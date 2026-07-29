@@ -1,30 +1,25 @@
 package com.example.learningservice.entities;
 
-
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
 
 @Entity
-@Table(name = "topics")
+@Table(name = "parts")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class Topic extends BaseEntity {
+public class Part extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "level_id")
-    private Level level;
+    @JoinColumn(name = "topic_id")
+    private Topic topic;
 
     private String title;
-    private String description;
-
-    @Column(name = "thumbnail_url")
-    private String thumbnailUrl;
 
     @Column(name = "order_index")
     private Integer orderIndex;
 
-    @OneToMany(mappedBy = "topic", cascade = CascadeType.ALL)
-    private List<Part> parts;
+    @OneToMany(mappedBy = "part", cascade = CascadeType.ALL)
+    private List<Session> sessions;
 }

@@ -1,19 +1,16 @@
 package com.example.learningservice.entities;
 
+
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
-@Table(name = "LESSON_ITEMS")
+@Table(name = "session_items")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class LessonItem {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
-
-    @Column(name = "lesson_id")
-    private Integer lessonId;
+public class SessionItem extends BaseEntity {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(name = "content_text", columnDefinition = "TEXT")
     private String contentText;
@@ -30,13 +27,6 @@ public class LessonItem {
     @Column(name = "item_type")
     private String itemType;
 
-    @Column(name = "createAt")
-    private LocalDateTime createAt;
-
-    @Column(name = "updateAt")
-    private LocalDateTime updateAt;
-
-    private Integer createBy;
-    private Integer updateBy;
-    private Boolean isDelete;
+    @OneToMany(mappedBy = "sessionItem", cascade = CascadeType.ALL)
+    private List<SessionItemMapping> sessionMappings;
 }
