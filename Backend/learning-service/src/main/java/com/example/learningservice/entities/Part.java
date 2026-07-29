@@ -1,33 +1,28 @@
 package com.example.learningservice.entities;
 
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
 
 @Entity
-@Table(name = "topics")
+@Table(name = "parts")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class Topic extends BaseEntity {
+public class Part extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "level_id")
-    @JsonIgnoreProperties({"topics", "hibernateLazyInitializer", "handler"})
-    private Level level;
+    @JoinColumn(name = "topic_id")
+    @JsonIgnoreProperties({"parts", "hibernateLazyInitializer", "handler"})
+    private Topic topic;
 
     private String title;
-    private String description;
-
-    @Column(name = "thumbnail_url")
-    private String thumbnailUrl;
 
     @Column(name = "order_index")
     private Integer orderIndex;
 
-    @OneToMany(mappedBy = "topic", cascade = CascadeType.ALL)
-    @JsonIgnoreProperties("topic")
-    private List<Part> parts;
+    @OneToMany(mappedBy = "part", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("part")
+    private List<Session> sessions;
 }
