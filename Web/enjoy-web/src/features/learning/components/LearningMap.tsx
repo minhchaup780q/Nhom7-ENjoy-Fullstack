@@ -209,7 +209,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
   };
 
   // Phẳng hóa toàn bộ bài học (Sessions) của các Phần (Parts) thuộc Chủ đề hiện tại để vẽ bản đồ dài nối liền
-  const allSessionsInTopic = currentParts.flatMap((part, partIdx) => {
+  const rawSessionsInTopic = currentParts.flatMap((part, partIdx) => {
     const partSessions = getSessionsForPart(part.id);
     return partSessions.map((session, sessionIdx) => ({
       ...session,
@@ -218,6 +218,27 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
       partIdx,
       sessionIdx,
     }));
+  });
+
+  // Tính toán lại trạng thái khoá/mở khóa thực tế: một session chỉ được mở (UNLOCK) nếu nó là bài đầu tiên, hoặc bài ngay trước đó đã HOÀN THÀNH (FINISH). Các bài đã hoàn thành vẫn giữ nguyên trạng thái FINISH.
+  const allSessionsInTopic = rawSessionsInTopic.map((session, index) => {
+    let calculatedStatus = session.status;
+    
+    if (session.status !== SessionStatus.FINISH) {
+      const prevSession = index > 0 ? rawSessionsInTopic[index - 1] : null;
+      const isPrevFinished = prevSession ? prevSession.status === SessionStatus.FINISH : false;
+      
+      if (index === 0 || isPrevFinished) {
+        calculatedStatus = SessionStatus.UNLOCK;
+      } else {
+        calculatedStatus = SessionStatus.LOCK;
+      }
+    }
+    
+    return {
+      ...session,
+      status: calculatedStatus
+    };
   });
 
   // Tìm bài học đang học hiện tại (UNLOCK) để hiển thị thông tin động trên Sticky Header

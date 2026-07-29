@@ -3,7 +3,7 @@ import { useLearningStore } from '../store/useLearningStore';
 import type { Session, SessionItem } from '../types';
 import { Mascot } from '../../../components/ui/Mascot';
 import { Button3D } from '../../../components/ui/Button3D';
-import { X, Heart, AlertTriangle, CheckCircle, Volume2 } from 'lucide-react';
+import { X, Heart, AlertTriangle, CheckCircle, Volume2, Mic, Square, Play, RefreshCw } from 'lucide-react';
 import { BASE_URL } from '../../../services/apiClient';
 
 interface SessionPlayerProps {
@@ -39,6 +39,10 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [listeningOptions, setListeningOptions] = useState<string[]>([]);
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
+  const [textOptions, setTextOptions] = useState<string[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
 
   const getAssetUrl = (path?: string) => {
     if (!path) return '';
@@ -103,9 +107,9 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     ? ((currentStepIndex) / currentItems.length) * 100 
     : 0;
 
-  // Tạo danh sách 4 lựa chọn hình ảnh ngẫu nhiên cho Vòng 2 (LISTENING)
+  // Tạo danh sách 4 lựa chọn hình ảnh ngẫu nhiên cho Vòng 3 (LISTENING)
   useEffect(() => {
-    if (!currentItem || (session.sessionType !== 'LISTENING' && session.sessionType !== 'WORD_RECOGNITION')) return;
+    if (!currentItem || session.sessionType !== 'LISTENING') return;
 
     const correctImage = currentItem.imageUrl || '';
     const otherImages = currentItems
@@ -133,6 +137,34 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
 
     const finalChoices = [correctImage, ...selectedOthers].sort(() => 0.5 - Math.random());
     setListeningOptions(finalChoices);
+    
+    setSelectedOption(null);
+    setIsChecked(false);
+  }, [currentItem, currentItems, session.sessionType]);
+
+  // Tạo danh sách 4 lựa chọn chữ ngẫu nhiên cho Vòng 2 (WORD_RECOGNITION)
+  useEffect(() => {
+    if (!currentItem || session.sessionType !== 'WORD_RECOGNITION') return;
+
+    const correctText = currentItem.contentText || '';
+    const otherTexts = currentItems
+      .map(item => item.contentText || '')
+      .filter(txt => txt !== '' && txt !== correctText);
+
+    const uniqueOtherTexts = Array.from(new Set(otherTexts));
+    const shuffledOthers = [...uniqueOtherTexts].sort(() => 0.5 - Math.random());
+    const selectedOthers = shuffledOthers.slice(0, 3);
+
+    const backupTexts = ['Dog', 'Cat', 'Elephant', 'Lion', 'Monkey', 'Pig', 'Duck', 'Bird'];
+    while (selectedOthers.length < 3) {
+      const backupTxt = backupTexts[Math.floor(Math.random() * backupTexts.length)];
+      if (!selectedOthers.includes(backupTxt) && backupTxt !== correctText) {
+        selectedOthers.push(backupTxt);
+      }
+    }
+
+    const finalChoices = [correctText, ...selectedOthers].sort(() => 0.5 - Math.random());
+    setTextOptions(finalChoices);
     
     setSelectedOption(null);
     setIsChecked(false);
@@ -209,6 +241,59 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     };
   };
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks: Blob[] = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunks.push(e.data);
+        }
+      };
+
+      recorder.onstop = () => {
+        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        setRecordedAudioUrl(audioUrl);
+        setSelectedOption('recorded');
+
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = () => {
+          const base64Data = reader.result as string;
+          localStorage.setItem('recordedAudio', base64Data);
+          localStorage.setItem('speakCorrectAnswer', currentItem?.contentText || '');
+          console.log("Đã lưu audio và đáp án vào localStorage:", currentItem?.contentText);
+        };
+      };
+
+      recorder.start();
+      setMediaRecorder(recorder);
+      setIsRecording(true);
+      setRecordedAudioUrl(null);
+      setSelectedOption(null);
+    } catch (err) {
+      console.error("Không thể truy cập micro:", err);
+      alert("Bé hãy cho phép Enjoy truy cập micro để luyện tập phát âm nhé!");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop();
+      mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      setIsRecording(false);
+    }
+  };
+
+  const playRecordedAudio = () => {
+    if (!recordedAudioUrl) return;
+    const audio = new Audio(recordedAudioUrl);
+    audio.play().catch(err => console.error("Không thể phát lại bản ghi âm:", err));
+  };
+
   const handleSelectOption = (option: string) => {
     if (isChecked) return;
     setSelectedOption(option);
@@ -225,7 +310,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     }
 
     // Trường hợp LISTENING: So sánh ảnh được chọn với ảnh của từ hiện tại
-    if (session.sessionType === 'LISTENING' || session.sessionType === 'WORD_RECOGNITION') {
+    if (session.sessionType === 'LISTENING') {
       const correctImage = currentItem.imageUrl || '';
       const correct = selectedOption === correctImage;
       setIsCorrect(correct);
@@ -236,6 +321,23 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       return;
     }
 
+    // Trường hợp WORD_RECOGNITION: So sánh chữ được chọn với chữ của từ hiện tại
+    if (session.sessionType === 'WORD_RECOGNITION') {
+      const correctText = currentItem.contentText || '';
+      const correct = selectedOption === correctText;
+      setIsCorrect(correct);
+      setIsChecked(true);
+      if (!correct) {
+        setHearts(prev => Math.max(0, prev - 1));
+      }
+      return;
+    }
+    // Trường hợp SPEAKING: Chấp nhận phát âm thành công khi có bản thu âm
+    if (session.sessionType === 'SPEAKING') {
+      setIsCorrect(true);
+      setIsChecked(true);
+      return;
+    }
     const answer = currentItem.correctAnswer || currentItem.translation || '';
     const correct = selectedOption === answer;
     
@@ -252,6 +354,8 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     setSelectedOption(null);
     setIsChecked(false);
     setListeningOptions([]);
+    setRecordedAudioUrl(null);
+    setTextOptions([]);
 
     if (hearts <= 0) {
       // Hết tim -> Thua cuộc
@@ -312,10 +416,18 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     );
   }
 
-  if ((session.sessionType === 'LISTENING' || session.sessionType === 'WORD_RECOGNITION') && listeningOptions.length === 0) {
+  if (session.sessionType === 'LISTENING' && listeningOptions.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white min-h-svh">
         <Mascot expression="thinking" speechBubbleText="Đợi Enjoy chuẩn bị hình ảnh câu hỏi một xíu nhé..." />
+      </div>
+    );
+  }
+
+  if (session.sessionType === 'WORD_RECOGNITION' && textOptions.length === 0) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white min-h-svh">
+        <Mascot expression="thinking" speechBubbleText="Đợi Enjoy chuẩn bị câu hỏi đoán hình một xíu nhé..." />
       </div>
     );
   }
@@ -367,14 +479,18 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
               ? 'Giới thiệu từ mới' 
               : (session.sessionType === 'LISTENING' || session.sessionType === 'WORD_RECOGNITION')
                 ? 'Chọn hình tương ứng'
-                : 'Chọn đáp án chính xác'}
+                : session.sessionType === 'SPEAKING'
+                  ? 'Tập phát âm chuẩn'
+                  : 'Chọn đáp án chính xác'}
           </span>
           <h2 className="text-2xl font-display font-extrabold text-text-main m-0 leading-tight">
             {session.sessionType === 'INTRODUCTION' 
               ? 'Làm quen và phát âm từ mới nhé!' 
               : (session.sessionType === 'LISTENING' || session.sessionType === 'WORD_RECOGNITION')
                 ? 'Nghe loa phát âm và chọn hình ảnh phù hợp nhé!'
-                : 'Nghĩa của từ/câu sau đây là gì?'}
+                : session.sessionType === 'SPEAKING'
+                  ? 'Nghe phát âm mẫu và ấn ghi âm để tập đọc nhé!'
+                  : 'Nghĩa của từ/câu sau đây là gì?'}
           </h2>
         </div>
 
@@ -442,7 +558,61 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
               />
             </div>
           </div>
-        ) : (session.sessionType === 'LISTENING' || session.sessionType === 'WORD_RECOGNITION') ? (
+        ) : session.sessionType === 'WORD_RECOGNITION' ? (
+          <div className="flex flex-col items-center space-y-6 animate-fade-in-up w-full">
+            {/* Image Frame in Center */}
+            {currentItem.imageUrl ? (
+              <div className="w-full max-w-sm h-52 bg-white border-2 border-border-main rounded-[2.5rem] shadow-sm overflow-hidden relative flex items-center justify-center p-3">
+                <img
+                  src={getAssetUrl(currentItem.imageUrl)}
+                  alt="Câu hỏi đoán hình"
+                  className="w-full h-full object-cover rounded-[2rem]"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400";
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="w-full max-w-sm h-52 bg-primary-soft/10 border-2 border-dashed border-primary/20 rounded-[2.5rem] flex items-center justify-center">
+                <span className="text-sm text-text-muted font-bold">Hình ảnh câu hỏi</span>
+              </div>
+            )}
+
+            {/* 4 Text Choices */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full pt-4">
+              {textOptions.map((option, idx) => {
+                const isSelected = selectedOption === option;
+                const optionLabel = String.fromCharCode(65 + idx); // A, B, C, D
+
+                return (
+                  <button
+                    key={option + '-' + idx}
+                    onClick={() => handleSelectOption(option)}
+                    className={`card-3d px-6 py-4 flex items-center gap-4 border-2 transition-all cursor-pointer rounded-2xl ${
+                      isSelected
+                        ? 'border-primary bg-primary-soft text-primary ring-2 ring-primary/10 shadow-[0_4px_0_0_#d93d74] scale-[1.02]'
+                        : 'border-border-main hover:bg-bg-light text-text-main bg-white shadow-[0_4px_0_0_#e5e5e5]'
+                    }`}
+                    style={{
+                      pointerEvents: isChecked ? 'none' : 'auto',
+                    }}
+                  >
+                    <span
+                      className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center font-display text-xs ${
+                        isSelected
+                          ? 'border-primary bg-primary text-white font-extrabold'
+                          : 'border-border-main text-text-muted bg-white'
+                      }`}
+                    >
+                      {optionLabel}
+                    </span>
+                    <span className="text-base font-display font-bold leading-none">{option}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : session.sessionType === 'LISTENING' ? (
           <div className="flex flex-col items-center space-y-8 animate-fade-in-up w-full">
             {/* Speech Dialog Area with Mascot & 2 Sound speed buttons */}
             <div className="flex items-center justify-center py-4">
@@ -515,6 +685,121 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                   </button>
                 );
               })}
+            </div>
+          </div>
+        ) : session.sessionType === 'SPEAKING' ? (
+          <div className="flex flex-col items-center space-y-6 animate-fade-in-up w-full">
+            {/* Flashcard container (Same as INTRODUCTION but tailored for Speaking) */}
+            <div className="w-full max-w-sm bg-white border-2 border-border-main rounded-[2.5rem] shadow-[0_8px_0_0_#e5e5e5] p-6 flex flex-col items-center space-y-6 hover:translate-y-[-2px] hover:shadow-[0_10px_0_0_#e5e5e5] transition-all duration-150 relative overflow-hidden group">
+              
+              {/* Image Frame */}
+              {currentItem.imageUrl ? (
+                <div className="w-full h-48 bg-bg-light border-2 border-border-main/50 rounded-3xl overflow-hidden relative flex items-center justify-center">
+                  <img
+                    src={getAssetUrl(currentItem.imageUrl)}
+                    alt={currentItem.contentText}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400";
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="w-full h-48 bg-primary-soft/10 border-2 border-dashed border-primary/20 rounded-3xl flex items-center justify-center">
+                  <span className="text-sm text-text-muted font-bold">Hình ảnh minh họa</span>
+                </div>
+              )}
+
+              {/* Text & Audio Controls */}
+              <div className="w-full text-center space-y-4">
+                <div className="flex items-center justify-center gap-4">
+                  <h3 className="text-4xl font-display font-extrabold text-text-main tracking-wide">
+                    {currentItem.contentText}
+                  </h3>
+                  
+                  {/* Speaker Button */}
+                  <button
+                    onClick={() => playSound(1.0)}
+                    className={`btn-3d w-14 h-14 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                      isPlayingAudio
+                        ? 'btn-3d-pink scale-110 animate-pulse'
+                        : 'btn-3d-blue hover:scale-105'
+                    }`}
+                  >
+                    <Volume2 className={`w-7 h-7 text-white ${isPlayingAudio ? 'animate-bounce-soft' : ''}`} />
+                  </button>
+                </div>
+
+                <div className="border-t-2 border-border-main/30 my-2 pt-3">
+                  <span className="text-xs font-extrabold text-primary tracking-wider uppercase block mb-1">
+                    Nghĩa tiếng Việt
+                  </span>
+                  <p className="text-xl font-display font-extrabold text-primary-dark">
+                    {currentItem.translation}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Speaking voice recording controller */}
+            <div className="w-full max-w-sm bg-white border-2 border-border-main rounded-[2rem] p-5 shadow-sm flex flex-col items-center gap-4">
+              <span className="text-xs font-extrabold text-text-muted uppercase tracking-widest">LUYỆN PHÁT ÂM</span>
+              
+              <div className="flex items-center gap-4 justify-center w-full">
+                {/* 1. Record Button */}
+                {!isRecording && !recordedAudioUrl && (
+                  <button
+                    onClick={startRecording}
+                    disabled={isChecked}
+                    className="btn-3d px-6 py-3 rounded-2xl flex items-center gap-2 cursor-pointer btn-3d-pink font-display font-extrabold text-xs"
+                  >
+                    <Mic className="w-5 h-5 text-white" />
+                    NHẤN ĐỂ GHI ÂM
+                  </button>
+                )}
+
+                {/* 2. Recording Status Pulsing Button */}
+                {isRecording && (
+                  <button
+                    onClick={stopRecording}
+                    className="px-6 py-3 bg-[#ff4d4f] border-b-4 border-[#cf1322] text-white hover:bg-[#ff7875] rounded-2xl flex items-center gap-2 cursor-pointer font-display font-extrabold text-xs animate-pulse"
+                  >
+                    <Square className="w-5 h-5 fill-current text-white" />
+                    ĐANG GHI ÂM (DỪNG)
+                  </button>
+                )}
+
+                {/* 3. Re-record & Play Recorded Voice buttons */}
+                {!isRecording && recordedAudioUrl && (
+                  <div className="flex items-center gap-3 w-full justify-center">
+                    <button
+                      onClick={playRecordedAudio}
+                      className="btn-3d px-5 py-3 rounded-2xl flex items-center gap-1.5 cursor-pointer btn-3d-green font-display font-extrabold text-xs flex-1"
+                    >
+                      <Play className="w-4 h-4 text-white" />
+                      NGHE LẠI
+                    </button>
+                    
+                    <button
+                      onClick={startRecording}
+                      disabled={isChecked}
+                      className="px-4 py-3 bg-white border-2 border-border-main text-text-main hover:bg-bg-light rounded-2xl flex items-center gap-1.5 cursor-pointer font-display font-extrabold text-xs shadow-sm hover:translate-y-[-1px] active:translate-y-[1px] transition-all"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      THU LẠI
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Status Message */}
+              {isRecording ? (
+                <p className="text-[11px] text-[#ff4d4f] font-bold animate-bounce-soft">Enjoy đang nghe bé nói nè... 🎙️</p>
+              ) : recordedAudioUrl ? (
+                <p className="text-[11px] text-[#52c41a] font-bold">Đã lưu giọng bé! Hãy bấm KIỂM TRA để tiếp tục học.</p>
+              ) : (
+                <p className="text-[11px] text-text-muted font-bold">Hãy cho phép mic và nhấn nút đỏ để bắt đầu nói.</p>
+              )}
             </div>
           </div>
         ) : (
