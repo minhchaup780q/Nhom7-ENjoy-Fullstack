@@ -1,113 +1,209 @@
 @import "tailwindcss";
 
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+@theme {
+  /* Tông màu hồng tươi sáng chủ đạo (Duolingo Pink Style) */
+  --color-primary: #ff5e97;
+  --color-primary-hover: #ff3e80;
+  --color-primary-dark: #e03a74;
+  --color-primary-light: #ff8ab4;
+  --color-primary-soft: #fff2f6;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  /* Tông màu xanh lá cây tương tự Duolingo nhưng cân bằng với màu hồng */
+  --color-success: #58cc02;
+  --color-success-hover: #46a302;
+  --color-success-dark: #3f9102;
+  --color-success-soft: #eefad4;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* Tông màu xanh dương */
+  --color-info: #1cb0f6;
+  --color-info-hover: #1899d6;
+  --color-info-dark: #1280b5;
+  --color-info-soft: #ddf4ff;
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  /* Tông màu vàng cam (Streak, Thưởng) */
+  --color-warning: #ff9600;
+  --color-warning-hover: #e68500;
+  --color-warning-dark: #cc7600;
+  --color-warning-soft: #fff2e0;
+
+  /* Màu chữ và nền */
+  --color-text-main: #3c3c3c;
+  --color-text-muted: #afafaf;
+  --color-border-main: #e5e5e5;
+  --color-bg-main: #ffffff;
+  --color-bg-light: #f7f7f7;
+
+  /* Phông chữ */
+  --font-display: "Outfit", "Inter", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+/* Tinh chỉnh scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
 }
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cccccc;
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #aaaaaa;
 }
 
 body {
+  font-family: var(--font-sans);
+  color: var(--color-text-main);
+  background-color: var(--color-bg-main);
   margin: 0;
+  padding: 0;
+  overflow-x: hidden;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
+/* Hiệu ứng 3D Duolingo Button */
+.btn-3d {
+  position: relative;
   display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  border-radius: 16px;
+  border: 2px solid currentColor;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.1s ease;
+  transform: translateY(0);
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+.btn-3d:active {
+  transform: translateY(4px);
+}
+
+/* Pink 3D Button */
+.btn-3d-pink {
+  background-color: #ff5e97;
+  color: #ffffff;
+  border-color: #ff5e97;
+  box-shadow: 0 4px 0 #d93d74;
+}
+.btn-3d-pink:active {
+  box-shadow: 0 0 0 #d93d74;
+}
+
+/* Green 3D Button */
+.btn-3d-green {
+  background-color: #58cc02;
+  color: #ffffff;
+  border-color: #58cc02;
+  box-shadow: 0 4px 0 #3f9102;
+}
+.btn-3d-green:active {
+  box-shadow: 0 0 0 #3f9102;
+}
+
+/* Blue 3D Button */
+.btn-3d-blue {
+  background-color: #1cb0f6;
+  color: #ffffff;
+  border-color: #1cb0f6;
+  box-shadow: 0 4px 0 #1280b5;
+}
+.btn-3d-blue:active {
+  box-shadow: 0 0 0 #1280b5;
+}
+
+/* Gray 3D Button */
+.btn-3d-gray {
+  background-color: #ffffff;
+  color: #afafaf;
+  border-color: #e5e5e5;
+  box-shadow: 0 4px 0 #e5e5e5;
+}
+.btn-3d-gray:hover {
+  background-color: #f7f7f7;
+}
+.btn-3d-gray:active {
+  box-shadow: 0 0 0 #e5e5e5;
+}
+
+/* 3D Card */
+.card-3d {
+  background-color: #ffffff;
+  border: 2px solid #e5e5e5;
+  border-bottom-width: 4px;
+  border-radius: 20px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.card-3d:hover {
+  transform: translateY(-2px);
+  border-bottom-width: 6px;
+}
+.card-3d:active {
+  transform: translateY(2px);
+  border-bottom-width: 2px;
+}
+
+/* ==========================================
+   ANIMATIONS SYSTEM
+   ========================================== */
+
+/* 1. Lơ lửng nhẹ nhàng cho Mascot */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0px); }
+}
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* 2. Lắc lư thu hút (Hover hoặc lỗi) */
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+.animate-wiggle {
+  animation: wiggle 0.4s ease-in-out infinite alternate;
+}
+.hover-wiggle:hover {
+  animation: wiggle 0.3s ease-in-out infinite alternate;
+}
+
+/* 3. Nảy nhẹ mềm mại */
+@keyframes bounceSoft {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-4px) scale(1.02); }
+}
+.animate-bounce-soft {
+  animation: bounceSoft 2.5s ease-in-out infinite;
+}
+
+/* 4. Hiện mượt từ dưới lên */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Lắc mạnh khi trả lời sai (shake) */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
 }
