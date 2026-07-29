@@ -1,6 +1,7 @@
 package com.example.learningservice.entities;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
@@ -28,5 +29,6 @@ public class SessionItem extends BaseEntity {
     private String itemType;
 
     @OneToMany(mappedBy = "sessionItem", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("sessionItem")
     private List<SessionItemMapping> sessionMappings;
 }

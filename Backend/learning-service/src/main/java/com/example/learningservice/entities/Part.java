@@ -1,5 +1,6 @@
 package com.example.learningservice.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
@@ -13,6 +14,7 @@ public class Part extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "topic_id")
+    @JsonIgnoreProperties({"parts", "hibernateLazyInitializer", "handler"})
     private Topic topic;
 
     private String title;
@@ -21,5 +23,6 @@ public class Part extends BaseEntity {
     private Integer orderIndex;
 
     @OneToMany(mappedBy = "part", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("part")
     private List<Session> sessions;
 }

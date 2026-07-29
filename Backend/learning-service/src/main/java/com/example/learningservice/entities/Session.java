@@ -2,6 +2,7 @@ package com.example.learningservice.entities;
 
 import com.example.learningservice.entities.enums.SessionStatus;
 import com.example.learningservice.entities.enums.SessionType;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -16,6 +17,7 @@ public class Session extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "part_id")
+    @JsonIgnoreProperties({"sessions", "hibernateLazyInitializer", "handler"})
     private Part part;
 
     @Enumerated(EnumType.STRING)
@@ -38,5 +40,6 @@ public class Session extends BaseEntity {
     private Integer orderIndex;
 
     @OneToMany(mappedBy = "session", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("session")
     private List<SessionItemMapping> itemMappings;
 }

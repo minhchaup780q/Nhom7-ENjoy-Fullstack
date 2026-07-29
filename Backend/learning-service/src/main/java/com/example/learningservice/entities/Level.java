@@ -1,6 +1,7 @@
 package com.example.learningservice.entities;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
@@ -19,5 +20,6 @@ public class Level extends BaseEntity {
     private Integer orderIndex;
 
     @OneToMany(mappedBy = "level", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("level")
     private List<Topic> topics;
 }
