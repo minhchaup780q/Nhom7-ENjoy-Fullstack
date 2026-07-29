@@ -37,6 +37,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   const [showExitModal, setShowExitModal] = useState(false);
 
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [listeningOptions, setListeningOptions] = useState<string[]>([]);
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
 
   const getAssetUrl = (path?: string) => {
@@ -102,6 +103,41 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     ? ((currentStepIndex) / currentItems.length) * 100 
     : 0;
 
+  // Tạo danh sách 4 lựa chọn hình ảnh ngẫu nhiên cho Vòng 2 (LISTENING)
+  useEffect(() => {
+    if (!currentItem || (session.sessionType !== 'LISTENING' && session.sessionType !== 'WORD_RECOGNITION')) return;
+
+    const correctImage = currentItem.imageUrl || '';
+    const otherImages = currentItems
+      .map(item => item.imageUrl || '')
+      .filter(img => img !== '' && img !== correctImage);
+
+    const uniqueOtherImages = Array.from(new Set(otherImages));
+    const shuffledOthers = [...uniqueOtherImages].sort(() => 0.5 - Math.random());
+    const selectedOthers = shuffledOthers.slice(0, 3);
+
+    const backupImages = [
+      'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=600&auto=format&fit=crop&q=80',
+    ];
+    
+    while (selectedOthers.length < 3) {
+      const backupImg = backupImages[Math.floor(Math.random() * backupImages.length)];
+      if (!selectedOthers.includes(backupImg) && backupImg !== correctImage) {
+        selectedOthers.push(backupImg);
+      }
+    }
+
+    const finalChoices = [correctImage, ...selectedOthers].sort(() => 0.5 - Math.random());
+    setListeningOptions(finalChoices);
+    
+    setSelectedOption(null);
+    setIsChecked(false);
+  }, [currentItem, currentItems, session.sessionType]);
+
   // Phát âm thanh tự động khi câu hỏi hoặc từ vựng thay đổi
   useEffect(() => {
     if (!currentItem) return;
@@ -145,7 +181,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     };
   }, [currentStepIndex, currentItem?.id]);
 
-  const playSound = () => {
+  const playSound = (speed: number = 1.0) => {
     if (!currentItem || !currentItem.audioUrl) return;
 
     const fullAudioUrl = getAssetUrl(currentItem.audioUrl);
@@ -155,6 +191,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     }
 
     const audio = new Audio(fullAudioUrl);
+    audio.playbackRate = speed;
     setCurrentAudio(audio);
     setIsPlayingAudio(true);
 
@@ -187,6 +224,18 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       return;
     }
 
+    // Trường hợp LISTENING: So sánh ảnh được chọn với ảnh của từ hiện tại
+    if (session.sessionType === 'LISTENING' || session.sessionType === 'WORD_RECOGNITION') {
+      const correctImage = currentItem.imageUrl || '';
+      const correct = selectedOption === correctImage;
+      setIsCorrect(correct);
+      setIsChecked(true);
+      if (!correct) {
+        setHearts(prev => Math.max(0, prev - 1));
+      }
+      return;
+    }
+
     const answer = currentItem.correctAnswer || currentItem.translation || '';
     const correct = selectedOption === answer;
     
@@ -202,6 +251,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     // Reset state câu hỏi cũ
     setSelectedOption(null);
     setIsChecked(false);
+    setListeningOptions([]);
 
     if (hearts <= 0) {
       // Hết tim -> Thua cuộc
@@ -262,6 +312,14 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     );
   }
 
+  if ((session.sessionType === 'LISTENING' || session.sessionType === 'WORD_RECOGNITION') && listeningOptions.length === 0) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white min-h-svh">
+        <Mascot expression="thinking" speechBubbleText="Đợi Enjoy chuẩn bị hình ảnh câu hỏi một xíu nhé..." />
+      </div>
+    );
+  }
+
   if (!currentItem) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white min-h-svh">
@@ -305,12 +363,18 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
         {/* Render Title/Task */}
         <div className="text-left space-y-1">
           <span className="text-xs font-extrabold text-primary tracking-widest uppercase">
-            {session.sessionType === 'INTRODUCTION' ? 'Giới thiệu từ mới' : 'Chọn đáp án chính xác'}
+            {session.sessionType === 'INTRODUCTION' 
+              ? 'Giới thiệu từ mới' 
+              : (session.sessionType === 'LISTENING' || session.sessionType === 'WORD_RECOGNITION')
+                ? 'Chọn hình tương ứng'
+                : 'Chọn đáp án chính xác'}
           </span>
           <h2 className="text-2xl font-display font-extrabold text-text-main m-0 leading-tight">
             {session.sessionType === 'INTRODUCTION' 
               ? 'Làm quen và phát âm từ mới nhé!' 
-              : 'Nghĩa của từ/câu sau đây là gì?'}
+              : (session.sessionType === 'LISTENING' || session.sessionType === 'WORD_RECOGNITION')
+                ? 'Nghe loa phát âm và chọn hình ảnh phù hợp nhé!'
+                : 'Nghĩa của từ/câu sau đây là gì?'}
           </h2>
         </div>
 
@@ -346,7 +410,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                   
                   {/* Speaker Button */}
                   <button
-                    onClick={playSound}
+                    onClick={() => playSound(1.0)}
                     className={`btn-3d w-14 h-14 rounded-full flex items-center justify-center transition-all cursor-pointer ${
                       isPlayingAudio
                         ? 'btn-3d-pink scale-110 animate-pulse'
@@ -378,6 +442,81 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
               />
             </div>
           </div>
+        ) : (session.sessionType === 'LISTENING' || session.sessionType === 'WORD_RECOGNITION') ? (
+          <div className="flex flex-col items-center space-y-8 animate-fade-in-up w-full">
+            {/* Speech Dialog Area with Mascot & 2 Sound speed buttons */}
+            <div className="flex items-center justify-center py-4">
+              <div className="relative bg-white border-2 border-border-main rounded-[2rem] p-5 shadow-sm flex items-center gap-6 animate-fade-in-up">
+                
+                {/* Standard speed sound button */}
+                <button
+                  onClick={() => playSound(1.0)}
+                  className={`btn-3d w-16 h-16 rounded-2xl flex items-center justify-center cursor-pointer transition-all ${
+                    isPlayingAudio ? 'btn-3d-pink animate-pulse' : 'btn-3d-blue hover:scale-105'
+                  }`}
+                >
+                  <Volume2 className="w-8 h-8 text-white" />
+                </button>
+
+                {/* Vertical separator */}
+                <div className="w-[2px] h-12 bg-border-main" />
+
+                {/* Slow turtle speed sound button */}
+                <button
+                  onClick={() => playSound(0.5)}
+                  className="w-16 h-16 rounded-2xl border-2 border-border-main flex items-center justify-center cursor-pointer hover:bg-bg-light active:translate-y-[2px] transition-all bg-white"
+                  title="Nghe chậm"
+                >
+                  <span className="text-2xl mr-0.5">🐢</span>
+                  <Volume2 className="w-5 h-5 text-primary" />
+                </button>
+              </div>
+            </div>
+
+            {/* Grid of 4 image choices */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full pt-4">
+              {listeningOptions.map((imageUrl, idx) => {
+                const isSelected = selectedOption === imageUrl;
+                const optionLabel = String.fromCharCode(65 + idx); // A, B, C, D
+
+                return (
+                  <button
+                    key={imageUrl + '-' + idx}
+                    onClick={() => handleSelectOption(imageUrl)}
+                    className={`card-3d p-3 text-center transition-all border-2 select-none cursor-pointer flex flex-col items-center space-y-3 rounded-3xl ${
+                      isSelected
+                        ? 'border-primary bg-primary-soft text-primary ring-2 ring-primary/10 shadow-[0_4px_0_0_#d93d74] scale-105'
+                        : 'border-border-main hover:bg-bg-light text-text-main bg-white shadow-[0_4px_0_0_#e5e5e5]'
+                    }`}
+                    style={{
+                      pointerEvents: isChecked ? 'none' : 'auto',
+                    }}
+                  >
+                    <span
+                      className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center font-display text-xs ${
+                        isSelected
+                          ? 'border-primary bg-primary text-white font-extrabold'
+                          : 'border-border-main text-text-muted bg-white'
+                      }`}
+                    >
+                      {optionLabel}
+                    </span>
+
+                    <div className="w-full h-32 bg-bg-light border border-border-main/30 rounded-2xl overflow-hidden relative flex items-center justify-center">
+                      <img
+                        src={getAssetUrl(imageUrl)}
+                        alt={`Lựa chọn ${optionLabel}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400';
+                        }}
+                      />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         ) : (
           /* Normal multiple-choice and question rendering */
           <>
@@ -395,7 +534,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
             {(currentItem.itemType === 'VOCABULARY' || currentItem.itemType === 'LISTENING') && (
               <div className="flex justify-center">
                 <button
-                  onClick={playSound}
+                  onClick={() => playSound(1.0)}
                   className={`btn-3d w-14 h-14 rounded-full flex items-center justify-center cursor-pointer ${
                     isPlayingAudio ? 'btn-3d-pink scale-110 animate-pulse' : 'btn-3d-blue'
                   }`}
