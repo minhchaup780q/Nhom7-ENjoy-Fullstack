@@ -65,4 +65,28 @@ export const learningApi = {
   updateSession: (id: number, session: Partial<Session>) => {
     return apiClient.put<Session>(`/api/sessions/${id}`, session);
   },
+
+  // Chấm điểm phát âm bằng Python Faster-Whisper Service
+  assessPronunciation: async (audioBlob: Blob, targetSentence: string): Promise<{
+    isAllCorrect: boolean;
+    accuracyScore: number;
+    recognizedText: string;
+    details: { word: string; status: 'correct' | 'wrong' }[];
+  }> => {
+    const formData = new FormData();
+    formData.append('audio', audioBlob, 'recording.webm');
+    formData.append('target_sentence', targetSentence);
+
+    const response = await fetch('http://localhost:8000/api/v1/speech/assess', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Speech assessment error: ${response.statusText}`);
+    }
+
+    return response.json();
+  },
 };
+

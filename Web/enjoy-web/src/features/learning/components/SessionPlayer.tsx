@@ -4,8 +4,9 @@ import { SessionItemType } from '../types';
 import type { Session, SessionItem } from '../types';
 import { Mascot } from '../../../components/ui/Mascot';
 import { Button3D } from '../../../components/ui/Button3D';
-import { X, Heart, AlertTriangle, CheckCircle, Volume2, Mic, Square, Play, RefreshCw } from 'lucide-react';
+import { X, Heart, AlertTriangle, CheckCircle, Volume2, Mic, Square, Play, RefreshCw, RotateCcw } from 'lucide-react';
 import { BASE_URL } from '../../../services/apiClient';
+import { learningApi } from '../services/learningApi';
 
 interface SessionPlayerProps {
   session: Session;
@@ -33,13 +34,13 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isChecked, setIsChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
-  
+
   // Trạng thái cho Vòng 4 (GAMIFIED_REVIEW)
   const [quizOptions, setQuizOptions] = useState<string[]>([]);
   const [shuffledWords, setShuffledWords] = useState<{ id: number; text: string; selected: boolean }[]>([]);
   const [selectedWords, setSelectedWords] = useState<{ id: number; text: string }[]>([]);
   const [blankAnswers, setBlankAnswers] = useState<Record<number, string>>({});
-  
+
   // Trạng thái layout ngẫu nhiên cho Vòng 5 (GAMIFIED_REVIEW)
   const [itemLayouts, setItemLayouts] = useState<Record<number, 'LISTENING' | 'SPEAKING' | 'QUIZ' | 'FILL_IN_BLANK'>>({});
 
@@ -53,6 +54,9 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
+  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
+  const [speakingResult, setSpeakingResult] = useState<{ word: string; status: 'correct' | 'wrong' }[] | null>(null);
+  const [isAssessing, setIsAssessing] = useState(false);
 
   const [playItems, setPlayItems] = useState<InteractiveItem[]>([]);
 
@@ -68,8 +72,8 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
 
   const currentItems = playItems;
   const currentItem = currentItems[currentStepIndex];
-  const progressPercent = currentItems.length > 0 
-    ? ((currentStepIndex) / currentItems.length) * 100 
+  const progressPercent = currentItems.length > 0
+    ? ((currentStepIndex) / currentItems.length) * 100
     : 0;
 
   const getActiveLayout = (): 'INTRODUCTION' | 'LISTENING' | 'SPEAKING' | 'QUIZ' | 'FILL_IN_BLANK' | 'UNKNOWN' => {
@@ -94,7 +98,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     let lastIndex = 0;
     let blankIndex = 0;
     let match;
-    
+
     while ((match = regex.exec(text)) !== null) {
       const matchIndex = match.index;
       if (matchIndex > lastIndex) {
@@ -110,14 +114,14 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       });
       lastIndex = regex.lastIndex;
     }
-    
+
     if (lastIndex < text.length) {
       tokens.push({
         type: 'text',
         content: text.substring(lastIndex)
       });
     }
-    
+
     return tokens;
   };
 
@@ -160,7 +164,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     if (!currentItem || !isQuizLayout) return;
 
     const correctKeyword = currentItem.keyword || '';
-    
+
     // Tìm các keyword của các items khác có cùng type QUIZ
     const otherKeywords = currentItems
       .filter(item => item.itemType === SessionItemType.QUIZ && item.keyword && item.keyword !== correctKeyword)
@@ -168,10 +172,10 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
 
     const uniqueOthers = Array.from(new Set(otherKeywords));
     const backupKeywords = ['cow', 'pig', 'duck', 'horse', 'sheep', 'run', 'swim', 'eat', 'sleep', 'fly', 'red', 'blue', 'green', 'yellow', 'black'];
-    
+
     const shuffledOthers = [...uniqueOthers].sort(() => 0.5 - Math.random());
     const selectedOthers = shuffledOthers.slice(0, 3);
-    
+
     while (selectedOthers.length < 3) {
       const backup = backupKeywords[Math.floor(Math.random() * backupKeywords.length)];
       if (backup !== correctKeyword && !selectedOthers.includes(backup)) {
@@ -216,7 +220,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
 
   // Tạo danh sách 4 lựa chọn hình ảnh ngẫu nhiên cho Vòng 3 (LISTENING)
   useEffect(() => {
-    const isListeningLayout = session.sessionType === 'LISTENING' || 
+    const isListeningLayout = session.sessionType === 'LISTENING' ||
       (session.sessionType === 'GAMIFIED_REVIEW' && itemLayouts[currentItem?.id] === 'LISTENING');
 
     if (!currentItem || !isListeningLayout) return;
@@ -237,7 +241,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       'https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=600&auto=format&fit=crop&q=80',
       'https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=600&auto=format&fit=crop&q=80',
     ];
-    
+
     while (selectedOthers.length < 3) {
       const backupImg = backupImages[Math.floor(Math.random() * backupImages.length)];
       if (!selectedOthers.includes(backupImg) && backupImg !== correctImage) {
@@ -247,7 +251,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
 
     const finalChoices = [correctImage, ...selectedOthers].sort(() => 0.5 - Math.random());
     setListeningOptions(finalChoices);
-    
+
     setSelectedOption(null);
     setIsChecked(false);
   }, [currentItem, currentItems, session.sessionType, itemLayouts]);
@@ -257,13 +261,13 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   // Phát âm thanh tự động khi câu hỏi hoặc từ vựng thay đổi
   useEffect(() => {
     if (!currentItem) return;
-    
+
     // Tìm URL âm thanh
     const audioUrl = currentItem.audioUrl;
     if (!audioUrl) return;
 
     const fullAudioUrl = getAssetUrl(audioUrl);
-    
+
     // Stop any previous audio
     if (currentAudio) {
       currentAudio.pause();
@@ -341,6 +345,8 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
         const audioBlob = new Blob(chunks, { type: 'audio/webm' });
         const audioUrl = URL.createObjectURL(audioBlob);
         setRecordedAudioUrl(audioUrl);
+        setRecordedBlob(audioBlob);
+        setSpeakingResult(null);
         setSelectedOption('recorded');
 
         const reader = new FileReader();
@@ -389,7 +395,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     // Tìm ô trống đầu tiên chưa được điền
     const tokens = parseSentence(currentItem.contentText);
     const expectedBlanks = tokens.filter(t => t.type === 'blank');
-    
+
     const firstEmptyBlank = expectedBlanks.find(blank => !blankAnswers[blank.blankIndex!]);
     if (!firstEmptyBlank) return; // Đã điền đầy tất cả các ô trống rồi
 
@@ -454,7 +460,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     return currentItem.correctAnswer || currentItem.translation || '';
   };
 
-  const handleCheckAnswer = () => {
+  const handleCheckAnswer = async () => {
     if (!currentItem) return;
 
     // 1. INTRODUCTION: Bấm là qua luôn
@@ -476,10 +482,27 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       return;
     }
 
-    // 3. SPEAKING: Ghi âm qua luôn
+    // 3. SPEAKING: Ghi âm & Gọi AI Faster-Whisper chấm điểm phát âm
     if (activeLayout === 'SPEAKING') {
-      setIsCorrect(true);
-      setIsChecked(true);
+      if (recordedBlob && currentItem.contentText) {
+        setIsAssessing(true);
+        try {
+          const res = await learningApi.assessPronunciation(recordedBlob, currentItem.contentText);
+          setSpeakingResult(res.details);
+          setIsCorrect(res.isAllCorrect);
+          setIsChecked(true);
+        } catch (error) {
+          console.error("Lỗi khi chấm điểm phát âm:", error);
+          // Fallback nếu chưa bật service AI: Cho qua luôn
+          setIsCorrect(true);
+          setIsChecked(true);
+        } finally {
+          setIsAssessing(false);
+        }
+      } else {
+        setIsCorrect(true);
+        setIsChecked(true);
+      }
       return;
     }
 
@@ -524,12 +547,24 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     }
   };
 
+  const handleRetrySpeaking = () => {
+    setIsChecked(false);
+    setIsCorrect(false);
+    setRecordedAudioUrl(null);
+    setRecordedBlob(null);
+    setSpeakingResult(null);
+    setSelectedOption(null);
+  };
+
   const handleContinue = () => {
     // Reset state câu hỏi cũ
     setSelectedOption(null);
     setIsChecked(false);
     setListeningOptions([]);
     setRecordedAudioUrl(null);
+    setRecordedBlob(null);
+    setSpeakingResult(null);
+    setIsAssessing(false);
     setQuizOptions([]);
     setShuffledWords([]);
     setSelectedWords([]);
@@ -568,7 +603,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white min-h-svh animate-fade-in-up space-y-8 max-w-xl mx-auto">
         <Mascot expression="happy" speechBubbleText="Tuyệt vời quá! Bé đã hoàn thành bài học hôm nay rồi!" size={200} />
-        
+
         <div className="text-center space-y-2">
           <h2 className="text-3xl font-display font-extrabold text-primary">BÀI HỌC HOÀN THÀNH</h2>
           <p className="text-sm font-semibold text-text-main/70">
@@ -652,13 +687,13 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
 
       {/* Main Core Question Area */}
       <main className="max-w-2xl w-full mx-auto px-6 py-8 flex-1 flex flex-col justify-center space-y-8">
-        
+
         {/* Render Title/Task */}
         {!(activeLayout === 'QUIZ') && (
           <div className="text-left space-y-1">
             <span className="text-xs font-extrabold text-primary tracking-widest uppercase">
-              {activeLayout === 'INTRODUCTION' 
-                ? 'Giới thiệu từ mới' 
+              {activeLayout === 'INTRODUCTION'
+                ? 'Giới thiệu từ mới'
                 : activeLayout === 'LISTENING'
                   ? 'Chọn hình tương ứng'
                   : activeLayout === 'SPEAKING'
@@ -668,8 +703,8 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                       : 'Chọn đáp án chính xác'}
             </span>
             <h2 className="text-2xl font-display font-extrabold text-text-main m-0 leading-tight">
-              {activeLayout === 'INTRODUCTION' 
-                ? 'Làm quen và phát âm từ mới nhé!' 
+              {activeLayout === 'INTRODUCTION'
+                ? 'Làm quen và phát âm từ mới nhé!'
                 : activeLayout === 'LISTENING'
                   ? 'Nghe loa phát âm và chọn hình ảnh phù hợp nhé!'
                   : activeLayout === 'SPEAKING'
@@ -685,7 +720,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
           <div className="flex flex-col items-center space-y-6 animate-fade-in-up">
             {/* Flashcard container */}
             <div className="w-full max-w-sm bg-white border-2 border-border-main rounded-[2.5rem] shadow-[0_8px_0_0_#e5e5e5] p-6 flex flex-col items-center space-y-6 hover:translate-y-[-2px] hover:shadow-[0_10px_0_0_#e5e5e5] transition-all duration-150 relative overflow-hidden group">
-              
+
               {/* Image Frame */}
               {currentItem.imageUrl ? (
                 <div className="w-full h-48 bg-bg-light border-2 border-border-main/50 rounded-3xl overflow-hidden relative flex items-center justify-center">
@@ -710,15 +745,14 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                   <h3 className="text-4xl font-display font-extrabold text-text-main tracking-wide">
                     {currentItem.contentText}
                   </h3>
-                  
+
                   {/* Speaker Button */}
                   <button
                     onClick={() => playSound(1.0)}
-                    className={`btn-3d w-14 h-14 rounded-full flex items-center justify-center transition-all cursor-pointer ${
-                      isPlayingAudio
+                    className={`btn-3d w-14 h-14 rounded-full flex items-center justify-center transition-all cursor-pointer ${isPlayingAudio
                         ? 'btn-3d-pink scale-110 animate-pulse'
                         : 'btn-3d-blue hover:scale-105'
-                    }`}
+                      }`}
                   >
                     <Volume2 className={`w-7 h-7 text-white ${isPlayingAudio ? 'animate-bounce-soft' : ''}`} />
                   </button>
@@ -751,13 +785,12 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
             {/* Speech Dialog Area with Mascot & 2 Sound speed buttons */}
             <div className="flex items-center justify-center py-4">
               <div className="relative bg-white border-2 border-border-main rounded-[2rem] p-5 shadow-sm flex items-center gap-6 animate-fade-in-up">
-                
+
                 {/* Standard speed sound button */}
                 <button
                   onClick={() => playSound(1.0)}
-                  className={`btn-3d w-16 h-16 rounded-2xl flex items-center justify-center cursor-pointer transition-all ${
-                    isPlayingAudio ? 'btn-3d-pink animate-pulse' : 'btn-3d-blue hover:scale-105'
-                  }`}
+                  className={`btn-3d w-16 h-16 rounded-2xl flex items-center justify-center cursor-pointer transition-all ${isPlayingAudio ? 'btn-3d-pink animate-pulse' : 'btn-3d-blue hover:scale-105'
+                    }`}
                 >
                   <Volume2 className="w-8 h-8 text-white" />
                 </button>
@@ -787,11 +820,10 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                   <button
                     key={imageUrl + '-' + idx}
                     onClick={() => handleSelectOption(imageUrl)}
-                    className={`card-3d p-2 border-2 transition-all flex flex-col items-center gap-2 cursor-pointer relative ${
-                      isSelected
+                    className={`card-3d p-2 border-2 transition-all flex flex-col items-center gap-2 cursor-pointer relative ${isSelected
                         ? 'border-primary bg-primary-soft ring-2 ring-primary/10 shadow-[0_4px_0_0_#d93d74] scale-[1.03]'
                         : 'border-border-main hover:bg-bg-light bg-white shadow-[0_4px_0_0_#e5e5e5]'
-                    }`}
+                      }`}
                     style={{
                       pointerEvents: isChecked ? 'none' : 'auto',
                     }}
@@ -818,7 +850,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
           <div className="flex flex-col items-center space-y-6 animate-fade-in-up w-full">
             {/* Flashcard container (Same as INTRODUCTION but tailored for Speaking) */}
             <div className="w-full max-w-sm bg-white border-2 border-border-main rounded-[2.5rem] shadow-[0_8px_0_0_#e5e5e5] p-6 flex flex-col items-center space-y-6 hover:translate-y-[-2px] hover:shadow-[0_10px_0_0_#e5e5e5] transition-all duration-150 relative overflow-hidden group">
-              
+
               {/* Image Frame */}
               {currentItem.imageUrl ? (
                 <div className="w-full h-48 bg-bg-light border-2 border-border-main/50 rounded-3xl overflow-hidden relative flex items-center justify-center">
@@ -839,19 +871,34 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
 
               {/* Text & Audio Controls */}
               <div className="w-full text-center space-y-4">
-                <div className="flex items-center justify-center gap-4">
-                  <h3 className="text-4xl font-display font-extrabold text-text-main tracking-wide">
-                    {currentItem.contentText}
-                  </h3>
-                  
+                <div className="flex items-center justify-center gap-4 flex-wrap">
+                  {speakingResult ? (
+                    <div className="flex flex-wrap items-center justify-center gap-2 py-1">
+                      {speakingResult.map((res, idx) => (
+                        <span
+                          key={idx}
+                          className={`text-3xl font-display font-extrabold px-3 py-1.5 rounded-2xl border-2 transition-all ${res.status === 'correct'
+                              ? 'bg-emerald-50 text-emerald-600 border-emerald-300 shadow-sm'
+                              : 'bg-rose-50 text-rose-600 border-rose-400 font-extrabold shadow-sm animate-pulse'
+                            }`}
+                        >
+                          {res.word}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <h3 className="text-4xl font-display font-extrabold text-text-main tracking-wide">
+                      {currentItem.contentText}
+                    </h3>
+                  )}
+
                   {/* Speaker Button */}
                   <button
                     onClick={() => playSound(1.0)}
-                    className={`btn-3d w-14 h-14 rounded-full flex items-center justify-center transition-all cursor-pointer ${
-                      isPlayingAudio
+                    className={`btn-3d w-14 h-14 rounded-full flex items-center justify-center transition-all cursor-pointer ${isPlayingAudio
                         ? 'btn-3d-pink scale-110 animate-pulse'
                         : 'btn-3d-blue hover:scale-105'
-                    }`}
+                      }`}
                   >
                     <Volume2 className={`w-7 h-7 text-white ${isPlayingAudio ? 'animate-bounce-soft' : ''}`} />
                   </button>
@@ -871,7 +918,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
             {/* Speaking voice recording controller */}
             <div className="w-full max-w-sm bg-white border-2 border-border-main rounded-[2rem] p-5 shadow-sm flex flex-col items-center gap-4">
               <span className="text-xs font-extrabold text-text-muted uppercase tracking-widest">LUYỆN PHÁT ÂM</span>
-              
+
               <div className="flex items-center gap-4 justify-center w-full">
                 {/* 1. Record Button */}
                 {!isRecording && !recordedAudioUrl && (
@@ -906,7 +953,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                       <Play className="w-4 h-4 text-white" />
                       NGHE LẠI
                     </button>
-                    
+
                     <button
                       onClick={startRecording}
                       disabled={isChecked}
@@ -951,21 +998,19 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                   <button
                     key={option + '-' + idx}
                     onClick={() => handleSelectOption(option)}
-                    className={`card-3d p-4 text-left font-sans font-bold text-sm tracking-wide transition-all border-2 select-none cursor-pointer flex items-center gap-4 ${
-                      isSelected
+                    className={`card-3d p-4 text-left font-sans font-bold text-sm tracking-wide transition-all border-2 select-none cursor-pointer flex items-center gap-4 ${isSelected
                         ? 'border-primary bg-primary-soft text-primary ring-2 ring-primary/10 shadow-[0_4px_0_0_#d93d74] scale-[1.01]'
                         : 'border-border-main hover:bg-bg-light text-text-main bg-white shadow-[0_4px_0_0_#e5e5e5]'
-                    }`}
+                      }`}
                     style={{
                       pointerEvents: isChecked ? 'none' : 'auto',
                     }}
                   >
                     <span
-                      className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center font-display text-xs ${
-                        isSelected
+                      className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center font-display text-xs ${isSelected
                           ? 'border-primary bg-primary text-white font-extrabold'
                           : 'border-border-main text-text-muted bg-white'
-                      }`}
+                        }`}
                     >
                       {optionLabel}
                     </span>
@@ -1016,11 +1061,10 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                       key={index}
                       onClick={() => filledWord && handleRemoveWordFromBlank(token.blankIndex!, filledWord)}
                       disabled={isChecked}
-                      className={`inline-flex items-center justify-center min-w-24 h-10 px-3 border-2 rounded-xl font-sans font-extrabold text-sm transition-all ${
-                        filledWord
+                      className={`inline-flex items-center justify-center min-w-24 h-10 px-3 border-2 rounded-xl font-sans font-extrabold text-sm transition-all ${filledWord
                           ? 'bg-white border-primary text-primary shadow-[0_2px_0_0_#d93d74] hover:bg-red-50 hover:border-red-300 cursor-pointer active:translate-y-[1px]'
                           : 'bg-white/50 border-dashed border-border-main text-transparent pointer-events-none'
-                      }`}
+                        }`}
                     >
                       {filledWord || '_______'}
                     </button>
@@ -1073,9 +1117,8 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
               <div className="flex justify-center">
                 <button
                   onClick={() => playSound(1.0)}
-                  className={`btn-3d w-14 h-14 rounded-full flex items-center justify-center cursor-pointer ${
-                    isPlayingAudio ? 'btn-3d-pink scale-110 animate-pulse' : 'btn-3d-blue'
-                  }`}
+                  className={`btn-3d w-14 h-14 rounded-full flex items-center justify-center cursor-pointer ${isPlayingAudio ? 'btn-3d-pink scale-110 animate-pulse' : 'btn-3d-blue'
+                    }`}
                 >
                   <Volume2 className="w-6 h-6 text-white" />
                 </button>
@@ -1093,21 +1136,19 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                     <button
                       key={option}
                       onClick={() => handleSelectOption(option)}
-                      className={`card-3d p-4 text-left font-sans font-bold text-sm tracking-wide transition-all border-2 select-none cursor-pointer flex items-center gap-4 ${
-                        isSelected
+                      className={`card-3d p-4 text-left font-sans font-bold text-sm tracking-wide transition-all border-2 select-none cursor-pointer flex items-center gap-4 ${isSelected
                           ? 'border-primary bg-primary-soft text-primary ring-2 ring-primary/10'
                           : 'border-border-main hover:bg-bg-light text-text-main'
-                      }`}
+                        }`}
                       style={{
                         pointerEvents: isChecked ? 'none' : 'auto',
                       }}
                     >
                       <span
-                        className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center font-display text-xs ${
-                          isSelected
+                        className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center font-display text-xs ${isSelected
                             ? 'border-primary bg-primary text-white font-extrabold'
                             : 'border-border-main text-text-muted bg-white'
-                        }`}
+                          }`}
                       >
                         {optionLabel}
                       </span>
@@ -1123,13 +1164,12 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
 
       {/* Footer Check Answer / Continue Bar */}
       <footer
-        className={`w-full py-6 px-6 border-t-2 select-none transition-colors duration-200 ${
-          session.sessionType !== 'INTRODUCTION' && isChecked
+        className={`w-full py-6 px-6 border-t-2 select-none transition-colors duration-200 ${session.sessionType !== 'INTRODUCTION' && isChecked
             ? isCorrect
               ? 'bg-[#d7f5b3] border-[#a0da5a]' // Đúng: Banner màu xanh
               : 'bg-[#ffdfe0] border-[#ffb3b5]' // Sai: Banner màu đỏ
             : 'bg-white border-border-main'
-        }`}
+          }`}
       >
         <div className="max-w-2xl w-full mx-auto flex items-center justify-between gap-4">
           {session.sessionType === 'INTRODUCTION' ? (
@@ -1177,8 +1217,8 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                 </div>
               ) : (
                 <div className="text-left text-xs font-bold text-text-muted hidden sm:block">
-                  {isCheckButtonEnabled 
-                    ? 'Tuyệt vời! Bé hãy nhấn "Kiểm Tra" đáp án nhé.' 
+                  {isCheckButtonEnabled
+                    ? 'Tuyệt vời! Bé hãy nhấn "Kiểm Tra" đáp án nhé.'
                     : 'Bé hãy chọn một đáp án đúng nhất phía trên.'}
                 </div>
               )}
@@ -1187,12 +1227,37 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
               {!isChecked ? (
                 <Button3D
                   variant={isCheckButtonEnabled ? 'pink' : 'gray'}
-                  disabled={!isCheckButtonEnabled}
+                  disabled={!isCheckButtonEnabled || isAssessing}
                   onClick={handleCheckAnswer}
                   className="px-8 min-w-[150px]"
                 >
-                  KIỂM TRA
+                  {isAssessing ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>ĐANG KIỂM TRA...</span>
+                    </div>
+                  ) : (
+                    'KIỂM TRA'
+                  )}
                 </Button3D>
+              ) : activeLayout === 'SPEAKING' && !isCorrect ? (
+                <div className="flex items-center gap-3">
+                  <Button3D
+                    variant="gray"
+                    onClick={handleRetrySpeaking}
+                    className="px-6 min-w-[120px]"
+                  >
+                    <RotateCcw className="w-4 h-4 mr-1.5 inline" />
+                    LÀM LẠI
+                  </Button3D>
+                  <Button3D
+                    variant="pink"
+                    onClick={handleContinue}
+                    className="px-6 min-w-[120px]"
+                  >
+                    TIẾP TỤC
+                  </Button3D>
+                </div>
               ) : (
                 <Button3D
                   variant={isCorrect ? 'green' : 'pink'}
