@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLearningStore } from '../store/useLearningStore';
+import { SessionItemType } from '../types';
 import type { Session, SessionItem } from '../types';
 import { Mascot } from '../../../components/ui/Mascot';
 import { Button3D } from '../../../components/ui/Button3D';
@@ -63,7 +64,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       id: 2001,
       contentText: 'Dog',
       translation: 'Con chó',
-      itemType: 'INTRODUCTION',
+      itemType: SessionItemType.FLASHCARD,
       imageUrl: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&auto=format&fit=crop&q=80',
       audioUrl: 'https://dict.youdao.com/dictvoice?audio=dog&type=2',
     },
@@ -71,7 +72,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       id: 2002,
       contentText: 'Cat',
       translation: 'Con mèo',
-      itemType: 'INTRODUCTION',
+      itemType: SessionItemType.FLASHCARD,
       imageUrl: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600&auto=format&fit=crop&q=80',
       audioUrl: 'https://dict.youdao.com/dictvoice?audio=cat&type=2',
     },
@@ -79,7 +80,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       id: 2003,
       contentText: 'Elephant',
       translation: 'Con voi',
-      itemType: 'INTRODUCTION',
+      itemType: SessionItemType.FLASHCARD,
       imageUrl: 'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?w=600&auto=format&fit=crop&q=80',
       audioUrl: 'https://dict.youdao.com/dictvoice?audio=elephant&type=2',
     },
@@ -87,7 +88,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       id: 2004,
       contentText: 'Lion',
       translation: 'Sư tử',
-      itemType: 'INTRODUCTION',
+      itemType: SessionItemType.FLASHCARD,
       imageUrl: 'https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=600&auto=format&fit=crop&q=80',
       audioUrl: 'https://dict.youdao.com/dictvoice?audio=lion&type=2',
     },
@@ -95,7 +96,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       id: 2005,
       contentText: 'Monkey',
       translation: 'Con khỉ',
-      itemType: 'INTRODUCTION',
+      itemType: SessionItemType.FLASHCARD,
       imageUrl: 'https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=600&auto=format&fit=crop&q=80',
       audioUrl: 'https://dict.youdao.com/dictvoice?audio=monkey&type=2',
     },
@@ -816,7 +817,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
             </div>
 
             {/* Sound option for vocabulary / speaking */}
-            {(currentItem.itemType === 'VOCABULARY' || currentItem.itemType === 'LISTENING') && (
+            {(currentItem.itemType === SessionItemType.FLASHCARD || currentItem.itemType === SessionItemType.QUIZ) && (
               <div className="flex justify-center">
                 <button
                   onClick={() => playSound(1.0)}

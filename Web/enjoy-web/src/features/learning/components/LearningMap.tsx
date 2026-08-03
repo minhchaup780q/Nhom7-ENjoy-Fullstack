@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLearningStore } from '../store/useLearningStore';
-import { SessionStatus, SessionType } from '../types';
+import { SessionStatus, SessionType, SessionItemType } from '../types';
 import type { Session, Topic } from '../types';
 import { Button3D } from '../../../components/ui/Button3D';
 import { Mascot } from '../../../components/ui/Mascot';
@@ -26,6 +26,14 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
   } = useLearningStore();
 
   const [selectedNodeId, setSelectedNodeId] = useState<number | null>(null);
+
+  const getSessionKeywords = (session: Session): string => {
+    if (!session.itemMappings || session.itemMappings.length === 0) return 'Trống';
+    const keywords = session.itemMappings
+      .map(m => m.sessionItem?.keyword)
+      .filter((k): k is string => typeof k === 'string' && k.trim() !== '');
+    return keywords.length > 0 ? Array.from(new Set(keywords)).join(', ') : 'Trống';
+  };
   
   // Trạng thái màn hình: 'levels' (Trình độ) | 'topics' (Chủ đề - Giống Ảnh 1) | 'sessions' (Bản đồ bài học - Giống Ảnh 2)
   const [currentView, setCurrentView] = useState<'levels' | 'topics' | 'sessions'>(
@@ -158,11 +166,66 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
     { id: 10, title: 'Lời chào & Giới thiệu', description: 'Học cách chào hỏi và giới thiệu bản thân' },
   ];
   const mockSessions: Session[] = [
-    { id: 1001, partId: 100, title: 'Bài học 1: Chào buổi sáng', keyword: 'Hello, Morning', description: 'Làm quen với các câu chào hỏi buổi sáng đơn giản.', sessionType: SessionType.INTRODUCTION, status: SessionStatus.FINISH, orderIndex: 1 },
-    { id: 1002, partId: 100, title: 'Bài học 2: Giới thiệu tên', keyword: 'What is your name', description: 'Học cách hỏi và trả lời về tên của mình.', sessionType: SessionType.LISTENING, status: SessionStatus.UNLOCK, orderIndex: 2 },
-    { id: 1003, partId: 100, title: 'Bài học 3: Gặp gỡ bạn mới', keyword: 'Nice to meet you', description: 'Các câu nói thể hiện sự vui mừng khi gặp gỡ.', sessionType: SessionType.SPEAKING, status: SessionStatus.LOCK, orderIndex: 3 },
-    { id: 1004, partId: 100, title: 'Bài học 4: Nhận biết mặt chữ', keyword: 'Alphabet A-B-C', description: 'Học từ vựng và nhận diện ký tự cơ bản.', sessionType: SessionType.WORD_RECOGNITION, status: SessionStatus.LOCK, orderIndex: 4 },
-    { id: 1005, partId: 100, title: 'Bài học 5: Ôn tập tổng hợp', keyword: 'Review 1', description: 'Bài kiểm tra ôn tập cuối bài.', sessionType: SessionType.GAMIFIED_REVIEW, status: SessionStatus.LOCK, orderIndex: 5 },
+    { 
+      id: 1001, 
+      partId: 100, 
+      title: 'Bài học 1: Chào buổi sáng', 
+      description: 'Làm quen với các câu chào hỏi buổi sáng đơn giản.', 
+      sessionType: SessionType.INTRODUCTION, 
+      status: SessionStatus.FINISH, 
+      orderIndex: 1,
+      itemMappings: [
+        { sessionId: 1001, sessionItemId: 2001, orderIndex: 1, sessionItem: { id: 2001, contentText: 'Hello', keyword: 'Hello, Morning', itemType: SessionItemType.FLASHCARD } as any }
+      ]
+    },
+    { 
+      id: 1002, 
+      partId: 100, 
+      title: 'Bài học 2: Giới thiệu tên', 
+      description: 'Học cách hỏi và trả lời về tên của mình.', 
+      sessionType: SessionType.LISTENING, 
+      status: SessionStatus.UNLOCK, 
+      orderIndex: 2,
+      itemMappings: [
+        { sessionId: 1002, sessionItemId: 2002, orderIndex: 1, sessionItem: { id: 2002, contentText: 'What is your name', keyword: 'What is your name', itemType: SessionItemType.QUIZ } as any }
+      ]
+    },
+    { 
+      id: 1003, 
+      partId: 100, 
+      title: 'Bài học 3: Gặp gỡ bạn mới', 
+      description: 'Các câu nói thể hiện sự vui mừng khi gặp gỡ.', 
+      sessionType: SessionType.SPEAKING, 
+      status: SessionStatus.LOCK, 
+      orderIndex: 3,
+      itemMappings: [
+        { sessionId: 1003, sessionItemId: 2003, orderIndex: 1, sessionItem: { id: 2003, contentText: 'Nice to meet you', keyword: 'Nice to meet you', itemType: SessionItemType.QUIZ } as any }
+      ]
+    },
+    { 
+      id: 1004, 
+      partId: 100, 
+      title: 'Bài học 4: Nhận biết mặt chữ', 
+      description: 'Học từ vựng và nhận diện ký tự cơ bản.', 
+      sessionType: SessionType.WORD_RECOGNITION, 
+      status: SessionStatus.LOCK, 
+      orderIndex: 4,
+      itemMappings: [
+        { sessionId: 1004, sessionItemId: 2004, orderIndex: 1, sessionItem: { id: 2004, contentText: 'A B C', keyword: 'Alphabet A-B-C', itemType: SessionItemType.QUIZ } as any }
+      ]
+    },
+    { 
+      id: 1005, 
+      partId: 100, 
+      title: 'Bài học 5: Ôn tập tổng hợp', 
+      description: 'Bài kiểm tra ôn tập cuối bài.', 
+      sessionType: SessionType.GAMIFIED_REVIEW, 
+      status: SessionStatus.LOCK, 
+      orderIndex: 5,
+      itemMappings: [
+        { sessionId: 1005, sessionItemId: 2005, orderIndex: 1, sessionItem: { id: 2005, contentText: 'Review', keyword: 'Review 1', itemType: SessionItemType.QUIZ } as any }
+      ]
+    },
   ];
 
   const currentLevels = levels.length > 0 ? levels : mockLevels;
@@ -507,7 +570,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                             {session.title}
                           </h4>
                           <div className="bg-bg-light border border-border-main rounded-xl px-2 py-1 inline-block text-[10px] font-bold text-text-main/70 my-2">
-                            Từ khóa: {session.keyword}
+                            Từ khóa: {getSessionKeywords(session)}
                           </div>
                           <p className="text-[11px] font-semibold text-text-main/60 leading-relaxed mb-4">
                             {session.description}

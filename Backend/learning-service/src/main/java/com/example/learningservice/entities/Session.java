@@ -31,7 +31,6 @@ public class Session extends BaseEntity {
     private Long badgeId; // Service Gamification quản lý
 
     private String title;
-    private String keyword;
 
     @Column(columnDefinition = "TEXT")
     private String description;

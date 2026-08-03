@@ -173,7 +173,6 @@ export const useLearningStore = create<LearningState>((set, get) => ({
       if (currentSession) {
         await learningApi.updateSession(sessionId, {
           title: currentSession.title,
-          keyword: currentSession.keyword,
           description: currentSession.description,
           orderIndex: currentSession.orderIndex,
           sessionType: currentSession.sessionType,
@@ -188,7 +187,6 @@ export const useLearningStore = create<LearningState>((set, get) => ({
         if (nextSession.status === SessionStatus.LOCK) {
           await learningApi.updateSession(nextSession.id, {
             title: nextSession.title,
-            keyword: nextSession.keyword,
             description: nextSession.description,
             orderIndex: nextSession.orderIndex,
             sessionType: nextSession.sessionType,
