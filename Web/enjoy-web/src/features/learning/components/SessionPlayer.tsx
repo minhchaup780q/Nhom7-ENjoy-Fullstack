@@ -58,51 +58,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     selectSession(session);
   }, [session, selectSession]);
 
-  // Tạo danh sách câu hỏi mẫu phòng khi dữ liệu database rỗng (Offline Mode)
-  const mockItems: InteractiveItem[] = [
-    {
-      id: 2001,
-      contentText: 'Dog',
-      translation: 'Con chó',
-      itemType: SessionItemType.FLASHCARD,
-      imageUrl: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&auto=format&fit=crop&q=80',
-      audioUrl: 'https://dict.youdao.com/dictvoice?audio=dog&type=2',
-    },
-    {
-      id: 2002,
-      contentText: 'Cat',
-      translation: 'Con mèo',
-      itemType: SessionItemType.FLASHCARD,
-      imageUrl: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600&auto=format&fit=crop&q=80',
-      audioUrl: 'https://dict.youdao.com/dictvoice?audio=cat&type=2',
-    },
-    {
-      id: 2003,
-      contentText: 'Elephant',
-      translation: 'Con voi',
-      itemType: SessionItemType.FLASHCARD,
-      imageUrl: 'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?w=600&auto=format&fit=crop&q=80',
-      audioUrl: 'https://dict.youdao.com/dictvoice?audio=elephant&type=2',
-    },
-    {
-      id: 2004,
-      contentText: 'Lion',
-      translation: 'Sư tử',
-      itemType: SessionItemType.FLASHCARD,
-      imageUrl: 'https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=600&auto=format&fit=crop&q=80',
-      audioUrl: 'https://dict.youdao.com/dictvoice?audio=lion&type=2',
-    },
-    {
-      id: 2005,
-      contentText: 'Monkey',
-      translation: 'Con khỉ',
-      itemType: SessionItemType.FLASHCARD,
-      imageUrl: 'https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=600&auto=format&fit=crop&q=80',
-      audioUrl: 'https://dict.youdao.com/dictvoice?audio=monkey&type=2',
-    },
-  ];
-
-  const currentItems = sessionItems.length > 0 ? (sessionItems as InteractiveItem[]) : mockItems;
+  const currentItems = sessionItems as InteractiveItem[];
   const currentItem = currentItems[currentStepIndex];
   const progressPercent = currentItems.length > 0 
     ? ((currentStepIndex) / currentItems.length) * 100 
@@ -429,6 +385,15 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white min-h-svh">
         <Mascot expression="thinking" speechBubbleText="Đợi Enjoy chuẩn bị câu hỏi đoán hình một xíu nhé..." />
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white min-h-svh">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+        <span className="text-sm font-bold text-text-muted">Đang tải bài học...</span>
       </div>
     );
   }

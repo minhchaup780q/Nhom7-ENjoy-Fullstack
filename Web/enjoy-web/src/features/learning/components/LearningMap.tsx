@@ -23,6 +23,8 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
     selectLevel,
     selectTopic,
     selectSession,
+    loading,
+    error,
   } = useLearningStore();
 
   const [selectedNodeId, setSelectedNodeId] = useState<number | null>(null);
@@ -157,98 +159,13 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
     }
   };
 
-  // Dữ liệu giả lập mẫu khi Backend không có dữ liệu (Offline Mode)
-  const mockLevels = [
-    { id: 1, name: 'Nhập Môn Giao Tiếp', code: 'L1', orderIndex: 1 },
-    { id: 2, name: 'Trung Cấp Học Thuật', code: 'L2', orderIndex: 2 },
-  ];
-  const mockTopics = [
-    { id: 10, title: 'Lời chào & Giới thiệu', description: 'Học cách chào hỏi và giới thiệu bản thân' },
-  ];
-  const mockSessions: Session[] = [
-    { 
-      id: 1001, 
-      partId: 100, 
-      title: 'Bài học 1: Chào buổi sáng', 
-      description: 'Làm quen với các câu chào hỏi buổi sáng đơn giản.', 
-      sessionType: SessionType.INTRODUCTION, 
-      status: SessionStatus.FINISH, 
-      orderIndex: 1,
-      itemMappings: [
-        { sessionId: 1001, sessionItemId: 2001, orderIndex: 1, sessionItem: { id: 2001, contentText: 'Hello', keyword: 'Hello, Morning', itemType: SessionItemType.FLASHCARD } as any }
-      ]
-    },
-    { 
-      id: 1002, 
-      partId: 100, 
-      title: 'Bài học 2: Giới thiệu tên', 
-      description: 'Học cách hỏi và trả lời về tên của mình.', 
-      sessionType: SessionType.LISTENING, 
-      status: SessionStatus.UNLOCK, 
-      orderIndex: 2,
-      itemMappings: [
-        { sessionId: 1002, sessionItemId: 2002, orderIndex: 1, sessionItem: { id: 2002, contentText: 'What is your name', keyword: 'What is your name', itemType: SessionItemType.QUIZ } as any }
-      ]
-    },
-    { 
-      id: 1003, 
-      partId: 100, 
-      title: 'Bài học 3: Gặp gỡ bạn mới', 
-      description: 'Các câu nói thể hiện sự vui mừng khi gặp gỡ.', 
-      sessionType: SessionType.SPEAKING, 
-      status: SessionStatus.LOCK, 
-      orderIndex: 3,
-      itemMappings: [
-        { sessionId: 1003, sessionItemId: 2003, orderIndex: 1, sessionItem: { id: 2003, contentText: 'Nice to meet you', keyword: 'Nice to meet you', itemType: SessionItemType.QUIZ } as any }
-      ]
-    },
-    { 
-      id: 1004, 
-      partId: 100, 
-      title: 'Bài học 4: Nhận biết mặt chữ', 
-      description: 'Học từ vựng và nhận diện ký tự cơ bản.', 
-      sessionType: SessionType.WORD_RECOGNITION, 
-      status: SessionStatus.LOCK, 
-      orderIndex: 4,
-      itemMappings: [
-        { sessionId: 1004, sessionItemId: 2004, orderIndex: 1, sessionItem: { id: 2004, contentText: 'A B C', keyword: 'Alphabet A-B-C', itemType: SessionItemType.QUIZ } as any }
-      ]
-    },
-    { 
-      id: 1005, 
-      partId: 100, 
-      title: 'Bài học 5: Ôn tập tổng hợp', 
-      description: 'Bài kiểm tra ôn tập cuối bài.', 
-      sessionType: SessionType.GAMIFIED_REVIEW, 
-      status: SessionStatus.LOCK, 
-      orderIndex: 5,
-      itemMappings: [
-        { sessionId: 1005, sessionItemId: 2005, orderIndex: 1, sessionItem: { id: 2005, contentText: 'Review', keyword: 'Review 1', itemType: SessionItemType.QUIZ } as any }
-      ]
-    },
-  ];
-
-  const currentLevels = levels.length > 0 ? levels : mockLevels;
-  const currentLevel = activeLevel || currentLevels[0];
-  const currentTopic = activeTopic || mockTopics[0];
-
-  const currentParts = parts.length > 0 ? parts : ([
-    { id: 100, title: 'Lời chào cơ bản' },
-    { id: 101, title: 'Hỏi han sức khỏe' },
-    { id: 102, title: 'Nói lời tạm biệt' }
-  ] as any[]);
+  const currentLevels = levels;
+  const currentLevel = activeLevel;
+  const currentTopic = activeTopic;
+  const currentParts = parts;
 
   const getSessionsForPart = (partId: number): Session[] => {
-    if (parts.length > 0 && sessionsByPart[partId]) {
-      return sessionsByPart[partId];
-    }
-    if (partId === 100) {
-      return mockSessions;
-    }
-    if (partId === 101) {
-      return mockSessions.map(s => ({ ...s, id: s.id + 10, status: SessionStatus.LOCK }));
-    }
-    return [];
+    return sessionsByPart[partId] || [];
   };
 
   // Tính toán tiến trình hoàn thành của một Chủ đề
@@ -259,8 +176,6 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
       const finishedCount = topicSessions.filter(s => s.status === SessionStatus.FINISH).length;
       return Math.round((finishedCount / topicSessions.length) * 100);
     }
-    // Mock mặc định cho chủ đề đầu tiên để hiển thị đẹp
-    if (topicId === 10 || topicId === topics[0]?.id) return 40;
     return 0;
   };
 
@@ -306,6 +221,37 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
 
   // Tìm bài học đang học hiện tại (UNLOCK) để hiển thị thông tin động trên Sticky Header
   const activeSession = allSessionsInTopic.find(s => s.status === SessionStatus.UNLOCK) || allSessionsInTopic[0];
+
+  if (loading && levels.length === 0) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-12 space-y-4">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <span className="text-sm font-bold text-text-muted">Đang tải dữ liệu trình độ...</span>
+      </div>
+    );
+  }
+
+  if (error && levels.length === 0) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-12 space-y-4 text-center">
+        <span className="text-sm font-bold text-red-500">Đã xảy ra lỗi: {error}</span>
+        <button 
+          onClick={() => fetchLevels()}
+          className="px-4 py-2 bg-primary text-white font-bold rounded-xl shadow-md hover:bg-primary-dark transition-all cursor-pointer"
+        >
+          Thử lại
+        </button>
+      </div>
+    );
+  }
+
+  if (levels.length === 0 && !loading) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-12 space-y-4 text-center">
+        <span className="text-sm font-bold text-text-muted">Không tìm thấy trình độ học tập nào. Vui lòng kết nối database và chạy script khởi tạo.</span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 w-full mx-auto py-6 px-4 select-none pb-24">

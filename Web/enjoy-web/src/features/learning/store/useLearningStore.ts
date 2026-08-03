@@ -160,10 +160,8 @@ export const useLearningStore = create<LearningState>((set, get) => ({
     
     // Thu thập toàn bộ sessions của topic hiện tại để xử lý tiến trình
     const allSessions: Session[] = parts.flatMap(part => sessionsByPart[part.id] || []);
-    const isMock = allSessions.length === 0 || !activeTopic;
-    
-    if (isMock) {
-      console.log("Đang chạy chế độ mock/offline progress");
+    if (!activeTopic || allSessions.length === 0) {
+      console.warn("Không tìm thấy chủ đề hoặc phiên học hoạt động");
       return;
     }
 
