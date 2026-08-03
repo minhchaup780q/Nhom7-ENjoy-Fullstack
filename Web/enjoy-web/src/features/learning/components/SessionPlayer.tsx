@@ -33,6 +33,16 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isChecked, setIsChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
+  
+  // Trạng thái cho Vòng 4 (GAMIFIED_REVIEW)
+  const [quizOptions, setQuizOptions] = useState<string[]>([]);
+  const [shuffledWords, setShuffledWords] = useState<{ id: number; text: string; selected: boolean }[]>([]);
+  const [selectedWords, setSelectedWords] = useState<{ id: number; text: string }[]>([]);
+  const [blankAnswers, setBlankAnswers] = useState<Record<number, string>>({});
+  
+  // Trạng thái layout ngẫu nhiên cho Vòng 5 (GAMIFIED_REVIEW)
+  const [itemLayouts, setItemLayouts] = useState<Record<number, 'LISTENING' | 'SPEAKING' | 'QUIZ' | 'FILL_IN_BLANK'>>({});
+
   const [hearts, setHearts] = useState(5);
   const [sessionFinished, setSessionFinished] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
@@ -40,10 +50,76 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [listeningOptions, setListeningOptions] = useState<string[]>([]);
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
-  const [textOptions, setTextOptions] = useState<string[]>([]);
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
+
+  const [playItems, setPlayItems] = useState<InteractiveItem[]>([]);
+
+  // Cập nhật và xáo trộn các câu hỏi mỗi khi chơi Vòng 5 (GAMIFIED_REVIEW)
+  useEffect(() => {
+    if (!sessionItems) return;
+    let items = [...sessionItems] as InteractiveItem[];
+    if (session.sessionType === 'GAMIFIED_REVIEW') {
+      items.sort(() => 0.5 - Math.random());
+    }
+    setPlayItems(items);
+  }, [sessionItems, session.sessionType]);
+
+  const currentItems = playItems;
+  const currentItem = currentItems[currentStepIndex];
+  const progressPercent = currentItems.length > 0 
+    ? ((currentStepIndex) / currentItems.length) * 100 
+    : 0;
+
+  const getActiveLayout = (): 'INTRODUCTION' | 'LISTENING' | 'SPEAKING' | 'QUIZ' | 'FILL_IN_BLANK' | 'UNKNOWN' => {
+    if (!session || !currentItem) return 'UNKNOWN';
+    if (session.sessionType === 'INTRODUCTION') return 'INTRODUCTION';
+    if (session.sessionType === 'LISTENING') return 'LISTENING';
+    if (session.sessionType === 'SPEAKING') return 'SPEAKING';
+    if (session.sessionType === 'WORD_RECOGNITION') {
+      return currentItem.itemType === SessionItemType.QUIZ ? 'QUIZ' : 'FILL_IN_BLANK';
+    }
+    if (session.sessionType === 'GAMIFIED_REVIEW') {
+      return itemLayouts[currentItem.id] || 'UNKNOWN';
+    }
+    return 'UNKNOWN';
+  };
+
+  const activeLayout = getActiveLayout();
+
+  const parseSentence = (text: string) => {
+    const regex = /\[([^\]]+)\]/g;
+    const tokens: { type: 'text' | 'blank'; content: string; blankIndex?: number }[] = [];
+    let lastIndex = 0;
+    let blankIndex = 0;
+    let match;
+    
+    while ((match = regex.exec(text)) !== null) {
+      const matchIndex = match.index;
+      if (matchIndex > lastIndex) {
+        tokens.push({
+          type: 'text',
+          content: text.substring(lastIndex, matchIndex)
+        });
+      }
+      tokens.push({
+        type: 'blank',
+        content: match[1],
+        blankIndex: blankIndex++
+      });
+      lastIndex = regex.lastIndex;
+    }
+    
+    if (lastIndex < text.length) {
+      tokens.push({
+        type: 'text',
+        content: text.substring(lastIndex)
+      });
+    }
+    
+    return tokens;
+  };
 
   const getAssetUrl = (path?: string) => {
     if (!path) return '';
@@ -58,15 +134,92 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     selectSession(session);
   }, [session, selectSession]);
 
-  const currentItems = sessionItems as InteractiveItem[];
-  const currentItem = currentItems[currentStepIndex];
-  const progressPercent = currentItems.length > 0 
-    ? ((currentStepIndex) / currentItems.length) * 100 
-    : 0;
+  // Tạo layout ngẫu nhiên cho các câu hỏi trong Vòng 5 (GAMIFIED_REVIEW)
+  useEffect(() => {
+    if (!sessionItems || session.sessionType !== 'GAMIFIED_REVIEW') return;
+
+    const layouts: Record<number, 'LISTENING' | 'SPEAKING' | 'QUIZ' | 'FILL_IN_BLANK'> = {};
+    sessionItems.forEach((item) => {
+      if (item.itemType === SessionItemType.FILL_IN_BLANK) {
+        layouts[item.id] = 'FILL_IN_BLANK';
+      } else if (item.itemType === SessionItemType.QUIZ) {
+        layouts[item.id] = 'QUIZ';
+      } else {
+        // Đối với FLASHCARD, chọn ngẫu nhiên giữa LISTENING (Vòng 2) hoặc SPEAKING (Vòng 3)
+        layouts[item.id] = Math.random() < 0.5 ? 'LISTENING' : 'SPEAKING';
+      }
+    });
+    setItemLayouts(layouts);
+  }, [sessionItems, session.sessionType]);
+
+  // Tạo danh sách 4 lựa chọn cho Vòng 4/5 (QUIZ)
+  useEffect(() => {
+    const isQuizLayout = (session.sessionType === 'WORD_RECOGNITION' && currentItem?.itemType === SessionItemType.QUIZ) ||
+      (session.sessionType === 'GAMIFIED_REVIEW' && itemLayouts[currentItem?.id] === 'QUIZ');
+
+    if (!currentItem || !isQuizLayout) return;
+
+    const correctKeyword = currentItem.keyword || '';
+    
+    // Tìm các keyword của các items khác có cùng type QUIZ
+    const otherKeywords = currentItems
+      .filter(item => item.itemType === SessionItemType.QUIZ && item.keyword && item.keyword !== correctKeyword)
+      .map(item => item.keyword as string);
+
+    const uniqueOthers = Array.from(new Set(otherKeywords));
+    const backupKeywords = ['cow', 'pig', 'duck', 'horse', 'sheep', 'run', 'swim', 'eat', 'sleep', 'fly', 'red', 'blue', 'green', 'yellow', 'black'];
+    
+    const shuffledOthers = [...uniqueOthers].sort(() => 0.5 - Math.random());
+    const selectedOthers = shuffledOthers.slice(0, 3);
+    
+    while (selectedOthers.length < 3) {
+      const backup = backupKeywords[Math.floor(Math.random() * backupKeywords.length)];
+      if (backup !== correctKeyword && !selectedOthers.includes(backup)) {
+        selectedOthers.push(backup);
+      }
+    }
+
+    const finalChoices = [correctKeyword, ...selectedOthers].sort(() => 0.5 - Math.random());
+    setQuizOptions(finalChoices);
+    setSelectedOption(null);
+    setIsChecked(false);
+  }, [currentItem, currentItems, session.sessionType, itemLayouts]);
+
+  // Tạo danh sách các từ xáo trộn cho Vòng 4/5 (FILL_IN_BLANK)
+  useEffect(() => {
+    const isFillLayout = (session.sessionType === 'WORD_RECOGNITION' && currentItem?.itemType === SessionItemType.FILL_IN_BLANK) ||
+      (session.sessionType === 'GAMIFIED_REVIEW' && itemLayouts[currentItem?.id] === 'FILL_IN_BLANK');
+
+    if (!currentItem || !isFillLayout) return;
+
+    // Chỉ trích xuất các từ trong ngoặc vuông [word] làm đáp án
+    const regex = /\[([^\]]+)\]/g;
+    const matches: string[] = [];
+    let match;
+    while ((match = regex.exec(currentItem.contentText)) !== null) {
+      matches.push(match[1]);
+    }
+
+    const wordsWithId = matches.map((word, index) => ({
+      id: index,
+      text: word,
+      selected: false
+    }));
+
+    const shuffled = [...wordsWithId].sort(() => 0.5 - Math.random());
+    setShuffledWords(shuffled);
+    setBlankAnswers({});
+    setIsChecked(false);
+  }, [currentItem, session.sessionType, itemLayouts]);
+
+
 
   // Tạo danh sách 4 lựa chọn hình ảnh ngẫu nhiên cho Vòng 3 (LISTENING)
   useEffect(() => {
-    if (!currentItem || session.sessionType !== 'LISTENING') return;
+    const isListeningLayout = session.sessionType === 'LISTENING' || 
+      (session.sessionType === 'GAMIFIED_REVIEW' && itemLayouts[currentItem?.id] === 'LISTENING');
+
+    if (!currentItem || !isListeningLayout) return;
 
     const correctImage = currentItem.imageUrl || '';
     const otherImages = currentItems
@@ -97,35 +250,9 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     
     setSelectedOption(null);
     setIsChecked(false);
-  }, [currentItem, currentItems, session.sessionType]);
+  }, [currentItem, currentItems, session.sessionType, itemLayouts]);
 
-  // Tạo danh sách 4 lựa chọn chữ ngẫu nhiên cho Vòng 2 (WORD_RECOGNITION)
-  useEffect(() => {
-    if (!currentItem || session.sessionType !== 'WORD_RECOGNITION') return;
 
-    const correctText = currentItem.contentText || '';
-    const otherTexts = currentItems
-      .map(item => item.contentText || '')
-      .filter(txt => txt !== '' && txt !== correctText);
-
-    const uniqueOtherTexts = Array.from(new Set(otherTexts));
-    const shuffledOthers = [...uniqueOtherTexts].sort(() => 0.5 - Math.random());
-    const selectedOthers = shuffledOthers.slice(0, 3);
-
-    const backupTexts = ['Dog', 'Cat', 'Elephant', 'Lion', 'Monkey', 'Pig', 'Duck', 'Bird'];
-    while (selectedOthers.length < 3) {
-      const backupTxt = backupTexts[Math.floor(Math.random() * backupTexts.length)];
-      if (!selectedOthers.includes(backupTxt) && backupTxt !== correctText) {
-        selectedOthers.push(backupTxt);
-      }
-    }
-
-    const finalChoices = [correctText, ...selectedOthers].sort(() => 0.5 - Math.random());
-    setTextOptions(finalChoices);
-    
-    setSelectedOption(null);
-    setIsChecked(false);
-  }, [currentItem, currentItems, session.sessionType]);
 
   // Phát âm thanh tự động khi câu hỏi hoặc từ vựng thay đổi
   useEffect(() => {
@@ -256,18 +383,89 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     setSelectedOption(option);
   };
 
+  const handleAddWordToBlank = (word: { id: number; text: string }) => {
+    if (isChecked || !currentItem) return;
+
+    // Tìm ô trống đầu tiên chưa được điền
+    const tokens = parseSentence(currentItem.contentText);
+    const expectedBlanks = tokens.filter(t => t.type === 'blank');
+    
+    const firstEmptyBlank = expectedBlanks.find(blank => !blankAnswers[blank.blankIndex!]);
+    if (!firstEmptyBlank) return; // Đã điền đầy tất cả các ô trống rồi
+
+    const blankIndex = firstEmptyBlank.blankIndex!;
+    setBlankAnswers(prev => ({
+      ...prev,
+      [blankIndex]: word.text
+    }));
+
+    // Đánh dấu từ đã chọn
+    setShuffledWords(prev =>
+      prev.map(w => w.id === word.id ? { ...w, selected: true } : w)
+    );
+  };
+
+  const handleRemoveWordFromBlank = (blankIndex: number, text: string) => {
+    if (isChecked) return;
+
+    // Gỡ khỏi map điền từ
+    setBlankAnswers(prev => {
+      const copy = { ...prev };
+      delete copy[blankIndex];
+      return copy;
+    });
+
+    // Trả từ về trạng thái chưa được chọn
+    setShuffledWords(prev => {
+      // Tìm từ đầu tiên trùng text và đang selected = true để reset về false
+      let found = false;
+      return prev.map(w => {
+        if (!found && w.text === text && w.selected) {
+          found = true;
+          return { ...w, selected: false };
+        }
+        return w;
+      });
+    });
+  };
+
+  const isCheckButtonEnabled = (() => {
+    if (!currentItem) return false;
+    if (activeLayout === 'FILL_IN_BLANK') {
+      const tokens = parseSentence(currentItem.contentText);
+      const expectedCount = tokens.filter(t => t.type === 'blank').length;
+      const filledCount = Object.keys(blankAnswers).length;
+      return filledCount === expectedCount;
+    }
+    if (activeLayout === 'SPEAKING') {
+      return !!recordedAudioUrl;
+    }
+    return !!selectedOption;
+  })();
+
+  const getCorrectAnswerText = () => {
+    if (!currentItem) return '';
+    if (activeLayout === 'FILL_IN_BLANK') {
+      return currentItem.contentText.replace(/[\[\]]/g, '');
+    }
+    if (activeLayout === 'QUIZ') {
+      return currentItem.keyword || '';
+    }
+    return currentItem.correctAnswer || currentItem.translation || '';
+  };
+
   const handleCheckAnswer = () => {
     if (!currentItem) return;
 
-    // Trường hợp INTRODUCTION: Bấm là qua luôn không cần check đáp án đúng sai
-    if (session.sessionType === 'INTRODUCTION') {
+    // 1. INTRODUCTION: Bấm là qua luôn
+    if (activeLayout === 'INTRODUCTION') {
       setIsCorrect(true);
       setIsChecked(true);
       return;
     }
 
-    // Trường hợp LISTENING: So sánh ảnh được chọn với ảnh của từ hiện tại
-    if (session.sessionType === 'LISTENING') {
+    // 2. LISTENING: So sánh ảnh
+    if (activeLayout === 'LISTENING') {
       const correctImage = currentItem.imageUrl || '';
       const correct = selectedOption === correctImage;
       setIsCorrect(correct);
@@ -278,10 +476,16 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       return;
     }
 
-    // Trường hợp WORD_RECOGNITION: So sánh chữ được chọn với chữ của từ hiện tại
-    if (session.sessionType === 'WORD_RECOGNITION') {
-      const correctText = currentItem.contentText || '';
-      const correct = selectedOption === correctText;
+    // 3. SPEAKING: Ghi âm qua luôn
+    if (activeLayout === 'SPEAKING') {
+      setIsCorrect(true);
+      setIsChecked(true);
+      return;
+    }
+
+    // 4. QUIZ: So sánh từ khóa
+    if (activeLayout === 'QUIZ') {
+      const correct = selectedOption === currentItem.keyword;
       setIsCorrect(correct);
       setIsChecked(true);
       if (!correct) {
@@ -289,18 +493,32 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       }
       return;
     }
-    // Trường hợp SPEAKING: Chấp nhận phát âm thành công khi có bản thu âm
-    if (session.sessionType === 'SPEAKING') {
-      setIsCorrect(true);
+
+    // 5. FILL_IN_BLANK: So sánh câu xếp
+    if (activeLayout === 'FILL_IN_BLANK') {
+      const tokens = parseSentence(currentItem.contentText);
+      const expectedBlanks = tokens.filter(t => t.type === 'blank');
+      let correct = true;
+      expectedBlanks.forEach(blank => {
+        const userVal = blankAnswers[blank.blankIndex!]?.trim().toLowerCase();
+        const expectedVal = blank.content.trim().toLowerCase();
+        if (userVal !== expectedVal) {
+          correct = false;
+        }
+      });
+      setIsCorrect(correct);
       setIsChecked(true);
+      if (!correct) {
+        setHearts(prev => Math.max(0, prev - 1));
+      }
       return;
     }
+
+    // Fallback trắc nghiệm thông thường khác
     const answer = currentItem.correctAnswer || currentItem.translation || '';
     const correct = selectedOption === answer;
-    
     setIsCorrect(correct);
     setIsChecked(true);
-
     if (!correct) {
       setHearts(prev => Math.max(0, prev - 1));
     }
@@ -312,7 +530,10 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     setIsChecked(false);
     setListeningOptions([]);
     setRecordedAudioUrl(null);
-    setTextOptions([]);
+    setQuizOptions([]);
+    setShuffledWords([]);
+    setSelectedWords([]);
+    setBlankAnswers({});
 
     if (hearts <= 0) {
       // Hết tim -> Thua cuộc
@@ -381,15 +602,9 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     );
   }
 
-  if (session.sessionType === 'WORD_RECOGNITION' && textOptions.length === 0) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white min-h-svh">
-        <Mascot expression="thinking" speechBubbleText="Đợi Enjoy chuẩn bị câu hỏi đoán hình một xíu nhé..." />
-      </div>
-    );
-  }
 
-  if (loading) {
+
+  if (loading || (sessionItems && sessionItems.length > 0 && playItems.length === 0)) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white min-h-svh">
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
@@ -439,28 +654,34 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       <main className="max-w-2xl w-full mx-auto px-6 py-8 flex-1 flex flex-col justify-center space-y-8">
         
         {/* Render Title/Task */}
-        <div className="text-left space-y-1">
-          <span className="text-xs font-extrabold text-primary tracking-widest uppercase">
-            {session.sessionType === 'INTRODUCTION' 
-              ? 'Giới thiệu từ mới' 
-              : (session.sessionType === 'LISTENING' || session.sessionType === 'WORD_RECOGNITION')
-                ? 'Chọn hình tương ứng'
-                : session.sessionType === 'SPEAKING'
-                  ? 'Tập phát âm chuẩn'
-                  : 'Chọn đáp án chính xác'}
-          </span>
-          <h2 className="text-2xl font-display font-extrabold text-text-main m-0 leading-tight">
-            {session.sessionType === 'INTRODUCTION' 
-              ? 'Làm quen và phát âm từ mới nhé!' 
-              : (session.sessionType === 'LISTENING' || session.sessionType === 'WORD_RECOGNITION')
-                ? 'Nghe loa phát âm và chọn hình ảnh phù hợp nhé!'
-                : session.sessionType === 'SPEAKING'
-                  ? 'Nghe phát âm mẫu và ấn ghi âm để tập đọc nhé!'
-                  : 'Nghĩa của từ/câu sau đây là gì?'}
-          </h2>
-        </div>
+        {!(activeLayout === 'QUIZ') && (
+          <div className="text-left space-y-1">
+            <span className="text-xs font-extrabold text-primary tracking-widest uppercase">
+              {activeLayout === 'INTRODUCTION' 
+                ? 'Giới thiệu từ mới' 
+                : activeLayout === 'LISTENING'
+                  ? 'Chọn hình tương ứng'
+                  : activeLayout === 'SPEAKING'
+                    ? 'Tập phát âm chuẩn'
+                    : activeLayout === 'FILL_IN_BLANK'
+                      ? 'Sắp xếp câu đúng'
+                      : 'Chọn đáp án chính xác'}
+            </span>
+            <h2 className="text-2xl font-display font-extrabold text-text-main m-0 leading-tight">
+              {activeLayout === 'INTRODUCTION' 
+                ? 'Làm quen và phát âm từ mới nhé!' 
+                : activeLayout === 'LISTENING'
+                  ? 'Nghe loa phát âm và chọn hình ảnh phù hợp nhé!'
+                  : activeLayout === 'SPEAKING'
+                    ? 'Nghe phát âm mẫu và ấn ghi âm để tập đọc nhé!'
+                    : activeLayout === 'FILL_IN_BLANK'
+                      ? 'Nhấp các từ bên dưới theo đúng thứ tự để xếp câu nhé!'
+                      : 'Nghĩa của từ/câu sau đây là gì?'}
+            </h2>
+          </div>
+        )}
 
-        {session.sessionType === 'INTRODUCTION' ? (
+        {activeLayout === 'INTRODUCTION' ? (
           <div className="flex flex-col items-center space-y-6 animate-fade-in-up">
             {/* Flashcard container */}
             <div className="w-full max-w-sm bg-white border-2 border-border-main rounded-[2.5rem] shadow-[0_8px_0_0_#e5e5e5] p-6 flex flex-col items-center space-y-6 hover:translate-y-[-2px] hover:shadow-[0_10px_0_0_#e5e5e5] transition-all duration-150 relative overflow-hidden group">
@@ -524,61 +745,8 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
               />
             </div>
           </div>
-        ) : session.sessionType === 'WORD_RECOGNITION' ? (
-          <div className="flex flex-col items-center space-y-6 animate-fade-in-up w-full">
-            {/* Image Frame in Center */}
-            {currentItem.imageUrl ? (
-              <div className="w-full max-w-sm h-52 bg-white border-2 border-border-main rounded-[2.5rem] shadow-sm overflow-hidden relative flex items-center justify-center p-3">
-                <img
-                  src={getAssetUrl(currentItem.imageUrl)}
-                  alt="Câu hỏi đoán hình"
-                  className="w-full h-full object-cover rounded-[2rem]"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400";
-                  }}
-                />
-              </div>
-            ) : (
-              <div className="w-full max-w-sm h-52 bg-primary-soft/10 border-2 border-dashed border-primary/20 rounded-[2.5rem] flex items-center justify-center">
-                <span className="text-sm text-text-muted font-bold">Hình ảnh câu hỏi</span>
-              </div>
-            )}
 
-            {/* 4 Text Choices */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full pt-4">
-              {textOptions.map((option, idx) => {
-                const isSelected = selectedOption === option;
-                const optionLabel = String.fromCharCode(65 + idx); // A, B, C, D
-
-                return (
-                  <button
-                    key={option + '-' + idx}
-                    onClick={() => handleSelectOption(option)}
-                    className={`card-3d px-6 py-4 flex items-center gap-4 border-2 transition-all cursor-pointer rounded-2xl ${
-                      isSelected
-                        ? 'border-primary bg-primary-soft text-primary ring-2 ring-primary/10 shadow-[0_4px_0_0_#d93d74] scale-[1.02]'
-                        : 'border-border-main hover:bg-bg-light text-text-main bg-white shadow-[0_4px_0_0_#e5e5e5]'
-                    }`}
-                    style={{
-                      pointerEvents: isChecked ? 'none' : 'auto',
-                    }}
-                  >
-                    <span
-                      className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center font-display text-xs ${
-                        isSelected
-                          ? 'border-primary bg-primary text-white font-extrabold'
-                          : 'border-border-main text-text-muted bg-white'
-                      }`}
-                    >
-                      {optionLabel}
-                    </span>
-                    <span className="text-base font-display font-bold leading-none">{option}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ) : session.sessionType === 'LISTENING' ? (
+        ) : activeLayout === 'LISTENING' ? (
           <div className="flex flex-col items-center space-y-8 animate-fade-in-up w-full">
             {/* Speech Dialog Area with Mascot & 2 Sound speed buttons */}
             <div className="flex items-center justify-center py-4">
@@ -594,23 +762,23 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                   <Volume2 className="w-8 h-8 text-white" />
                 </button>
 
-                {/* Vertical separator */}
-                <div className="w-[2px] h-12 bg-border-main" />
-
-                {/* Slow turtle speed sound button */}
+                {/* Turtle slow speed sound button */}
                 <button
-                  onClick={() => playSound(0.5)}
-                  className="w-16 h-16 rounded-2xl border-2 border-border-main flex items-center justify-center cursor-pointer hover:bg-bg-light active:translate-y-[2px] transition-all bg-white"
-                  title="Nghe chậm"
+                  onClick={() => playSound(0.6)}
+                  className={`btn-3d w-12 h-12 rounded-xl flex items-center justify-center cursor-pointer transition-all bg-amber-100 hover:scale-105 hover:bg-amber-200 border-b-4 border-amber-300 shadow-[0_2px_0_0_#d97706]`}
                 >
-                  <span className="text-2xl mr-0.5">🐢</span>
-                  <Volume2 className="w-5 h-5 text-primary" />
+                  <span className="text-2xl select-none" title="Turtle Mode (Chậm)">🐢</span>
                 </button>
+
+                <div className="text-left">
+                  <h4 className="text-sm font-display font-extrabold text-text-main m-0 leading-tight">HÃY NGHE KỸ NHÉ!</h4>
+                  <p className="text-[10px] font-semibold text-text-muted mt-0.5 leading-none">Bấm nút để nghe giọng đọc mẫu.</p>
+                </div>
               </div>
             </div>
 
-            {/* Grid of 4 image choices */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full pt-4">
+            {/* 4 Image Choices Grid */}
+            <div className="grid grid-cols-2 gap-5 w-full max-w-lg pt-2">
               {listeningOptions.map((imageUrl, idx) => {
                 const isSelected = selectedOption === imageUrl;
                 const optionLabel = String.fromCharCode(65 + idx); // A, B, C, D
@@ -619,26 +787,19 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                   <button
                     key={imageUrl + '-' + idx}
                     onClick={() => handleSelectOption(imageUrl)}
-                    className={`card-3d p-3 text-center transition-all border-2 select-none cursor-pointer flex flex-col items-center space-y-3 rounded-3xl ${
+                    className={`card-3d p-2 border-2 transition-all flex flex-col items-center gap-2 cursor-pointer relative ${
                       isSelected
-                        ? 'border-primary bg-primary-soft text-primary ring-2 ring-primary/10 shadow-[0_4px_0_0_#d93d74] scale-105'
-                        : 'border-border-main hover:bg-bg-light text-text-main bg-white shadow-[0_4px_0_0_#e5e5e5]'
+                        ? 'border-primary bg-primary-soft ring-2 ring-primary/10 shadow-[0_4px_0_0_#d93d74] scale-[1.03]'
+                        : 'border-border-main hover:bg-bg-light bg-white shadow-[0_4px_0_0_#e5e5e5]'
                     }`}
                     style={{
                       pointerEvents: isChecked ? 'none' : 'auto',
                     }}
                   >
-                    <span
-                      className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center font-display text-xs ${
-                        isSelected
-                          ? 'border-primary bg-primary text-white font-extrabold'
-                          : 'border-border-main text-text-muted bg-white'
-                      }`}
-                    >
+                    <span className="absolute top-2 left-2 z-10 w-5 h-5 rounded-md border flex items-center justify-center font-display text-[10px] font-extrabold bg-white border-border-main text-text-muted">
                       {optionLabel}
                     </span>
-
-                    <div className="w-full h-32 bg-bg-light border border-border-main/30 rounded-2xl overflow-hidden relative flex items-center justify-center">
+                    <div className="w-full aspect-video sm:h-32 rounded-xl overflow-hidden bg-bg-light relative">
                       <img
                         src={getAssetUrl(imageUrl)}
                         alt={`Lựa chọn ${optionLabel}`}
@@ -653,7 +814,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
               })}
             </div>
           </div>
-        ) : session.sessionType === 'SPEAKING' ? (
+        ) : activeLayout === 'SPEAKING' ? (
           <div className="flex flex-col items-center space-y-6 animate-fade-in-up w-full">
             {/* Flashcard container (Same as INTRODUCTION but tailored for Speaking) */}
             <div className="w-full max-w-sm bg-white border-2 border-border-main rounded-[2.5rem] shadow-[0_8px_0_0_#e5e5e5] p-6 flex flex-col items-center space-y-6 hover:translate-y-[-2px] hover:shadow-[0_10px_0_0_#e5e5e5] transition-all duration-150 relative overflow-hidden group">
@@ -768,8 +929,134 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
               )}
             </div>
           </div>
+        ) : activeLayout === 'QUIZ' ? (
+          <div className="flex flex-col items-center space-y-6 w-full animate-fade-in-up">
+            {/* Question speech bubble with Mascot */}
+            <div className="flex items-center justify-center py-4">
+              <Mascot
+                expression={isChecked ? (isCorrect ? 'happy' : 'sad') : 'thinking'}
+                speechBubbleText={currentItem.contentText}
+                bubblePosition="right"
+                size={140}
+              />
+            </div>
+
+            {/* QUIZ Choices (Keywords) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full pt-4">
+              {quizOptions.map((option, idx) => {
+                const isSelected = selectedOption === option;
+                const optionLabel = String.fromCharCode(65 + idx); // A, B, C, D
+
+                return (
+                  <button
+                    key={option + '-' + idx}
+                    onClick={() => handleSelectOption(option)}
+                    className={`card-3d p-4 text-left font-sans font-bold text-sm tracking-wide transition-all border-2 select-none cursor-pointer flex items-center gap-4 ${
+                      isSelected
+                        ? 'border-primary bg-primary-soft text-primary ring-2 ring-primary/10 shadow-[0_4px_0_0_#d93d74] scale-[1.01]'
+                        : 'border-border-main hover:bg-bg-light text-text-main bg-white shadow-[0_4px_0_0_#e5e5e5]'
+                    }`}
+                    style={{
+                      pointerEvents: isChecked ? 'none' : 'auto',
+                    }}
+                  >
+                    <span
+                      className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center font-display text-xs ${
+                        isSelected
+                          ? 'border-primary bg-primary text-white font-extrabold'
+                          : 'border-border-main text-text-muted bg-white'
+                      }`}
+                    >
+                      {optionLabel}
+                    </span>
+                    <span className="text-sm font-display font-bold leading-none">{option}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : activeLayout === 'FILL_IN_BLANK' ? (
+          <div className="flex flex-col items-center space-y-6 w-full animate-fade-in-up">
+            {/* Instruction Mascot */}
+            <div className="flex items-center justify-center py-2">
+              <Mascot
+                expression={isChecked ? (isCorrect ? 'happy' : 'sad') : 'thinking'}
+                speechBubbleText="Hãy nhấp chọn các từ bên dưới để điền vào chỗ trống nhé!"
+                bubblePosition="right"
+                size={90}
+              />
+            </div>
+
+            {/* Translation hint */}
+            <div className="text-center bg-[#f0f9ff] border border-[#b3e5fc] px-5 py-3 rounded-2xl w-full">
+              <span className="text-[10px] font-extrabold text-[#0288d1] tracking-wider uppercase block mb-1">Dịch nghĩa:</span>
+              <p className="text-base font-display font-extrabold text-[#01579b]">{currentItem.translation}</p>
+            </div>
+
+            {/* Image if available */}
+            {currentItem.imageUrl && (
+              <div className="w-full max-w-[200px] h-28 bg-white border border-border-main/50 rounded-2xl overflow-hidden shadow-sm flex items-center justify-center">
+                <img src={getAssetUrl(currentItem.imageUrl)} alt="Gợi ý" className="w-full h-full object-cover" />
+              </div>
+            )}
+
+            {/* Câu hỏi có chứa các ô trống */}
+            <div className="w-full bg-[#f8fafc] border-2 border-border-main rounded-[2rem] p-6 shadow-sm flex flex-wrap items-center justify-center gap-y-3 gap-x-1.5 leading-relaxed text-center min-h-[5rem]">
+              {parseSentence(currentItem.contentText).map((token, index) => {
+                if (token.type === 'text') {
+                  return (
+                    <span key={index} className="text-lg font-sans font-extrabold text-text-main">
+                      {token.content}
+                    </span>
+                  );
+                } else {
+                  const filledWord = blankAnswers[token.blankIndex!];
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => filledWord && handleRemoveWordFromBlank(token.blankIndex!, filledWord)}
+                      disabled={isChecked}
+                      className={`inline-flex items-center justify-center min-w-24 h-10 px-3 border-2 rounded-xl font-sans font-extrabold text-sm transition-all ${
+                        filledWord
+                          ? 'bg-white border-primary text-primary shadow-[0_2px_0_0_#d93d74] hover:bg-red-50 hover:border-red-300 cursor-pointer active:translate-y-[1px]'
+                          : 'bg-white/50 border-dashed border-border-main text-transparent pointer-events-none'
+                      }`}
+                    >
+                      {filledWord || '_______'}
+                    </button>
+                  );
+                }
+              })}
+            </div>
+
+            {/* Danh sách các thẻ từ khóa để chọn */}
+            <div className="w-full space-y-2 pt-4">
+              <span className="text-[10px] font-extrabold text-text-muted tracking-widest uppercase block text-left">CHỌN TỪ ĐỂ ĐIỀN:</span>
+              <div className="flex flex-wrap gap-2.5 justify-center p-4 border border-border-main/40 rounded-2xl bg-white shadow-sm min-h-16">
+                {shuffledWords.map((word) => {
+                  if (word.selected) {
+                    return (
+                      <div key={word.id} className="px-4 py-2.5 rounded-xl bg-bg-light/30 border-2 border-dashed border-border-main/20 text-transparent pointer-events-none min-w-[4rem] text-center h-10 flex items-center justify-center text-sm font-bold">
+                        {word.text}
+                      </div>
+                    );
+                  }
+                  return (
+                    <button
+                      key={word.id}
+                      onClick={() => handleAddWordToBlank(word)}
+                      disabled={isChecked}
+                      className="px-4 py-2.5 bg-white border-2 border-border-main shadow-[0_4px_0_0_#e5e5e5] text-text-main hover:bg-bg-light cursor-pointer active:translate-y-[2px] rounded-xl font-sans font-bold text-sm min-w-[4rem] text-center"
+                    >
+                      {word.text}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         ) : (
-          /* Normal multiple-choice and question rendering */
+          /* Fallback multiple-choice */
           <>
             {/* Speech Dialog Area with Mascot */}
             <div className="flex items-center justify-center py-4">
@@ -882,7 +1169,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                       <div>
                         <h4 className="text-base font-display font-extrabold text-primary-dark m-0">Chưa chính xác rồi bé!</h4>
                         <p className="text-[11px] font-semibold text-primary/80">
-                          Đáp án đúng là: <strong>{currentItem.correctAnswer || currentItem.translation}</strong>
+                          Đáp án đúng là: <strong>{getCorrectAnswerText()}</strong>
                         </p>
                       </div>
                     </>
@@ -890,7 +1177,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                 </div>
               ) : (
                 <div className="text-left text-xs font-bold text-text-muted hidden sm:block">
-                  {selectedOption 
+                  {isCheckButtonEnabled 
                     ? 'Tuyệt vời! Bé hãy nhấn "Kiểm Tra" đáp án nhé.' 
                     : 'Bé hãy chọn một đáp án đúng nhất phía trên.'}
                 </div>
@@ -899,8 +1186,8 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
               {/* Action button */}
               {!isChecked ? (
                 <Button3D
-                  variant={selectedOption ? 'pink' : 'gray'}
-                  disabled={!selectedOption}
+                  variant={isCheckButtonEnabled ? 'pink' : 'gray'}
+                  disabled={!isCheckButtonEnabled}
                   onClick={handleCheckAnswer}
                   className="px-8 min-w-[150px]"
                 >
