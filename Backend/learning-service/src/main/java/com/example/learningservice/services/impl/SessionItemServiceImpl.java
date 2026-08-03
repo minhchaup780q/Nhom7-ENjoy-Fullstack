@@ -40,6 +40,7 @@ public class SessionItemServiceImpl implements SessionItemService {
         item.setImageUrl(sessionItemDetails.getImageUrl());
         item.setAudioUrl(sessionItemDetails.getAudioUrl());
         item.setItemType(sessionItemDetails.getItemType());
+        item.setKeyword(sessionItemDetails.getKeyword());
         item.setUpdateAt(LocalDateTime.now());
         return sessionItemRepository.save(item);
     }

@@ -14,6 +14,12 @@ export enum SessionStatus {
   FINISH = 'FINISH',
 }
 
+export enum SessionItemType {
+  FLASHCARD = 'FLASHCARD',
+  QUIZ = 'QUIZ',
+  FILL_IN_BLANK = 'FILL_IN_BLANK',
+}
+
 export interface Level extends BaseEntity {
   id: number;
   name: string;
@@ -49,7 +55,6 @@ export interface Session extends BaseEntity {
   sessionType: SessionType;
   badgeId?: number;
   title: string;
-  keyword: string;
   description: string;
   status: SessionStatus;
   createdBy?: number;
@@ -63,7 +68,8 @@ export interface SessionItem extends BaseEntity {
   translation?: string;
   imageUrl?: string;
   audioUrl?: string;
-  itemType: string; // e.g. 'VOCABULARY', 'SENTENCE', 'QUESTION'
+  itemType: SessionItemType;
+  keyword?: string;
   sessionMappings?: SessionItemMapping[];
 }
 
