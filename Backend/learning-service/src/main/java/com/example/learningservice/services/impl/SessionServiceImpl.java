@@ -48,7 +48,6 @@ public class SessionServiceImpl implements SessionService {
     public Session updateSession(Long id, Session sessionDetails) {
         Session session = getSessionById(id);
         session.setTitle(sessionDetails.getTitle());
-        session.setKeyword(sessionDetails.getKeyword());
         session.setDescription(sessionDetails.getDescription());
         session.setOrderIndex(sessionDetails.getOrderIndex());
         session.setSessionType(sessionDetails.getSessionType());
