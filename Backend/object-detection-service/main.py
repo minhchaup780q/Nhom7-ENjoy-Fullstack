@@ -3,10 +3,36 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers.detection_router import router as detection_router
 
+# --- 1. Thêm các thư viện cần thiết cho Eureka ---
+import py_eureka_client.eureka_client as eureka_client
+from contextlib import asynccontextmanager
+
+# --- 2. Cấu hình Eureka ---
+EUREKA_SERVER = "http://localhost:8761/eureka/"
+SERVICE_NAME = "detection-service" # Đặt tên này để Gateway nhận diện (ví dụ: /detection-service/...)
+SERVICE_PORT = 8002                # Cùng port với cấu hình uvicorn ở dưới cùng
+
+# --- 3. Tạo Lifespan để xử lý việc đăng ký / ngắt kết nối Eureka ---
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Chạy khi khởi động ứng dụng
+    print("Đang đăng ký vào Eureka Server...")
+    await eureka_client.init_async(
+        eureka_server=EUREKA_SERVER,
+        app_name=SERVICE_NAME,
+        instance_port=SERVICE_PORT
+    )
+    yield
+    # Chạy khi tắt ứng dụng
+    print("Đang ngắt kết nối khỏi Eureka Server...")
+    await eureka_client.stop_async()
+
+# --- 4. Gắn lifespan vào khởi tạo FastAPI ---
 app = FastAPI(
     title="ENGjoy Object Detection Microservice",
     description="Microservice AI nhận diện đồ dùng học tập sử dụng YOLOv8",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan # Thêm dòng này
 )
 
 # CORS configuration for Frontend to connect successfully

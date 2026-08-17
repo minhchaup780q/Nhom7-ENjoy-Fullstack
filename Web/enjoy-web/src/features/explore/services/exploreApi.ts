@@ -18,7 +18,7 @@ export const exploreApi = {
     formData.append('image', imageBlob, 'capture.jpg');
     
     const response = await axios.post<DetectionResponse>(
-      'http://localhost:8002/api/v1/object/detect',
+      'http://localhost:8888/api/v1/object/detect',
       formData,
       {
         headers: {
