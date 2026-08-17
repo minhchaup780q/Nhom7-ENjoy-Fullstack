@@ -5,6 +5,7 @@ export interface DetectionItem {
   confidence: number;
   class_id: number;
   class_name: string;
+  bbox?: [number, number, number, number]; // [x, y, w, h] normalized coordinates (0 to 1)
 }
 
 export interface DetectionResponse {
