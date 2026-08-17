@@ -33,6 +33,9 @@ class DetectionService:
         # We run prediction with standard 0.25 confidence threshold
         results = model(img, conf=0.25)
         
+        # Get image dimensions to compute normalized coordinates
+        img_h, img_w = img.shape[:2]
+        
         detections = []
         for result in results:
             boxes = result.boxes
@@ -42,10 +45,17 @@ class DetectionService:
                 cls_id = int(box.cls[0])
                 cls_name = model.names[cls_id]
                 
+                # Calculate normalized bounding box [x_min, y_min, width, height] (0 to 1)
+                x_norm = max(0.0, min(1.0, x1 / img_w))
+                y_norm = max(0.0, min(1.0, y1 / img_h))
+                w_norm = max(0.0, min(1.0, (x2 - x1) / img_w))
+                h_norm = max(0.0, min(1.0, (y2 - y1) / img_h))
+                
                 detections.append({
                     "box": [round(x1, 1), round(y1, 1), round(x2, 1), round(y2, 1)],
                     "confidence": round(conf, 4),
                     "class_id": cls_id,
-                    "class_name": cls_name
+                    "class_name": cls_name,
+                    "bbox": [round(x_norm, 4), round(y_norm, 4), round(w_norm, 4), round(h_norm, 4)]
                 })
         return detections

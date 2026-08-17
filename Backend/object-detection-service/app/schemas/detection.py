@@ -6,6 +6,7 @@ class DetectionItem(BaseModel):
     confidence: float  # Confidence score (0.0 to 1.0)
     class_id: int      # Predicted class ID
     class_name: str    # Predicted class name (English, matching YOLO classes)
+    bbox: List[float] = None  # [x, y, w, h] normalized coordinates (0 to 1)
 
 class DetectionResponse(BaseModel):
     detections: List[DetectionItem]
