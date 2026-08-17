@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, CameraOff, RefreshCw, CheckCircle, Search, HelpCircle, Volume2 } from 'lucide-react';
+import { ArrowLeft, CameraOff, RefreshCw, CheckCircle, Search, HelpCircle, Volume2, BoxSelect } from 'lucide-react';
 import { exploreApi } from '../services/exploreApi';
-import type { DetectionItem } from '../services/exploreApi';
+// Thêm bbox vào kiểu dữ liệu (nếu chưa có)
+export interface DetectionItem {
+  class_name: string;
+  confidence: number;
+  bbox?: [number, number, number, number]; // Giả sử format: [x, y, width, height] (tỷ lệ 0 - 1)
+}
 import { Mascot } from '../../../components/ui/Mascot';
 
 interface RealWorldExplorerProps {
@@ -36,11 +41,14 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
   const [isAutoScan, setIsAutoScan] = useState(true);
+  const [showBoundingBoxes, setShowBoundingBoxes] = useState(true); // State bật tắt ô vuông
+  
   const [detectionResult, setDetectionResult] = useState<DetectionItem | null>(null);
+  const [currentDetections, setCurrentDetections] = useState<DetectionItem[]>([]); // Lưu list để vẽ box
+  
   const [foundItems, setFoundItems] = useState<string[]>([]);
   const [cameraError, setCameraError] = useState<string | null>(null);
 
-  // Auto-start camera when mounting
   useEffect(() => {
     startCamera();
     return () => {
@@ -48,7 +56,6 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
     };
   }, []);
 
-  // Auto-scan polling loop
   useEffect(() => {
     let intervalId: any = null;
     if (isCameraActive && isAutoScan) {
@@ -56,7 +63,7 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
         if (!isDetecting) {
           captureAndDetect();
         }
-      }, 1500);
+      }, 1500); // Có thể giảm xuống 500-1000ms nếu muốn bắt mượt hơn
     }
     return () => {
       if (intervalId) clearInterval(intervalId);
@@ -74,12 +81,9 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
         }
       });
       setIsCameraActive(true);
-      // Wait for React to mount/render the video ref if not already available,
-      // but keeping it always mounted ensures this is immediately populated.
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       } else {
-        // Fallback retry to bind stream
         setTimeout(() => {
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
@@ -111,20 +115,14 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
       const video = videoRef.current;
       const canvas = document.createElement('canvas');
       
-      // We crop a square from the top-right corner of the video frame.
-      // Set crop size dynamically (e.g. 35% of video resolution, capped at 300px)
-      const cropSize = Math.min(video.videoWidth * 0.35, 300);
-      canvas.width = cropSize;
-      canvas.height = cropSize;
+      // Chụp toàn bộ khung hình thay vì crop để có thể lấy tọa độ bounding box chính xác
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
 
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error("Could not get canvas 2D context");
-
-      // Coordinates mapping to the visual top-right region of the video stream
-      const sx = video.videoWidth - cropSize - (video.videoWidth * 0.05); // 5% right margin
-      const sy = video.videoHeight * 0.05; // 5% top margin
       
-      ctx.drawImage(video, sx, sy, cropSize, cropSize, 0, 0, cropSize, cropSize);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
       canvas.toBlob(async (blob) => {
         if (!blob) {
@@ -135,20 +133,21 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
         try {
           const res = await exploreApi.detectObject(blob);
           if (res.detections && res.detections.length > 0) {
-            // Pick the detection with the highest confidence score
+            
+            // Cập nhật toàn bộ các vật thể nhận được để vẽ ô vuông
+            setCurrentDetections(res.detections);
+
             const bestDetection = res.detections.reduce((best, cur) => 
               cur.confidence > best.confidence ? cur : best
             , res.detections[0]);
 
             setDetectionResult(bestDetection);
 
-            // If it is in our dictionary and confidence is above threshold
             if (OBJECT_LABELS[bestDetection.class_name] && bestDetection.confidence > 0.45) {
               const itemKey = bestDetection.class_name;
               
               setFoundItems(prev => {
                 if (!prev.includes(itemKey)) {
-                  // Speak pronunciation in English
                   speakWord(itemKey);
                   return [...prev, itemKey];
                 }
@@ -157,6 +156,7 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
             }
           } else {
             setDetectionResult(null);
+            setCurrentDetections([]);
           }
         } catch (err) {
           console.error("Object detection request error:", err);
@@ -173,17 +173,16 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
 
   const speakWord = (word: string) => {
     if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel(); // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(word);
       utterance.lang = 'en-US';
-      utterance.rate = 0.85; // slightly slower for better clarity
+      utterance.rate = 0.85;
       window.speechSynthesis.speak(utterance);
     }
   };
 
   return (
     <div className="flex-1 p-6 flex flex-col max-w-6xl mx-auto w-full select-none gap-6">
-      {/* Header Bar */}
       <div className="flex items-center justify-between pb-2 border-b-2 border-border-main">
         <button 
           onClick={onBack}
@@ -202,9 +201,8 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
         </div>
       </div>
 
-      {/* Main Grid View */}
       <div className="grid lg:grid-cols-12 gap-6 items-start">
-        {/* Left Side: Target Items List */}
+        {/* Left Side: Target Items List (Giữ nguyên của bạn) */}
         <div className="lg:col-span-5 bg-white border-4 border-border-main rounded-3xl p-5 flex flex-col h-[calc(100vh-180px)] overflow-hidden">
           <div className="mb-4">
             <h3 className="text-base font-display font-extrabold text-[#2b2b2b] flex items-center justify-between">
@@ -214,11 +212,10 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
               </span>
             </h3>
             <p className="text-xs font-semibold text-text-muted mt-1 leading-relaxed">
-              Bé hãy tìm và đưa các đồ vật này vào khung vuông camera góc trên bên phải nhé!
+              Bé hãy cầm các đồ vật này và đưa vào khung hình camera nhé!
             </p>
           </div>
 
-          {/* List Scroll Area */}
           <div className="flex-1 overflow-y-auto pr-1 space-y-2 max-h-full">
             {Object.entries(OBJECT_LABELS).map(([key, label]) => {
               const isFound = foundItems.includes(key);
@@ -262,7 +259,6 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
 
         {/* Right Side: Camera View Area */}
         <div className="lg:col-span-7 space-y-6">
-          {/* Camera Frame */}
           <div className="relative bg-black rounded-3xl overflow-hidden border-4 border-border-main aspect-[4/3] flex items-center justify-center">
             <video 
               ref={videoRef}
@@ -272,6 +268,34 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
               className={`w-full h-full object-cover ${isCameraActive ? 'block' : 'hidden'}`}
             />
             
+            {/* Lớp phủ Bounding Boxes (Các ô vuông) */}
+            {isCameraActive && showBoundingBoxes && currentDetections.map((det, idx) => {
+              // Giả sử API trả về bbox dưới dạng [x, y, w, h] (tỷ lệ 0-1)
+              // Chỉnh sửa theo format API thực tế của bạn tại mảng này
+              const [x, y, w, h] = det.bbox || [0, 0, 0, 0];
+              
+              if (w === 0 && h === 0) return null; // API không hỗ trợ box
+              
+              const left = `${x * 100}%`;
+              const top = `${y * 100}%`;
+              const width = `${w * 100}%`;
+              const height = `${h * 100}%`;
+              const labelText = OBJECT_LABELS[det.class_name] || det.class_name;
+
+              return (
+                <div 
+                  key={idx}
+                  className="absolute border-[3px] border-[#52c41a] z-10 transition-all duration-300 pointer-events-none rounded-sm shadow-[0_0_8px_rgba(82,196,26,0.5)]"
+                  style={{ left, top, width, height }}
+                >
+                  <span className="absolute -top-7 left-[-3px] bg-[#52c41a] text-white text-[11px] font-bold px-2 py-1 whitespace-nowrap rounded-t-md shadow-md flex items-center gap-1">
+                    <BoxSelect className="w-3 h-3" />
+                    {labelText} ({Math.round(det.confidence * 100)}%)
+                  </span>
+                </div>
+              )
+            })}
+
             {!isCameraActive && (
               <div className="text-center p-6 space-y-4 absolute inset-0 flex flex-col justify-center items-center bg-[#0d0d0d]">
                 <CameraOff className="w-16 h-16 text-[#5c5c5c] mx-auto animate-pulse" />
@@ -287,31 +311,8 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
               </div>
             )}
 
-            {/* Top-Right Bounding Crop Zone Overlay */}
             {isCameraActive && (
-              <div className="absolute top-[5%] right-[5%] w-[35%] aspect-square border-4 border-dashed border-primary rounded-3xl bg-black/25 flex flex-col items-center justify-center pointer-events-none group animate-pulse">
-                {/* Visual scanner bar animation */}
-                <div className="absolute left-0 right-0 h-1 bg-primary/70 shadow-[0_0_8px_rgba(var(--primary-color),0.8)] animate-[scan_2s_linear_infinite]" style={{
-                  animation: 'scan 2s linear infinite'
-                }} />
-                <span className="text-[10px] font-display font-extrabold text-white bg-primary px-2 py-0.5 rounded-full select-none text-center shadow">
-                  QUÉT Ở ĐÂY
-                </span>
-                
-                {/* Embedded styles for scan animation */}
-                <style>{`
-                  @keyframes scan {
-                    0% { top: 0%; }
-                    50% { top: 100%; }
-                    100% { top: 0%; }
-                  }
-                `}</style>
-              </div>
-            )}
-
-            {/* Floating Top Banner Status */}
-            {isCameraActive && (
-              <div className="absolute top-4 left-4 right-[45%] bg-black/60 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/10 text-white flex items-center gap-3 select-none">
+              <div className="absolute top-4 left-4 right-[45%] bg-black/60 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/10 text-white flex items-center gap-3 select-none z-20">
                 {isDetecting ? (
                   <div className="flex items-center gap-2 text-xs font-bold text-primary animate-pulse">
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -355,7 +356,21 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
                     className="w-5 h-5 accent-primary border-2 border-border-main rounded cursor-pointer"
                   />
                   <label htmlFor="autoScanCheck" className="text-xs font-display font-extrabold text-[#5c5c5c] cursor-pointer uppercase select-none">
-                    Quét tự động (1.5s)
+                    Tự động (1.5s)
+                  </label>
+                </div>
+                
+                {/* Toggle Bật/Tắt Ô Vuông */}
+                <div className="flex items-center gap-2 border-l-2 border-border-main pl-4">
+                  <input 
+                    type="checkbox" 
+                    id="showBBoxCheck"
+                    checked={showBoundingBoxes}
+                    onChange={(e) => setShowBoundingBoxes(e.target.checked)}
+                    className="w-5 h-5 accent-[#52c41a] border-2 border-border-main rounded cursor-pointer"
+                  />
+                  <label htmlFor="showBBoxCheck" className="text-xs font-display font-extrabold text-[#5c5c5c] cursor-pointer uppercase select-none">
+                    Hiển thị ô nhận diện
                   </label>
                 </div>
               </div>
@@ -372,13 +387,12 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
             </div>
           )}
 
-          {/* Interactive Mascot feedback */}
           <div className="bg-white border-4 border-border-main rounded-3xl p-4 flex items-center gap-4">
             <Mascot 
               expression={foundItems.length > 0 ? "happy" : "thinking"} 
               speechBubbleText={
                 foundItems.length === 0 
-                  ? "Bé ơi, hãy tìm một món đồ dùng học tập (ví dụ: bút chì hoặc thước kẻ) rồi đặt vào góc trên bên phải camera để Enjoy xem nhé!" 
+                  ? "Bé ơi, hãy tìm một món đồ dùng học tập (ví dụ: bút chì hoặc thước kẻ) và đưa lên trước camera để Enjoy xem nhé!" 
                   : foundItems.length === Object.keys(OBJECT_LABELS).length
                   ? "Tuyệt vời! Bé đã xuất sắc tìm thấy đầy đủ tất cả đồ dùng học tập rồi! Bé giỏi quá đi!"
                   : `Bé đã tìm được ${foundItems.length} đồ dùng học tập rồi! Cố gắng tìm thêm các món khác nhé!`
