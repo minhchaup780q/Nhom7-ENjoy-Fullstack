@@ -78,7 +78,7 @@ export const learningApi = {
     formData.append('audio', audioBlob, 'recording.webm');
     formData.append('target_sentence', targetSentence);
 
-    const response = await axios.post('http://localhost:8000/api/v1/speech/assess', formData);
+    const response = await axios.post('http://localhost:8888/api/v1/speech/assess', formData);
     return response.data;
   },
 };
