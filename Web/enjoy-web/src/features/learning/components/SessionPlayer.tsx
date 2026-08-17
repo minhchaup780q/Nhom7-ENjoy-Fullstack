@@ -38,7 +38,6 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   // Trạng thái cho Vòng 4 (GAMIFIED_REVIEW)
   const [quizOptions, setQuizOptions] = useState<string[]>([]);
   const [shuffledWords, setShuffledWords] = useState<{ id: number; text: string; selected: boolean }[]>([]);
-  const [selectedWords, setSelectedWords] = useState<{ id: number; text: string }[]>([]);
   const [blankAnswers, setBlankAnswers] = useState<Record<number, string>>({});
 
   // Trạng thái layout ngẫu nhiên cho Vòng 5 (GAMIFIED_REVIEW)
@@ -567,7 +566,6 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     setIsAssessing(false);
     setQuizOptions([]);
     setShuffledWords([]);
-    setSelectedWords([]);
     setBlankAnswers({});
 
     if (hearts <= 0) {

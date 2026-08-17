@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLearningStore } from '../store/useLearningStore';
-import { SessionStatus, SessionType, SessionItemType } from '../types';
+import { SessionStatus } from '../types';
 import type { Session, Topic } from '../types';
 import { Button3D } from '../../../components/ui/Button3D';
 import { Mascot } from '../../../components/ui/Mascot';

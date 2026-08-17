@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { apiClient } from '../../../services/apiClient';
 import type { Level, Topic, Part, Session, SessionItemMapping } from '../types';
 
@@ -77,16 +78,8 @@ export const learningApi = {
     formData.append('audio', audioBlob, 'recording.webm');
     formData.append('target_sentence', targetSentence);
 
-    const response = await fetch('http://localhost:8000/api/v1/speech/assess', {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (!response.ok) {
-      throw new Error(`Speech assessment error: ${response.statusText}`);
-    }
-
-    return response.json();
+    const response = await axios.post('http://localhost:8000/api/v1/speech/assess', formData);
+    return response.data;
   },
 };
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Compass, Trophy, Target, ShoppingBag, User } from 'lucide-react';
+import { BookOpen, Compass, Trophy, Target, ShoppingBag, User, Sparkles } from 'lucide-react';
 
 interface MenuItem {
   id: string;
@@ -15,6 +15,7 @@ interface SidebarLeftProps {
 export const SidebarLeft: React.FC<SidebarLeftProps> = ({ activeTab, setActiveTab }) => {
   const menuItems: MenuItem[] = [
     { id: 'learn', label: 'HỌC', icon: <BookOpen className="w-6 h-6 stroke-[2.5]" /> },
+    { id: 'explore', label: 'HỌC VÀ KHÁM PHÁ', icon: <Sparkles className="w-6 h-6 stroke-[2.5]" /> },
     { id: 'practice', label: 'LUYỆN TẬP', icon: <Compass className="w-6 h-6 stroke-[2.5]" /> },
     { id: 'leaderboard', label: 'BẢNG XẾP HẠNG', icon: <Trophy className="w-6 h-6 stroke-[2.5]" /> },
     { id: 'quests', label: 'NHIỆM VỤ', icon: <Target className="w-6 h-6 stroke-[2.5]" /> },
