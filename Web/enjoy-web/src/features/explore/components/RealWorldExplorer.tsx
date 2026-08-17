@@ -73,9 +73,18 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
           height: { ideal: 480 } 
         }
       });
+      setIsCameraActive(true);
+      // Wait for React to mount/render the video ref if not already available,
+      // but keeping it always mounted ensures this is immediately populated.
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        setIsCameraActive(true);
+      } else {
+        // Fallback retry to bind stream
+        setTimeout(() => {
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+        }, 100);
       }
     } catch (err) {
       console.error("Error opening camera:", err);
@@ -255,16 +264,16 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
         <div className="lg:col-span-7 space-y-6">
           {/* Camera Frame */}
           <div className="relative bg-black rounded-3xl overflow-hidden border-4 border-border-main aspect-[4/3] flex items-center justify-center">
-            {isCameraActive ? (
-              <video 
-                ref={videoRef}
-                autoPlay 
-                playsInline 
-                muted 
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="text-center p-6 space-y-4">
+            <video 
+              ref={videoRef}
+              autoPlay 
+              playsInline 
+              muted 
+              className={`w-full h-full object-cover ${isCameraActive ? 'block' : 'hidden'}`}
+            />
+            
+            {!isCameraActive && (
+              <div className="text-center p-6 space-y-4 absolute inset-0 flex flex-col justify-center items-center bg-[#0d0d0d]">
                 <CameraOff className="w-16 h-16 text-[#5c5c5c] mx-auto animate-pulse" />
                 <p className="text-sm font-semibold text-text-muted">
                   {cameraError || "Camera chưa được bật"}
