@@ -1,26 +1,23 @@
 import React from 'react';
+import { NavLink } from 'react-router-dom';
 import { BookOpen, Compass, Trophy, Target, ShoppingBag, User, Sparkles } from 'lucide-react';
 
 interface MenuItem {
   id: string;
   label: string;
   icon: React.ReactNode;
+  path: string;
 }
 
-interface SidebarLeftProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
-}
-
-export const SidebarLeft: React.FC<SidebarLeftProps> = ({ activeTab, setActiveTab }) => {
+export const SidebarLeft: React.FC = () => {
   const menuItems: MenuItem[] = [
-    { id: 'learn', label: 'HỌC', icon: <BookOpen className="w-6 h-6 stroke-[2.5]" /> },
-    { id: 'explore', label: 'HỌC VÀ KHÁM PHÁ', icon: <Sparkles className="w-6 h-6 stroke-[2.5]" /> },
-    { id: 'practice', label: 'LUYỆN TẬP', icon: <Compass className="w-6 h-6 stroke-[2.5]" /> },
-    { id: 'leaderboard', label: 'BẢNG XẾP HẠNG', icon: <Trophy className="w-6 h-6 stroke-[2.5]" /> },
-    { id: 'quests', label: 'NHIỆM VỤ', icon: <Target className="w-6 h-6 stroke-[2.5]" /> },
-    { id: 'shop', label: 'CỬA HÀNG', icon: <ShoppingBag className="w-6 h-6 stroke-[2.5]" /> },
-    { id: 'profile', label: 'HỒ SƠ', icon: <User className="w-6 h-6 stroke-[2.5]" /> },
+    { id: 'learn', label: 'HỌC', icon: <BookOpen className="w-6 h-6 stroke-[2.5]" />, path: '/learn' },
+    { id: 'explore', label: 'KHÁM PHÁ', icon: <Sparkles className="w-6 h-6 stroke-[2.5]" />, path: '/explore' },
+    { id: 'practice', label: 'LUYỆN TẬP', icon: <Compass className="w-6 h-6 stroke-[2.5]" />, path: '/practice' },
+    { id: 'leaderboard', label: 'BẢNG XẾP HẠNG', icon: <Trophy className="w-6 h-6 stroke-[2.5]" />, path: '/leaderboard' },
+    { id: 'quests', label: 'NHIỆM VỤ', icon: <Target className="w-6 h-6 stroke-[2.5]" />, path: '/quests' },
+    { id: 'shop', label: 'CỬA HÀNG', icon: <ShoppingBag className="w-6 h-6 stroke-[2.5]" />, path: '/shop' },
+    { id: 'profile', label: 'HỒ SƠ', icon: <User className="w-6 h-6 stroke-[2.5]" />, path: '/profile' },
   ];
 
   return (
@@ -36,20 +33,21 @@ export const SidebarLeft: React.FC<SidebarLeftProps> = ({ activeTab, setActiveTa
       {/* Menu items */}
       <nav className="flex-1 space-y-2">
         {menuItems.map((item) => {
-          const isActive = activeTab === item.id;
           return (
-            <button
+            <NavLink
               key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-display font-extrabold text-sm tracking-wider select-none transition-all duration-100 border-2 ${
-                isActive
-                  ? 'bg-primary-soft text-primary border-primary/20'
-                  : 'text-[#5c5c5c] border-transparent hover:bg-bg-light'
-              }`}
+              to={item.path}
+              className={({ isActive }) =>
+                `w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-display font-extrabold text-sm tracking-wider select-none transition-all duration-100 border-2 ${
+                  isActive
+                    ? 'bg-primary-soft text-primary border-primary/20'
+                    : 'text-[#5c5c5c] border-transparent hover:bg-bg-light'
+                }`
+              }
             >
               {item.icon}
               {item.label}
-            </button>
+            </NavLink>
           );
         })}
       </nav>
