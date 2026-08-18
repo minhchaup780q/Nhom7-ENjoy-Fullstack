@@ -36,6 +36,8 @@ const OBJECT_LABELS: Record<string, string> = {
   "staple": "Kim bấm"
 };
 
+const CONFIDENCE_THRESHOLD = 0.75; // Ngưỡng độ tin cậy nhận diện vật thể (75%)
+
 export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
@@ -143,7 +145,7 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
 
             setDetectionResult(bestDetection);
 
-            if (OBJECT_LABELS[bestDetection.class_name] && bestDetection.confidence > 0.45) {
+            if (OBJECT_LABELS[bestDetection.class_name] && bestDetection.confidence > CONFIDENCE_THRESHOLD) {
               const itemKey = bestDetection.class_name;
               
               setFoundItems(prev => {
@@ -318,7 +320,7 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                     ĐANG PHÂN TÍCH...
                   </div>
-                ) : detectionResult && OBJECT_LABELS[detectionResult.class_name] && detectionResult.confidence > 0.45 ? (
+                ) : detectionResult && OBJECT_LABELS[detectionResult.class_name] && detectionResult.confidence > CONFIDENCE_THRESHOLD ? (
                   <div className="space-y-0.5">
                     <div className="text-[10px] text-primary font-bold uppercase tracking-wider">Đã nhận diện:</div>
                     <div className="text-sm font-display font-extrabold text-white flex items-center gap-1.5">
