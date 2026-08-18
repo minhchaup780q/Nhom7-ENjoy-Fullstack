@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { apiClient } from '../../../services/apiClient';
 import type { Level, Topic, Part, Session, SessionItemMapping } from '../types';
 
@@ -65,4 +66,20 @@ export const learningApi = {
   updateSession: (id: number, session: Partial<Session>) => {
     return apiClient.put<Session>(`/api/sessions/${id}`, session);
   },
+
+  // Chấm điểm phát âm bằng Python Faster-Whisper Service
+  assessPronunciation: async (audioBlob: Blob, targetSentence: string): Promise<{
+    isAllCorrect: boolean;
+    accuracyScore: number;
+    recognizedText: string;
+    details: { word: string; status: 'correct' | 'wrong' }[];
+  }> => {
+    const formData = new FormData();
+    formData.append('audio', audioBlob, 'recording.webm');
+    formData.append('target_sentence', targetSentence);
+
+    const response = await axios.post('http://localhost:8888/api/v1/speech/assess', formData);
+    return response.data;
+  },
 };
+

@@ -1,0 +1,39 @@
+﻿server:
+  port: 8888 # Cổng của Gateway giao tiếp với bên ngoài (Khớp với cấu hình FE)
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webmvc:
+          routes:
+            - id: detection-service
+              uri: lb://detection-service
+              predicates:
+                - Path=/api/v1/object/**
+            - id: speech-assessment-service
+              uri: lb://speech-assessment-service
+              predicates:
+                - Path=/api/v1/speech/**
+            - id: learning-service
+              uri: lb://learning-service
+              predicates:
+                - Path=/api/**
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedOrigins: "*"
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - DELETE
+                  - OPTIONS
+                allowedHeaders: "*"
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/ # Trỏ về Discovery Server
