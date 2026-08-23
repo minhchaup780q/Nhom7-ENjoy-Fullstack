@@ -30,8 +30,8 @@ class DetectionService:
 
         # Load model and predict
         model = cls.get_model()
-        # We run prediction with standard 0.25 confidence threshold
-        results = model(img, conf=0.25)
+        # We run prediction with standard 0.75 confidence threshold
+        results = model(img, conf=0.75)
         
         # Get image dimensions to compute normalized coordinates
         img_h, img_w = img.shape[:2]
