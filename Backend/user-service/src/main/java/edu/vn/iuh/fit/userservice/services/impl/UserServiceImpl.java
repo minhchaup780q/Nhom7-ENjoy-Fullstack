@@ -1,6 +1,7 @@
 package edu.vn.iuh.fit.userservice.services.impl;
 
 import edu.vn.iuh.fit.userservice.dto.request.UserCreateRequest;
+import edu.vn.iuh.fit.userservice.dto.response.UserAuthResponse;
 import edu.vn.iuh.fit.userservice.dto.response.UserCreateResponse;
 import edu.vn.iuh.fit.userservice.entities.User;
 import edu.vn.iuh.fit.userservice.repositories.UserRepository;
@@ -33,6 +34,25 @@ public class UserServiceImpl implements UserService {
 
         return UserCreateResponse.builder()
                 .email(user.getEmail())
+                .build();
+    }
+
+    @Override
+    public UserAuthResponse checkUserExistsByEmail(String email) {
+
+        User user = new User();
+
+        if(userRepository.existsByEmail(email)){
+            user = userRepository.findUsersByEmail(email);
+        }else {
+            throw new RuntimeException("Email chưa được đăng kí!");
+        }
+
+        return UserAuthResponse.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .role(user.getRole().name())
+                .passwordHash(user.getPasswordHash())
                 .build();
     }
 }
