@@ -1,13 +1,11 @@
 package edu.vn.iuh.fit.userservice.controllers;
 
 import edu.vn.iuh.fit.userservice.dto.request.UserCreateRequest;
+import edu.vn.iuh.fit.userservice.dto.response.UserAuthResponse;
 import edu.vn.iuh.fit.userservice.dto.response.UserCreateResponse;
 import edu.vn.iuh.fit.userservice.services.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/user")
@@ -21,5 +19,10 @@ public class UserController {
         return userService.createUser(userCreateRequest);
     }
 
+
+    @GetMapping("/internal/by-email")
+    public UserAuthResponse checkUser(@RequestParam("email") String email){
+        return userService.checkUserExistsByEmail(email);
+    }
 
 }
