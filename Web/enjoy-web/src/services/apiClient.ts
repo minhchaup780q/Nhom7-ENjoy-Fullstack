@@ -42,17 +42,17 @@ export const apiClient = {
     const response = await axiosInstance.get<T>(path, options);
     return response.data;
   },
-  
+
   post: async <T>(path: string, body?: unknown, options?: RequestOptions): Promise<T> => {
     const response = await axiosInstance.post<T>(path, body, options);
     return response.data;
   },
-  
+
   put: async <T>(path: string, body?: unknown, options?: RequestOptions): Promise<T> => {
     const response = await axiosInstance.put<T>(path, body, options);
     return response.data;
   },
-  
+
   delete: async <T>(path: string, options?: RequestOptions): Promise<T> => {
     const response = await axiosInstance.delete<T>(path, options);
     return response.data;
