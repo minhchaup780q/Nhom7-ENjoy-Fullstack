@@ -6,6 +6,8 @@ import edu.vn.iuh.fit.userservice.dto.response.UserCreateResponse;
 import edu.vn.iuh.fit.userservice.entities.User;
 import edu.vn.iuh.fit.userservice.repositories.UserRepository;
 import edu.vn.iuh.fit.userservice.services.UserService;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,7 +22,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserCreateResponse createUser(UserCreateRequest request) {
         if(userRepository.existsByEmail(request.getEmail())){
-            throw new RuntimeException("Email đã tồn tại! Vui lòng nhập email khác");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email đã tồn tại! Vui lòng nhập email khác");
         }
 
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
@@ -45,7 +47,7 @@ public class UserServiceImpl implements UserService {
         if(userRepository.existsByEmail(email)){
             user = userRepository.findUsersByEmail(email);
         }else {
-            throw new RuntimeException("Email chưa được đăng kí!");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Email chưa được đăng ký!");
         }
 
         return UserAuthResponse.builder()
