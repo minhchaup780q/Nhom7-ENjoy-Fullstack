@@ -29,13 +29,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
 
   const [selectedNodeId, setSelectedNodeId] = useState<number | null>(null);
 
-  const getSessionKeywords = (session: Session): string => {
-    if (!session.itemMappings || session.itemMappings.length === 0) return 'Trống';
-    const keywords = session.itemMappings
-      .map(m => m.sessionItem?.keyword)
-      .filter((k): k is string => typeof k === 'string' && k.trim() !== '');
-    return keywords.length > 0 ? Array.from(new Set(keywords)).join(', ') : 'Trống';
-  };
+
   
   // Trạng thái màn hình: 'levels' (Trình độ) | 'topics' (Chủ đề - Giống Ảnh 1) | 'sessions' (Bản đồ bài học - Giống Ảnh 2)
   const [currentView, setCurrentView] = useState<'levels' | 'topics' | 'sessions'>(
@@ -474,7 +468,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                     </div>
                   )}
 
-                  <div className="w-full max-w-2xl flex justify-center items-center relative py-6">
+                  <div className={`w-full max-w-2xl flex justify-center items-center relative py-6 ${isSelected ? 'z-20' : ''}`}>
                     
                     {/* Left mascot placement */}
                     {hasMascotLeft && (
@@ -484,7 +478,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                     )}
 
                     {/* Node container with S-curve offset */}
-                    <div className="relative flex flex-col items-center" style={curveStyle}>
+                    <div className={`relative flex flex-col items-center ${isSelected ? 'z-20' : ''}`} style={curveStyle}>
                       
                       {/* Floating Start tag */}
                       {isUnlocked && (
@@ -515,9 +509,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                           <h4 className="text-sm font-display font-extrabold text-text-main m-0 leading-tight">
                             {session.title}
                           </h4>
-                          <div className="bg-bg-light border border-border-main rounded-xl px-2 py-1 inline-block text-[10px] font-bold text-text-main/70 my-2">
-                            Từ khóa: {getSessionKeywords(session)}
-                          </div>
+
                           <p className="text-[11px] font-semibold text-text-main/60 leading-relaxed mb-4">
                             {session.description}
                           </p>
