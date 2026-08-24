@@ -2,6 +2,9 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { LearningMap } from '../features/learning/components/LearningMap';
 import { ExploreDashboard } from '../features/explore/components/ExploreDashboard';
+import { LoginPage } from '../features/auth/components/LoginPage';
+import { RegisterPage } from '../features/auth/components/RegisterPage';
+import { useAuthStore } from '../features/auth/store/useAuthStore';
 import type { Session } from '../features/learning/types';
 
 interface FeatureUnderDevelopmentProps {
@@ -27,9 +30,22 @@ interface AppRoutesProps {
 }
 
 export const AppRoutes: React.FC<AppRoutesProps> = ({ onStartSession }) => {
+  // Biến isAuthenticated lấy trạng thái từ zustand useAuthStore, để bảo vệ quyền truy cập đường dẫn
+  // Đăng nhập rồi thì đường dẫn nào, chưa đăng nhập thì đường dẫn nào
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/learn" replace />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+
+      <Route
+        path="/"
+        element={
+          isAuthenticated ? <Navigate to="/learn" replace /> : <Navigate to="/login" replace />
+        }
+      />
+
       <Route path="/learn" element={<LearningMap onStartSession={onStartSession} />} />
       <Route path="/explore" element={<ExploreDashboard />} />
       <Route path="/practice" element={<FeatureUnderDevelopment tabName="LUYỆN TẬP" />} />
@@ -37,7 +53,12 @@ export const AppRoutes: React.FC<AppRoutesProps> = ({ onStartSession }) => {
       <Route path="/quests" element={<FeatureUnderDevelopment tabName="NHIỆM VỤ" />} />
       <Route path="/shop" element={<FeatureUnderDevelopment tabName="CỬA HÀNG" />} />
       <Route path="/profile" element={<FeatureUnderDevelopment tabName="HỒ SƠ" />} />
-      <Route path="*" element={<Navigate to="/learn" replace />} />
+      <Route
+        path="*"
+        element={
+          isAuthenticated ? <Navigate to="/learn" replace /> : <Navigate to="/login" replace />
+        }
+      />
     </Routes>
   );
 };

@@ -1,4 +1,4 @@
-﻿server:
+server:
   port: 8888 # Cổng của Gateway giao tiếp với bên ngoài (Khớp với cấu hình FE)
 
 spring:
@@ -9,6 +9,14 @@ spring:
       server:
         webmvc:
           routes:
+            - id: user-service
+              uri: lb://user-service
+              predicates:
+                - Path=/api/user/**, /api/users/**
+            - id: auth-service
+              uri: lb://auth-service
+              predicates:
+                - Path=/api/auth/**
             - id: detection-service
               uri: lb://detection-service
               predicates:
@@ -20,18 +28,7 @@ spring:
             - id: learning-service
               uri: lb://learning-service
               predicates:
-                - Path=/api/**
-          globalcors:
-            cors-configurations:
-              '[/**]':
-                allowedOrigins: "*"
-                allowedMethods:
-                  - GET
-                  - POST
-                  - PUT
-                  - DELETE
-                  - OPTIONS
-                allowedHeaders: "*"
+                - Path=/api/topics/**, /api/sessions/**, /api/session-items/**, /api/parts/**, /api/levels/**
 
 eureka:
   client:
