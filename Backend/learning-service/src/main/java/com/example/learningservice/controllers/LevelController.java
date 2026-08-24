@@ -11,7 +11,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/levels")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*") // Hỗ trợ CORS kết nối frontend
 public class LevelController {
 
     private final LevelService levelService;
