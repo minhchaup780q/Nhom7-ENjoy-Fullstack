@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { LearningMap } from '../features/learning/components/LearningMap';
 import { ExploreDashboard } from '../features/explore/components/ExploreDashboard';
 import { LoginPage } from '../features/auth/components/LoginPage';
@@ -25,39 +25,51 @@ const FeatureUnderDevelopment: React.FC<FeatureUnderDevelopmentProps> = ({ tabNa
   );
 };
 
+interface ProtectedRouteProps {
+  isAuthenticated: boolean;
+}
+
+
+// Dùng để kiểm tra đã login hay chưa cho toàn bộ các url
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ isAuthenticated }) => {
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  return <Outlet />;
+};
+
 interface AppRoutesProps {
   onStartSession: (session: Session) => void;
 }
 
 export const AppRoutes: React.FC<AppRoutesProps> = ({ onStartSession }) => {
-  // Biến isAuthenticated lấy trạng thái từ zustand useAuthStore, để bảo vệ quyền truy cập đường dẫn
-  // Đăng nhập rồi thì đường dẫn nào, chưa đăng nhập thì đường dẫn nào
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   return (
     <Routes>
+      {/* Public Routes */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
 
+      {/* Protected Routes - Bắt buộc phải đăng nhập */}
+      <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
+        <Route path="/learn" element={<LearningMap onStartSession={onStartSession} />} />
+        <Route path="/explore" element={<ExploreDashboard />} />
+        <Route path="/practice" element={<FeatureUnderDevelopment tabName="LUYỆN TẬP" />} />
+        <Route path="/leaderboard" element={<FeatureUnderDevelopment tabName="BẢNG XẾP HẠNG" />} />
+        <Route path="/quests" element={<FeatureUnderDevelopment tabName="NHIỆM VỤ" />} />
+        <Route path="/shop" element={<FeatureUnderDevelopment tabName="CỬA HÀNG" />} />
+        <Route path="/profile" element={<FeatureUnderDevelopment tabName="HỒ SƠ" />} />
+      </Route>
+
+      {/* Redirect Routes */}
       <Route
         path="/"
-        element={
-          isAuthenticated ? <Navigate to="/learn" replace /> : <Navigate to="/login" replace />
-        }
+        element={<Navigate to={isAuthenticated ? "/learn" : "/login"} replace />}
       />
-
-      <Route path="/learn" element={<LearningMap onStartSession={onStartSession} />} />
-      <Route path="/explore" element={<ExploreDashboard />} />
-      <Route path="/practice" element={<FeatureUnderDevelopment tabName="LUYỆN TẬP" />} />
-      <Route path="/leaderboard" element={<FeatureUnderDevelopment tabName="BẢNG XẾP HẠNG" />} />
-      <Route path="/quests" element={<FeatureUnderDevelopment tabName="NHIỆM VỤ" />} />
-      <Route path="/shop" element={<FeatureUnderDevelopment tabName="CỬA HÀNG" />} />
-      <Route path="/profile" element={<FeatureUnderDevelopment tabName="HỒ SƠ" />} />
       <Route
         path="*"
-        element={
-          isAuthenticated ? <Navigate to="/learn" replace /> : <Navigate to="/login" replace />
-        }
+        element={<Navigate to={isAuthenticated ? "/learn" : "/login"} replace />}
       />
     </Routes>
   );

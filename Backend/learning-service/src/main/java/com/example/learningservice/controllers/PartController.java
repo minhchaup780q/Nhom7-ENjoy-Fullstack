@@ -11,7 +11,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/parts")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class PartController {
 
     private final PartService partService;
