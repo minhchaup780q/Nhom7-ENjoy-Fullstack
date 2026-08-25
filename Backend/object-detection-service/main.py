@@ -20,7 +20,8 @@ async def lifespan(app: FastAPI):
     await eureka_client.init_async(
         eureka_server=EUREKA_SERVER,
         app_name=SERVICE_NAME,
-        instance_port=SERVICE_PORT
+        instance_port=SERVICE_PORT,
+        instance_host="localhost"
     )
     yield
     # Chạy khi tắt ứng dụng
@@ -35,14 +36,15 @@ app = FastAPI(
     lifespan=lifespan # Thêm dòng này
 )
 
-# CORS configuration for Frontend to connect successfully
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS configuration - Disabled because API Gateway handles CORS globally.
+# Adding CORSMiddleware here causes duplicate Access-Control-Allow-Origin headers when routed via Gateway.
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["*"],
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 
 # Include routing
 app.include_router(detection_router)
