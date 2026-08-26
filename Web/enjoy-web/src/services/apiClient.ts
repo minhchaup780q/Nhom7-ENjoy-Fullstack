@@ -11,6 +11,7 @@ export class ApiError extends Error {
   }
 }
 
+// Khởi tạo instace axios (cung cấp 2 bộ chặn request và response)
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
   headers: {
@@ -18,7 +19,20 @@ const axiosInstance = axios.create({
   },
 });
 
-// Interceptor to handle errors and reject with custom ApiError for backward compatibility
+// Request Interceptor: bộ chặn xử lý request trước khi gửi xuống server
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('enjoy_access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+
+  (error) => Promise.reject(error)
+)
+
+// Response Interceptor: bộ chặn xử lý khi nhận dữ liệu từ server với ApiError
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
