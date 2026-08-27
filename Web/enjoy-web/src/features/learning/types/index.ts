@@ -88,3 +88,12 @@ export interface ChildItemStatus extends BaseEntity {
   countWrong: number;
   lastUpdated: string;
 }
+
+export interface UserProgress extends BaseEntity {
+  id: number;
+  userId: number;
+  session: Session;
+  status: SessionStatus;
+  completedAt?: string;
+}
+

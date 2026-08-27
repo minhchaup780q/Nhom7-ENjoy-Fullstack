@@ -16,7 +16,7 @@ public class JwtUtil {
     private String secretKey;
 
     private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey));
+        return Keys.hmacShaKeyFor(secretKey.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     // 1. Hàm duy nhất làm nhiệm vụ Verify Signature + Extract Payload

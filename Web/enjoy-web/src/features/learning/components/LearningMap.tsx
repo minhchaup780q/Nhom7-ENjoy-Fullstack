@@ -17,6 +17,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
     topics,
     parts,
     sessionsByPart,
+    userProgress = [],
     activeLevel,
     activeTopic,
     fetchLevels,
@@ -162,24 +163,6 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
     return sessionsByPart[partId] || [];
   };
 
-  // Tính toán tiến trình hoàn thành của một Chủ đề
-  const getTopicProgress = (topicId: number) => {
-    if (activeTopic && activeTopic.id === topicId && parts.length > 0) {
-      const topicSessions = parts.flatMap(p => sessionsByPart[p.id] || []);
-      if (topicSessions.length === 0) return 0;
-      const finishedCount = topicSessions.filter(s => s.status === SessionStatus.FINISH).length;
-      return Math.round((finishedCount / topicSessions.length) * 100);
-    }
-    return 0;
-  };
-
-  const isTopicUnlocked = (_topic: Topic, index: number) => {
-    if (index === 0) return true;
-    const prevTopic = topics[index - 1];
-    if (!prevTopic) return false;
-    return getTopicProgress(prevTopic.id) === 100;
-  };
-
   // Phẳng hóa toàn bộ bài học (Sessions) của các Phần (Parts) thuộc Chủ đề hiện tại để vẽ bản đồ dài nối liền
   const rawSessionsInTopic = currentParts.flatMap((part, partIdx) => {
     const partSessions = getSessionsForPart(part.id);
@@ -192,26 +175,45 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
     }));
   });
 
-  // Tính toán lại trạng thái khoá/mở khóa thực tế: một session chỉ được mở (UNLOCK) nếu nó là bài đầu tiên, hoặc bài ngay trước đó đã HOÀN THÀNH (FINISH). Các bài đã hoàn thành vẫn giữ nguyên trạng thái FINISH.
+  // Map trạng thái bài học dựa trên userProgress cá nhân
   const allSessionsInTopic = rawSessionsInTopic.map((session, index) => {
-    let calculatedStatus = session.status;
-    
-    if (session.status !== SessionStatus.FINISH) {
+    const prog = userProgress.find(p => p.session && p.session.id === session.id);
+    let calculatedStatus = SessionStatus.LOCK;
+
+    if (prog) {
+      calculatedStatus = prog.status;
+    } else {
       const prevSession = index > 0 ? rawSessionsInTopic[index - 1] : null;
-      const isPrevFinished = prevSession ? prevSession.status === SessionStatus.FINISH : false;
-      
+      const prevProg = prevSession ? userProgress.find(p => p.session && p.session.id === prevSession.id) : null;
+      const isPrevFinished = prevProg ? prevProg.status === SessionStatus.FINISH : false;
+
       if (index === 0 || isPrevFinished) {
         calculatedStatus = SessionStatus.UNLOCK;
-      } else {
-        calculatedStatus = SessionStatus.LOCK;
       }
     }
-    
+
     return {
       ...session,
       status: calculatedStatus
     };
   });
+
+  // Tính toán tiến trình hoàn thành của một Chủ đề
+  const getTopicProgress = (topicId: number) => {
+    if (activeTopic && activeTopic.id === topicId && parts.length > 0) {
+      if (allSessionsInTopic.length === 0) return 0;
+      const finishedCount = allSessionsInTopic.filter(s => s.status === SessionStatus.FINISH).length;
+      return Math.round((finishedCount / allSessionsInTopic.length) * 100);
+    }
+    return 0;
+  };
+
+  const isTopicUnlocked = (_topic: Topic, index: number) => {
+    if (index === 0) return true;
+    const prevTopic = topics[index - 1];
+    if (!prevTopic) return false;
+    return getTopicProgress(prevTopic.id) === 100;
+  };
 
   // Tìm bài học đang học hiện tại (UNLOCK) để hiển thị thông tin động trên Sticky Header
   const activeSession = allSessionsInTopic.find(s => s.status === SessionStatus.UNLOCK) || allSessionsInTopic[0];

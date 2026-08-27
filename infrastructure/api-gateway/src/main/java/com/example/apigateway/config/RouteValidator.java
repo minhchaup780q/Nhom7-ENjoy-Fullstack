@@ -10,7 +10,10 @@ import java.util.function.Predicate;
 public class RouteValidator {
     // Danh sách các API không cần kiểm tra Token
     public static final List<String> openApiEndpoints = List.of(
-            "api/auth/login"
+            "/api/auth/login",
+            "/api/user/register",
+            "/api/user",
+            "/api/auth"
     );
 
     // bộ lọc tách ra thành url public hay private
