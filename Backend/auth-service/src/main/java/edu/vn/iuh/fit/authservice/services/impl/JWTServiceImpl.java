@@ -12,18 +12,20 @@ import java.util.Date;
 
 @Service
 public class JWTServiceImpl implements JWTService {
-
     @Value("${jwt.signerKey}")
     private String secretKey;
 
     public String generateAccessToken(Long userId, String email, String role){
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
 
-
+//        Thời gian tạo
         Date issueTime = new Date();
+//        Thời gian hết hạn
         Date expiredTime = Date.from(issueTime.toInstant().plus(30, ChronoUnit.MINUTES));
         JWTClaimsSet claimsSet =  new JWTClaimsSet.Builder()
-                .subject(email)
+                .claim("userId", userId)
+                .claim("email", email)
+                .claim("role", role)
                 .issueTime(issueTime)
                 .expirationTime(expiredTime)
                 .build();
@@ -47,7 +49,7 @@ public class JWTServiceImpl implements JWTService {
         Date issueTime = new Date();
         Date expiredTime = Date.from(issueTime.toInstant().plus(30, ChronoUnit.DAYS));
         JWTClaimsSet claimsSet =  new JWTClaimsSet.Builder()
-                .subject(email)
+                .claim("userId", userId)
                 .issueTime(issueTime)
                 .expirationTime(expiredTime)
                 .build();
