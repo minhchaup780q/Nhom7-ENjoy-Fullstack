@@ -6,31 +6,32 @@ spring:
     name: api-gateway
   cloud:
     gateway:
-      server:
-        webmvc:
-          routes:
-            - id: user-service
-              uri: lb://user-service
-              predicates:
-                - Path=/api/user/**, /api/users/**
-            - id: auth-service
-              uri: lb://auth-service
-              predicates:
-                - Path=/api/auth/**
-            - id: detection-service
-              uri: lb://detection-service
-              predicates:
-                - Path=/api/v1/object/**
-            - id: speech-assessment-service
-              uri: lb://speech-assessment-service
-              predicates:
-                - Path=/api/v1/speech/**
-            - id: learning-service
-              uri: lb://learning-service
-              predicates:
-                - Path=/api/topics/**, /api/sessions/**, /api/session-items/**, /api/parts/**, /api/levels/**
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/user/**, /api/users/**
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/auth/**
+        - id: detection-service
+          uri: lb://detection-service
+          predicates:
+            - Path=/api/v1/object/**
+        - id: speech-assessment-service
+          uri: lb://speech-assessment-service
+          predicates:
+            - Path=/api/v1/speech/**
+        - id: learning-service
+          uri: lb://learning-service
+          predicates:
+            - Path=/api/topics/**, /api/sessions/**, /api/session-items/**, /api/parts/**, /api/levels/**, /api/progress/**
 
 eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/ # Trỏ về Discovery Server
+
+jwt:
+  signerKey: "qkqwyKZxDFIyakJVrxojGYa66ShVokq8gofJ1v2zCLeM3o38gDb0E7z9vLVNeW47EYSQVoZI5dds4TLsHIDGW0"

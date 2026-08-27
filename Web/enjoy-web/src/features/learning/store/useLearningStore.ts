@@ -11,6 +11,7 @@ interface LearningState {
   sessions: Session[];
   sessionsByPart: Record<number, Session[]>;
   sessionItems: SessionItem[];
+  userProgress: import('../types').UserProgress[];
   
   // Thực thể đang được kích hoạt (Đang học)
   activeLevel: Level | null;
@@ -27,6 +28,7 @@ interface LearningState {
 
   // Các hàm hành động (Actions)
   fetchLevels: () => Promise<void>;
+  fetchUserProgress: () => Promise<void>;
   selectLevel: (level: Level) => Promise<void>;
   selectTopic: (topic: Topic) => Promise<void>;
   selectPart: (part: Part) => Promise<void>;
@@ -47,6 +49,7 @@ export const useLearningStore = create<LearningState>((set, get) => ({
   sessions: [],
   sessionsByPart: {},
   sessionItems: [],
+  userProgress: [],
   
   activeLevel: null,
   activeTopic: null,
@@ -56,6 +59,15 @@ export const useLearningStore = create<LearningState>((set, get) => ({
   currentStepIndex: 0,
   loading: false,
   error: null,
+
+  fetchUserProgress: async () => {
+    try {
+      const userProgress = await learningApi.getUserProgress();
+      set({ userProgress });
+    } catch (err) {
+      console.error("Lỗi khi tải tiến độ người dùng:", err);
+    }
+  },
 
   // Lấy danh sách Level từ API
   fetchLevels: async () => {
@@ -89,6 +101,14 @@ export const useLearningStore = create<LearningState>((set, get) => ({
       
       // Fetch sessions for all parts in parallel
       const sessionsMap: Record<number, Session[]> = {};
+      let userProgress: import('../types').UserProgress[] = [];
+      
+      try {
+        userProgress = await learningApi.getUserProgress();
+      } catch (e) {
+        console.warn("Chưa lấy được tiến độ user:", e);
+      }
+
       await Promise.all(
         parts.map(async (part) => {
           try {
@@ -101,7 +121,7 @@ export const useLearningStore = create<LearningState>((set, get) => ({
         })
       );
 
-      set({ parts, sessionsByPart: sessionsMap, loading: false });
+      set({ parts, sessionsByPart: sessionsMap, userProgress, loading: false });
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Không thể lấy thông tin chi tiết chủ đề';
       set({ error: errorMessage, loading: false });
@@ -154,49 +174,20 @@ export const useLearningStore = create<LearningState>((set, get) => ({
     }
   },
 
-  // Hoàn thành bài học hiện tại (FINISH) và mở khóa bài tiếp theo (UNLOCK)
+  // Hoàn thành bài học hiện tại (FINISH) và mở khóa bài tiếp theo (UNLOCK) cho User
   completeSession: async (sessionId: number) => {
-    const { activeTopic, selectTopic, parts, sessionsByPart } = get();
+    const { activeTopic, selectTopic } = get();
     
-    // Thu thập toàn bộ sessions của topic hiện tại để xử lý tiến trình
-    const allSessions: Session[] = parts.flatMap(part => sessionsByPart[part.id] || []);
-    if (!activeTopic || allSessions.length === 0) {
-      console.warn("Không tìm thấy chủ đề hoặc phiên học hoạt động");
-      return;
-    }
-
     try {
-      // 1. Cập nhật Session hiện tại thành FINISH
-      const currentSession = allSessions.find(s => s.id === sessionId);
-      if (currentSession) {
-        await learningApi.updateSession(sessionId, {
-          title: currentSession.title,
-          description: currentSession.description,
-          orderIndex: currentSession.orderIndex,
-          sessionType: currentSession.sessionType,
-          status: SessionStatus.FINISH
-        });
-      }
+      // Gọi API completeUserSession để cập nhật tiến độ riêng cho User
+      await learningApi.completeUserSession(sessionId);
 
-      // 2. Tìm Session tiếp theo trong danh sách toàn bộ của Topic để UNLOCK
-      const currentIndex = allSessions.findIndex(s => s.id === sessionId);
-      if (currentIndex !== -1 && currentIndex < allSessions.length - 1) {
-        const nextSession = allSessions[currentIndex + 1];
-        if (nextSession.status === SessionStatus.LOCK) {
-          await learningApi.updateSession(nextSession.id, {
-            title: nextSession.title,
-            description: nextSession.description,
-            orderIndex: nextSession.orderIndex,
-            sessionType: nextSession.sessionType,
-            status: SessionStatus.UNLOCK
-          });
-        }
+      // Tải lại toàn bộ dữ liệu Topic để cập nhật UI bản đồ học theo User
+      if (activeTopic) {
+        await selectTopic(activeTopic);
       }
-
-      // 3. Tải lại toàn bộ dữ liệu Topic để cập nhật UI bản đồ học
-      await selectTopic(activeTopic);
     } catch (err) {
-      console.error("Lỗi khi cập nhật tiến trình bài học:", err);
+      console.error("Lỗi khi cập nhật tiến trình bài học cho User:", err);
     }
   },
 

@@ -1,8 +1,18 @@
 import axios from 'axios';
 import { apiClient } from '../../../services/apiClient';
-import type { Level, Topic, Part, Session, SessionItemMapping } from '../types';
+import type { Level, Topic, Part, Session, SessionItemMapping, UserProgress } from '../types';
 
 export const learningApi = {
+  // Lấy tiến độ học cá nhân của User hiện tại
+  getUserProgress: () => {
+    return apiClient.get<UserProgress[]>('/api/progress/my-progress');
+  },
+
+  // Đánh dấu hoàn thành bài học và mở khóa bài tiếp theo cho User hiện tại
+  completeUserSession: (sessionId: number) => {
+    return apiClient.post<UserProgress>(`/api/progress/complete/${sessionId}`);
+  },
+
   // Lấy danh sách toàn bộ Levels active
   getLevels: () => {
     return apiClient.get<Level[]>('/api/levels');
