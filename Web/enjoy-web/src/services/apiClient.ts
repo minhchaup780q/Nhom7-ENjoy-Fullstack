@@ -1,4 +1,5 @@
-import axios from 'axios';
+import axios, { type InternalAxiosRequestConfig } from 'axios';
+import { useAuthStore } from '../features/auth/store/useAuthStore';
 
 export const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8888';
 
@@ -11,6 +12,29 @@ export class ApiError extends Error {
   }
 }
 
+interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
+
+// Cờ và hàng đợi để xử lý bài toán nhiều request bị 401 cùng lúc: chỉ tạo newAccessTOken một lần
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value?: unknown) => void;
+  reject: (reason?: unknown) => void;
+}> = [];
+
+const processQueue = (error: unknown, token: string | null = null) => {
+  failedQueue.forEach((promise) => {
+    if (error) {
+      promise.reject(error);
+    } else {
+      promise.resolve(token);
+    }
+  });
+
+  failedQueue = [];
+};
+
 // Khởi tạo instace axios (cung cấp 2 bộ chặn request và response)
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -18,6 +42,7 @@ const axiosInstance = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
 
 // Request Interceptor: bộ chặn xử lý request trước khi gửi xuống server
 axiosInstance.interceptors.request.use(
@@ -32,19 +57,82 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// Response Interceptor: bộ chặn xử lý khi nhận dữ liệu từ server với ApiError
+// Response Interceptor: bộ chặn xử lý khi nhận dữ liệu từ server
 axiosInstance.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (axios.isAxiosError(error) && error.response) {
-      const status = error.response.status;
-      const data = error.response.data as { message?: string } | null;
-      const message = data?.message || `Yêu cầu API thất bại với mã lỗi ${status}`;
-      return Promise.reject(new ApiError(message, status));
+
+  async (error) => {
+    const originalRequest = error.config as CustomAxiosRequestConfig;
+
+    // Kiểm tra nếu bị lỗi 401 và chưa từng retry trong chính cái request này
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !originalRequest.url?.includes('/api/auth/refresh')
+    ) {
+      if (isRefreshing) {
+        // Nếu đang trong quá trình refresh token, cho request này vào hàng đợi chờ
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers = originalRequest.headers || {};
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return axiosInstance(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const refreshToken = localStorage.getItem('enjoy_refresh_token');
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
+        }
+
+        // Gọi API refresh token
+        const response = await axios.post(`${BASE_URL}/api/auth/refresh`, null, {
+          headers: {
+            refreshToken: refreshToken,
+          },
+        });
+
+        // Backend trả về LoginResponse với { accessToken, refreshToken }
+        const newAccessToken = response.data.accessToken || response.data.result?.accessToken;
+
+        if (!newAccessToken) {
+          throw new Error('Failed to retrieve new access token');
+        }
+
+        // Cập nhật state trong Zustand store và localStorage
+        useAuthStore.getState().setAccessToken(newAccessToken);
+
+        // Giải phóng hàng đợi chờ
+        processQueue(null, newAccessToken);
+
+        // Gửi lại request ban đầu với token mới
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return axiosInstance(originalRequest);
+      } catch (refreshError) {
+        // Khi refresh token không hợp lệ hoặc đã hết hạn
+        processQueue(refreshError, null);
+        useAuthStore.getState().logout();
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
     }
+
     return Promise.reject(error);
   }
 );
+
+
+
 
 interface RequestOptions {
   headers?: Record<string, string>;
