@@ -6,4 +6,6 @@ import edu.vn.iuh.fit.authservice.dto.response.LoginResponse;
 public interface AuthenticationService {
 
     LoginResponse login(LoginRequest request);
+
+    LoginResponse refresh(String refreshToken);
 }

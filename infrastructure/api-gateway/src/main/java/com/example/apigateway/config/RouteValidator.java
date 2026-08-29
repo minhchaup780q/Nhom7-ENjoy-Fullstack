@@ -13,7 +13,8 @@ public class RouteValidator {
             "/api/auth/login",
             "/api/user/register",
             "/api/user",
-            "/api/auth"
+            "/api/auth",
+            "/api/auth/refresh"
     );
 
     // bộ lọc tách ra thành url public hay private
