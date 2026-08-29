@@ -17,6 +17,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
     topics,
     parts,
     sessionsByPart,
+    userProgress = [],
     activeLevel,
     activeTopic,
     fetchLevels,
@@ -29,13 +30,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
 
   const [selectedNodeId, setSelectedNodeId] = useState<number | null>(null);
 
-  const getSessionKeywords = (session: Session): string => {
-    if (!session.itemMappings || session.itemMappings.length === 0) return 'Trống';
-    const keywords = session.itemMappings
-      .map(m => m.sessionItem?.keyword)
-      .filter((k): k is string => typeof k === 'string' && k.trim() !== '');
-    return keywords.length > 0 ? Array.from(new Set(keywords)).join(', ') : 'Trống';
-  };
+
   
   // Trạng thái màn hình: 'levels' (Trình độ) | 'topics' (Chủ đề - Giống Ảnh 1) | 'sessions' (Bản đồ bài học - Giống Ảnh 2)
   const [currentView, setCurrentView] = useState<'levels' | 'topics' | 'sessions'>(
@@ -168,24 +163,6 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
     return sessionsByPart[partId] || [];
   };
 
-  // Tính toán tiến trình hoàn thành của một Chủ đề
-  const getTopicProgress = (topicId: number) => {
-    if (activeTopic && activeTopic.id === topicId && parts.length > 0) {
-      const topicSessions = parts.flatMap(p => sessionsByPart[p.id] || []);
-      if (topicSessions.length === 0) return 0;
-      const finishedCount = topicSessions.filter(s => s.status === SessionStatus.FINISH).length;
-      return Math.round((finishedCount / topicSessions.length) * 100);
-    }
-    return 0;
-  };
-
-  const isTopicUnlocked = (_topic: Topic, index: number) => {
-    if (index === 0) return true;
-    const prevTopic = topics[index - 1];
-    if (!prevTopic) return false;
-    return getTopicProgress(prevTopic.id) === 100;
-  };
-
   // Phẳng hóa toàn bộ bài học (Sessions) của các Phần (Parts) thuộc Chủ đề hiện tại để vẽ bản đồ dài nối liền
   const rawSessionsInTopic = currentParts.flatMap((part, partIdx) => {
     const partSessions = getSessionsForPart(part.id);
@@ -198,26 +175,45 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
     }));
   });
 
-  // Tính toán lại trạng thái khoá/mở khóa thực tế: một session chỉ được mở (UNLOCK) nếu nó là bài đầu tiên, hoặc bài ngay trước đó đã HOÀN THÀNH (FINISH). Các bài đã hoàn thành vẫn giữ nguyên trạng thái FINISH.
+  // Map trạng thái bài học dựa trên userProgress cá nhân
   const allSessionsInTopic = rawSessionsInTopic.map((session, index) => {
-    let calculatedStatus = session.status;
-    
-    if (session.status !== SessionStatus.FINISH) {
+    const prog = userProgress.find(p => p.session && p.session.id === session.id);
+    let calculatedStatus = SessionStatus.LOCK;
+
+    if (prog) {
+      calculatedStatus = prog.status;
+    } else {
       const prevSession = index > 0 ? rawSessionsInTopic[index - 1] : null;
-      const isPrevFinished = prevSession ? prevSession.status === SessionStatus.FINISH : false;
-      
+      const prevProg = prevSession ? userProgress.find(p => p.session && p.session.id === prevSession.id) : null;
+      const isPrevFinished = prevProg ? prevProg.status === SessionStatus.FINISH : false;
+
       if (index === 0 || isPrevFinished) {
         calculatedStatus = SessionStatus.UNLOCK;
-      } else {
-        calculatedStatus = SessionStatus.LOCK;
       }
     }
-    
+
     return {
       ...session,
       status: calculatedStatus
     };
   });
+
+  // Tính toán tiến trình hoàn thành của một Chủ đề
+  const getTopicProgress = (topicId: number) => {
+    if (activeTopic && activeTopic.id === topicId && parts.length > 0) {
+      if (allSessionsInTopic.length === 0) return 0;
+      const finishedCount = allSessionsInTopic.filter(s => s.status === SessionStatus.FINISH).length;
+      return Math.round((finishedCount / allSessionsInTopic.length) * 100);
+    }
+    return 0;
+  };
+
+  const isTopicUnlocked = (_topic: Topic, index: number) => {
+    if (index === 0) return true;
+    const prevTopic = topics[index - 1];
+    if (!prevTopic) return false;
+    return getTopicProgress(prevTopic.id) === 100;
+  };
 
   // Tìm bài học đang học hiện tại (UNLOCK) để hiển thị thông tin động trên Sticky Header
   const activeSession = allSessionsInTopic.find(s => s.status === SessionStatus.UNLOCK) || allSessionsInTopic[0];
@@ -474,7 +470,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                     </div>
                   )}
 
-                  <div className="w-full max-w-2xl flex justify-center items-center relative py-6">
+                  <div className={`w-full max-w-2xl flex justify-center items-center relative py-6 ${isSelected ? 'z-20' : ''}`}>
                     
                     {/* Left mascot placement */}
                     {hasMascotLeft && (
@@ -484,7 +480,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                     )}
 
                     {/* Node container with S-curve offset */}
-                    <div className="relative flex flex-col items-center" style={curveStyle}>
+                    <div className={`relative flex flex-col items-center ${isSelected ? 'z-20' : ''}`} style={curveStyle}>
                       
                       {/* Floating Start tag */}
                       {isUnlocked && (
@@ -515,9 +511,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                           <h4 className="text-sm font-display font-extrabold text-text-main m-0 leading-tight">
                             {session.title}
                           </h4>
-                          <div className="bg-bg-light border border-border-main rounded-xl px-2 py-1 inline-block text-[10px] font-bold text-text-main/70 my-2">
-                            Từ khóa: {getSessionKeywords(session)}
-                          </div>
+
                           <p className="text-[11px] font-semibold text-text-main/60 leading-relaxed mb-4">
                             {session.description}
                           </p>
