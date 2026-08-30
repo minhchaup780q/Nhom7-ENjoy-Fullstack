@@ -127,7 +127,9 @@ axiosInstance.interceptors.response.use(
       }
     }
 
-    return Promise.reject(error);
+    const status = error.response?.status || 500;
+    const message = error.response?.data?.message || error.response?.data?.reason || error.message;
+    return Promise.reject(new ApiError(message, status));
   }
 );
 

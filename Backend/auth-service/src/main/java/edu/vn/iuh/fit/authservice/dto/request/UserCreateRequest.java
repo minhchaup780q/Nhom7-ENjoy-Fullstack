@@ -1,11 +1,7 @@
-package edu.vn.iuh.fit.userservice.dto.request;
+package edu.vn.iuh.fit.authservice.dto.request;
 
-import edu.vn.iuh.fit.userservice.entities.enums.UserRole;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import edu.vn.iuh.fit.authservice.entities.enums.UserRole;
+import lombok.*;
 
 import java.time.LocalDate;
 

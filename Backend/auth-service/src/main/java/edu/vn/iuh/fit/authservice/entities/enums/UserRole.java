@@ -1,4 +1,4 @@
-package edu.vn.iuh.fit.userservice.entities.enums;
+package edu.vn.iuh.fit.authservice.entities.enums;
 
 public enum UserRole {
     ROLE_CHILDREN,
