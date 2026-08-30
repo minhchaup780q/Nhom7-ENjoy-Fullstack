@@ -16,7 +16,7 @@ public class UserController {
 
     private final UserService userService;
 
-    @PostMapping
+    @PostMapping("/internal/create")
     public ResponseEntity<UserCreateResponse> createUser(@RequestBody UserCreateRequest userCreateRequest){
         UserCreateResponse response = userService.createUser(userCreateRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);

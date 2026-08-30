@@ -4,6 +4,7 @@ import edu.vn.iuh.fit.userservice.entities.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -18,12 +19,15 @@ public class User{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "account_id")
+    private Long accountId;
+
     private String email;
 
-    @Column(name = "password_hash")
-    private String passwordHash;
+    private String username;
 
-    private String provider;
+    @Column(name = "avatar_url")
+    private String avatarUrl;
 
     @Enumerated(EnumType.STRING)
     private UserRole role;
@@ -31,7 +35,7 @@ public class User{
     @Column(name = "parent_id")
     private Long parentId;
 
-    private LocalDateTime birthday;
+    private LocalDate birthday;
 
     @Column(name = "daily_time_limit")
     private int dailyTimeLimit;

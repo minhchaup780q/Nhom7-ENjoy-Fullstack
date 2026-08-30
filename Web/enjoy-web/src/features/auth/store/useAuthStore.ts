@@ -8,6 +8,7 @@ interface AuthState {
   isAuthenticated: boolean;
   setAuth: (user: User, accessToken: string, refreshToken?: string) => void;
   setAccessToken: (accessToken: string) => void;
+  setHasPassword: (hasPassword: boolean) => void;
   logout: () => void;
 }
 
@@ -53,6 +54,16 @@ export const useAuthStore = create<AuthState>((set) => ({
   setAccessToken: (newAccessToken: string) => {
     localStorage.setItem(ACCESS_TOKEN_KEY, newAccessToken);
     set({ accessToken: newAccessToken });
+  },
+
+  setHasPassword: (hasPassword: boolean) => {
+    set((state) => {
+      const updatedUser = state.user ? { ...state.user, hasPassword } : null;
+      if (updatedUser) {
+        localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+      }
+      return { user: updatedUser };
+    });
   },
 
   logout: () => {
