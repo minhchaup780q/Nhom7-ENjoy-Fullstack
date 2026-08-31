@@ -288,21 +288,35 @@ export const PracticeDashboard: React.FC = () => {
                   </div>
 
                   {/* Word / Sentence Details */}
-                  <div className="flex items-start justify-between gap-3 pt-1">
-                    <div>
-                      <h4 className="text-lg font-display font-black text-[#2b2b2b] flex items-center gap-2">
-                        {item.contentText}
-                      </h4>
-                      {item.translation && (
-                        <p className="text-xs font-semibold text-text-muted mt-0.5">
-                          {item.translation}
-                        </p>
+                  <div className="flex items-center justify-between gap-3 pt-1">
+                    <div className="flex items-center gap-2.5">
+                      {item.imageUrl && (
+                        <div className="w-11 h-11 rounded-xl overflow-hidden border border-border-main bg-bg-light shrink-0">
+                          <img
+                            src={getAssetUrl(item.imageUrl)}
+                            alt="thumbnail"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400';
+                            }}
+                          />
+                        </div>
                       )}
+                      <div>
+                        <h4 className="text-base font-display font-black text-[#2b2b2b]">
+                          {item.contentText}
+                        </h4>
+                        {item.translation && (
+                          <p className="text-xs font-semibold text-text-muted mt-0.5">
+                            {item.translation}
+                          </p>
+                        )}
+                      </div>
                     </div>
 
                     <button
                       onClick={() => playSpeech(item.contentText)}
-                      className="p-2 bg-primary-soft hover:bg-primary/20 text-primary rounded-xl transition-colors"
+                      className="p-2 bg-primary-soft hover:bg-primary/20 text-primary rounded-xl transition-colors shrink-0"
                       title="Nghe phát âm"
                     >
                       <Volume2 className="w-4 h-4" />
@@ -316,7 +330,13 @@ export const PracticeDashboard: React.FC = () => {
                         <AlertTriangle className="w-3.5 h-3.5" />
                         Đã chọn sai:
                       </span>
-                      <strong className="line-through">{item.wrongAnswerSubmitted}</strong>
+                      {item.wrongAnswerSubmitted && item.wrongAnswerSubmitted.startsWith('http') ? (
+                        <div className="w-6 h-6 rounded border border-red-300 overflow-hidden shrink-0">
+                          <img src={getAssetUrl(item.wrongAnswerSubmitted)} alt="Wrong" className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <strong className="line-through">{item.wrongAnswerSubmitted}</strong>
+                      )}
                     </div>
 
                     <div className="flex items-center justify-between text-text-muted text-[11px] font-medium pt-1 border-t border-border-main/50">
