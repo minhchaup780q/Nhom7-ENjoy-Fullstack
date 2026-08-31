@@ -19,6 +19,16 @@ export interface MistakeItem {
   createdAt: string;
 }
 
+export interface PageResponse<T> {
+  content: T[];
+  pageNumber: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+  first: boolean;
+}
+
 export interface MistakeCreatePayload {
   questionId: number;
   roundType: number;
@@ -44,10 +54,30 @@ export const mistakeApi = {
     return apiClient.post<MistakeItem[]>('/api/mistakes/batch', payloads);
   },
 
-  // Lấy danh sách lỗi sai của User (có thể lọc theo trạng thái)
-  getUserMistakes: (status?: MistakeStatus) => {
-    return apiClient.get<MistakeItem[]>('/api/mistakes', {
-      params: status ? { status } : {},
+  // Lấy danh sách lỗi sai phân trang của User (load theo trang)
+  getUserMistakesPaged: (params?: {
+    status?: MistakeStatus;
+    roundType?: number;
+    page?: number;
+    size?: number;
+  }) => {
+    return apiClient.get<PageResponse<MistakeItem>>('/api/mistakes', {
+      params: {
+        status: params?.status || 'NEEDS_REVIEW',
+        roundType: params?.roundType,
+        page: params?.page ?? 0,
+        size: params?.size ?? 6,
+      },
+    });
+  },
+
+  // Lấy danh sách câu hỏi cần ôn tập cho Player
+  getPracticeQueue: (roundType?: number, limit = 20) => {
+    return apiClient.get<MistakeItem[]>('/api/mistakes/practice-queue', {
+      params: {
+        roundType,
+        limit,
+      },
     });
   },
 
@@ -71,3 +101,4 @@ export const mistakeApi = {
     return apiClient.delete<void>(`/api/mistakes/${id}`);
   },
 };
+
