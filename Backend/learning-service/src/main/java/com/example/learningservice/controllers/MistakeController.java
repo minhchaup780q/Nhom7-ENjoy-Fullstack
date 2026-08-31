@@ -32,15 +32,31 @@ public class MistakeController {
     }
 
     @GetMapping
-    public ResponseEntity<List<MistakeResponse>> getUserMistakes(
+    public ResponseEntity<PageResponse<MistakeResponse>> getUserMistakes(
             @RequestHeader(value = "X-User-Id", required = false) Long headerUserId,
             @RequestParam(value = "userId", required = false) Long queryUserId,
-            @RequestParam(value = "status", required = false) MistakeStatus status) {
+            @RequestParam(value = "status", required = false, defaultValue = "NEEDS_REVIEW") MistakeStatus status,
+            @RequestParam(value = "roundType", required = false) Integer roundType,
+            @RequestParam(value = "page", required = false, defaultValue = "0") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "6") int size) {
         Long userId = (headerUserId != null) ? headerUserId : queryUserId;
         if (userId == null) {
             return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.ok(mistakeService.getUserMistakes(userId, status));
+        return ResponseEntity.ok(mistakeService.getUserMistakesPaged(userId, status, roundType, page, size));
+    }
+
+    @GetMapping("/practice-queue")
+    public ResponseEntity<List<MistakeResponse>> getPracticeQueue(
+            @RequestHeader(value = "X-User-Id", required = false) Long headerUserId,
+            @RequestParam(value = "userId", required = false) Long queryUserId,
+            @RequestParam(value = "roundType", required = false) Integer roundType,
+            @RequestParam(value = "limit", required = false, defaultValue = "20") int limit) {
+        Long userId = (headerUserId != null) ? headerUserId : queryUserId;
+        if (userId == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(mistakeService.getPracticeQueue(userId, roundType, limit));
     }
 
     @PutMapping("/{id}/status")

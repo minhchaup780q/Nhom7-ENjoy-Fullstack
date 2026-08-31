@@ -3,6 +3,7 @@ package com.example.learningservice.services.impl;
 import com.example.learningservice.dto.MistakeCreateRequest;
 import com.example.learningservice.dto.MistakeResponse;
 import com.example.learningservice.dto.MistakeStatsResponse;
+import com.example.learningservice.dto.PageResponse;
 import com.example.learningservice.entities.Mistake;
 import com.example.learningservice.entities.SessionItem;
 import com.example.learningservice.entities.enums.MistakeStatus;
@@ -11,6 +12,10 @@ import com.example.learningservice.repositories.SessionItemRepository;
 import com.example.learningservice.services.MistakeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -91,6 +96,41 @@ public class MistakeServiceImpl implements MistakeService {
             mistakes = mistakeRepository.findByUserId(userId);
         }
         return mistakes.stream()
+                .map(MistakeResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<MistakeResponse> getUserMistakesPaged(Long userId, MistakeStatus status, Integer roundType, int page, int size) {
+        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, size), Sort.by(Sort.Direction.DESC, "createdAt"));
+        
+        Page<Mistake> mistakePage;
+        if (status != null && roundType != null) {
+            mistakePage = mistakeRepository.findByUserIdAndStatusAndRoundType(userId, status, roundType, pageable);
+        } else if (status != null) {
+            mistakePage = mistakeRepository.findByUserIdAndStatus(userId, status, pageable);
+        } else if (roundType != null) {
+            mistakePage = mistakeRepository.findByUserIdAndRoundType(userId, roundType, pageable);
+        } else {
+            mistakePage = mistakeRepository.findByUserId(userId, pageable);
+        }
+
+        Page<MistakeResponse> responsePage = mistakePage.map(MistakeResponse::fromEntity);
+        return PageResponse.fromPage(responsePage);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MistakeResponse> getPracticeQueue(Long userId, Integer roundType, int limit) {
+        Pageable pageable = PageRequest.of(0, Math.max(1, limit), Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Mistake> mistakePage;
+        if (roundType != null) {
+            mistakePage = mistakeRepository.findByUserIdAndStatusAndRoundType(userId, MistakeStatus.NEEDS_REVIEW, roundType, pageable);
+        } else {
+            mistakePage = mistakeRepository.findByUserIdAndStatus(userId, MistakeStatus.NEEDS_REVIEW, pageable);
+        }
+        return mistakePage.getContent().stream()
                 .map(MistakeResponse::fromEntity)
                 .collect(Collectors.toList());
     }
