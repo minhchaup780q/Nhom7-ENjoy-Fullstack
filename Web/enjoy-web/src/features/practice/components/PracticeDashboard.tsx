@@ -253,7 +253,7 @@ export const PracticeDashboard: React.FC = () => {
                 : 'bg-white border-border-main text-[#5c5c5c] hover:bg-bg-light'
             }`}
           >
-            <span>⚡ CẦN ÔN TẬP</span>
+            <span>CẦN ÔN TẬP</span>
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
               statusFilter === 'NEEDS_REVIEW' ? 'bg-white/20 text-white' : 'bg-amber-100 text-[#d46b08]'
             }`}>
@@ -269,7 +269,7 @@ export const PracticeDashboard: React.FC = () => {
                 : 'bg-white border-border-main text-[#5c5c5c] hover:bg-bg-light'
             }`}
           >
-            <span>✓ ĐÃ THÀNH THẠO</span>
+            <span>ĐÃ THÀNH THẠO</span>
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
               statusFilter === 'MASTERED' ? 'bg-white/20 text-white' : 'bg-green-100 text-[#389e0d]'
             }`}>
@@ -277,6 +277,24 @@ export const PracticeDashboard: React.FC = () => {
             </span>
           </button>
         </div>
+
+        {/* Round Filter Dropdown */}
+        <div className="flex items-center gap-2">
+          <FunnelIcon className="w-4 h-4 text-text-muted" />
+          <select
+            value={roundFilter}
+            onChange={(e) => handleRoundChange(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))}
+            className="p-2 bg-white border-2 border-border-main rounded-xl text-xs font-display font-bold text-[#5c5c5c] outline-none cursor-pointer"
+          >
+            <option value="ALL">Tất cả kỹ năng / Vòng</option>
+            <option value="1">Vòng 1: Từ vựng / Nhận diện</option>
+            <option value="2">Vòng 2: Luyện nghe</option>
+            <option value="3">Vòng 3: Luyện nói</option>
+            <option value="4">Vòng 4: Đọc hiểu & Quiz</option>
+            <option value="5">Vòng 5: Điền từ & Viết</option>
+          </select>
+        </div>
+      </div>
 
       {/* Mistake Cards List */}
       {loading ? (
