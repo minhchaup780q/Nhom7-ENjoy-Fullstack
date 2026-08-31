@@ -64,12 +64,17 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config as CustomAxiosRequestConfig;
 
-    // Kiểm tra nếu bị lỗi 401 và chưa từng retry trong chính cái request này
+    // Kiểm tra nếu bị lỗi 401 và không phải là request auth (login/register/googleAuth) hay refresh token
+    const isAuthRequest = originalRequest?.url?.includes('/api/auth/login') ||
+                          originalRequest?.url?.includes('/api/auth/register') ||
+                          originalRequest?.url?.includes('/api/auth/login-by-google') ||
+                          originalRequest?.url?.includes('/api/auth/refresh');
+
     if (
       error.response?.status === 401 &&
       originalRequest &&
       !originalRequest._retry &&
-      !originalRequest.url?.includes('/api/auth/refresh')
+      !isAuthRequest
     ) {
       if (isRefreshing) {
         // Nếu đang trong quá trình refresh token, cho request này vào hàng đợi chờ

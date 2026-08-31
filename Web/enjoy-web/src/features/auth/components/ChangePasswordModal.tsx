@@ -4,13 +4,13 @@ import { authApi } from '../api/authApi';
 import { useAuthStore } from '../store/useAuthStore';
 import { ApiError } from '../../../services/apiClient';
 
-interface SettingsModalProps {
+interface ChangePasswordModalProps {
   isOpen: boolean;
   onClose: () => void;
   hasPassword?: boolean;
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, hasPassword = true }) => {
+export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClose, hasPassword = true }) => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -182,7 +182,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, h
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-3 rounded-2xl bg-[#58cc02] border-b-4 border-[#3f9102] text-white font-extrabold uppercase tracking-wider text-xs hover:brightness-105 active:translate-y-0.5 active:border-b-0 transition disabled:opacity-50"
+              className="flex-1 py-3 rounded-2xl bg-[#ff5e97] border-b-4 border-[#d93d74] text-white font-extrabold uppercase tracking-wider text-xs hover:brightness-105 active:translate-y-0.5 active:border-b-0 transition disabled:opacity-50"
             >
               {loading ? 'ĐANG LƯU...' : 'LƯU MẬT KHẨU'}
             </button>

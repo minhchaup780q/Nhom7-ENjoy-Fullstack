@@ -224,7 +224,7 @@ export const RegisterPage: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-4 py-3.5 rounded-2xl bg-[#58cc02] border-b-4 border-[#3f9102] text-white font-extrabold uppercase tracking-wider text-base hover:brightness-105 active:translate-y-1 active:border-b-0 transition-all disabled:opacity-50"
+              className="w-full mt-4 py-3.5 rounded-2xl bg-[#ff5e97] border-b-4 border-[#d93d74] text-white font-extrabold uppercase tracking-wider text-base hover:brightness-105 active:translate-y-1 active:border-b-0 transition-all disabled:opacity-50"
             >
               {loading ? 'ĐANG XỬ LÝ...' : 'TẠO TÀI KHOẢN'}
             </button>
@@ -274,7 +274,7 @@ export const RegisterPage: React.FC = () => {
             <button
               type="submit"
               disabled={loading || otpCode.length !== 6}
-              className="w-full mt-4 py-3.5 rounded-2xl bg-sky-500 border-b-4 border-sky-700 text-white font-extrabold uppercase tracking-wider text-base hover:brightness-105 active:translate-y-1 active:border-b-0 transition-all disabled:opacity-50"
+              className="w-full mt-4 py-3.5 rounded-2xl bg-[#ff5e97] border-b-4 border-[#d93d74] text-white font-extrabold uppercase tracking-wider text-base hover:brightness-105 active:translate-y-1 active:border-b-0 transition-all disabled:opacity-50"
             >
               {loading ? 'ĐANG XÁC THỰC...' : 'XÁC NHẬN OTP'}
             </button>

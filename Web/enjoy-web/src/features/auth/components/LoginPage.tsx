@@ -145,7 +145,7 @@ export const LoginPage: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 rounded-2xl bg-[#1cb0f6] border-b-4 border-[#1280b5] text-white font-extrabold uppercase tracking-wider text-base hover:brightness-105 active:translate-y-1 active:border-b-0 transition-all disabled:opacity-50"
+            className="w-full py-3.5 rounded-2xl bg-[#ff5e97] border-b-4 border-[#d93d74] text-white font-extrabold uppercase tracking-wider text-base hover:brightness-105 active:translate-y-1 active:border-b-0 transition-all disabled:opacity-50"
           >
             {loading ? 'ĐANG XỬ LÝ...' : 'ĐĂNG NHẬP'}
           </button>
