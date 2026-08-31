@@ -29,19 +29,12 @@ const getAssetUrl = (path?: string) => {
 };
 
 const ROUND_NAMES: Record<number, string> = {
-  1: 'Vòng 1: Nhận diện từ vựng',
+  1: 'Vòng 1: Giới thiệu từ mới',
   2: 'Vòng 2: Luyện nghe (Listening)',
   3: 'Vòng 3: Luyện nói & Phát âm',
   4: 'Vòng 4: Đọc hiểu & Quiz',
   5: 'Vòng 5: Chính tả & Điền từ'
 };
-
-const BACKUP_DISTRACTORS = [
-  'apple', 'banana', 'cat', 'dog', 'elephant', 'fish', 'giraffe', 'house',
-  'ice cream', 'jacket', 'kite', 'lion', 'monkey', 'nest', 'orange', 'panda',
-  'queen', 'rabbit', 'sun', 'tiger', 'umbrella', 'van', 'water', 'yellow', 'zebra',
-  'run', 'jump', 'eat', 'sleep', 'read', 'sing', 'dance', 'play', 'swim', 'fly'
-];
 
 const BACKUP_IMAGES = [
   'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&auto=format&fit=crop&q=80',
@@ -49,7 +42,11 @@ const BACKUP_IMAGES = [
   'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?w=600&auto=format&fit=crop&q=80',
   'https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=600&auto=format&fit=crop&q=80',
   'https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=600&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=600&auto=format&fit=crop&q=80'
+];
+
+const BACKUP_KEYWORDS = [
+  'cow', 'pig', 'duck', 'horse', 'sheep', 'run', 'swim', 'eat', 'sleep', 'fly',
+  'red', 'blue', 'green', 'yellow', 'black', 'apple', 'cat', 'dog', 'house'
 ];
 
 export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
@@ -96,7 +93,7 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
     }
   }, [currentItem]);
 
-  // Luôn tạo đúng 4 lựa chọn (Hình ảnh cho Vòng 2, Chữ cho các Vòng khác)
+  // Tạo danh sách 4 lựa chọn cho câu hỏi
   useEffect(() => {
     if (!currentItem) return;
 
@@ -105,56 +102,59 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
     setIsChecked(false);
     setIsCorrect(false);
 
-    // Tự động phát âm thanh nếu là Vòng nghe (Round 2)
     if (currentItem.roundType === 2) {
-      const timer = setTimeout(() => playAudio(1.0), 300);
-      return () => clearTimeout(timer);
-    }
-
-    if (currentItem.roundType === 2) {
-      // VÒNG NGHE: Luôn tạo 4 hình ảnh
-      const correctImage = currentItem.imageUrl || BACKUP_IMAGES[0];
+      // VÒNG 2 (LISTENING): 4 hình ảnh
+      const correctImage = currentItem.imageUrl || '';
       const otherImages = mistakes
-        .map(m => m.imageUrl || '')
+        .map(item => item.imageUrl || '')
         .filter(img => img !== '' && img !== correctImage);
 
-      const uniqueOthers = Array.from(new Set(otherImages));
-      while (uniqueOthers.length < 3) {
-        const backupImg = BACKUP_IMAGES[Math.floor(Math.random() * BACKUP_IMAGES.length)];
-        if (!uniqueOthers.includes(backupImg) && backupImg !== correctImage) {
-          uniqueOthers.push(backupImg);
+      const uniqueOtherImages = Array.from(new Set(otherImages));
+      const selectedOthers: string[] = [];
+
+      uniqueOtherImages.forEach(img => {
+        if (selectedOthers.length < 3 && !selectedOthers.includes(img)) {
+          selectedOthers.push(img);
+        }
+      });
+
+      for (const backupImg of BACKUP_IMAGES) {
+        if (selectedOthers.length >= 3) break;
+        if (backupImg !== correctImage && !selectedOthers.includes(backupImg)) {
+          selectedOthers.push(backupImg);
         }
       }
 
-      const final4Images = [correctImage, ...uniqueOthers.slice(0, 3)].sort(() => 0.5 - Math.random());
-      setOptions(final4Images);
+      const finalChoices = [correctImage || BACKUP_IMAGES[0], ...selectedOthers].sort(() => 0.5 - Math.random());
+      setOptions(finalChoices);
+
+      // Tự động phát âm thanh khi vào vòng nghe
+      setTimeout(() => playAudio(1.0), 300);
     } else {
-      // CÁC VÒNG KHÁC: Luôn tạo 4 lựa chọn chữ
-      const correctAnswer = currentItem.keyword || currentItem.contentText || '';
-      const wrongSubmitted = currentItem.wrongAnswerSubmitted;
+      // CÁC VÒNG KHÁC: 4 lựa chọn chữ
+      const correctKeyword = currentItem.keyword || currentItem.contentText || '';
+      const otherKeywords = mistakes
+        .filter(item => item.id !== currentItem.id && item.keyword && item.keyword !== correctKeyword)
+        .map(item => item.keyword as string);
 
-      const otherWords = mistakes
-        .filter(m => m.id !== currentItem.id)
-        .map(m => m.keyword || m.contentText)
-        .filter((w): w is string => Boolean(w && !w.startsWith('http') && w.toLowerCase() !== correctAnswer.toLowerCase()));
+      const uniqueOthers = Array.from(new Set(otherKeywords));
+      const selectedOthers: string[] = [];
 
-      const poolSet = new Set<string>();
-      poolSet.add(correctAnswer);
-      if (wrongSubmitted && !wrongSubmitted.startsWith('http') && wrongSubmitted.toLowerCase() !== correctAnswer.toLowerCase()) {
-        poolSet.add(wrongSubmitted);
-      }
-      otherWords.forEach(w => poolSet.add(w));
+      uniqueOthers.forEach(w => {
+        if (selectedOthers.length < 3 && !selectedOthers.includes(w)) {
+          selectedOthers.push(w);
+        }
+      });
 
-      const backupPool = [...BACKUP_DISTRACTORS].sort(() => 0.5 - Math.random());
-      for (const word of backupPool) {
-        if (poolSet.size >= 4) break;
-        if (word.toLowerCase() !== correctAnswer.toLowerCase()) {
-          poolSet.add(word);
+      for (const backup of BACKUP_KEYWORDS) {
+        if (selectedOthers.length >= 3) break;
+        if (backup !== correctKeyword && !selectedOthers.includes(backup)) {
+          selectedOthers.push(backup);
         }
       }
 
-      const final4Options = Array.from(poolSet).slice(0, 4).sort(() => 0.5 - Math.random());
-      setOptions(final4Options);
+      const finalChoices = [correctKeyword, ...selectedOthers].sort(() => 0.5 - Math.random());
+      setOptions(finalChoices);
     }
   }, [currentIndex, currentItem, mistakes, playAudio]);
 
@@ -165,14 +165,17 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
     let correct = false;
 
     if (currentItem.roundType === 2) {
+      // Vòng Nghe: So sánh URL ảnh
       userAns = selectedOption || '';
-      const targetImage = currentItem.imageUrl || options[0];
-      correct = selectedOption === targetImage || selectedOption === currentItem.imageUrl;
+      const correctImage = currentItem.imageUrl || options[0];
+      correct = selectedOption === correctImage || (!!currentItem.imageUrl && selectedOption === currentItem.imageUrl);
     } else if (currentItem.roundType === 5) {
+      // Vòng Điền từ
       userAns = fillInputValue.trim().toLowerCase();
       const target = (currentItem.keyword || currentItem.contentText || '').trim().toLowerCase();
       correct = userAns === target;
     } else {
+      // Vòng Trắc nghiệm chữ
       userAns = (selectedOption || '').trim().toLowerCase();
       const target = (currentItem.keyword || currentItem.contentText || '').trim().toLowerCase();
       correct = userAns === target;
@@ -265,11 +268,11 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-[#f7f9fa] flex flex-col justify-between select-none">
-      {/* Header */}
+      {/* Header Bar */}
       <div className="max-w-3xl mx-auto w-full px-4 py-3 flex items-center gap-3">
         <button
           onClick={onClose}
-          className="p-2 hover:bg-white rounded-xl text-text-muted hover:text-[#2b2b2b]"
+          className="p-2 hover:bg-white rounded-xl text-text-muted hover:text-[#2b2b2b] transition-colors"
         >
           <X className="w-5 h-5 stroke-[2.5]" />
         </button>
@@ -287,8 +290,9 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
         </div>
       </div>
 
-      {/* Main Area */}
+      {/* Main Core Question Area */}
       <div className="flex-1 max-w-xl mx-auto w-full px-4 py-2 flex flex-col justify-center gap-4">
+        {/* Round Badge */}
         <div className="flex items-center justify-between">
           <span className="px-3 py-0.5 bg-primary-soft text-primary rounded-full text-xs font-display font-black uppercase">
             {ROUND_NAMES[currentItem.roundType] || `Vòng ${currentItem.roundType}`}
@@ -299,39 +303,41 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
           </span>
         </div>
 
-        {/* Question Flashcard */}
+        {/* Question Header Card */}
         <div className="bg-white border-2 border-border-main rounded-2xl p-4 shadow-sm space-y-3 text-center">
           {isListeningRound ? (
-            <div className="flex items-center justify-center gap-3 py-1">
+            <div className="flex items-center justify-center gap-4 py-2">
               <button
                 onClick={() => playAudio(1.0)}
-                className={`btn-3d w-12 h-12 rounded-xl flex items-center justify-center cursor-pointer transition-all ${
-                  isPlayingAudio ? 'btn-3d-pink animate-pulse' : 'btn-3d-blue'
+                className={`btn-3d w-14 h-14 rounded-2xl flex items-center justify-center cursor-pointer transition-all ${
+                  isPlayingAudio ? 'btn-3d-pink animate-pulse' : 'btn-3d-blue hover:scale-105'
                 }`}
                 title="Nghe chuẩn"
               >
-                <Volume2 className="w-6 h-6 text-white" />
+                <Volume2 className="w-7 h-7 text-white" />
               </button>
+
               <button
                 onClick={() => playAudio(0.6)}
-                className="btn-3d w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer bg-amber-100 border-b-4 border-amber-300"
+                className="btn-3d w-11 h-11 rounded-xl flex items-center justify-center cursor-pointer bg-amber-100 border-b-4 border-amber-300 shadow-[0_2px_0_0_#d97706]"
                 title="Nghe chậm"
               >
-                <span className="text-lg select-none">🐢</span>
+                <span className="text-xl select-none">🐢</span>
               </button>
+
               <div className="text-left">
                 <h4 className="text-sm font-display font-extrabold text-[#2b2b2b] m-0">
-                  HÃY NGHE VÀ CHỌN ẢNH ĐÚNG!
+                  HÃY NGHE KỸ VÀ CHỌN HÌNH ẢNH ĐÚNG!
                 </h4>
-                <p className="text-[10px] font-semibold text-text-muted">
-                  Bấm nút loa để nghe phát âm
+                <p className="text-[10px] font-semibold text-text-muted mt-0.5">
+                  Bấm nút loa để nghe giọng đọc mẫu.
                 </p>
               </div>
             </div>
           ) : (
             <div className="space-y-2">
               {currentItem.imageUrl && (
-                <div className="w-28 h-28 mx-auto rounded-xl overflow-hidden border border-border-main bg-bg-light flex items-center justify-center">
+                <div className="w-24 h-24 mx-auto rounded-xl overflow-hidden border border-border-main bg-bg-light flex items-center justify-center">
                   <img
                     src={getAssetUrl(currentItem.imageUrl)}
                     alt="Illustration"
@@ -363,45 +369,51 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
             </div>
           )}
 
+          {/* Previous Mistake Pill */}
           <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-red-50 border border-red-200 rounded-full text-[11px] text-red-600 font-semibold">
             <AlertTriangle className="w-3 h-3 shrink-0" />
-            <span>Lần trước chọn sai: </span>
-            {currentItem.wrongAnswerSubmitted.startsWith('http') ? (
-              <img src={getAssetUrl(currentItem.wrongAnswerSubmitted)} alt="Wrong" className="w-4 h-4 rounded object-cover inline-block" />
+            <span>Lần trước bé chọn sai: </span>
+            {currentItem.wrongAnswerSubmitted && currentItem.wrongAnswerSubmitted.startsWith('http') ? (
+              <div className="w-4 h-4 rounded border border-red-300 overflow-hidden inline-block align-middle ml-1">
+                <img src={getAssetUrl(currentItem.wrongAnswerSubmitted)} alt="Wrong" className="w-full h-full object-cover" />
+              </div>
             ) : (
               <strong className="line-through">{currentItem.wrongAnswerSubmitted}</strong>
             )}
           </div>
         </div>
 
-        {/* 4 Choices */}
+        {/* 4 Interactive Choices */}
         {isListeningRound ? (
-          <div className="grid grid-cols-2 gap-3 w-full">
-            {options.map((imgSrc, idx) => {
-              const isSelected = selectedOption === imgSrc;
+          // VÒNG 2: 4 THẺ ẢNH GIỐNG HỆT NHƯ BÀI HỌC CHÍNH
+          <div className="grid grid-cols-2 gap-3.5 w-full max-w-lg mx-auto">
+            {options.map((imageUrl, idx) => {
+              const isSelected = selectedOption === imageUrl;
               const optionLabel = String.fromCharCode(65 + idx);
 
               return (
                 <button
-                  key={idx}
-                  onClick={() => !isChecked && setSelectedOption(imgSrc)}
-                  disabled={isChecked}
-                  className={`p-1.5 rounded-2xl border-4 transition-all flex flex-col items-center gap-1 relative cursor-pointer ${
-                    isSelected 
-                      ? 'border-primary bg-primary-soft ring-2 ring-primary/10 scale-[1.02]' 
-                      : 'border-border-main bg-white hover:border-primary/50'
+                  key={imageUrl + '-' + idx}
+                  onClick={() => !isChecked && setSelectedOption(imageUrl)}
+                  className={`card-3d p-2 border-2 transition-all flex flex-col items-center gap-2 cursor-pointer relative ${
+                    isSelected
+                      ? 'border-primary bg-primary-soft ring-2 ring-primary/10 shadow-[0_4px_0_0_#d93d74] scale-[1.03]'
+                      : 'border-border-main hover:bg-bg-light bg-white shadow-[0_4px_0_0_#e5e5e5]'
                   }`}
+                  style={{
+                    pointerEvents: isChecked ? 'none' : 'auto',
+                  }}
                 >
                   <span className="absolute top-2 left-2 z-10 w-5 h-5 rounded-md border flex items-center justify-center font-display text-[10px] font-extrabold bg-white border-border-main text-text-muted">
                     {optionLabel}
                   </span>
-                  <div className="w-full aspect-video sm:h-28 rounded-xl overflow-hidden bg-bg-light relative">
+                  <div className="w-full aspect-video sm:h-32 rounded-xl overflow-hidden bg-bg-light relative">
                     <img
-                      src={getAssetUrl(imgSrc)}
+                      src={getAssetUrl(imageUrl)}
                       alt={`Lựa chọn ${optionLabel}`}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = BACKUP_IMAGES[idx % BACKUP_IMAGES.length];
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400';
                       }}
                     />
                   </div>
@@ -423,7 +435,7 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
             />
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2.5">
             {options.map((opt, idx) => {
               const isSelected = selectedOption === opt;
               const optionLabel = String.fromCharCode(65 + idx);
@@ -433,7 +445,7 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
                   key={idx}
                   onClick={() => !isChecked && setSelectedOption(opt)}
                   disabled={isChecked}
-                  className={`py-3 px-3 rounded-xl border-2 font-display font-bold text-sm transition-all flex items-center gap-2 ${
+                  className={`py-3.5 px-3 rounded-xl border-2 font-display font-bold text-sm transition-all flex items-center gap-2 ${
                     isSelected 
                       ? 'bg-primary text-white border-primary shadow-sm scale-[1.01]' 
                       : 'bg-white border-border-main text-[#4b5563] hover:bg-bg-light'
@@ -452,7 +464,7 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
         )}
       </div>
 
-      {/* Footer */}
+      {/* Bottom Footer */}
       <div className={`border-t-2 border-border-main px-4 py-3 transition-all ${
         isChecked 
           ? isCorrect 
