@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useGoogleLogin } from '@react-oauth/google';
+import axios from 'axios';
 import { authApi } from '../api/authApi';
 import { useAuthStore } from '../store/useAuthStore';
 import { ApiError } from '../../../services/apiClient';
@@ -26,7 +28,7 @@ export const LoginPage: React.FC = () => {
     try {
       const response = await authApi.login({ email: email.trim(), password });
       setAuth(
-        { email: email.trim() },
+        { email: email.trim(), hasPassword: response.hasPassword ?? true },
         response.accessToken,
         response.refreshToken
       );
@@ -42,11 +44,48 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleGoogleLogin = () => {
-    // Mock Google OAuth login flow
-    setAuth({ email: 'user.google@gmail.com', username: 'Google User' }, 'google-mock-token');
-    navigate('/learn');
-  };
+  const handleGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setLoading(true);
+      setErrorMsg(null);
+
+      try {
+        // 1. Lấy thông tin user profile từ Google qua Access Token
+        const userInfo = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        });
+
+        const { email: googleEmail, name: googleName, sub: googleId } = userInfo.data;
+
+        // 2. Gửi thông tin sang Backend auth-service (/api/auth/login-by-google)
+        const response = await authApi.googleAuth({
+          email: googleEmail,
+          name: googleName,
+          googleId: googleId,
+        });
+
+        // 3. Lưu Access Token và Refresh Token vào Zustand store / localStorage
+        setAuth(
+          { email: googleEmail, username: googleName, hasPassword: response.hasPassword ?? false },
+          response.accessToken,
+          response.refreshToken
+        );
+
+        navigate('/learn');
+      } catch (err) {
+        if (err instanceof ApiError) {
+          setErrorMsg(err.message || 'Đăng nhập Google thất bại!');
+        } else {
+          setErrorMsg('Lỗi xác thực Google. Vui lòng thử lại!');
+        }
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: () => {
+      setErrorMsg('Đăng nhập Google không thành công hoặc đã bị hủy!');
+    },
+  });
 
   return (
     <div className="min-h-screen bg-white flex flex-col justify-between items-center px-4 py-6 relative font-sans">
@@ -106,7 +145,7 @@ export const LoginPage: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 rounded-2xl bg-[#1cb0f6] border-b-4 border-[#1280b5] text-white font-extrabold uppercase tracking-wider text-base hover:brightness-105 active:translate-y-1 active:border-b-0 transition-all disabled:opacity-50"
+            className="w-full py-3.5 rounded-2xl bg-[#ff5e97] border-b-4 border-[#d93d74] text-white font-extrabold uppercase tracking-wider text-base hover:brightness-105 active:translate-y-1 active:border-b-0 transition-all disabled:opacity-50"
           >
             {loading ? 'ĐANG XỬ LÝ...' : 'ĐĂNG NHẬP'}
           </button>

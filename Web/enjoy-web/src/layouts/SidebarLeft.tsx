@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { BookOpen, Compass, Trophy, Target, ShoppingBag, User, Sparkles } from 'lucide-react';
+import { SettingsFlyoutMenu } from './SettingsFlyoutMenu';
 
 interface MenuItem {
   id: string;
@@ -21,7 +22,7 @@ export const SidebarLeft: React.FC = () => {
   ];
 
   return (
-    <aside className="w-64 border-r-2 border-border-main min-h-svh p-4 flex flex-col fixed left-0 top-0 bg-white">
+    <aside className="w-64 border-r-2 border-border-main min-h-svh p-4 flex flex-col fixed left-0 top-0 bg-white z-20">
       {/* Brand logo */}
       <div className="px-4 py-6 mb-4">
         <h1 className="text-3xl font-extrabold tracking-wide text-primary m-0 font-display flex items-center gap-2 select-none">
@@ -32,24 +33,25 @@ export const SidebarLeft: React.FC = () => {
 
       {/* Menu items */}
       <nav className="flex-1 space-y-2">
-        {menuItems.map((item) => {
-          return (
-            <NavLink
-              key={item.id}
-              to={item.path}
-              className={({ isActive }) =>
-                `w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-display font-extrabold text-sm tracking-wider select-none transition-all duration-100 border-2 ${
-                  isActive
-                    ? 'bg-primary-soft text-primary border-primary/20'
-                    : 'text-[#5c5c5c] border-transparent hover:bg-bg-light'
-                }`
-              }
-            >
-              {item.icon}
-              {item.label}
-            </NavLink>
-          );
-        })}
+        {menuItems.map((item) => (
+          <NavLink
+            key={item.id}
+            to={item.path}
+            className={({ isActive }) =>
+              `w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-display font-extrabold text-sm tracking-wider select-none transition-all duration-100 border-2 ${
+                isActive
+                  ? 'bg-primary-soft text-primary border-primary/20'
+                  : 'text-[#5c5c5c] border-transparent hover:bg-bg-light'
+              }`
+            }
+          >
+            {item.icon}
+            {item.label}
+          </NavLink>
+        ))}
+
+        {/* Nút cài đặt và toàn bộ popup, modal con của nó */}
+        <SettingsFlyoutMenu />
       </nav>
 
       {/* Footer copyright */}

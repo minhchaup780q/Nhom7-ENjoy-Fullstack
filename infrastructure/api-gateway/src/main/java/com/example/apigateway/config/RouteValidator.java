@@ -8,18 +8,21 @@ import java.util.function.Predicate;
 
 @Component
 public class RouteValidator {
-    // Danh sách các API không cần kiểm tra Token
+    // Danh sách các API công khai (Public Whitelist)
     public static final List<String> openApiEndpoints = List.of(
             "/api/auth/login",
-            "/api/user/register",
-            "/api/user",
-            "/api/auth"
+            "/api/auth/login-by-google",
+            "/api/auth/register",
+            "/api/auth/verify-otp",
+            "/api/auth/resend-otp",
+            "/api/auth/refresh",
+            "/api/user"
     );
 
-    // bộ lọc tách ra thành url public hay private
+    // Bộ lọc: nếu request KHÔNG nằm trong whitelist thì là route cần bảo mật (sẽ giải mã JWT và gắn X-User-Id)
     public Predicate<ServerHttpRequest> isSecured =
             request -> openApiEndpoints
                     .stream()
-                    .noneMatch(uri -> request.getURI().getPath().startsWith(uri));
+                    .noneMatch(uri -> request.getURI().getPath().equals(uri) || request.getURI().getPath().startsWith("/api/user/public"));
 
 }
