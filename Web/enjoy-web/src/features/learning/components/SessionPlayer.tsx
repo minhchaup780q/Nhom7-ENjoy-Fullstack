@@ -4,7 +4,6 @@ import { SessionItemType } from '../types';
 import type { Session, SessionItem } from '../types';
 import { Mascot } from '../../../components/ui/Mascot';
 import { Button3D } from '../../../components/ui/Button3D';
-import { X, Heart, AlertTriangle, CheckCircle, Volume2, Mic, Square, Play, RefreshCw, RotateCcw } from 'lucide-react';
 import { BASE_URL } from '../../../services/apiClient';
 import { learningApi } from '../services/learningApi';
 

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, CameraOff, RefreshCw, CheckCircle, Search, HelpCircle, Volume2, BoxSelect } from 'lucide-react';
 import { exploreApi } from '../services/exploreApi';
 // Thêm bbox vào kiểu dữ liệu (nếu chưa có)
 export interface DetectionItem {

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Settings, KeyRound, LogOut } from 'lucide-react';
+import { Cog6ToothIcon, KeyIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 import { ChangePasswordModal } from '../features/auth/components/ChangePasswordModal';
 import { LogoutConfirmModal } from '../features/auth/components/LogoutConfirmModal';
 import { useAuthStore } from '../features/auth/store/useAuthStore';
@@ -13,7 +13,7 @@ export const SettingsFlyoutMenu: React.FC = () => {
   const menuRef = useRef<HTMLDivElement>(null);
   const user = useAuthStore((state) => state.user);
   const navigate = useNavigate();
-  const logout = useAuthStore((state) => state.logout)
+  const logout = useAuthStore((state) => state.logout);
 
   // Đóng popup menu cài đặt khi click ra ngoài
   useEffect(() => {
@@ -33,7 +33,7 @@ export const SettingsFlyoutMenu: React.FC = () => {
 
   // Hàm xử lý xác nhận đăng xuất
   const handleConfirmLogout = () => {
-    logout()
+    logout();
     navigate('/login');
   };
 
@@ -49,7 +49,7 @@ export const SettingsFlyoutMenu: React.FC = () => {
             : 'border-transparent text-[#5c5c5c] hover:bg-bg-light hover:text-slate-700'
             }`}
         >
-          <Settings className="w-6 h-6 stroke-[2.5]" />
+          <Cog6ToothIcon className="w-6 h-6 stroke-[2.5]" />
           CÀI ĐẶT
         </button>
 
@@ -63,10 +63,10 @@ export const SettingsFlyoutMenu: React.FC = () => {
                 setIsFlyoutOpen(false);
                 setIsPasswordModalOpen(true);
               }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left font-display font-bold text-sm text-slate-700 hover:bg-slate-100 transition-colors"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left font-display font-bold text-sm text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
             >
               <div className="p-2 rounded-lg bg-sky-50 text-sky-600">
-                <KeyRound className="w-4 h-4 stroke-[2.5]" />
+                <KeyIcon className="w-4 h-4 stroke-[2.5]" />
               </div>
               <span>Đổi mật khẩu</span>
             </button>
@@ -81,10 +81,10 @@ export const SettingsFlyoutMenu: React.FC = () => {
                 setIsFlyoutOpen(false);
                 setIsLogoutModalOpen(true);
               }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left font-display font-bold text-sm text-red-500 hover:bg-red-50 transition-colors"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left font-display font-bold text-sm text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
             >
               <div className="p-2 rounded-lg bg-red-50 text-red-500">
-                <LogOut className="w-4 h-4 stroke-[2.5]" />
+                <ArrowRightOnRectangleIcon className="w-4 h-4 stroke-[2.5]" />
               </div>
               <span>Đăng xuất</span>
             </button>

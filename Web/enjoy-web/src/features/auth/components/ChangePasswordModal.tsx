@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Lock, KeyRound } from 'lucide-react';
+import { XMarkIcon, LockClosedIcon, KeyIcon } from '@heroicons/react/24/outline';
 import { authApi } from '../api/authApi';
 import { useAuthStore } from '../store/useAuthStore';
 import { ApiError } from '../../../services/apiClient';
@@ -90,15 +90,15 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+          className="absolute top-4 right-4 p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
         >
-          <X className="w-5 h-5" />
+          <XMarkIcon className="w-5 h-5 stroke-[2.5]" />
         </button>
 
         {/* Modal Title */}
         <div className="flex items-center gap-3 mb-6">
           <div className="p-3 rounded-2xl bg-sky-100 text-sky-600">
-            {hasPassword ? <Lock className="w-6 h-6" /> : <KeyRound className="w-6 h-6" />}
+            {hasPassword ? <LockClosedIcon className="w-6 h-6 stroke-[2.5]" /> : <KeyIcon className="w-6 h-6 stroke-[2.5]" />}
           </div>
           <div>
             <h2 className="text-xl font-extrabold text-slate-700 font-display">
@@ -112,7 +112,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
           </div>
         </div>
 
-        {/* Feedback Messages: Chỉ hiển thị duy nhất 1 loại thông báo */}
+        {/* Feedback Messages */}
         {errorMsg ? (
           <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-semibold text-center animate-shake">
             {errorMsg}
@@ -125,7 +125,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
 
         {/* Change Password Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Current Password Field (Only if user already has a password) */}
+          {/* Current Password Field */}
           {hasPassword && (
             <div>
               <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 ml-1">
@@ -174,7 +174,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 rounded-2xl border-2 border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-xs hover:bg-slate-100 transition"
+              className="flex-1 py-3 rounded-2xl border-2 border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-xs hover:bg-slate-100 transition cursor-pointer"
             >
               Hủy
             </button>
@@ -182,7 +182,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-3 rounded-2xl bg-[#ff5e97] border-b-4 border-[#d93d74] text-white font-extrabold uppercase tracking-wider text-xs hover:brightness-105 active:translate-y-0.5 active:border-b-0 transition disabled:opacity-50"
+              className="flex-1 py-3 rounded-2xl bg-[#ff5e97] border-b-4 border-[#d93d74] text-white font-extrabold uppercase tracking-wider text-xs hover:brightness-105 active:translate-y-0.5 active:border-b-0 transition disabled:opacity-50 cursor-pointer"
             >
               {loading ? 'ĐANG LƯU...' : 'LƯU MẬT KHẨU'}
             </button>
