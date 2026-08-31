@@ -1,20 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { 
-  ArrowLeft, 
-  CameraOff, 
-  RefreshCw, 
-  CheckCircle, 
-  Volume2, 
-  BoxSelect, 
-  Clock, 
-  FastForward, 
-  Play, 
-  Trophy, 
-  Sparkles, 
-  RotateCcw, 
-  XCircle,
-  Award
-} from 'lucide-react';
 import { exploreApi } from '../services/exploreApi';
 import { Mascot } from '../../../components/ui/Mascot';
 

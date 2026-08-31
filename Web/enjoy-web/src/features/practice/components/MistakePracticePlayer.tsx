@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  X, 
-  Heart, 
-  CheckCircle, 
-  AlertTriangle, 
-  Volume2, 
-  RotateCcw, 
-  Trophy, 
-  Clock
-} from 'lucide-react';
+  XMarkIcon, 
+  HeartIcon, 
+  CheckCircleIcon, 
+  ExclamationTriangleIcon, 
+  SpeakerWaveIcon, 
+  ArrowPathIcon, 
+  TrophyIcon, 
+  ClockIcon
+} from '@heroicons/react/24/solid';
 import { Button3D } from '../../../components/ui/Button3D';
 import { Mascot } from '../../../components/ui/Mascot';
 import { BASE_URL } from '../../../services/apiClient';
@@ -216,7 +216,7 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
       <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
         <div className="bg-white border-4 border-border-main rounded-3xl p-6 max-w-md w-full text-center space-y-4 shadow-2xl">
           <div className="w-16 h-16 bg-primary-soft rounded-2xl mx-auto flex items-center justify-center text-primary shadow-inner">
-            <Trophy className="w-8 h-8 stroke-[2.5]" />
+            <TrophyIcon className="w-8 h-8" />
           </div>
 
           <div className="space-y-1">
@@ -272,9 +272,9 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
       <div className="max-w-3xl mx-auto w-full px-4 py-3 flex items-center gap-3">
         <button
           onClick={onClose}
-          className="p-2 hover:bg-white rounded-xl text-text-muted hover:text-[#2b2b2b] transition-colors"
+          className="p-2 hover:bg-white rounded-xl text-text-muted hover:text-[#2b2b2b] transition-colors cursor-pointer"
         >
-          <X className="w-5 h-5 stroke-[2.5]" />
+          <XMarkIcon className="w-5 h-5 stroke-[2.5]" />
         </button>
 
         <div className="flex-1 bg-[#e5e7eb] h-3.5 rounded-full overflow-hidden border border-border-main/50 p-0.5">
@@ -285,7 +285,7 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
         </div>
 
         <div className="flex items-center gap-1.5 px-3 py-1 bg-red-50 border border-red-200 rounded-xl text-red-500 font-display font-black text-xs">
-          <Heart className="w-4 h-4 fill-current animate-pulse" />
+          <HeartIcon className="w-4 h-4 animate-pulse" />
           <span>{hearts}</span>
         </div>
       </div>
@@ -298,7 +298,7 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
             {ROUND_NAMES[currentItem.roundType] || `Vòng ${currentItem.roundType}`}
           </span>
           <span className="text-xs font-semibold text-text-muted flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5" />
+            <ClockIcon className="w-3.5 h-3.5" />
             {currentItem.durationSeconds || 0}s
           </span>
         </div>
@@ -314,7 +314,7 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
                 }`}
                 title="Nghe chuẩn"
               >
-                <Volume2 className="w-7 h-7 text-white" />
+                <SpeakerWaveIcon className="w-7 h-7 text-white" />
               </button>
 
               <button
@@ -357,7 +357,7 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
                   onClick={() => playAudio(1.0)}
                   className="p-2 bg-primary-soft hover:bg-primary/20 text-primary rounded-xl"
                 >
-                  <Volume2 className={`w-4 h-4 ${isPlayingAudio ? 'animate-bounce' : ''}`} />
+                  <SpeakerWaveIcon className={`w-4 h-4 ${isPlayingAudio ? 'animate-bounce' : ''}`} />
                 </button>
               </div>
 
@@ -371,7 +371,7 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
 
           {/* Previous Mistake Pill */}
           <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-red-50 border border-red-200 rounded-full text-[11px] text-red-600 font-semibold">
-            <AlertTriangle className="w-3 h-3 shrink-0" />
+            <ExclamationTriangleIcon className="w-3 h-3 shrink-0" />
             <span>Lần trước bé chọn sai: </span>
             {currentItem.wrongAnswerSubmitted && currentItem.wrongAnswerSubmitted.startsWith('http') ? (
               <div className="w-4 h-4 rounded border border-red-300 overflow-hidden inline-block align-middle ml-1">
@@ -478,7 +478,7 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                 isCorrect ? 'bg-[#52c41a] text-white' : 'bg-[#f5222d] text-white'
               }`}>
-                {isCorrect ? <CheckCircle className="w-5 h-5" /> : <X className="w-5 h-5" />}
+                {isCorrect ? <CheckCircleIcon className="w-5 h-5" /> : <XMarkIcon className="w-5 h-5" />}
               </div>
               <div>
                 <p className={`font-display font-black text-sm ${

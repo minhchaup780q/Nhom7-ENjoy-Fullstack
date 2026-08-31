@@ -1,20 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  Compass, 
-  RotateCcw, 
-  CheckCircle, 
-  AlertTriangle, 
-  Volume2, 
-  Play, 
-  Sparkles, 
-  Trophy, 
-  Clock, 
-  Filter, 
-  BookOpen, 
-  Bot,
-  RefreshCw,
-  Award
-} from 'lucide-react';
+  ArrowPathIcon, 
+  CheckCircleIcon, 
+  ExclamationTriangleIcon, 
+  SpeakerWaveIcon, 
+  PlayIcon, 
+  SparklesIcon, 
+  TrophyIcon, 
+  ClockIcon, 
+  FunnelIcon, 
+  BookOpenIcon, 
+  CpuChipIcon,
+  XMarkIcon
+} from '@heroicons/react/24/solid';
 import { Button3D } from '../../../components/ui/Button3D';
 import { Mascot } from '../../../components/ui/Mascot';
 import { BASE_URL } from '../../../services/apiClient';
@@ -179,7 +177,7 @@ export const PracticeDashboard: React.FC = () => {
       <div className="bg-white border-4 border-border-main rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary-soft text-primary flex items-center justify-center">
-            <BookOpen className="w-5 h-5" />
+            <BookOpenIcon className="w-5 h-5" />
           </div>
           <div>
             <h3 className="text-sm font-display font-black text-[#2b2b2b] uppercase">
@@ -198,7 +196,7 @@ export const PracticeDashboard: React.FC = () => {
           onClick={startPracticeAllNeedsReview}
           className="flex items-center gap-2"
         >
-          <Play className="w-4 h-4 fill-current" />
+          <PlayIcon className="w-4 h-4 fill-current" />
           ÔN TẬP TẤT CẢ ({needsReviewList.length})
         </Button3D>
       </div>
@@ -225,7 +223,7 @@ export const PracticeDashboard: React.FC = () => {
 
         {/* Round Filter Dropdown */}
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-text-muted" />
+          <FunnelIcon className="w-4 h-4 text-text-muted" />
           <select
             value={roundFilter}
             onChange={(e) => setRoundFilter(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))}
@@ -244,12 +242,12 @@ export const PracticeDashboard: React.FC = () => {
       {/* Mistake Cards List */}
       {loading ? (
         <div className="p-12 text-center text-sm font-bold text-text-muted flex items-center justify-center gap-2">
-          <RefreshCw className="w-5 h-5 animate-spin text-primary" />
+          <ArrowPathIcon className="w-5 h-5 animate-spin text-primary" />
           ĐANG TẢI DỮ LIỆU LUYỆN TẬP...
         </div>
       ) : filteredMistakes.length === 0 ? (
         <div className="bg-white border-4 border-border-main rounded-3xl p-12 text-center space-y-3">
-          <CheckCircle className="w-12 h-12 text-[#52c41a] mx-auto" />
+          <CheckCircleIcon className="w-12 h-12 text-[#52c41a] mx-auto" />
           <h3 className="text-lg font-display font-black text-[#2b2b2b] uppercase">
             Không có câu hỏi nào trong danh mục này!
           </h3>
@@ -316,10 +314,10 @@ export const PracticeDashboard: React.FC = () => {
 
                     <button
                       onClick={() => playSpeech(item.contentText)}
-                      className="p-2 bg-primary-soft hover:bg-primary/20 text-primary rounded-xl transition-colors shrink-0"
+                      className="p-2 bg-primary-soft hover:bg-primary/20 text-primary rounded-xl transition-colors shrink-0 cursor-pointer"
                       title="Nghe phát âm"
                     >
-                      <Volume2 className="w-4 h-4" />
+                      <SpeakerWaveIcon className="w-4 h-4" />
                     </button>
                   </div>
 
@@ -327,7 +325,7 @@ export const PracticeDashboard: React.FC = () => {
                   <div className="bg-[#f8f9fa] border-2 border-border-main rounded-2xl p-3 space-y-1.5 text-xs">
                     <div className="flex items-center justify-between text-[#cf1322] font-semibold">
                       <span className="flex items-center gap-1">
-                        <AlertTriangle className="w-3.5 h-3.5" />
+                        <ExclamationTriangleIcon className="w-3.5 h-3.5" />
                         Đã chọn sai:
                       </span>
                       {item.wrongAnswerSubmitted && item.wrongAnswerSubmitted.startsWith('http') ? (
@@ -341,7 +339,7 @@ export const PracticeDashboard: React.FC = () => {
 
                     <div className="flex items-center justify-between text-text-muted text-[11px] font-medium pt-1 border-t border-border-main/50">
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
+                        <ClockIcon className="w-3.5 h-3.5" />
                         Thời gian làm câu này:
                       </span>
                       <span className="font-mono font-bold text-[#2b2b2b]">{item.durationSeconds || 0} giây</span>
@@ -353,18 +351,18 @@ export const PracticeDashboard: React.FC = () => {
                 <div className="flex items-center gap-2 pt-2">
                   <button
                     onClick={() => startPracticeSingleItem(item)}
-                    className="flex-1 py-2.5 bg-primary-soft hover:bg-primary/20 text-primary font-display font-black rounded-xl text-xs uppercase tracking-wide transition-colors flex items-center justify-center gap-1.5"
+                    className="flex-1 py-2.5 bg-primary-soft hover:bg-primary/20 text-primary font-display font-black rounded-xl text-xs uppercase tracking-wide transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                   >
-                    <RotateCcw className="w-3.5 h-3.5" />
+                    <ArrowPathIcon className="w-3.5 h-3.5" />
                     Luyện tập câu này
                   </button>
 
                   <button
                     onClick={() => setAiModalItem(item)}
-                    className="p-2.5 bg-[#f0f5ff] hover:bg-[#d6e4ff] text-[#2f54eb] rounded-xl border-2 border-[#adc6ff] transition-colors"
+                    className="p-2.5 bg-[#f0f5ff] hover:bg-[#d6e4ff] text-[#2f54eb] rounded-xl border-2 border-[#adc6ff] transition-colors cursor-pointer"
                     title="AI Phân tích lỗi sai"
                   >
-                    <Bot className="w-4 h-4" />
+                    <CpuChipIcon className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -379,14 +377,14 @@ export const PracticeDashboard: React.FC = () => {
           <div className="bg-white border-4 border-border-main rounded-3xl p-6 md:p-8 max-w-lg w-full space-y-5 animate-in zoom-in-95 shadow-2xl">
             <div className="flex items-center justify-between border-b-2 border-border-main pb-3">
               <div className="flex items-center gap-2 text-primary font-display font-black text-base uppercase">
-                <Bot className="w-5 h-5" />
+                <CpuChipIcon className="w-5 h-5" />
                 AI Phân Tích Lỗi Sai
               </div>
               <button
                 onClick={() => setAiModalItem(null)}
-                className="p-1 hover:bg-bg-light rounded-lg text-text-muted"
+                className="p-1 hover:bg-bg-light rounded-lg text-text-muted cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <XMarkIcon className="w-5 h-5" />
               </button>
             </div>
 

@@ -5,7 +5,15 @@ import type { Session, Topic } from '../types';
 import { Button3D } from '../../../components/ui/Button3D';
 import { Mascot } from '../../../components/ui/Mascot';
 import mascotImg from '../../../assets/mascot.png';
-import { Star, Lock, CheckCircle, ArrowLeft, GraduationCap, Award, Crown, Trophy, Sparkles } from 'lucide-react';
+import { 
+  AcademicCapIcon, 
+  TrophyIcon, 
+  SparklesIcon, 
+  StarIcon, 
+  LockClosedIcon, 
+  CheckCircleIcon, 
+  ArrowLeftIcon 
+} from '@heroicons/react/24/solid';
 
 interface LearningMapProps {
   onStartSession: (session: Session) => void;
@@ -90,15 +98,15 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
   const getLevelIcon = (index: number) => {
     switch (index % 4) {
       case 0:
-        return <GraduationCap className="w-9 h-9" />;
+        return <AcademicCapIcon className="w-9 h-9" />;
       case 1:
-        return <Award className="w-9 h-9" />;
+        return <TrophyIcon className="w-9 h-9" />;
       case 2:
-        return <Crown className="w-9 h-9" />;
+        return <SparklesIcon className="w-9 h-9" />;
       case 3:
-        return <Trophy className="w-9 h-9" />;
+        return <TrophyIcon className="w-9 h-9" />;
       default:
-        return <Sparkles className="w-9 h-9" />;
+        return <SparklesIcon className="w-9 h-9" />;
     }
   };
 
@@ -123,12 +131,12 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
 
   const getSessionIcon = (session: Session) => {
     if (session.status === SessionStatus.LOCK) {
-      return <Lock className="w-6 h-6 text-text-muted" />;
+      return <LockClosedIcon className="w-6 h-6 text-text-muted" />;
     }
     if (session.status === SessionStatus.FINISH) {
-      return <CheckCircle className="w-8 h-8 text-success fill-white stroke-[2.5]" />;
+      return <CheckCircleIcon className="w-8 h-8 text-success fill-white stroke-[2.5]" />;
     }
-    return <Star className="w-7 h-7 text-white fill-white animate-pulse" />;
+    return <StarIcon className="w-7 h-7 text-white fill-white animate-pulse" />;
   };
 
   const getNodeBackground = (session: Session, isSelected: boolean) => {
@@ -293,7 +301,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
               onClick={() => setCurrentView('levels')}
               className="flex items-center gap-2 px-4 py-2.5 border-2 border-border-main rounded-xl hover:bg-bg-light font-display font-bold text-xs text-text-muted transition-all cursor-pointer shadow-[0_2px_0_0_#e5e5e5] active:translate-y-[1px]"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeftIcon className="w-4 h-4" />
               QUAY LẠI
             </button>
             <span className="text-xs font-extrabold text-primary tracking-widest uppercase">
@@ -329,7 +337,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                   >
                     {/* Left details & progress & action button */}
                     <div className="flex-grow text-left space-y-4 w-full">
-                      <div className="space-y-1">
+                       <div className="space-y-1">
                         <span className="text-[10px] font-extrabold text-primary/70 tracking-widest uppercase block">Chủ đề {index + 1}</span>
                         <h3 className={`text-lg font-display font-extrabold ${isUnlocked ? 'text-[#0079b8]' : 'text-text-muted'}`}>
                           {tpc.title}
@@ -337,7 +345,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                         <p className="text-xs font-semibold text-text-muted line-clamp-2">{tpc.description}</p>
                         {!isUnlocked && (
                           <span className="inline-flex items-center gap-1.5 text-xs font-bold text-text-muted pt-1">
-                            <Lock className="w-3.5 h-3.5" /> CHƯA MỞ KHÓA
+                            <LockClosedIcon className="w-3.5 h-3.5" /> CHƯA MỞ KHÓA
                           </span>
                         )}
                       </div>
@@ -374,7 +382,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                             onClick={() => alert("Bé hãy hoàn thành các chủ đề trước để mở khóa nhé!")}
                             className="px-8 py-3 text-xs tracking-wider font-display font-extrabold uppercase border-2 border-border-main bg-white text-text-muted"
                           >
-                            <Lock className="w-4 h-4 mr-2 inline" />
+                            <LockClosedIcon className="w-4 h-4 mr-2 inline" />
                             NHẢY TỚI CHỦ ĐỀ {index + 1}
                           </Button3D>
                         )}
@@ -426,7 +434,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                 onClick={() => setCurrentView('topics')}
                 className="w-10 h-10 rounded-xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors cursor-pointer text-white"
               >
-                <ArrowLeft className="w-5 h-5 stroke-[2.5]" />
+                <ArrowLeftIcon className="w-5 h-5 stroke-[2.5]" />
               </button>
               <div>
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#f1e6ff] block mb-0.5">

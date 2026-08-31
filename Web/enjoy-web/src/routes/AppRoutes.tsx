@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { LearningMap } from '../features/learning/components/LearningMap';
 import { ExploreDashboard } from '../features/explore/components/ExploreDashboard';
+import { ProfilePage } from '../features/profile/components/ProfilePage';
 import { PracticeDashboard } from '../features/practice/components/PracticeDashboard';
 import { LoginPage } from '../features/auth/components/LoginPage';
 import { RegisterPage } from '../features/auth/components/RegisterPage';
@@ -60,7 +61,7 @@ export const AppRoutes: React.FC<AppRoutesProps> = ({ onStartSession }) => {
         <Route path="/leaderboard" element={<FeatureUnderDevelopment tabName="BẢNG XẾP HẠNG" />} />
         <Route path="/quests" element={<FeatureUnderDevelopment tabName="NHIỆM VỤ" />} />
         <Route path="/shop" element={<FeatureUnderDevelopment tabName="CỬA HÀNG" />} />
-        <Route path="/profile" element={<FeatureUnderDevelopment tabName="HỒ SƠ" />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Route>
 
       {/* Redirect Routes */}
