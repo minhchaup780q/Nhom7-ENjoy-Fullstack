@@ -26,7 +26,7 @@ spring:
         - id: learning-service
           uri: lb://learning-service
           predicates:
-            - Path=/api/topics/**, /api/sessions/**, /api/session-items/**, /api/parts/**, /api/levels/**, /api/progress/**
+            - Path=/api/topics/**, /api/sessions/**, /api/session-items/**, /api/parts/**, /api/levels/**, /api/progress/**, /api/mistakes/**
 
 eureka:
   client:
