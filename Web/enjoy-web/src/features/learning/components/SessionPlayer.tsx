@@ -7,6 +7,17 @@ import { Button3D } from '../../../components/ui/Button3D';
 import { BASE_URL } from '../../../services/apiClient';
 import { learningApi } from '../services/learningApi';
 import { mistakeApi } from '../services/mistakeApi';
+import { 
+  XMarkIcon, 
+  HeartIcon, 
+  SpeakerWaveIcon, 
+  MicrophoneIcon, 
+  StopIcon, 
+  PlayIcon, 
+  ArrowPathIcon, 
+  CheckCircleIcon, 
+  ExclamationTriangleIcon 
+} from '@heroicons/react/24/solid';
 
 interface SessionPlayerProps {
   session: Session;
@@ -699,7 +710,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
           onClick={() => setShowExitModal(true)}
           className="text-text-muted hover:text-text-main transition-colors cursor-pointer"
         >
-          <X className="w-7 h-7 stroke-[2.5]" />
+          <XMarkIcon className="w-7 h-7 stroke-[2.5]" />
         </button>
 
         {/* Progress Bar container */}
@@ -712,7 +723,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
 
         {/* Health point stats */}
         <div className="flex items-center gap-1.5 text-primary font-display font-extrabold text-sm select-none">
-          <Heart className="w-6 h-6 fill-current stroke-[2.5]" />
+          <HeartIcon className="w-6 h-6 fill-current stroke-[2.5]" />
           <span>{hearts}</span>
         </div>
       </header>
@@ -786,7 +797,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                         : 'btn-3d-blue hover:scale-105'
                       }`}
                   >
-                    <Volume2 className={`w-7 h-7 text-white ${isPlayingAudio ? 'animate-bounce-soft' : ''}`} />
+                    <SpeakerWaveIcon className={`w-7 h-7 text-white ${isPlayingAudio ? 'animate-bounce-soft' : ''}`} />
                   </button>
                 </div>
 
@@ -824,7 +835,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                   className={`btn-3d w-16 h-16 rounded-2xl flex items-center justify-center cursor-pointer transition-all ${isPlayingAudio ? 'btn-3d-pink animate-pulse' : 'btn-3d-blue hover:scale-105'
                     }`}
                 >
-                  <Volume2 className="w-8 h-8 text-white" />
+                  <SpeakerWaveIcon className="w-8 h-8 text-white" />
                 </button>
 
                 {/* Turtle slow speed sound button */}
@@ -932,7 +943,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                         : 'btn-3d-blue hover:scale-105'
                       }`}
                   >
-                    <Volume2 className={`w-7 h-7 text-white ${isPlayingAudio ? 'animate-bounce-soft' : ''}`} />
+                    <SpeakerWaveIcon className={`w-7 h-7 text-white ${isPlayingAudio ? 'animate-bounce-soft' : ''}`} />
                   </button>
                 </div>
 
@@ -959,7 +970,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                     disabled={isChecked}
                     className="btn-3d px-6 py-3 rounded-2xl flex items-center gap-2 cursor-pointer btn-3d-pink font-display font-extrabold text-xs"
                   >
-                    <Mic className="w-5 h-5 text-white" />
+                    <MicrophoneIcon className="w-5 h-5 text-white" />
                     NHẤN ĐỂ GHI ÂM
                   </button>
                 )}
@@ -970,7 +981,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                     onClick={stopRecording}
                     className="px-6 py-3 bg-[#ff4d4f] border-b-4 border-[#cf1322] text-white hover:bg-[#ff7875] rounded-2xl flex items-center gap-2 cursor-pointer font-display font-extrabold text-xs animate-pulse"
                   >
-                    <Square className="w-5 h-5 fill-current text-white" />
+                    <StopIcon className="w-5 h-5 fill-current text-white" />
                     ĐANG GHI ÂM (DỪNG)
                   </button>
                 )}
@@ -982,7 +993,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                       onClick={playRecordedAudio}
                       className="btn-3d px-5 py-3 rounded-2xl flex items-center gap-1.5 cursor-pointer btn-3d-green font-display font-extrabold text-xs flex-1"
                     >
-                      <Play className="w-4 h-4 text-white" />
+                      <PlayIcon className="w-4 h-4 text-white" />
                       NGHE LẠI
                     </button>
 
@@ -991,7 +1002,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                       disabled={isChecked}
                       className="px-4 py-3 bg-white border-2 border-border-main text-text-main hover:bg-bg-light rounded-2xl flex items-center gap-1.5 cursor-pointer font-display font-extrabold text-xs shadow-sm hover:translate-y-[-1px] active:translate-y-[1px] transition-all"
                     >
-                      <RefreshCw className="w-4 h-4" />
+                      <ArrowPathIcon className="w-4 h-4" />
                       THU LẠI
                     </button>
                   </div>
@@ -1152,7 +1163,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                   className={`btn-3d w-14 h-14 rounded-full flex items-center justify-center cursor-pointer ${isPlayingAudio ? 'btn-3d-pink scale-110 animate-pulse' : 'btn-3d-blue'
                     }`}
                 >
-                  <Volume2 className="w-6 h-6 text-white" />
+                  <SpeakerWaveIcon className="w-6 h-6 text-white" />
                 </button>
               </div>
             )}
@@ -1229,7 +1240,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                 <div className="flex items-center gap-3 text-left">
                   {isCorrect ? (
                     <>
-                      <CheckCircle className="w-8 h-8 text-success fill-white stroke-[2.5] animate-bounce-soft" />
+                      <CheckCircleIcon className="w-8 h-8 text-success fill-white stroke-[2.5] animate-bounce-soft" />
                       <div>
                         <h4 className="text-base font-display font-extrabold text-[#439c00] m-0">Tuyệt vời quá bé ơi!</h4>
                         <p className="text-[11px] font-semibold text-[#5aa81e]">Đáp án hoàn toàn chính xác.</p>
@@ -1237,7 +1248,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                     </>
                   ) : (
                     <>
-                      <AlertTriangle className="w-8 h-8 text-primary fill-white stroke-[2.5] animate-shake" />
+                      <ExclamationTriangleIcon className="w-8 h-8 text-primary fill-white stroke-[2.5] animate-shake" />
                       <div>
                         <h4 className="text-base font-display font-extrabold text-primary-dark m-0">Chưa chính xác rồi bé!</h4>
                         <p className="text-[11px] font-semibold text-primary/80">
@@ -1279,7 +1290,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                     onClick={handleRetrySpeaking}
                     className="px-6 min-w-[120px]"
                   >
-                    <RotateCcw className="w-4 h-4 mr-1.5 inline" />
+                    <ArrowPathIcon className="w-4 h-4 mr-1.5 inline" />
                     LÀM LẠI
                   </Button3D>
                   <Button3D

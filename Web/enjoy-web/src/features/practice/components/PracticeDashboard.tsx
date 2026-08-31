@@ -116,7 +116,7 @@ export const PracticeDashboard: React.FC = () => {
       <div className="bg-gradient-to-r from-primary to-[#ff85a2] rounded-3xl p-6 md:p-8 text-white border-4 border-border-main shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="space-y-2 text-center md:text-left">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-display font-black uppercase tracking-wider">
-            <Compass className="w-4 h-4" />
+            <SparklesIcon className="w-4 h-4" />
             CÁ NHÂN HÓA LỘ TRÌNH ÔN TẬP
           </div>
           <h1 className="text-2xl md:text-3xl font-display font-black uppercase tracking-wide">
