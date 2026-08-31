@@ -3,6 +3,7 @@ import { Settings, KeyRound, LogOut } from 'lucide-react';
 import { ChangePasswordModal } from '../features/auth/components/ChangePasswordModal';
 import { LogoutConfirmModal } from '../features/auth/components/LogoutConfirmModal';
 import { useAuthStore } from '../features/auth/store/useAuthStore';
+import { useNavigate } from 'react-router-dom';
 
 export const SettingsFlyoutMenu: React.FC = () => {
   const [isFlyoutOpen, setIsFlyoutOpen] = useState(false);
@@ -11,6 +12,8 @@ export const SettingsFlyoutMenu: React.FC = () => {
 
   const menuRef = useRef<HTMLDivElement>(null);
   const user = useAuthStore((state) => state.user);
+  const navigate = useNavigate();
+  const logout = useAuthStore((state) => state.logout)
 
   // Đóng popup menu cài đặt khi click ra ngoài
   useEffect(() => {
@@ -28,9 +31,10 @@ export const SettingsFlyoutMenu: React.FC = () => {
     };
   }, [isFlyoutOpen]);
 
-  // Hàm xử lý xác nhận đăng xuất (để trống theo yêu cầu để bạn tự viết logic)
+  // Hàm xử lý xác nhận đăng xuất
   const handleConfirmLogout = () => {
-    // TODO: Viết logic xử lý đăng xuất tại đây
+    logout()
+    navigate('/login');
   };
 
   return (
@@ -40,11 +44,10 @@ export const SettingsFlyoutMenu: React.FC = () => {
         <button
           type="button"
           onClick={() => setIsFlyoutOpen((prev) => !prev)}
-          className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-display font-extrabold text-sm tracking-wider select-none transition-all duration-100 border-2 ${
-            isFlyoutOpen
-              ? 'bg-bg-light text-slate-800 border-border-main'
-              : 'border-transparent text-[#5c5c5c] hover:bg-bg-light hover:text-slate-700'
-          }`}
+          className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-display font-extrabold text-sm tracking-wider select-none transition-all duration-100 border-2 ${isFlyoutOpen
+            ? 'bg-bg-light text-slate-800 border-border-main'
+            : 'border-transparent text-[#5c5c5c] hover:bg-bg-light hover:text-slate-700'
+            }`}
         >
           <Settings className="w-6 h-6 stroke-[2.5]" />
           CÀI ĐẶT
