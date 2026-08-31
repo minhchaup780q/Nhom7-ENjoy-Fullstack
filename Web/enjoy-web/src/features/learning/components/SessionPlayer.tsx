@@ -7,6 +7,7 @@ import { Button3D } from '../../../components/ui/Button3D';
 import { X, Heart, AlertTriangle, CheckCircle, Volume2, Mic, Square, Play, RefreshCw, RotateCcw } from 'lucide-react';
 import { BASE_URL } from '../../../services/apiClient';
 import { learningApi } from '../services/learningApi';
+import { mistakeApi } from '../services/mistakeApi';
 
 interface SessionPlayerProps {
   session: Session;
@@ -56,6 +57,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const [speakingResult, setSpeakingResult] = useState<{ word: string; status: 'correct' | 'wrong' }[] | null>(null);
   const [isAssessing, setIsAssessing] = useState(false);
+  const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
 
   const [playItems, setPlayItems] = useState<InteractiveItem[]>([]);
 
@@ -293,6 +295,9 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       setIsPlayingAudio(false);
     };
 
+    // Reset thời gian bắt đầu câu hỏi khi chuyển step
+    setQuestionStartTime(Date.now());
+
     // Cleanup khi chuyển câu hỏi
     return () => {
       clearTimeout(playTimeout);
@@ -459,6 +464,28 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     return currentItem.correctAnswer || currentItem.translation || '';
   };
 
+  const getRoundTypeNumber = (): number => {
+    if (session.sessionType === 'INTRODUCTION') return 1;
+    if (session.sessionType === 'LISTENING') return 2;
+    if (session.sessionType === 'SPEAKING') return 3;
+    if (session.sessionType === 'WORD_RECOGNITION') return 4;
+    if (session.sessionType === 'GAMIFIED_REVIEW') return 5;
+    return 1;
+  };
+
+  const recordMistakeIfWrong = (wrongAnswer: string) => {
+    if (!currentItem) return;
+    const durationSeconds = Math.max(1, Math.round((Date.now() - questionStartTime) / 1000));
+    mistakeApi.logMistake({
+      questionId: currentItem.id,
+      roundType: getRoundTypeNumber(),
+      wrongAnswerSubmitted: wrongAnswer || 'Chưa trả lời đúng',
+      durationSeconds,
+    }).catch(err => {
+      console.warn("Không thể lưu lỗi sai vào learning-service:", err);
+    });
+  };
+
   const handleCheckAnswer = async () => {
     if (!currentItem) return;
 
@@ -477,6 +504,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       setIsChecked(true);
       if (!correct) {
         setHearts(prev => Math.max(0, prev - 1));
+        recordMistakeIfWrong(selectedOption || 'Ảnh chưa đúng');
       }
       return;
     }
@@ -490,6 +518,9 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
           setSpeakingResult(res.details);
           setIsCorrect(res.isAllCorrect);
           setIsChecked(true);
+          if (!res.isAllCorrect) {
+            recordMistakeIfWrong(res.recognizedText || 'Phát âm chưa chuẩn');
+          }
         } catch (error) {
           console.error("Lỗi khi chấm điểm phát âm:", error);
           // Fallback nếu chưa bật service AI: Cho qua luôn
@@ -512,6 +543,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       setIsChecked(true);
       if (!correct) {
         setHearts(prev => Math.max(0, prev - 1));
+        recordMistakeIfWrong(selectedOption || 'Đáp án chưa đúng');
       }
       return;
     }
@@ -532,6 +564,8 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       setIsChecked(true);
       if (!correct) {
         setHearts(prev => Math.max(0, prev - 1));
+        const userFilled = Object.values(blankAnswers).join(' ') || 'Điền từ chưa đúng';
+        recordMistakeIfWrong(userFilled);
       }
       return;
     }
@@ -543,6 +577,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     setIsChecked(true);
     if (!correct) {
       setHearts(prev => Math.max(0, prev - 1));
+      recordMistakeIfWrong(selectedOption || 'Chưa đúng');
     }
   };
 

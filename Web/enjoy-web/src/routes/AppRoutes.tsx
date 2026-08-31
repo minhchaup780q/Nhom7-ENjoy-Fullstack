@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { LearningMap } from '../features/learning/components/LearningMap';
 import { ExploreDashboard } from '../features/explore/components/ExploreDashboard';
+import { PracticeDashboard } from '../features/practice/components/PracticeDashboard';
 import { LoginPage } from '../features/auth/components/LoginPage';
 import { RegisterPage } from '../features/auth/components/RegisterPage';
 import { useAuthStore } from '../features/auth/store/useAuthStore';
@@ -55,7 +56,7 @@ export const AppRoutes: React.FC<AppRoutesProps> = ({ onStartSession }) => {
       <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
         <Route path="/learn" element={<LearningMap onStartSession={onStartSession} />} />
         <Route path="/explore" element={<ExploreDashboard />} />
-        <Route path="/practice" element={<FeatureUnderDevelopment tabName="LUYỆN TẬP" />} />
+        <Route path="/practice" element={<PracticeDashboard />} />
         <Route path="/leaderboard" element={<FeatureUnderDevelopment tabName="BẢNG XẾP HẠNG" />} />
         <Route path="/quests" element={<FeatureUnderDevelopment tabName="NHIỆM VỤ" />} />
         <Route path="/shop" element={<FeatureUnderDevelopment tabName="CỬA HÀNG" />} />
