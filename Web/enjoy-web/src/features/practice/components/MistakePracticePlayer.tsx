@@ -7,12 +7,16 @@ import {
   SpeakerWaveIcon, 
   ArrowPathIcon, 
   TrophyIcon, 
-  ClockIcon
+  ClockIcon,
+  MicrophoneIcon,
+  StopIcon,
+  PlayIcon
 } from '@heroicons/react/24/solid';
 import { Button3D } from '../../../components/ui/Button3D';
 import { Mascot } from '../../../components/ui/Mascot';
 import { BASE_URL } from '../../../services/apiClient';
 import { mistakeApi, type MistakeItem } from '../../learning/services/mistakeApi';
+import { learningApi } from '../../learning/services/learningApi';
 
 interface MistakePracticePlayerProps {
   mistakes: MistakeItem[];
@@ -31,7 +35,7 @@ const getAssetUrl = (path?: string) => {
 const ROUND_NAMES: Record<number, string> = {
   1: 'Vòng 1: Giới thiệu từ mới',
   2: 'Vòng 2: Luyện nghe (Listening)',
-  3: 'Vòng 3: Luyện nói & Phát âm',
+  3: 'Vòng 3: Luyện nói & Phát âm (Speaking)',
   4: 'Vòng 4: Đọc hiểu & Quiz',
   5: 'Vòng 5: Chính tả & Điền từ'
 };
@@ -66,10 +70,18 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
   const [totalScore, setTotalScore] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
 
+  // States dành riêng cho Vòng 3 (SPEAKING / Luyện phát âm)
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
+  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [isAssessing, setIsAssessing] = useState(false);
+  const [speakingResult, setSpeakingResult] = useState<{ word: string; status: 'correct' | 'wrong' }[] | null>(null);
+
   const currentItem = mistakes[currentIndex];
   const progressPercent = mistakes.length > 0 ? (currentIndex / mistakes.length) * 100 : 0;
 
-  // Phát âm thanh
+  // Phát âm thanh mẫu
   const playAudio = useCallback((speed: number = 1.0) => {
     if (!currentItem) return;
 
@@ -93,7 +105,56 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
     }
   }, [currentItem]);
 
-  // Tạo danh sách 4 lựa chọn cho câu hỏi
+  // Bắt đầu ghi âm giọng đọc của bé
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks: Blob[] = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunks.push(e.data);
+        }
+      };
+
+      recorder.onstop = () => {
+        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        setRecordedAudioUrl(audioUrl);
+        setRecordedBlob(audioBlob);
+        setSpeakingResult(null);
+      };
+
+      recorder.start();
+      setMediaRecorder(recorder);
+      setIsRecording(true);
+      setRecordedAudioUrl(null);
+      setRecordedBlob(null);
+      setSpeakingResult(null);
+    } catch (err) {
+      console.error("Không thể truy cập micro:", err);
+      alert("Bé hãy cho phép Enjoy truy cập micro để luyện tập phát âm nhé!");
+    }
+  };
+
+  // Dừng ghi âm
+  const stopRecording = () => {
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop();
+      mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      setIsRecording(false);
+    }
+  };
+
+  // Nghe lại đoạn âm thanh vừa thu
+  const playRecordedAudio = () => {
+    if (!recordedAudioUrl) return;
+    const audio = new Audio(recordedAudioUrl);
+    audio.play().catch(err => console.error("Không thể phát lại bản ghi âm:", err));
+  };
+
+  // Khởi tạo câu hỏi theo từng vòng
   useEffect(() => {
     if (!currentItem) return;
 
@@ -101,6 +162,10 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
     setFillInputValue('');
     setIsChecked(false);
     setIsCorrect(false);
+    setIsRecording(false);
+    setRecordedAudioUrl(null);
+    setRecordedBlob(null);
+    setSpeakingResult(null);
 
     if (currentItem.roundType === 2) {
       // VÒNG 2 (LISTENING): 4 hình ảnh
@@ -130,6 +195,9 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
 
       // Tự động phát âm thanh khi vào vòng nghe
       setTimeout(() => playAudio(1.0), 300);
+    } else if (currentItem.roundType === 3) {
+      // VÒNG 3 (SPEAKING): Luyện nói, không cần tạo 4 lựa chọn
+      setOptions([]);
     } else {
       // CÁC VÒNG KHÁC: 4 lựa chọn chữ
       const correctKeyword = currentItem.keyword || currentItem.contentText || '';
@@ -164,7 +232,28 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
     let userAns = '';
     let correct = false;
 
-    if (currentItem.roundType === 2) {
+    if (currentItem.roundType === 3) {
+      // VÒNG 3 (SPEAKING): Chấm điểm bằng AI Faster-Whisper
+      if (recordedBlob && currentItem.contentText) {
+        setIsAssessing(true);
+        try {
+          const res = await learningApi.assessPronunciation(recordedBlob, currentItem.contentText);
+          setSpeakingResult(res.details);
+          correct = res.isAllCorrect;
+          userAns = res.recognizedText || 'Phát âm chưa chuẩn';
+        } catch (err) {
+          console.error("Lỗi khi chấm điểm phát âm vòng luyện tập:", err);
+          correct = false;
+          userAns = 'Lỗi nhận diện giọng nói';
+          setSpeakingResult(currentItem.contentText.split(' ').map(w => ({ word: w, status: 'wrong' })));
+        } finally {
+          setIsAssessing(false);
+        }
+      } else {
+        correct = false;
+        userAns = 'Chưa ghi âm';
+      }
+    } else if (currentItem.roundType === 2) {
       // Vòng Nghe: So sánh URL ảnh
       userAns = selectedOption || '';
       const correctImage = currentItem.imageUrl || options[0];
@@ -264,7 +353,14 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
   }
 
   const isListeningRound = currentItem.roundType === 2;
-  const isCheckEnabled = currentItem.roundType === 5 ? fillInputValue.trim().length > 0 : !!selectedOption;
+  const isSpeakingRound = currentItem.roundType === 3;
+  const isFillBlankRound = currentItem.roundType === 5;
+
+  const isCheckEnabled = isSpeakingRound
+    ? (!!recordedAudioUrl && !isRecording && !isAssessing)
+    : isFillBlankRound
+      ? fillInputValue.trim().length > 0
+      : !!selectedOption;
 
   return (
     <div className="fixed inset-0 z-50 bg-[#f7f9fa] flex flex-col justify-between select-none">
@@ -350,12 +446,30 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
               )}
 
               <div className="flex items-center justify-center gap-2">
-                <h3 className="text-2xl font-display font-black text-[#2b2b2b]">
-                  {currentItem.contentText}
-                </h3>
+                {speakingResult ? (
+                  <div className="flex flex-wrap items-center justify-center gap-2 py-1">
+                    {speakingResult.map((res, idx) => (
+                      <span
+                        key={idx}
+                        className={`text-2xl font-display font-extrabold px-3 py-1 rounded-xl border-2 transition-all ${
+                          res.status === 'correct'
+                            ? 'bg-emerald-50 text-emerald-600 border-emerald-300'
+                            : 'bg-rose-50 text-rose-600 border-rose-400 animate-pulse'
+                        }`}
+                      >
+                        {res.word}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <h3 className="text-2xl font-display font-black text-[#2b2b2b]">
+                    {currentItem.contentText}
+                  </h3>
+                )}
                 <button
                   onClick={() => playAudio(1.0)}
                   className="p-2 bg-primary-soft hover:bg-primary/20 text-primary rounded-xl"
+                  title="Nghe phát âm chuẩn"
                 >
                   <SpeakerWaveIcon className={`w-4 h-4 ${isPlayingAudio ? 'animate-bounce' : ''}`} />
                 </button>
@@ -383,9 +497,74 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
           </div>
         </div>
 
-        {/* 4 Interactive Choices */}
-        {isListeningRound ? (
-          // VÒNG 2: 4 THẺ ẢNH GIỐNG HỆT NHƯ BÀI HỌC CHÍNH
+        {/* Interactive Workspace Area */}
+        {isSpeakingRound ? (
+          // VÒNG 3 (SPEAKING): GIAO DIỆN GHI ÂM LUYỆN NÓI
+          <div className="w-full bg-white border-2 border-border-main rounded-2xl p-5 shadow-sm flex flex-col items-center gap-4 text-center">
+            <span className="text-xs font-extrabold text-text-muted uppercase tracking-wider">
+              BÉ HÃY NHẤN GHI ÂM VÀ ĐỌC TO CÂU TRÊN
+            </span>
+
+            <div className="flex items-center gap-3 justify-center w-full">
+              {/* 1. Record Button */}
+              {!isRecording && !recordedAudioUrl && (
+                <button
+                  onClick={startRecording}
+                  disabled={isChecked || isAssessing}
+                  className="btn-3d px-6 py-3 rounded-2xl flex items-center gap-2 cursor-pointer btn-3d-pink font-display font-extrabold text-xs"
+                >
+                  <MicrophoneIcon className="w-5 h-5 text-white" />
+                  NHẤN ĐỂ GHI ÂM
+                </button>
+              )}
+
+              {/* 2. Recording Status Pulsing Button */}
+              {isRecording && (
+                <button
+                  onClick={stopRecording}
+                  className="px-6 py-3 bg-[#ff4d4f] border-b-4 border-[#cf1322] text-white hover:bg-[#ff7875] rounded-2xl flex items-center gap-2 cursor-pointer font-display font-extrabold text-xs animate-pulse"
+                >
+                  <StopIcon className="w-5 h-5 fill-current text-white" />
+                  ĐANG GHI ÂM (BẤM ĐỂ DỪNG)
+                </button>
+              )}
+
+              {/* 3. Re-record & Play Recorded Voice buttons */}
+              {!isRecording && recordedAudioUrl && (
+                <div className="flex items-center gap-3 w-full justify-center">
+                  <button
+                    onClick={playRecordedAudio}
+                    className="btn-3d px-5 py-3 rounded-2xl flex items-center gap-1.5 cursor-pointer btn-3d-green font-display font-extrabold text-xs flex-1"
+                  >
+                    <PlayIcon className="w-4 h-4 text-white" />
+                    NGHE LẠI
+                  </button>
+
+                  <button
+                    onClick={startRecording}
+                    disabled={isChecked || isAssessing}
+                    className="px-4 py-3 bg-white border-2 border-border-main text-text-main hover:bg-bg-light rounded-2xl flex items-center gap-1.5 cursor-pointer font-display font-extrabold text-xs shadow-sm hover:translate-y-[-1px] active:translate-y-[1px] transition-all"
+                  >
+                    <ArrowPathIcon className="w-4 h-4" />
+                    THU LẠI
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Status Message */}
+            {isRecording ? (
+              <p className="text-[11px] text-[#ff4d4f] font-bold animate-bounce-soft">Enjoy đang nghe bé nói nè... 🎙️</p>
+            ) : isAssessing ? (
+              <p className="text-[11px] text-primary font-bold animate-pulse">AI Faster-Whisper đang chấm điểm phát âm...</p>
+            ) : recordedAudioUrl ? (
+              <p className="text-[11px] text-[#52c41a] font-bold">Đã lưu giọng bé! Hãy bấm KIỂM TRA để xem kết quả.</p>
+            ) : (
+              <p className="text-[11px] text-text-muted">Bấm micro để bắt đầu thu âm phát âm của bé.</p>
+            )}
+          </div>
+        ) : isListeningRound ? (
+          // VÒNG 2 (LISTENING): 4 THẺ ẢNH
           <div className="grid grid-cols-2 gap-3.5 w-full max-w-lg mx-auto">
             {options.map((imageUrl, idx) => {
               const isSelected = selectedOption === imageUrl;
@@ -421,7 +600,8 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
               );
             })}
           </div>
-        ) : currentItem.roundType === 5 ? (
+        ) : isFillBlankRound ? (
+          // VÒNG 5 (FILL IN BLANK): ĐIỀN TỪ
           <div className="space-y-2">
             <input
               type="text"
@@ -435,6 +615,7 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
             />
           </div>
         ) : (
+          // VÒNG TRẮC NGHIỆM CHỮ (QUIZ / VÒNG 4)
           <div className="grid grid-cols-2 gap-2.5">
             {options.map((opt, idx) => {
               const isSelected = selectedOption === opt;
@@ -495,7 +676,9 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
             </div>
           ) : (
             <div className="text-xs font-semibold text-text-muted">
-              Chọn đáp án đúng nhất để hoàn thành nhé!
+              {isSpeakingRound 
+                ? 'Ghi âm và phát âm to rõ để kiểm tra nhé!'
+                : 'Chọn đáp án đúng nhất để hoàn thành nhé!'}
             </div>
           )}
 
