@@ -3,6 +3,7 @@ import { Cog6ToothIcon, KeyIcon, ArrowRightOnRectangleIcon, UserGroupIcon } from
 import { ChangePasswordModal } from '../features/auth/components/ChangePasswordModal';
 import { LogoutConfirmModal } from '../features/auth/components/LogoutConfirmModal';
 import { FamilyManagementModal } from '../features/profile/components/FamilyManagementModal';
+import { profileApi } from '../features/profile/services/profileApi';
 import { useAuthStore } from '../features/auth/store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 
@@ -14,12 +15,14 @@ export const SettingsFlyoutMenu: React.FC = () => {
 
   const menuRef = useRef<HTMLDivElement>(null);
   const user = useAuthStore((state) => state.user);
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const setAuth = useAuthStore((state) => state.setAuth);
   const navigate = useNavigate();
   const logout = useAuthStore((state) => state.logout);
 
   const isParent = user?.role === 'ROLE_PARENT';
 
-  // Đóng popup menu cài đặt khi click ra ngoài
+  // Đóng popup menu cài đặt khi click ra ngoài & Fetch profile mới nhất khi mở menu
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -29,11 +32,17 @@ export const SettingsFlyoutMenu: React.FC = () => {
 
     if (isFlyoutOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      // Fetch latest profile
+      profileApi.getProfile().then((p) => {
+        if (p && user && accessToken && (p.role !== user.role || p.username !== user.username)) {
+          setAuth({ ...user, role: p.role, username: p.username }, accessToken);
+        }
+      }).catch(() => {});
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isFlyoutOpen]);
+  }, [isFlyoutOpen, user, accessToken, setAuth]);
 
   // Hàm xử lý xác nhận đăng xuất
   const handleConfirmLogout = () => {

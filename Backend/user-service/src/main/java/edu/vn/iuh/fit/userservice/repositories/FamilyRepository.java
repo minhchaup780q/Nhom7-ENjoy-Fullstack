@@ -11,5 +11,7 @@ public interface FamilyRepository extends JpaRepository<Family, Long> {
     List<Family> findByParentId(Long parentId);
     List<Family> findByStudentId(Long studentId);
     Optional<Family> findByParentIdAndStudentId(Long parentId, Long studentId);
+    List<Family> findByParentIdAndStatus(Long parentId, FamilyStatus status);
     List<Family> findByStudentIdAndStatus(Long studentId, FamilyStatus status);
+    Optional<Family> findByStudentIdAndVerificationCodeAndStatus(Long studentId, String verificationCode, FamilyStatus status);
 }
