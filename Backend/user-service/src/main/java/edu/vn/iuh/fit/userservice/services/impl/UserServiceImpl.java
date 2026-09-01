@@ -15,7 +15,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 
 @Service
 @RequiredArgsConstructor
@@ -90,6 +92,15 @@ public class UserServiceImpl implements UserService {
         }
         if (request.getBirthday() != null) {
             user.setBirthday(request.getBirthday());
+            // Tự động cập nhật loại tài khoản theo độ tuổi (nếu không phải ADMIN)
+            if (user.getRole() != UserRole.ROLE_ADMIN) {
+                int age = Period.between(request.getBirthday(), LocalDate.now()).getYears();
+                if (age <= 16) {
+                    user.setRole(UserRole.ROLE_CHILDREN);
+                } else {
+                    user.setRole(UserRole.ROLE_PARENT);
+                }
+            }
         }
         if (request.getAvatarUrl() != null && !request.getAvatarUrl().trim().isEmpty()) {
             user.setAvatarUrl(request.getAvatarUrl().trim());

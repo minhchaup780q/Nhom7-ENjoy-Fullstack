@@ -5,13 +5,10 @@ import {
   CalendarIcon, 
   ShieldCheckIcon, 
   CameraIcon, 
-  UserGroupIcon, 
   CheckIcon, 
   ArrowRightOnRectangleIcon, 
   CheckCircleIcon, 
-  ArrowPathIcon,
-  FaceSmileIcon,
-  HeartIcon
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import { Button3D } from '../../../components/ui/Button3D';
 import { Mascot } from '../../../components/ui/Mascot';
@@ -42,7 +39,6 @@ export const ProfilePage: React.FC = () => {
   const [birthday, setBirthday] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
-  const [showParentModal, setShowParentModal] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -68,11 +64,42 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
+  // Vai trò tài khoản hiện tại từ database
+  const isParent = profile?.role === 'ROLE_PARENT' || user?.role === 'ROLE_PARENT';
+  const roleLabel = (profile?.role === 'ROLE_ADMIN' || user?.role === 'ROLE_ADMIN')
+    ? 'Quản trị viên'
+    : isParent
+      ? 'Phụ huynh'
+      : 'Học sinh';
+
+  // Helper tính tuổi
+  const calculateAge = (birthDateStr: string) => {
+    if (!birthDateStr) return null;
+    const birthDate = new Date(birthDateStr);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  const todayStr = new Date().toISOString().split('T')[0];
+
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim()) {
       setErrorMessage('Tên hiển thị không được để trống.');
       return;
+    }
+
+    if (birthday) {
+      const age = calculateAge(birthday);
+      if (age !== null && age < 0) {
+        setErrorMessage('Ngày sinh không hợp lệ (không thể ở tương lai).');
+        return;
+      }
     }
 
     setSaving(true);
@@ -109,12 +136,14 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
-  const isParent = profile?.role === 'ROLE_PARENT' || user?.role === 'ROLE_PARENT';
-  const roleLabel = isParent 
-    ? 'Phụ huynh' 
-    : (profile?.role === 'ROLE_ADMIN' || user?.role === 'ROLE_ADMIN') 
-      ? 'Quản trị viên' 
-      : 'Học sinh';
+  if (loading) {
+    return (
+      <div className="flex-1 p-8 flex flex-col items-center justify-center min-h-[400px]">
+        <ArrowPathIcon className="w-8 h-8 text-primary animate-spin mb-3" />
+        <p className="text-sm font-display font-black text-text-muted">Đang tải thông tin cá nhân...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 p-4 md:p-8 flex flex-col max-w-4xl mx-auto w-full select-none gap-6">
@@ -174,39 +203,6 @@ export const ProfilePage: React.FC = () => {
         </div>
       </div>
 
-      {/* MỤC DÀNH CHO PHỤ HUYNH (NẾU LÀ PARENT) */}
-      {isParent && (
-        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-4 border-amber-300 rounded-3xl p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-5">
-          <div className="flex items-center gap-4 text-center sm:text-left">
-            <div className="w-14 h-14 rounded-2xl bg-amber-200 text-amber-800 flex items-center justify-center shrink-0 shadow-inner">
-              <FaceSmileIcon className="w-8 h-8 stroke-[2.5]" />
-            </div>
-            <div className="space-y-1">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-amber-200/80 rounded-full text-[10px] font-display font-black text-amber-900 uppercase">
-                <HeartIcon className="w-3.5 h-3.5" />
-                DÀNH CHO PHỤ HUYNH
-              </div>
-              <h3 className="text-lg font-display font-black text-[#2b2b2b]">
-                Quản Lý & Giám Sát Trẻ Em
-              </h3>
-              <p className="text-xs font-medium text-amber-900/80 max-w-md">
-                Khu vực dành riêng cho ba mẹ quản lý tài khoản và thiết lập học tập của các bé.
-              </p>
-            </div>
-          </div>
-
-          <Button3D
-            variant="pink"
-            size="md"
-            onClick={() => setShowParentModal(true)}
-            className="flex items-center gap-2 shrink-0"
-          >
-            <UserGroupIcon className="w-4 h-4 stroke-[2.5]" />
-            QUẢN LÝ TRẺ EM
-          </Button3D>
-        </div>
-      )}
-
       {/* Edit Profile Form */}
       <div className="bg-white border-4 border-border-main rounded-3xl p-6 md:p-8 shadow-sm space-y-6">
         <div className="flex items-center gap-3 border-b-2 border-border-main pb-4">
@@ -265,7 +261,12 @@ export const ProfilePage: React.FC = () => {
                 <input
                   type="date"
                   value={birthday}
-                  onChange={(e) => setBirthday(e.target.value)}
+                  min="1920-01-01"
+                  max={todayStr}
+                  onChange={(e) => {
+                    setBirthday(e.target.value);
+                    if (errorMessage) setErrorMessage(null);
+                  }}
                   className="w-full pl-10 pr-4 py-3 bg-[#f8f9fa] border-2 border-border-main rounded-2xl text-sm font-semibold text-[#2b2b2b] focus:border-primary focus:bg-white outline-none transition-all"
                 />
                 <CalendarIcon className="w-4 h-4 text-text-muted absolute left-3.5 top-3.5" />
@@ -385,30 +386,6 @@ export const ProfilePage: React.FC = () => {
 
             <Button3D variant="gray" fullWidth size="sm" onClick={() => setShowAvatarPicker(false)}>
               ĐÓNG
-            </Button3D>
-          </div>
-        </div>
-      )}
-
-      {/* Parent Management Modal */}
-      {showParentModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-white border-4 border-border-main rounded-3xl p-6 max-w-md w-full text-center space-y-5 animate-in zoom-in-95 shadow-2xl">
-            <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto shadow-inner">
-              <FaceSmileIcon className="w-8 h-8 stroke-[2.5]" />
-            </div>
-
-            <div className="space-y-1.5">
-              <h3 className="text-xl font-display font-black text-[#2b2b2b] uppercase">
-                Quản Lý Trẻ Em
-              </h3>
-              <p className="text-xs font-semibold text-text-muted leading-relaxed">
-                Khu vực phụ huynh quản lý danh sách các bé và tiến độ học tập.
-              </p>
-            </div>
-
-            <Button3D variant="pink" fullWidth size="md" onClick={() => setShowParentModal(false)}>
-              ĐÃ HIỂU
             </Button3D>
           </div>
         </div>
