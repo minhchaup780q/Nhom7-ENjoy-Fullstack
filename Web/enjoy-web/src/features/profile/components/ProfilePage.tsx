@@ -68,11 +68,42 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
+  // Vai trò tài khoản hiện tại từ database
+  const isParent = profile?.role === 'ROLE_PARENT' || user?.role === 'ROLE_PARENT';
+  const roleLabel = (profile?.role === 'ROLE_ADMIN' || user?.role === 'ROLE_ADMIN')
+    ? 'Quản trị viên'
+    : isParent
+      ? 'Phụ huynh'
+      : 'Học sinh';
+
+  // Helper tính tuổi
+  const calculateAge = (birthDateStr: string) => {
+    if (!birthDateStr) return null;
+    const birthDate = new Date(birthDateStr);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  const todayStr = new Date().toISOString().split('T')[0];
+
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim()) {
       setErrorMessage('Tên hiển thị không được để trống.');
       return;
+    }
+
+    if (birthday) {
+      const age = calculateAge(birthday);
+      if (age !== null && age < 0) {
+        setErrorMessage('Ngày sinh không hợp lệ (không thể ở tương lai).');
+        return;
+      }
     }
 
     setSaving(true);
@@ -109,12 +140,14 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
-  const isParent = profile?.role === 'ROLE_PARENT' || user?.role === 'ROLE_PARENT';
-  const roleLabel = isParent 
-    ? 'Phụ huynh' 
-    : (profile?.role === 'ROLE_ADMIN' || user?.role === 'ROLE_ADMIN') 
-      ? 'Quản trị viên' 
-      : 'Học sinh';
+  if (loading) {
+    return (
+      <div className="flex-1 p-8 flex flex-col items-center justify-center min-h-[400px]">
+        <ArrowPathIcon className="w-8 h-8 text-primary animate-spin mb-3" />
+        <p className="text-sm font-display font-black text-text-muted">Đang tải thông tin cá nhân...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 p-4 md:p-8 flex flex-col max-w-4xl mx-auto w-full select-none gap-6">
@@ -265,7 +298,12 @@ export const ProfilePage: React.FC = () => {
                 <input
                   type="date"
                   value={birthday}
-                  onChange={(e) => setBirthday(e.target.value)}
+                  min="1920-01-01"
+                  max={todayStr}
+                  onChange={(e) => {
+                    setBirthday(e.target.value);
+                    if (errorMessage) setErrorMessage(null);
+                  }}
                   className="w-full pl-10 pr-4 py-3 bg-[#f8f9fa] border-2 border-border-main rounded-2xl text-sm font-semibold text-[#2b2b2b] focus:border-primary focus:bg-white outline-none transition-all"
                 />
                 <CalendarIcon className="w-4 h-4 text-text-muted absolute left-3.5 top-3.5" />
