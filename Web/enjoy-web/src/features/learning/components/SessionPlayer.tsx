@@ -529,18 +529,22 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
           setIsCorrect(res.isAllCorrect);
           setIsChecked(true);
           if (!res.isAllCorrect) {
+            setHearts(prev => Math.max(0, prev - 1));
             recordMistakeIfWrong(res.recognizedText || 'Phát âm chưa chuẩn');
           }
         } catch (error) {
           console.error("Lỗi khi chấm điểm phát âm:", error);
-          // Fallback nếu chưa bật service AI: Cho qua luôn
-          setIsCorrect(true);
+          // Xử lý khi service không phản hồi hoặc không nhận diện được: Đánh dấu là chưa đạt
+          setIsCorrect(false);
+          setHearts(prev => Math.max(0, prev - 1));
+          setSpeakingResult(currentItem.contentText.split(' ').map(w => ({ word: w, status: 'wrong' })));
           setIsChecked(true);
+          recordMistakeIfWrong('Không thể nhận diện giọng nói');
         } finally {
           setIsAssessing(false);
         }
       } else {
-        setIsCorrect(true);
+        setIsCorrect(false);
         setIsChecked(true);
       }
       return;

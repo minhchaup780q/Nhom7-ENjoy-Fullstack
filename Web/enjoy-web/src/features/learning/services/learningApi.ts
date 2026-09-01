@@ -88,8 +88,26 @@ export const learningApi = {
     formData.append('audio', audioBlob, 'recording.webm');
     formData.append('target_sentence', targetSentence);
 
-    const response = await axios.post('http://localhost:8888/api/v1/speech/assess', formData);
-    return response.data;
+    const token = localStorage.getItem('enjoy_access_token');
+    const headers: Record<string, string> = {
+      'Content-Type': 'multipart/form-data',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      // 1. Gọi qua API Gateway
+      const response = await axios.post('http://localhost:8888/api/v1/speech/assess', formData, { headers });
+      return response.data;
+    } catch (gatewayError) {
+      console.warn("Gọi speech service qua Gateway thất bại, đang thử gọi trực tiếp port 8000...", gatewayError);
+      // 2. Fallback gọi trực tiếp speech-assessment-service port 8000
+      const directResponse = await axios.post('http://localhost:8000/api/v1/speech/assess', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      return directResponse.data;
+    }
   },
 };
 
