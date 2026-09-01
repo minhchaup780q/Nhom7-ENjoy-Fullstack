@@ -269,41 +269,90 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
 
 
 
-  // Phát âm thanh tự động khi câu hỏi hoặc từ vựng thay đổi
-  useEffect(() => {
+  // Hàm phát âm thanh với cơ chế dự phòng Web Speech API nếu nguồn audio lỗi (403, 404, NotSupportedError)
+  const playAudioWithFallback = (speed: number = 1.0, isAutoPlay: boolean = false) => {
     if (!currentItem) return;
 
-    // Tìm URL âm thanh
-    const audioUrl = currentItem.audioUrl;
-    if (!audioUrl) return;
-
-    const fullAudioUrl = getAssetUrl(audioUrl);
-
-    // Stop any previous audio
+    // Dừng âm thanh và giọng đọc cũ
     if (currentAudio) {
       currentAudio.pause();
       setIsPlayingAudio(false);
     }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
 
-    // Tạo đối tượng âm thanh mới
-    const audio = new Audio(fullAudioUrl);
-    setCurrentAudio(audio);
+    const speakWithTTS = () => {
+      const textToSpeak = currentItem.contentText?.replace(/[\[\]]/g, '') || currentItem.keyword || '';
+      if (!textToSpeak || !('speechSynthesis' in window)) {
+        setIsPlayingAudio(false);
+        return;
+      }
 
-    // Auto-play âm thanh sau khi chuyển từ (chỉ áp dụng ở chế độ INTRODUCTION)
-    const playTimeout = setTimeout(() => {
+      try {
+        const utterance = new SpeechSynthesisUtterance(textToSpeak);
+        utterance.lang = 'en-US';
+        utterance.rate = speed;
+        utterance.onstart = () => setIsPlayingAudio(true);
+        utterance.onend = () => setIsPlayingAudio(false);
+        utterance.onerror = () => setIsPlayingAudio(false);
+        window.speechSynthesis.speak(utterance);
+      } catch (e) {
+        console.warn("Lỗi SpeechSynthesis:", e);
+        setIsPlayingAudio(false);
+      }
+    };
+
+    const audioUrl = currentItem.audioUrl;
+    if (audioUrl) {
+      const fullAudioUrl = getAssetUrl(audioUrl);
+      const audio = new Audio(fullAudioUrl);
+      audio.playbackRate = speed;
+      setCurrentAudio(audio);
+
+      audio.onended = () => {
+        setIsPlayingAudio(false);
+      };
+
+      audio.onerror = () => {
+        // Nguồn âm thanh online không tải được (NotSupportedError / 403 / 404 / CORS) -> Dùng Web Speech API
+        speakWithTTS();
+      };
+
       audio.play()
         .then(() => {
           setIsPlayingAudio(true);
         })
         .catch(err => {
-          console.warn("Không thể tự động phát âm thanh:", err);
+          if (!isAutoPlay) {
+            console.warn("Không thể phát trực tiếp audioUrl, chuyển sang SpeechSynthesis dự phòng:", err);
+          }
+          speakWithTTS();
         });
-    }, 500);
+    } else {
+      speakWithTTS();
+    }
+  };
 
-    // Lắng nghe khi phát xong
-    audio.onended = () => {
+  // Phát âm thanh tự động khi câu hỏi hoặc từ vựng thay đổi
+  useEffect(() => {
+    if (!currentItem) return;
+
+    // Stop any previous audio & speech
+    if (currentAudio) {
+      currentAudio.pause();
       setIsPlayingAudio(false);
-    };
+    }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+
+    // Auto-play âm thanh sau khi chuyển từ (ở chế độ INTRODUCTION hoặc LISTENING)
+    const playTimeout = setTimeout(() => {
+      if (session.sessionType === 'INTRODUCTION' || session.sessionType === 'LISTENING') {
+        playAudioWithFallback(1.0, true);
+      }
+    }, 500);
 
     // Reset thời gian bắt đầu câu hỏi khi chuyển step
     setQuestionStartTime(Date.now());
@@ -311,36 +360,17 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     // Cleanup khi chuyển câu hỏi
     return () => {
       clearTimeout(playTimeout);
-      audio.pause();
+      if (currentAudio) {
+        currentAudio.pause();
+      }
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
     };
-  }, [currentStepIndex, currentItem?.id]);
+  }, [currentStepIndex, currentItem?.id, session.sessionType]);
 
   const playSound = (speed: number = 1.0) => {
-    if (!currentItem || !currentItem.audioUrl) return;
-
-    const fullAudioUrl = getAssetUrl(currentItem.audioUrl);
-
-    if (currentAudio) {
-      currentAudio.pause();
-    }
-
-    const audio = new Audio(fullAudioUrl);
-    audio.playbackRate = speed;
-    setCurrentAudio(audio);
-    setIsPlayingAudio(true);
-
-    audio.play()
-      .then(() => {
-        setIsPlayingAudio(true);
-      })
-      .catch(err => {
-        console.error("Lỗi phát âm thanh:", err);
-        setIsPlayingAudio(false);
-      });
-
-    audio.onended = () => {
-      setIsPlayingAudio(false);
-    };
+    playAudioWithFallback(speed, false);
   };
 
   const startRecording = async () => {
