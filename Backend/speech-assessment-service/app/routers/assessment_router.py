@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from app.schemas.assessment import AssessmentResponse
 from app.services.speech_service import SpeechService
@@ -8,7 +9,8 @@ router = APIRouter(prefix="/api/v1/speech", tags=["Speech Assessment"])
 @router.post("/assess", response_model=AssessmentResponse)
 async def assess_speech(
     audio: UploadFile = File(...),
-    target_sentence: str = Form(...)
+    target_sentence: str = Form(...),
+    keyword: Optional[str] = Form(None)
 ):
     if not audio:
         raise HTTPException(status_code=400, detail="Audio file is required.")
@@ -28,6 +30,7 @@ async def assess_speech(
         result = SpeechService.evaluate_pronunciation(
             audio_bytes=audio_bytes,
             target_sentence=target_sentence.strip(),
+            keyword=keyword.strip() if keyword else None,
             file_extension=ext
         )
         return result

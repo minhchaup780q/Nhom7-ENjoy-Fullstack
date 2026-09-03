@@ -237,7 +237,7 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
       if (recordedBlob && currentItem.contentText) {
         setIsAssessing(true);
         try {
-          const res = await learningApi.assessPronunciation(recordedBlob, currentItem.contentText);
+          const res = await learningApi.assessPronunciation(recordedBlob, currentItem.contentText, currentItem.keyword);
           setSpeakingResult(res.details);
           correct = res.isAllCorrect;
           userAns = res.recognizedText || 'Phát âm chưa chuẩn';

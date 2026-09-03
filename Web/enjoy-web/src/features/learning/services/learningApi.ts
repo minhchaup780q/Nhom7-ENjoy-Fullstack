@@ -78,7 +78,7 @@ export const learningApi = {
   },
 
   // Chấm điểm phát âm bằng Python Faster-Whisper Service
-  assessPronunciation: async (audioBlob: Blob, targetSentence: string): Promise<{
+  assessPronunciation: async (audioBlob: Blob, targetSentence: string, keyword?: string): Promise<{
     isAllCorrect: boolean;
     accuracyScore: number;
     recognizedText: string;
@@ -87,6 +87,9 @@ export const learningApi = {
     const formData = new FormData();
     formData.append('audio', audioBlob, 'recording.webm');
     formData.append('target_sentence', targetSentence);
+    if (keyword) {
+      formData.append('keyword', keyword);
+    }
 
     const token = localStorage.getItem('enjoy_access_token');
     const headers: Record<string, string> = {
