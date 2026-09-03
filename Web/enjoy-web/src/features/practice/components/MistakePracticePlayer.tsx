@@ -433,11 +433,11 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
           ) : (
             <div className="space-y-2">
               {currentItem.imageUrl && (
-                <div className="w-24 h-24 mx-auto rounded-xl overflow-hidden border border-border-main bg-bg-light flex items-center justify-center">
+                <div className="w-24 h-24 mx-auto rounded-xl overflow-hidden border border-border-main bg-bg-light flex items-center justify-center p-1">
                   <img
                     src={getAssetUrl(currentItem.imageUrl)}
                     alt="Illustration"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = BACKUP_IMAGES[0];
                     }}
@@ -586,11 +586,11 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
                   <span className="absolute top-2 left-2 z-10 w-5 h-5 rounded-md border flex items-center justify-center font-display text-[10px] font-extrabold bg-white border-border-main text-text-muted">
                     {optionLabel}
                   </span>
-                  <div className="w-full aspect-video sm:h-32 rounded-xl overflow-hidden bg-bg-light relative">
+                  <div className="w-full aspect-video sm:h-32 rounded-xl overflow-hidden bg-bg-light relative flex items-center justify-center p-2">
                     <img
                       src={getAssetUrl(imageUrl)}
                       alt={`Lựa chọn ${optionLabel}`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400';
                       }}

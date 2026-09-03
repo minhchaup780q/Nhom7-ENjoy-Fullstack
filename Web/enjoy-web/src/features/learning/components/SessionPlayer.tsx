@@ -800,11 +800,11 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
 
               {/* Image Frame */}
               {currentItem.imageUrl ? (
-                <div className="w-full h-48 bg-bg-light border-2 border-border-main/50 rounded-3xl overflow-hidden relative flex items-center justify-center">
+                <div className="w-full h-52 bg-slate-50/80 border-2 border-border-main/50 rounded-3xl overflow-hidden relative flex items-center justify-center p-3">
                   <img
                     src={getAssetUrl(currentItem.imageUrl)}
                     alt={currentItem.contentText}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-sm"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400";
                     }}
@@ -908,11 +908,11 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                     <span className="absolute top-2 left-2 z-10 w-5 h-5 rounded-md border flex items-center justify-center font-display text-[10px] font-extrabold bg-white border-border-main text-text-muted">
                       {optionLabel}
                     </span>
-                    <div className="w-full aspect-video sm:h-32 rounded-xl overflow-hidden bg-bg-light relative">
+                    <div className="w-full aspect-video sm:h-32 rounded-xl overflow-hidden bg-bg-light relative flex items-center justify-center p-2">
                       <img
                         src={getAssetUrl(imageUrl)}
                         alt={`Lựa chọn ${optionLabel}`}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400';
                         }}
@@ -930,11 +930,11 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
 
               {/* Image Frame */}
               {currentItem.imageUrl ? (
-                <div className="w-full h-48 bg-bg-light border-2 border-border-main/50 rounded-3xl overflow-hidden relative flex items-center justify-center">
+                <div className="w-full h-52 bg-slate-50/80 border-2 border-border-main/50 rounded-3xl overflow-hidden relative flex items-center justify-center p-3">
                   <img
                     src={getAssetUrl(currentItem.imageUrl)}
                     alt={currentItem.contentText}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-sm"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400";
                     }}
@@ -1117,8 +1117,8 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
 
             {/* Image if available */}
             {currentItem.imageUrl && (
-              <div className="w-full max-w-[200px] h-28 bg-white border border-border-main/50 rounded-2xl overflow-hidden shadow-sm flex items-center justify-center">
-                <img src={getAssetUrl(currentItem.imageUrl)} alt="Gợi ý" className="w-full h-full object-cover" />
+              <div className="w-full max-w-[200px] h-28 bg-white border border-border-main/50 rounded-2xl overflow-hidden shadow-sm flex items-center justify-center p-2">
+                <img src={getAssetUrl(currentItem.imageUrl)} alt="Gợi ý" className="w-full h-full object-contain" />
               </div>
             )}
 

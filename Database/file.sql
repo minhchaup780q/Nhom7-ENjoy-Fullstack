@@ -38,14 +38,14 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 16 (FLASHCARD - full sentences)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(48, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+head&type=2', 'I have got a head.', 'https://images.unsplash.com/photo-1566753323558-f4e0952af115?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'head', 'Tôi có một cái đầu.'),
+	(48, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+head&type=2', 'I have got a head.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/head.webp', 'FLASHCARD', 'head', 'Tôi có một cái đầu.'),
 	(49, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+face&type=2', 'I have got a face.', 'https://images.unsplash.com/photo-1549068106-b024baf5062d?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'face', 'Tôi có một khuôn mặt.'),
-	(50, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+two+eyes&type=2', 'I have got two eyes.', 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'eyes', 'Tôi có hai con mắt.'),
-	(51, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+two+ears&type=2', 'I have got two ears.', 'https://images.unsplash.com/photo-1589793474234-1a4c82f188f7?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'ears', 'Tôi có hai cái tai.'),
-	(52, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+nose&type=2', 'I have got a nose.', 'https://images.unsplash.com/photo-1585352599987-46279e50b03d?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'nose', 'Tôi có một cái mũi.'),
-	(53, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+small+mouth&type=2', 'I have got a small mouth.', 'https://images.unsplash.com/photo-1587061949409-02e5a2f4d05d?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'mouth', 'Tôi có một cái miệng nhỏ.'),
-	(54, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+black+hair&type=2', 'I have got black hair.', 'https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'hair', 'Tôi có tóc đen.'),
-	(55, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+happy+smile&type=2', 'I have got a happy smile.', 'https://images.unsplash.com/photo-1518640467707-6811f4a6ab73?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'smile', 'Tôi có một nụ cười hạnh phúc.');
+	(50, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+two+eyes&type=2', 'I have got two eyes.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/eyes.webp', 'FLASHCARD', 'eyes', 'Tôi có hai con mắt.'),
+	(51, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+two+ears&type=2', 'I have got two ears.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/ears.webp', 'FLASHCARD', 'ears', 'Tôi có hai cái tai.'),
+	(52, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+nose&type=2', 'I have got a nose.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/nose.webp', 'FLASHCARD', 'nose', 'Tôi có một cái mũi.'),
+	(53, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+small+mouth&type=2', 'I have got a small mouth.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/mouth.webp', 'FLASHCARD', 'mouth', 'Tôi có một cái miệng nhỏ.'),
+	(54, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+black+hair&type=2', 'I have got black hair.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/hair.webp', 'FLASHCARD', 'hair', 'Tôi có tóc đen.'),
+	(55, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+happy+smile&type=2', 'I have got a happy smile.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/smile.webp', 'FLASHCARD', 'smile', 'Tôi có một nụ cười hạnh phúc.');
 
 -- Session 2: LISTENING - Body and Face Part 1
 INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `badge_id`, `description`, `order_index`, `session_type`, `status`, `title`, `part_id`) VALUES
@@ -61,7 +61,7 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 19 (QUIZ - question and answer)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(57, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=What+have+you+got&type=2', 'What have you got?', NULL, 'QUIZ', 'head', 'Bạn có gì?');
+	(57, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=What+have+you+got&type=2', 'What have you got?', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/head.webp', 'QUIZ', 'head', 'Bạn có gì?');
 
 -- Session 5: GAMIFIED_REVIEW - Body and Face Part 1 (FILL_IN_BLANK)
 INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `badge_id`, `description`, `order_index`, `session_type`, `status`, `title`, `part_id`) VALUES
@@ -69,14 +69,14 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 20 (GAMIFIED_REVIEW - FILL_IN_BLANK with full sentences)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(58, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+head&type=2', 'I have got a [head].', 'https://images.unsplash.com/photo-1566753323558-f4e0952af115?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'head', 'Tôi có một cái đầu.'),
-	(59, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+black+hair&type=2', 'I have got [black] hair.', 'https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'black', 'Tôi có tóc đen.'),
+	(58, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+head&type=2', 'I have got a [head].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/head.webp', 'FILL_IN_BLANK', 'head', 'Tôi có một cái đầu.'),
+	(59, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+black+hair&type=2', 'I have got [black] hair.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/black.webp', 'FILL_IN_BLANK', 'black', 'Tôi có tóc đen.'),
 	(60, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+round+face&type=2', 'I have got a [round] face.', 'https://images.unsplash.com/photo-1549068106-b024baf5062d?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'round', 'Tôi có khuôn mặt tròn.'),
-	(61, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+two+eyes&type=2', 'I have got two [eyes].', 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'eyes', 'Tôi có hai con mắt.'),
-	(62, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+two+ears&type=2', 'I have got two [ears].', 'https://images.unsplash.com/photo-1589793474234-1a4c82f188f7?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'ears', 'Tôi có hai cái tai.'),
-	(63, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+nose&type=2', 'I have got a [nose].', 'https://images.unsplash.com/photo-1585352599987-46279e50b03d?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'nose', 'Tôi có một cái mũi.'),
+	(61, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+two+eyes&type=2', 'I have got two [eyes].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/eyes.webp', 'FILL_IN_BLANK', 'eyes', 'Tôi có hai con mắt.'),
+	(62, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+two+ears&type=2', 'I have got two [ears].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/ears.webp', 'FILL_IN_BLANK', 'ears', 'Tôi có hai cái tai.'),
+	(63, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+nose&type=2', 'I have got a [nose].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/nose.webp', 'FILL_IN_BLANK', 'nose', 'Tôi có một cái mũi.'),
 	(64, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+small+mouth&type=2', 'I have got a [small] mouth.', 'https://images.unsplash.com/photo-1587061949409-02e5a2f4d05d?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'small', 'Tôi có một cái miệng nhỏ.'),
-	(65, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+happy+smile&type=2', 'I have got a happy [smile].', 'https://images.unsplash.com/photo-1518640467707-6811f4a6ab73?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'smile', 'Tôi có một nụ cười hạnh phúc.');
+	(65, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+happy+smile&type=2', 'I have got a happy [smile].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/smile.webp', 'FILL_IN_BLANK', 'smile', 'Tôi có một nụ cười hạnh phúc.');
 
 -- Part 2: Body and Face Part 2
 INSERT INTO `parts` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `order_index`, `title`, `topic_id`) VALUES
@@ -88,11 +88,11 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 21 (FLASHCARD - full sentences)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(66, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+two+arms&type=2', 'I have got two arms.', 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'arms', 'Tôi có hai cánh tay.'),
-	(67, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+two+hands&type=2', 'I have got two hands.', 'https://images.unsplash.com/photo-1489844097929-c8d5b91c456e?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'hands', 'Tôi có hai bàn tay.'),
-	(68, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+strong+body&type=2', 'I have got a strong body.', 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'body', 'Tôi có một cơ thể khỏe mạnh.'),
-	(69, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+two+legs&type=2', 'I have got two legs.', 'https://images.unsplash.com/photo-1541410965319-d53f24fa7f5d?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'legs', 'Tôi có hai chân.'),
-	(70, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+two+feet&type=2', 'I have got two feet.', 'https://images.unsplash.com/photo-1542654618-b58c61d69425?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'feet', 'Tôi có hai bàn chân.');
+	(66, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+two+arms&type=2', 'I have got two arms.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/arms.webp', 'FLASHCARD', 'arms', 'Tôi có hai cánh tay.'),
+	(67, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+two+hands&type=2', 'I have got two hands.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/hands.webp', 'FLASHCARD', 'hands', 'Tôi có hai bàn tay.'),
+	(68, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+strong+body&type=2', 'I have got a strong body.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/body.webp', 'FLASHCARD', 'body', 'Tôi có một cơ thể khỏe mạnh.'),
+	(69, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+two+legs&type=2', 'I have got two legs.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/legs.webp', 'FLASHCARD', 'legs', 'Tôi có hai chân.'),
+	(70, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+two+feet&type=2', 'I have got two feet.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/feet.webp', 'FLASHCARD', 'feet', 'Tôi có hai bàn chân.');
 
 -- Session 2: LISTENING - Body and Face Part 2
 INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `badge_id`, `description`, `order_index`, `session_type`, `status`, `title`, `part_id`) VALUES
@@ -108,7 +108,7 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 24 (QUIZ)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(71, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=What+have+you+got&type=2', 'What have you got?', NULL, 'QUIZ', 'arms', 'Bạn có gì?');
+	(71, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=What+have+you+got&type=2', 'What have you got?', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/arms.webp', 'QUIZ', 'arms', 'Bạn có gì?');
 
 -- Session 5: GAMIFIED_REVIEW - Body and Face Part 2 (FILL_IN_BLANK)
 INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `badge_id`, `description`, `order_index`, `session_type`, `status`, `title`, `part_id`) VALUES
@@ -116,11 +116,11 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 25 (FILL_IN_BLANK)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(72, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+two+arms&type=2', 'I have got two [arms].', 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'arms', 'Tôi có hai cánh tay.'),
-	(73, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+two+hands&type=2', 'I have got two [hands].', 'https://images.unsplash.com/photo-1489844097929-c8d5b91c456e?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'hands', 'Tôi có hai bàn tay.'),
-	(74, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+strong+body&type=2', 'I have got a strong [body].', 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'body', 'Tôi có một cơ thể khỏe mạnh.'),
-	(75, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+two+legs&type=2', 'I have got two [legs].', 'https://images.unsplash.com/photo-1541410965319-d53f24fa7f5d?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'legs', 'Tôi có hai chân.'),
-	(76, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+two+feet&type=2', 'I have got two [feet].', 'https://images.unsplash.com/photo-1542654618-b58c61d69425?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'feet', 'Tôi có hai bàn chân.');
+	(72, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+two+arms&type=2', 'I have got two [arms].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/arms.webp', 'FILL_IN_BLANK', 'arms', 'Tôi có hai cánh tay.'),
+	(73, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+two+hands&type=2', 'I have got two [hands].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/hands.webp', 'FILL_IN_BLANK', 'hands', 'Tôi có hai bàn tay.'),
+	(74, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+strong+body&type=2', 'I have got a strong [body].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/body.webp', 'FILL_IN_BLANK', 'body', 'Tôi có một cơ thể khỏe mạnh.'),
+	(75, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+two+legs&type=2', 'I have got two [legs].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/legs.webp', 'FILL_IN_BLANK', 'legs', 'Tôi có hai chân.'),
+	(76, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+two+feet&type=2', 'I have got two [feet].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/feet.webp', 'FILL_IN_BLANK', 'feet', 'Tôi có hai bàn chân.');
 
 -- =====================================================
 -- TOPIC 2: FAMILY & FRIENDS
@@ -138,12 +138,12 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 26 (FLASHCARD - full sentences)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(77, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=This+is+my+mother&type=2', 'This is my mother.', 'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'mother', 'Đây là mẹ của tôi.'),
-	(78, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=This+is+my+father&type=2', 'This is my father.', 'https://images.unsplash.com/photo-1543096222-72de739f7917?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'father', 'Đây là bố của tôi.'),
-	(79, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=This+is+my+sister&type=2', 'This is my sister.', 'https://images.unsplash.com/photo-1519824145371-296894a0daa9?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'sister', 'Đây là chị/em gái của tôi.'),
-	(80, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=This+is+my+brother&type=2', 'This is my brother.', 'https://images.unsplash.com/photo-1519735777090-ec97162dc266?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'brother', 'Đây là anh/em trai của tôi.'),
-	(81, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=This+is+my+baby&type=2', 'This is my baby.', 'https://images.unsplash.com/photo-1502839808605-3f8551831fb8?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'baby', 'Đây là em bé của tôi.'),
-	(82, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=This+is+my+family&type=2', 'This is my family.', 'https://images.unsplash.com/photo-1511895426328-dc8714191300?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'family', 'Đây là gia đình của tôi.');
+	(77, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=This+is+my+mother&type=2', 'This is my mother.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/mother.webp', 'FLASHCARD', 'mother', 'Đây là mẹ của tôi.'),
+	(78, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=This+is+my+father&type=2', 'This is my father.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/father.webp', 'FLASHCARD', 'father', 'Đây là bố của tôi.'),
+	(79, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=This+is+my+sister&type=2', 'This is my sister.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/sister.webp', 'FLASHCARD', 'sister', 'Đây là chị/em gái của tôi.'),
+	(80, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=This+is+my+brother&type=2', 'This is my brother.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/brother.webp', 'FLASHCARD', 'brother', 'Đây là anh/em trai của tôi.'),
+	(81, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=This+is+my+baby&type=2', 'This is my baby.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/baby.webp', 'FLASHCARD', 'baby', 'Đây là em bé của tôi.'),
+	(82, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=This+is+my+family&type=2', 'This is my family.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/family.webp', 'FLASHCARD', 'family', 'Đây là gia đình của tôi.');
 
 -- Session 2: LISTENING - Family Part 1
 INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `badge_id`, `description`, `order_index`, `session_type`, `status`, `title`, `part_id`) VALUES
@@ -159,7 +159,7 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 29 (QUIZ)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(83, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Who+is+this&type=2', 'Who is this?', NULL, 'QUIZ', 'mother', 'Đây là ai?');
+	(83, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Who+is+this&type=2', 'Who is this?', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/mother.webp', 'QUIZ', 'mother', 'Đây là ai?');
 
 -- Session 5: GAMIFIED_REVIEW - Family Part 1 (FILL_IN_BLANK)
 INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `badge_id`, `description`, `order_index`, `session_type`, `status`, `title`, `part_id`) VALUES
@@ -167,12 +167,12 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 30 (FILL_IN_BLANK)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(84, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=This+is+my+mother&type=2', 'This is my [mother].', 'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'mother', 'Đây là mẹ của tôi.'),
-	(85, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=This+is+my+father&type=2', 'This is my [father].', 'https://images.unsplash.com/photo-1543096222-72de739f7917?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'father', 'Đây là bố của tôi.'),
-	(86, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=This+is+my+sister&type=2', 'This is my [sister].', 'https://images.unsplash.com/photo-1519824145371-296894a0daa9?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'sister', 'Đây là chị/em gái của tôi.'),
-	(87, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=This+is+my+brother&type=2', 'This is my [brother].', 'https://images.unsplash.com/photo-1519735777090-ec97162dc266?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'brother', 'Đây là anh/em trai của tôi.'),
-	(88, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=This+is+my+baby&type=2', 'This is my [baby].', 'https://images.unsplash.com/photo-1502839808605-3f8551831fb8?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'baby', 'Đây là em bé của tôi.'),
-	(89, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=This+is+my+family&type=2', 'This is my [family].', 'https://images.unsplash.com/photo-1511895426328-dc8714191300?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'family', 'Đây là gia đình của tôi.');
+	(84, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=This+is+my+mother&type=2', 'This is my [mother].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/mother.webp', 'FILL_IN_BLANK', 'mother', 'Đây là mẹ của tôi.'),
+	(85, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=This+is+my+father&type=2', 'This is my [father].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/father.webp', 'FILL_IN_BLANK', 'father', 'Đây là bố của tôi.'),
+	(86, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=This+is+my+sister&type=2', 'This is my [sister].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/sister.webp', 'FILL_IN_BLANK', 'sister', 'Đây là chị/em gái của tôi.'),
+	(87, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=This+is+my+brother&type=2', 'This is my [brother].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/brother.webp', 'FILL_IN_BLANK', 'brother', 'Đây là anh/em trai của tôi.'),
+	(88, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=This+is+my+baby&type=2', 'This is my [baby].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/baby.webp', 'FILL_IN_BLANK', 'baby', 'Đây là em bé của tôi.'),
+	(89, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=This+is+my+family&type=2', 'This is my [family].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/family.webp', 'FILL_IN_BLANK', 'family', 'Đây là gia đình của tôi.');
 
 -- =====================================================
 -- TOPIC 4: ANIMALS
@@ -190,12 +190,12 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 31 (FLASHCARD - full sentences)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(90, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+cat&type=2', 'I have got a cat.', 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'cat', 'Tôi có một con mèo.'),
-	(91, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+dog&type=2', 'I have got a dog.', 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'dog', 'Tôi có một con chó.'),
-	(92, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+fish&type=2', 'I have got a fish.', 'https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'fish', 'Tôi có một con cá.'),
-	(93, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+bird&type=2', 'I have got a bird.', 'https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'bird', 'Tôi có một con chim.'),
-	(94, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+mouse&type=2', 'I have got a mouse.', 'https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'mouse', 'Tôi có một con chuột.'),
-	(95, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+pet&type=2', 'I have got a pet.', 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'pet', 'Tôi có một con thú cưng.');
+	(90, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+cat&type=2', 'I have got a cat.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/cat.webp', 'FLASHCARD', 'cat', 'Tôi có một con mèo.'),
+	(91, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+dog&type=2', 'I have got a dog.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/dog.webp', 'FLASHCARD', 'dog', 'Tôi có một con chó.'),
+	(92, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+fish&type=2', 'I have got a fish.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/fish.webp', 'FLASHCARD', 'fish', 'Tôi có một con cá.'),
+	(93, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+bird&type=2', 'I have got a bird.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/bird.webp', 'FLASHCARD', 'bird', 'Tôi có một con chim.'),
+	(94, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+mouse&type=2', 'I have got a mouse.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/mouse.webp', 'FLASHCARD', 'mouse', 'Tôi có một con chuột.'),
+	(95, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+pet&type=2', 'I have got a pet.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/pet.webp', 'FLASHCARD', 'pet', 'Tôi có một con thú cưng.');
 
 -- Session 2: LISTENING - Pets
 INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `badge_id`, `description`, `order_index`, `session_type`, `status`, `title`, `part_id`) VALUES
@@ -211,7 +211,7 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 34 (QUIZ)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(96, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=What+have+you+got&type=2', 'What have you got?', NULL, 'QUIZ', 'cat', 'Bạn có gì?');
+	(96, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=What+have+you+got&type=2', 'What have you got?', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/cat.webp', 'QUIZ', 'cat', 'Bạn có gì?');
 
 -- Session 5: GAMIFIED_REVIEW - Pets (FILL_IN_BLANK)
 INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `badge_id`, `description`, `order_index`, `session_type`, `status`, `title`, `part_id`) VALUES
@@ -219,11 +219,11 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 35 (FILL_IN_BLANK)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(97, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+cat&type=2', 'I have got a [cat].', 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'cat', 'Tôi có một con mèo.'),
-	(98, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+dog&type=2', 'I have got a [dog].', 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'dog', 'Tôi có một con chó.'),
-	(99, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+fish&type=2', 'I have got a [fish].', 'https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'fish', 'Tôi có một con cá.'),
-	(100, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+bird&type=2', 'I have got a [bird].', 'https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'bird', 'Tôi có một con chim.'),
-	(101, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+mouse&type=2', 'I have got a [mouse].', 'https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'mouse', 'Tôi có một con chuột.'),
+	(97, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+cat&type=2', 'I have got a [cat].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/cat.webp', 'FILL_IN_BLANK', 'cat', 'Tôi có một con mèo.'),
+	(98, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+dog&type=2', 'I have got a [dog].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/dog.webp', 'FILL_IN_BLANK', 'dog', 'Tôi có một con chó.'),
+	(99, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+fish&type=2', 'I have got a [fish].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/fish.webp', 'FILL_IN_BLANK', 'fish', 'Tôi có một con cá.'),
+	(100, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+bird&type=2', 'I have got a [bird].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/bird.webp', 'FILL_IN_BLANK', 'bird', 'Tôi có một con chim.'),
+	(101, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+a+mouse&type=2', 'I have got a [mouse].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/mouse.webp', 'FILL_IN_BLANK', 'mouse', 'Tôi có một con chuột.'),
 	(102, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+have+got+two+mice&type=2', 'I have got two [mice].', 'https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'mice', 'Tôi có hai con chuột.');
 
 -- Part 2: Farm Animals
@@ -236,13 +236,13 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 36 (FLASHCARD - full sentences)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(103, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+cow&type=2', 'It is a cow.', 'https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'cow', 'Nó là một con bò.'),
-	(104, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+chicken&type=2', 'It is a chicken.', 'https://images.unsplash.com/photo-1509625527869-d7b5c02ca154?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'chicken', 'Nó là một con gà.'),
-	(105, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+duck&type=2', 'It is a duck.', 'https://images.unsplash.com/photo-1555852095-64e7428df0fa?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'duck', 'Nó là một con vịt.'),
-	(106, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+goat&type=2', 'It is a goat.', 'https://images.unsplash.com/photo-1524024973431-2ad916746881?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'goat', 'Nó là một con dê.'),
-	(107, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+horse&type=2', 'It is a horse.', 'https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'horse', 'Nó là một con ngựa.'),
-	(108, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+sheep&type=2', 'It is a sheep.', 'https://images.unsplash.com/photo-1484557052118-f32bd25b45b5?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'sheep', 'Nó là một con cừu.'),
-	(109, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+donkey&type=2', 'It is a donkey.', 'https://images.unsplash.com/photo-1558898879-95c5c4f1a4c8?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'donkey', 'Nó là một con lừa.');
+	(103, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+cow&type=2', 'It is a cow.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/cow.webp', 'FLASHCARD', 'cow', 'Nó là một con bò.'),
+	(104, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+chicken&type=2', 'It is a chicken.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/chicken.webp', 'FLASHCARD', 'chicken', 'Nó là một con gà.'),
+	(105, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+duck&type=2', 'It is a duck.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/duck.webp', 'FLASHCARD', 'duck', 'Nó là một con vịt.'),
+	(106, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+goat&type=2', 'It is a goat.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/goat.webp', 'FLASHCARD', 'goat', 'Nó là một con dê.'),
+	(107, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+horse&type=2', 'It is a horse.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/horse.webp', 'FLASHCARD', 'horse', 'Nó là một con ngựa.'),
+	(108, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+sheep&type=2', 'It is a sheep.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/sheep.webp', 'FLASHCARD', 'sheep', 'Nó là một con cừu.'),
+	(109, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+donkey&type=2', 'It is a donkey.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/donkey.webp', 'FLASHCARD', 'donkey', 'Nó là một con lừa.');
 
 -- Session 2: LISTENING - Farm Animals
 INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `badge_id`, `description`, `order_index`, `session_type`, `status`, `title`, `part_id`) VALUES
@@ -258,7 +258,7 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 39 (QUIZ)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(110, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=What+is+it&type=2', 'What is it?', NULL, 'QUIZ', 'cow', 'Nó là gì?');
+	(110, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=What+is+it&type=2', 'What is it?', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/cow.webp', 'QUIZ', 'cow', 'Nó là gì?');
 
 -- Session 5: GAMIFIED_REVIEW - Farm Animals (FILL_IN_BLANK)
 INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `badge_id`, `description`, `order_index`, `session_type`, `status`, `title`, `part_id`) VALUES
@@ -266,13 +266,13 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 40 (FILL_IN_BLANK)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(111, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+cow&type=2', 'It is a [cow].', 'https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'cow', 'Nó là một con bò.'),
-	(112, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+chicken&type=2', 'It is a [chicken].', 'https://images.unsplash.com/photo-1509625527869-d7b5c02ca154?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'chicken', 'Nó là một con gà.'),
-	(113, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+duck&type=2', 'It is a [duck].', 'https://images.unsplash.com/photo-1555852095-64e7428df0fa?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'duck', 'Nó là một con vịt.'),
-	(114, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+goat&type=2', 'It is a [goat].', 'https://images.unsplash.com/photo-1524024973431-2ad916746881?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'goat', 'Nó là một con dê.'),
-	(115, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+horse&type=2', 'It is a [horse].', 'https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'horse', 'Nó là một con ngựa.'),
-	(116, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+sheep&type=2', 'It is a [sheep].', 'https://images.unsplash.com/photo-1484557052118-f32bd25b45b5?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'sheep', 'Nó là một con cừu.'),
-	(117, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+donkey&type=2', 'It is a [donkey].', 'https://images.unsplash.com/photo-1558898879-95c5c4f1a4c8?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'donkey', 'Nó là một con lừa.');
+	(111, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+cow&type=2', 'It is a [cow].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/cow.webp', 'FILL_IN_BLANK', 'cow', 'Nó là một con bò.'),
+	(112, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+chicken&type=2', 'It is a [chicken].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/chicken.webp', 'FILL_IN_BLANK', 'chicken', 'Nó là một con gà.'),
+	(113, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+duck&type=2', 'It is a [duck].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/duck.webp', 'FILL_IN_BLANK', 'duck', 'Nó là một con vịt.'),
+	(114, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+goat&type=2', 'It is a [goat].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/goat.webp', 'FILL_IN_BLANK', 'goat', 'Nó là một con dê.'),
+	(115, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+horse&type=2', 'It is a [horse].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/horse.webp', 'FILL_IN_BLANK', 'horse', 'Nó là một con ngựa.'),
+	(116, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+sheep&type=2', 'It is a [sheep].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/sheep.webp', 'FILL_IN_BLANK', 'sheep', 'Nó là một con cừu.'),
+	(117, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+donkey&type=2', 'It is a [donkey].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/donkey.webp', 'FILL_IN_BLANK', 'donkey', 'Nó là một con lừa.');
 
 -- Part 3: Wild Animals 1
 INSERT INTO `parts` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `order_index`, `title`, `topic_id`) VALUES
@@ -284,13 +284,13 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 41 (FLASHCARD - full sentences)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(118, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+a+bear&type=2', 'I can see a bear.', 'https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'bear', 'Tôi có thể nhìn thấy một con gấu.'),
-	(119, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+a+crocodile&type=2', 'I can see a crocodile.', 'https://images.unsplash.com/photo-1485550409059-9afb054cada4?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'crocodile', 'Tôi có thể nhìn thấy một con cá sấu.'),
-	(120, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+an+elephant&type=2', 'I can see an elephant.', 'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'elephant', 'Tôi có thể nhìn thấy một con voi.'),
-	(121, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+a+giraffe&type=2', 'I can see a giraffe.', 'https://images.unsplash.com/photo-1547562691-2d1f3d3c2a2f?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'giraffe', 'Tôi có thể nhìn thấy một con hươu cao cổ.'),
-	(122, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+a+monkey&type=2', 'I can see a monkey.', 'https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'monkey', 'Tôi có thể nhìn thấy một con khỉ.'),
-	(123, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+a+tiger&type=2', 'I can see a tiger.', 'https://images.unsplash.com/photo-1561731216-c3a4d99437d5?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'tiger', 'Tôi có thể nhìn thấy một con hổ.'),
-	(124, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+a+zebra&type=2', 'I can see a zebra.', 'https://images.unsplash.com/photo-1570222094114-d054a817e56b?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'zebra', 'Tôi có thể nhìn thấy một con ngựa vằn.');
+	(118, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+a+bear&type=2', 'I can see a bear.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/bear.webp', 'FLASHCARD', 'bear', 'Tôi có thể nhìn thấy một con gấu.'),
+	(119, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+a+crocodile&type=2', 'I can see a crocodile.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/crocodile.webp', 'FLASHCARD', 'crocodile', 'Tôi có thể nhìn thấy một con cá sấu.'),
+	(120, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+an+elephant&type=2', 'I can see an elephant.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/elephant.webp', 'FLASHCARD', 'elephant', 'Tôi có thể nhìn thấy một con voi.'),
+	(121, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+a+giraffe&type=2', 'I can see a giraffe.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/giraffe.webp', 'FLASHCARD', 'giraffe', 'Tôi có thể nhìn thấy một con hươu cao cổ.'),
+	(122, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+a+monkey&type=2', 'I can see a monkey.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/monkey.webp', 'FLASHCARD', 'monkey', 'Tôi có thể nhìn thấy một con khỉ.'),
+	(123, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+a+tiger&type=2', 'I can see a tiger.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/tiger.webp', 'FLASHCARD', 'tiger', 'Tôi có thể nhìn thấy một con hổ.'),
+	(124, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+a+zebra&type=2', 'I can see a zebra.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/zebra.webp', 'FLASHCARD', 'zebra', 'Tôi có thể nhìn thấy một con ngựa vằn.');
 
 -- Session 2: LISTENING - Wild Animals 1
 INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `badge_id`, `description`, `order_index`, `session_type`, `status`, `title`, `part_id`) VALUES
@@ -306,7 +306,7 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 44 (QUIZ)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(125, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=What+can+you+see&type=2', 'What can you see?', NULL, 'QUIZ', 'bear', 'Bạn có thể nhìn thấy gì?');
+	(125, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=What+can+you+see&type=2', 'What can you see?', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/bear.webp', 'QUIZ', 'bear', 'Bạn có thể nhìn thấy gì?');
 
 -- Session 5: GAMIFIED_REVIEW - Wild Animals 1 (FILL_IN_BLANK)
 INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `badge_id`, `description`, `order_index`, `session_type`, `status`, `title`, `part_id`) VALUES
@@ -314,13 +314,13 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 45 (FILL_IN_BLANK)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(126, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+a+bear&type=2', 'I can see a [bear].', 'https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'bear', 'Tôi có thể nhìn thấy một con gấu.'),
-	(127, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+a+crocodile&type=2', 'I can see a [crocodile].', 'https://images.unsplash.com/photo-1485550409059-9afb054cada4?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'crocodile', 'Tôi có thể nhìn thấy một con cá sấu.'),
-	(128, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+an+elephant&type=2', 'I can see an [elephant].', 'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'elephant', 'Tôi có thể nhìn thấy một con voi.'),
-	(129, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+a+giraffe&type=2', 'I can see a [giraffe].', 'https://images.unsplash.com/photo-1547562691-2d1f3d3c2a2f?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'giraffe', 'Tôi có thể nhìn thấy một con hươu cao cổ.'),
-	(130, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+a+monkey&type=2', 'I can see a [monkey].', 'https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'monkey', 'Tôi có thể nhìn thấy một con khỉ.'),
-	(131, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+a+tiger&type=2', 'I can see a [tiger].', 'https://images.unsplash.com/photo-1561731216-c3a4d99437d5?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'tiger', 'Tôi có thể nhìn thấy một con hổ.'),
-	(132, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+a+zebra&type=2', 'I can see a [zebra].', 'https://images.unsplash.com/photo-1570222094114-d054a817e56b?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'zebra', 'Tôi có thể nhìn thấy một con ngựa vằn.');
+	(126, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+a+bear&type=2', 'I can see a [bear].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/bear.webp', 'FILL_IN_BLANK', 'bear', 'Tôi có thể nhìn thấy một con gấu.'),
+	(127, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+a+crocodile&type=2', 'I can see a [crocodile].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/crocodile.webp', 'FILL_IN_BLANK', 'crocodile', 'Tôi có thể nhìn thấy một con cá sấu.'),
+	(128, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+an+elephant&type=2', 'I can see an [elephant].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/elephant.webp', 'FILL_IN_BLANK', 'elephant', 'Tôi có thể nhìn thấy một con voi.'),
+	(129, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+a+giraffe&type=2', 'I can see a [giraffe].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/giraffe.webp', 'FILL_IN_BLANK', 'giraffe', 'Tôi có thể nhìn thấy một con hươu cao cổ.'),
+	(130, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+a+monkey&type=2', 'I can see a [monkey].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/monkey.webp', 'FILL_IN_BLANK', 'monkey', 'Tôi có thể nhìn thấy một con khỉ.'),
+	(131, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+a+tiger&type=2', 'I can see a [tiger].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/tiger.webp', 'FILL_IN_BLANK', 'tiger', 'Tôi có thể nhìn thấy một con hổ.'),
+	(132, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=I+can+see+a+zebra&type=2', 'I can see a [zebra].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/zebra.webp', 'FILL_IN_BLANK', 'zebra', 'Tôi có thể nhìn thấy một con ngựa vằn.');
 
 -- Part 4: Wild Animals 2
 INSERT INTO `parts` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `order_index`, `title`, `topic_id`) VALUES
@@ -332,13 +332,13 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 46 (FLASHCARD - full sentences)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(133, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+frog&type=2', 'It is a frog.', 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'frog', 'Nó là một con ếch.'),
-	(134, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+hippo&type=2', 'It is a hippo.', 'https://images.unsplash.com/photo-1566652634449-8a0f1a02787a?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'hippo', 'Nó là một con hà mã.'),
-	(135, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+jellyfish&type=2', 'It is a jellyfish.', 'https://images.unsplash.com/photo-1495105787522-5334e3ffa0ef?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'jellyfish', 'Nó là một con sứa.'),
-	(136, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+lizard&type=2', 'It is a lizard.', 'https://images.unsplash.com/photo-1529810313688-44ea1c8b04d5?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'lizard', 'Nó là một con thằn lằn.'),
-	(137, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+polar+bear&type=2', 'It is a polar bear.', 'https://images.unsplash.com/photo-1589656966895-2f33e7653819?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'polar bear', 'Nó là một con gấu Bắc Cực.'),
-	(138, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+snake&type=2', 'It is a snake.', 'https://images.unsplash.com/photo-1522496244759-b99f5b8c4e35?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'snake', 'Nó là một con rắn.'),
-	(139, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+spider&type=2', 'It is a spider.', 'https://images.unsplash.com/photo-1516530397839-304b183ef07b?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'spider', 'Nó là một con nhện.');
+	(133, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+frog&type=2', 'It is a frog.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/frog.webp', 'FLASHCARD', 'frog', 'Nó là một con ếch.'),
+	(134, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+hippo&type=2', 'It is a hippo.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/hippo.webp', 'FLASHCARD', 'hippo', 'Nó là một con hà mã.'),
+	(135, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+jellyfish&type=2', 'It is a jellyfish.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/jellyfish.webp', 'FLASHCARD', 'jellyfish', 'Nó là một con sứa.'),
+	(136, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+lizard&type=2', 'It is a lizard.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/lizard.webp', 'FLASHCARD', 'lizard', 'Nó là một con thằn lằn.'),
+	(137, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+polar+bear&type=2', 'It is a polar bear.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/polar-bear.webp', 'FLASHCARD', 'polar bear', 'Nó là một con gấu Bắc Cực.'),
+	(138, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+snake&type=2', 'It is a snake.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/snake.webp', 'FLASHCARD', 'snake', 'Nó là một con rắn.'),
+	(139, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+spider&type=2', 'It is a spider.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/spider.webp', 'FLASHCARD', 'spider', 'Nó là một con nhện.');
 
 -- Session 2: LISTENING - Wild Animals 2
 INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `badge_id`, `description`, `order_index`, `session_type`, `status`, `title`, `part_id`) VALUES
@@ -354,7 +354,7 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 49 (QUIZ)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(140, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=What+animal+is+it&type=2', 'What animal is it?', NULL, 'QUIZ', 'frog', 'Nó là con vật gì?');
+	(140, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=What+animal+is+it&type=2', 'What animal is it?', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/frog.webp', 'QUIZ', 'frog', 'Nó là con vật gì?');
 
 -- Session 5: GAMIFIED_REVIEW - Wild Animals 2 (FILL_IN_BLANK)
 INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `badge_id`, `description`, `order_index`, `session_type`, `status`, `title`, `part_id`) VALUES
@@ -362,13 +362,13 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 50 (FILL_IN_BLANK)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(141, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+frog&type=2', 'It is a [frog].', 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'frog', 'Nó là một con ếch.'),
-	(142, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+hippo&type=2', 'It is a [hippo].', 'https://images.unsplash.com/photo-1566652634449-8a0f1a02787a?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'hippo', 'Nó là một con hà mã.'),
-	(143, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+jellyfish&type=2', 'It is a [jellyfish].', 'https://images.unsplash.com/photo-1495105787522-5334e3ffa0ef?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'jellyfish', 'Nó là một con sứa.'),
-	(144, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+lizard&type=2', 'It is a [lizard].', 'https://images.unsplash.com/photo-1529810313688-44ea1c8b04d5?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'lizard', 'Nó là một con thằn lằn.'),
-	(145, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+polar+bear&type=2', 'It is a [polar bear].', 'https://images.unsplash.com/photo-1589656966895-2f33e7653819?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'polar bear', 'Nó là một con gấu Bắc Cực.'),
-	(146, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+snake&type=2', 'It is a [snake].', 'https://images.unsplash.com/photo-1522496244759-b99f5b8c4e35?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'snake', 'Nó là một con rắn.'),
-	(147, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+spider&type=2', 'It is a [spider].', 'https://images.unsplash.com/photo-1516530397839-304b183ef07b?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'spider', 'Nó là một con nhện.');
+	(141, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+frog&type=2', 'It is a [frog].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/frog.webp', 'FILL_IN_BLANK', 'frog', 'Nó là một con ếch.'),
+	(142, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+hippo&type=2', 'It is a [hippo].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/hippo.webp', 'FILL_IN_BLANK', 'hippo', 'Nó là một con hà mã.'),
+	(143, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+jellyfish&type=2', 'It is a [jellyfish].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/jellyfish.webp', 'FILL_IN_BLANK', 'jellyfish', 'Nó là một con sứa.'),
+	(144, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+lizard&type=2', 'It is a [lizard].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/lizard.webp', 'FILL_IN_BLANK', 'lizard', 'Nó là một con thằn lằn.'),
+	(145, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+polar+bear&type=2', 'It is a [polar bear].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/polar-bear.webp', 'FILL_IN_BLANK', 'polar bear', 'Nó là một con gấu Bắc Cực.'),
+	(146, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+snake&type=2', 'It is a [snake].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/snake.webp', 'FILL_IN_BLANK', 'snake', 'Nó là một con rắn.'),
+	(147, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=It+is+a+spider&type=2', 'It is a [spider].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/spider.webp', 'FILL_IN_BLANK', 'spider', 'Nó là một con nhện.');
 
 -- =====================================================
 -- TOPIC 5: CLOTHES
@@ -386,16 +386,16 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 51 (FLASHCARD - full sentences)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(148, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+T-shirt&type=2', 'I\'m wearing a T-shirt.', 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'T-shirt', 'Tôi đang mặc một cái áo thun.'),
-	(149, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+shirt&type=2', 'I\'m wearing a shirt.', 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'shirt', 'Tôi đang mặc một cái áo sơ mi.'),
-	(150, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+trousers&type=2', 'I\'m wearing trousers.', 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'trousers', 'Tôi đang mặc quần dài.'),
-	(151, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+jeans&type=2', 'I\'m wearing jeans.', 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'jeans', 'Tôi đang mặc quần jean.'),
-	(152, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+shorts&type=2', 'I\'m wearing shorts.', 'https://images.unsplash.com/photo-1565693413576-0f2a4de2d80b?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'shorts', 'Tôi đang mặc quần short.'),
-	(153, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+skirt&type=2', 'I\'m wearing a skirt.', 'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'skirt', 'Tôi đang mặc một cái váy.'),
-	(154, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+dress&type=2', 'I\'m wearing a dress.', 'https://images.unsplash.com/photo-1581349485609-0f2e3a0f2c8a?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'dress', 'Tôi đang mặc một cái đầm.'),
-	(155, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+sock&type=2', 'I\'m wearing a sock.', 'https://images.unsplash.com/photo-1586350977771-b3b0abd50c82?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'sock', 'Tôi đang mang một cái tất.'),
-	(156, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+shoe&type=2', 'I\'m wearing a shoe.', 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'shoe', 'Tôi đang mang một cái giày.'),
-	(157, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+boots&type=2', 'I\'m wearing boots.', 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'boots', 'Tôi đang mang ủng.');
+	(148, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+T-shirt&type=2', 'I\'m wearing a T-shirt.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/t-shirt.webp', 'FLASHCARD', 'T-shirt', 'Tôi đang mặc một cái áo thun.'),
+	(149, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+shirt&type=2', 'I\'m wearing a shirt.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/shirt.webp', 'FLASHCARD', 'shirt', 'Tôi đang mặc một cái áo sơ mi.'),
+	(150, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+trousers&type=2', 'I\'m wearing trousers.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/trousers.webp', 'FLASHCARD', 'trousers', 'Tôi đang mặc quần dài.'),
+	(151, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+jeans&type=2', 'I\'m wearing jeans.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/jeans.webp', 'FLASHCARD', 'jeans', 'Tôi đang mặc quần jean.'),
+	(152, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+shorts&type=2', 'I\'m wearing shorts.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/shorts.webp', 'FLASHCARD', 'shorts', 'Tôi đang mặc quần short.'),
+	(153, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+skirt&type=2', 'I\'m wearing a skirt.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/skirt.webp', 'FLASHCARD', 'skirt', 'Tôi đang mặc một cái váy.'),
+	(154, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+dress&type=2', 'I\'m wearing a dress.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/dress.webp', 'FLASHCARD', 'dress', 'Tôi đang mặc một cái đầm.'),
+	(155, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+sock&type=2', 'I\'m wearing a sock.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/sock.webp', 'FLASHCARD', 'sock', 'Tôi đang mang một cái tất.'),
+	(156, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+shoe&type=2', 'I\'m wearing a shoe.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/shoe.webp', 'FLASHCARD', 'shoe', 'Tôi đang mang một cái giày.'),
+	(157, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+boots&type=2', 'I\'m wearing boots.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/boots.webp', 'FLASHCARD', 'boots', 'Tôi đang mang ủng.');
 
 -- Session 2: LISTENING - Basic Clothes
 INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `badge_id`, `description`, `order_index`, `session_type`, `status`, `title`, `part_id`) VALUES
@@ -411,7 +411,7 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 54 (QUIZ)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(158, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=What+are+you+wearing&type=2', 'What are you wearing?', NULL, 'QUIZ', 'T-shirt', 'Bạn đang mặc gì?');
+	(158, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=What+are+you+wearing&type=2', 'What are you wearing?', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/t-shirt.webp', 'QUIZ', 'T-shirt', 'Bạn đang mặc gì?');
 
 -- Session 5: GAMIFIED_REVIEW - Basic Clothes (FILL_IN_BLANK)
 INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `badge_id`, `description`, `order_index`, `session_type`, `status`, `title`, `part_id`) VALUES
@@ -419,16 +419,16 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 55 (FILL_IN_BLANK)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(159, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+T-shirt&type=2', 'I\'m wearing a [T-shirt].', 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'T-shirt', 'Tôi đang mặc một cái áo thun.'),
-	(160, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+shirt&type=2', 'I\'m wearing a [shirt].', 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'shirt', 'Tôi đang mặc một cái áo sơ mi.'),
-	(161, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+trousers&type=2', 'I\'m wearing [trousers].', 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'trousers', 'Tôi đang mặc quần dài.'),
-	(162, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+jeans&type=2', 'I\'m wearing [jeans].', 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'jeans', 'Tôi đang mặc quần jean.'),
-	(163, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+shorts&type=2', 'I\'m wearing [shorts].', 'https://images.unsplash.com/photo-1565693413576-0f2a4de2d80b?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'shorts', 'Tôi đang mặc quần short.'),
-	(164, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+skirt&type=2', 'I\'m wearing a [skirt].', 'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'skirt', 'Tôi đang mặc một cái váy.'),
-	(165, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+dress&type=2', 'I\'m wearing a [dress].', 'https://images.unsplash.com/photo-1581349485609-0f2e3a0f2c8a?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'dress', 'Tôi đang mặc một cái đầm.'),
-	(166, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+sock&type=2', 'I\'m wearing a [sock].', 'https://images.unsplash.com/photo-1586350977771-b3b0abd50c82?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'sock', 'Tôi đang mang một cái tất.'),
-	(167, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+shoe&type=2', 'I\'m wearing a [shoe].', 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'shoe', 'Tôi đang mang một cái giày.'),
-	(168, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+boots&type=2', 'I\'m wearing [boots].', 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'boots', 'Tôi đang mang ủng.');
+	(159, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+T-shirt&type=2', 'I\'m wearing a [T-shirt].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/t-shirt.webp', 'FILL_IN_BLANK', 'T-shirt', 'Tôi đang mặc một cái áo thun.'),
+	(160, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+shirt&type=2', 'I\'m wearing a [shirt].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/shirt.webp', 'FILL_IN_BLANK', 'shirt', 'Tôi đang mặc một cái áo sơ mi.'),
+	(161, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+trousers&type=2', 'I\'m wearing [trousers].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/trousers.webp', 'FILL_IN_BLANK', 'trousers', 'Tôi đang mặc quần dài.'),
+	(162, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+jeans&type=2', 'I\'m wearing [jeans].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/jeans.webp', 'FILL_IN_BLANK', 'jeans', 'Tôi đang mặc quần jean.'),
+	(163, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+shorts&type=2', 'I\'m wearing [shorts].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/shorts.webp', 'FILL_IN_BLANK', 'shorts', 'Tôi đang mặc quần short.'),
+	(164, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+skirt&type=2', 'I\'m wearing a [skirt].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/skirt.webp', 'FILL_IN_BLANK', 'skirt', 'Tôi đang mặc một cái váy.'),
+	(165, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+dress&type=2', 'I\'m wearing a [dress].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/dress.webp', 'FILL_IN_BLANK', 'dress', 'Tôi đang mặc một cái đầm.'),
+	(166, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+sock&type=2', 'I\'m wearing a [sock].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/sock.webp', 'FILL_IN_BLANK', 'sock', 'Tôi đang mang một cái tất.'),
+	(167, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+shoe&type=2', 'I\'m wearing a [shoe].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/shoe.webp', 'FILL_IN_BLANK', 'shoe', 'Tôi đang mang một cái giày.'),
+	(168, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+boots&type=2', 'I\'m wearing [boots].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/boots.webp', 'FILL_IN_BLANK', 'boots', 'Tôi đang mang ủng.');
 
 -- Part 2: Accessories
 INSERT INTO `parts` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `order_index`, `title`, `topic_id`) VALUES
@@ -440,13 +440,13 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 56 (FLASHCARD - full sentences)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(169, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+hat&type=2', 'I\'m wearing a hat.', 'https://images.unsplash.com/photo-1521369909029-2afed882baee?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'hat', 'Tôi đang đội một cái mũ.'),
-	(170, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+jacket&type=2', 'I\'m wearing a jacket.', 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'jacket', 'Tôi đang mặc một cái áo khoác.'),
-	(171, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+bag&type=2', 'I\'m wearing a bag.', 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'bag', 'Tôi đang đeo một cái túi.'),
-	(172, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+handbag&type=2', 'I\'m wearing a handbag.', 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'handbag', 'Tôi đang đeo một cái túi xách.'),
-	(173, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+glasses&type=2', 'I\'m wearing glasses.', 'https://images.unsplash.com/photo-1591076482161-42ce6da69f67?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'glasses', 'Tôi đang đeo kính mắt.'),
-	(174, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+baseball+cap&type=2', 'I\'m wearing a baseball cap.', 'https://images.unsplash.com/photo-1521369909029-2afed882baee?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'baseball cap', 'Tôi đang đội một cái mũ lưỡi trai.'),
-	(175, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+clothes&type=2', 'I\'m wearing clothes.', 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'clothes', 'Tôi đang mặc quần áo.');
+	(169, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+hat&type=2', 'I\'m wearing a hat.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/hat.webp', 'FLASHCARD', 'hat', 'Tôi đang đội một cái mũ.'),
+	(170, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+jacket&type=2', 'I\'m wearing a jacket.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/jacket.webp', 'FLASHCARD', 'jacket', 'Tôi đang mặc một cái áo khoác.'),
+	(171, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+bag&type=2', 'I\'m wearing a bag.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/bag.webp', 'FLASHCARD', 'bag', 'Tôi đang đeo một cái túi.'),
+	(172, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+handbag&type=2', 'I\'m wearing a handbag.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/handbag.webp', 'FLASHCARD', 'handbag', 'Tôi đang đeo một cái túi xách.'),
+	(173, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+glasses&type=2', 'I\'m wearing glasses.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/glasses.webp', 'FLASHCARD', 'glasses', 'Tôi đang đeo kính mắt.'),
+	(174, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+baseball+cap&type=2', 'I\'m wearing a baseball cap.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/baseball-cap.webp', 'FLASHCARD', 'baseball cap', 'Tôi đang đội một cái mũ lưỡi trai.'),
+	(175, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+clothes&type=2', 'I\'m wearing clothes.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/clothes.webp', 'FLASHCARD', 'clothes', 'Tôi đang mặc quần áo.');
 
 -- Session 2: LISTENING - Accessories
 INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `badge_id`, `description`, `order_index`, `session_type`, `status`, `title`, `part_id`) VALUES
@@ -462,7 +462,7 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 59 (QUIZ)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(176, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=What+are+you+wearing&type=2', 'What are you wearing?', NULL, 'QUIZ', 'hat', 'Bạn đang mặc gì?');
+	(176, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=What+are+you+wearing&type=2', 'What are you wearing?', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/hat.webp', 'QUIZ', 'hat', 'Bạn đang mặc gì?');
 
 -- Session 5: GAMIFIED_REVIEW - Accessories (FILL_IN_BLANK)
 INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `badge_id`, `description`, `order_index`, `session_type`, `status`, `title`, `part_id`) VALUES
@@ -470,13 +470,13 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 60 (FILL_IN_BLANK)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(177, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+hat&type=2', 'I\'m wearing a [hat].', 'https://images.unsplash.com/photo-1521369909029-2afed882baee?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'hat', 'Tôi đang đội một cái mũ.'),
-	(178, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+jacket&type=2', 'I\'m wearing a [jacket].', 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'jacket', 'Tôi đang mặc một cái áo khoác.'),
-	(179, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+bag&type=2', 'I\'m wearing a [bag].', 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'bag', 'Tôi đang đeo một cái túi.'),
-	(180, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+handbag&type=2', 'I\'m wearing a [handbag].', 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'handbag', 'Tôi đang đeo một cái túi xách.'),
-	(181, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+glasses&type=2', 'I\'m wearing [glasses].', 'https://images.unsplash.com/photo-1591076482161-42ce6da69f67?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'glasses', 'Tôi đang đeo kính mắt.'),
-	(182, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+baseball+cap&type=2', 'I\'m wearing a [baseball cap].', 'https://images.unsplash.com/photo-1521369909029-2afed882baee?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'baseball cap', 'Tôi đang đội một cái mũ lưỡi trai.'),
-	(183, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+clothes&type=2', 'I\'m wearing [clothes].', 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'clothes', 'Tôi đang mặc quần áo.');
+	(177, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+hat&type=2', 'I\'m wearing a [hat].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/hat.webp', 'FILL_IN_BLANK', 'hat', 'Tôi đang đội một cái mũ.'),
+	(178, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+jacket&type=2', 'I\'m wearing a [jacket].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/jacket.webp', 'FILL_IN_BLANK', 'jacket', 'Tôi đang mặc một cái áo khoác.'),
+	(179, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+bag&type=2', 'I\'m wearing a [bag].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/bag.webp', 'FILL_IN_BLANK', 'bag', 'Tôi đang đeo một cái túi.'),
+	(180, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+handbag&type=2', 'I\'m wearing a [handbag].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/handbag.webp', 'FILL_IN_BLANK', 'handbag', 'Tôi đang đeo một cái túi xách.'),
+	(181, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+glasses&type=2', 'I\'m wearing [glasses].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/glasses.webp', 'FILL_IN_BLANK', 'glasses', 'Tôi đang đeo kính mắt.'),
+	(182, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+a+baseball+cap&type=2', 'I\'m wearing a [baseball cap].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/baseball-cap.webp', 'FILL_IN_BLANK', 'baseball cap', 'Tôi đang đội một cái mũ lưỡi trai.'),
+	(183, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=Im+wearing+clothes&type=2', 'I\'m wearing [clothes].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/clothes.webp', 'FILL_IN_BLANK', 'clothes', 'Tôi đang mặc quần áo.');
 
 -- =====================================================
 -- TOPIC 3: COLOURS
@@ -494,17 +494,17 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 61 (FLASHCARD - full sentences)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(184, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+black&type=2', 'The ball is black.', 'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'black', 'Quả bóng màu đen.'),
-	(185, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+blue&type=2', 'The ball is blue.', 'https://images.unsplash.com/photo-1528643604158-450f24be69fb?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'blue', 'Quả bóng màu xanh dương.'),
-	(186, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+brown&type=2', 'The ball is brown.', 'https://images.unsplash.com/photo-1518843875459-f738682238a6?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'brown', 'Quả bóng màu nâu.'),
-	(187, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+green&type=2', 'The ball is green.', 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'green', 'Quả bóng màu xanh lá.'),
-	(188, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+grey&type=2', 'The ball is grey.', 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'grey', 'Quả bóng màu xám.'),
-	(189, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+orange&type=2', 'The ball is orange.', 'https://images.unsplash.com/photo-1557800636-894a64c1696f?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'orange', 'Quả bóng màu cam.'),
-	(190, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+pink&type=2', 'The ball is pink.', 'https://images.unsplash.com/photo-1528740561666-dc2479dc08d9?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'pink', 'Quả bóng màu hồng.'),
-	(191, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+purple&type=2', 'The ball is purple.', 'https://images.unsplash.com/photo-1528740561666-dc2479dc08d9?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'purple', 'Quả bóng màu tím.'),
-	(192, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+red&type=2', 'The ball is red.', 'https://images.unsplash.com/photo-1531315630201-bb15abeb1653?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'red', 'Quả bóng màu đỏ.'),
-	(193, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+white&type=2', 'The ball is white.', 'https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'white', 'Quả bóng màu trắng.'),
-	(194, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+yellow&type=2', 'The ball is yellow.', 'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?w=600&auto=format&fit=crop&q=80', 'FLASHCARD', 'yellow', 'Quả bóng màu vàng.');
+	(184, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+black&type=2', 'The ball is black.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/black.webp', 'FLASHCARD', 'black', 'Quả bóng màu đen.'),
+	(185, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+blue&type=2', 'The ball is blue.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/blue.webp', 'FLASHCARD', 'blue', 'Quả bóng màu xanh dương.'),
+	(186, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+brown&type=2', 'The ball is brown.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/brown.webp', 'FLASHCARD', 'brown', 'Quả bóng màu nâu.'),
+	(187, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+green&type=2', 'The ball is green.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/green.webp', 'FLASHCARD', 'green', 'Quả bóng màu xanh lá.'),
+	(188, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+grey&type=2', 'The ball is grey.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/grey.webp', 'FLASHCARD', 'grey', 'Quả bóng màu xám.'),
+	(189, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+orange&type=2', 'The ball is orange.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/orange.webp', 'FLASHCARD', 'orange', 'Quả bóng màu cam.'),
+	(190, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+pink&type=2', 'The ball is pink.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/pink.webp', 'FLASHCARD', 'pink', 'Quả bóng màu hồng.'),
+	(191, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+purple&type=2', 'The ball is purple.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/purple.webp', 'FLASHCARD', 'purple', 'Quả bóng màu tím.'),
+	(192, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+red&type=2', 'The ball is red.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/red.webp', 'FLASHCARD', 'red', 'Quả bóng màu đỏ.'),
+	(193, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+white&type=2', 'The ball is white.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/white.webp', 'FLASHCARD', 'white', 'Quả bóng màu trắng.'),
+	(194, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+yellow&type=2', 'The ball is yellow.', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/yellow.webp', 'FLASHCARD', 'yellow', 'Quả bóng màu vàng.');
 
 -- Session 2: LISTENING - Basic Colours
 INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `badge_id`, `description`, `order_index`, `session_type`, `status`, `title`, `part_id`) VALUES
@@ -520,7 +520,7 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 64 (QUIZ)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(195, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=What+colour+is+the+ball&type=2', 'What colour is the ball?', NULL, 'QUIZ', 'black', 'Quả bóng màu gì?');
+	(195, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=What+colour+is+the+ball&type=2', 'What colour is the ball?', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/black.webp', 'QUIZ', 'black', 'Quả bóng màu gì?');
 
 -- Session 5: GAMIFIED_REVIEW - Basic Colours (FILL_IN_BLANK)
 INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `badge_id`, `description`, `order_index`, `session_type`, `status`, `title`, `part_id`) VALUES
@@ -528,17 +528,17 @@ INSERT INTO `sessions` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`
 
 -- Session Items for Session 65 (FILL_IN_BLANK)
 INSERT INTO `session_items` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `content_text`, `image_url`, `item_type`, `keyword`, `translation`) VALUES
-	(196, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+black&type=2', 'The ball is [black].', 'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'black', 'Quả bóng màu đen.'),
-	(197, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+blue&type=2', 'The ball is [blue].', 'https://images.unsplash.com/photo-1528643604158-450f24be69fb?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'blue', 'Quả bóng màu xanh dương.'),
-	(198, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+brown&type=2', 'The ball is [brown].', 'https://images.unsplash.com/photo-1518843875459-f738682238a6?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'brown', 'Quả bóng màu nâu.'),
-	(199, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+green&type=2', 'The ball is [green].', 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'green', 'Quả bóng màu xanh lá.'),
-	(200, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+grey&type=2', 'The ball is [grey].', 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'grey', 'Quả bóng màu xám.'),
-	(201, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+orange&type=2', 'The ball is [orange].', 'https://images.unsplash.com/photo-1557800636-894a64c1696f?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'orange', 'Quả bóng màu cam.'),
-	(202, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+pink&type=2', 'The ball is [pink].', 'https://images.unsplash.com/photo-1528740561666-dc2479dc08d9?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'pink', 'Quả bóng màu hồng.'),
-	(203, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+purple&type=2', 'The ball is [purple].', 'https://images.unsplash.com/photo-1528740561666-dc2479dc08d9?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'purple', 'Quả bóng màu tím.'),
-	(204, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+red&type=2', 'The ball is [red].', 'https://images.unsplash.com/photo-1531315630201-bb15abeb1653?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'red', 'Quả bóng màu đỏ.'),
-	(205, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+white&type=2', 'The ball is [white].', 'https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'white', 'Quả bóng màu trắng.'),
-	(206, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+yellow&type=2', 'The ball is [yellow].', 'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?w=600&auto=format&fit=crop&q=80', 'FILL_IN_BLANK', 'yellow', 'Quả bóng màu vàng.');
+	(196, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+black&type=2', 'The ball is [black].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/black.webp', 'FILL_IN_BLANK', 'black', 'Quả bóng màu đen.'),
+	(197, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+blue&type=2', 'The ball is [blue].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/blue.webp', 'FILL_IN_BLANK', 'blue', 'Quả bóng màu xanh dương.'),
+	(198, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+brown&type=2', 'The ball is [brown].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/brown.webp', 'FILL_IN_BLANK', 'brown', 'Quả bóng màu nâu.'),
+	(199, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+green&type=2', 'The ball is [green].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/green.webp', 'FILL_IN_BLANK', 'green', 'Quả bóng màu xanh lá.'),
+	(200, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+grey&type=2', 'The ball is [grey].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/grey.webp', 'FILL_IN_BLANK', 'grey', 'Quả bóng màu xám.'),
+	(201, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+orange&type=2', 'The ball is [orange].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/orange.webp', 'FILL_IN_BLANK', 'orange', 'Quả bóng màu cam.'),
+	(202, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+pink&type=2', 'The ball is [pink].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/pink.webp', 'FILL_IN_BLANK', 'pink', 'Quả bóng màu hồng.'),
+	(203, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+purple&type=2', 'The ball is [purple].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/purple.webp', 'FILL_IN_BLANK', 'purple', 'Quả bóng màu tím.'),
+	(204, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+red&type=2', 'The ball is [red].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/red.webp', 'FILL_IN_BLANK', 'red', 'Quả bóng màu đỏ.'),
+	(205, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+white&type=2', 'The ball is [white].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/white.webp', 'FILL_IN_BLANK', 'white', 'Quả bóng màu trắng.'),
+	(206, NOW(), NULL, b'0', NOW(), NULL, 'https://dict.youdao.com/dictvoice?audio=The+ball+is+yellow&type=2', 'The ball is [yellow].', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/yellow.webp', 'FILL_IN_BLANK', 'yellow', 'Quả bóng màu vàng.');
 
 -- =====================================================
 -- SESSION ITEM MAPPINGS
