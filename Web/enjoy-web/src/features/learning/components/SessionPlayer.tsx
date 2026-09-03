@@ -16,7 +16,8 @@ import {
   PlayIcon, 
   ArrowPathIcon, 
   CheckCircleIcon, 
-  ExclamationTriangleIcon 
+  ExclamationTriangleIcon,
+  LightBulbIcon
 } from '@heroicons/react/24/solid';
 
 interface SessionPlayerProps {
@@ -46,8 +47,9 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   const [isChecked, setIsChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
 
-  // Trạng thái cho Vòng 4 (GAMIFIED_REVIEW)
+  // Trạng thái cho Vòng 4 (GAMIFIED_REVIEW & WORD_RECOGNITION)
   const [quizOptions, setQuizOptions] = useState<string[]>([]);
+  const [showTranslationHint, setShowTranslationHint] = useState(false);
   const [shuffledWords, setShuffledWords] = useState<{ id: number; text: string; selected: boolean }[]>([]);
   const [blankAnswers, setBlankAnswers] = useState<Record<number, string>>({});
 
@@ -198,6 +200,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     setQuizOptions(finalChoices);
     setSelectedOption(null);
     setIsChecked(false);
+    setShowTranslationHint(false);
   }, [currentItem, currentItems, session.sessionType, itemLayouts]);
 
   // Tạo danh sách các từ xáo trộn cho Vòng 4/5 (FILL_IN_BLANK)
@@ -644,6 +647,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     setSpeakingResult(null);
     setIsAssessing(false);
     setQuizOptions([]);
+    setShowTranslationHint(false);
     setShuffledWords([]);
     setBlankAnswers({});
 
@@ -1054,19 +1058,84 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
             </div>
           </div>
         ) : activeLayout === 'QUIZ' ? (
-          <div className="flex flex-col items-center space-y-6 w-full animate-fade-in-up">
-            {/* Question speech bubble with Mascot */}
-            <div className="flex items-center justify-center py-4">
-              <Mascot
-                expression={isChecked ? (isCorrect ? 'happy' : 'sad') : 'thinking'}
-                speechBubbleText={currentItem.contentText}
-                bubblePosition="right"
-                size={140}
-              />
+          <div className="flex flex-col items-center space-y-4 w-full animate-fade-in-up">
+            {/* Question speech bubble with Mascot, Audio Speaker & Hint Toggle */}
+            <div className="flex items-center justify-center gap-3 py-1 flex-wrap">
+              {/* Mascot */}
+              <div className="shrink-0">
+                <Mascot
+                  expression={isChecked ? (isCorrect ? 'happy' : 'sad') : 'thinking'}
+                  size={100}
+                />
+              </div>
+
+              {/* Speech Bubble Container */}
+              <div className="relative bg-white border-2 border-border-main rounded-2xl p-3 sm:p-4 shadow-sm min-w-[240px] max-w-sm flex flex-col gap-2">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-base sm:text-lg font-display font-extrabold text-text-main m-0 leading-snug">
+                    {showTranslationHint && currentItem.translation ? currentItem.translation : currentItem.contentText}
+                  </p>
+
+                  {/* Nút phát âm thanh nằm ngay cạnh câu hỏi */}
+                  <button
+                    onClick={() => playSound(1.0)}
+                    className={`btn-3d w-10 h-10 shrink-0 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                      isPlayingAudio
+                        ? 'btn-3d-pink scale-110 animate-pulse'
+                        : 'btn-3d-blue hover:scale-105'
+                    }`}
+                    title="Nghe câu hỏi"
+                  >
+                    <SpeakerWaveIcon className={`w-5 h-5 text-white ${isPlayingAudio ? 'animate-bounce-soft' : ''}`} />
+                  </button>
+                </div>
+
+                {/* Nút Gợi ý (Dịch nghĩa câu hỏi) */}
+                {currentItem.translation && (
+                  <div className="flex items-center gap-2 pt-1 border-t border-border-main/30">
+                    <button
+                      type="button"
+                      onClick={() => setShowTranslationHint(prev => !prev)}
+                      className={`text-[11px] font-extrabold flex items-center gap-1 px-2 py-0.5 rounded-lg border transition-all cursor-pointer ${
+                        showTranslationHint
+                          ? 'bg-amber-100 border-amber-300 text-amber-800'
+                          : 'bg-slate-50 hover:bg-amber-50 border-border-main/60 text-text-muted hover:text-amber-700'
+                      }`}
+                    >
+                      <LightBulbIcon className="w-3.5 h-3.5 text-amber-500" />
+                      <span>{showTranslationHint ? 'Xem câu tiếng Anh' : 'Gợi ý nghĩa'}</span>
+                    </button>
+
+                    {showTranslationHint && (
+                      <span className="text-[10px] text-text-muted italic">Đã dịch sang tiếng Việt</span>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
+            {/* Question Image Box */}
+            {currentItem.imageUrl ? (
+              <div className="w-full max-w-xs sm:max-w-sm bg-white border-2 border-border-main rounded-3xl p-3 shadow-[0_4px_0_0_#e5e5e5] flex items-center justify-center">
+                <div className="w-full h-44 sm:h-52 bg-slate-50 border-2 border-border-main/50 rounded-2xl overflow-hidden relative flex items-center justify-center p-2">
+                  <img
+                    src={getAssetUrl(currentItem.imageUrl)}
+                    alt={currentItem.contentText || 'Quiz image'}
+                    className="w-full h-full object-contain hover:scale-105 transition-transform duration-300 drop-shadow-sm"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400";
+                    }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="w-full max-w-xs bg-primary-soft/10 border-2 border-dashed border-primary/20 rounded-2xl p-4 text-center">
+                <span className="text-xs text-text-muted font-bold">Hình ảnh minh họa câu hỏi</span>
+              </div>
+            )}
+
             {/* QUIZ Choices (Keywords) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full pt-2">
               {quizOptions.map((option, idx) => {
                 const isSelected = selectedOption === option;
                 const optionLabel = String.fromCharCode(65 + idx); // A, B, C, D
