@@ -554,7 +554,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       if (recordedBlob && currentItem.contentText) {
         setIsAssessing(true);
         try {
-          const res = await learningApi.assessPronunciation(recordedBlob, currentItem.contentText);
+          const res = await learningApi.assessPronunciation(recordedBlob, currentItem.contentText, currentItem.keyword);
           setSpeakingResult(res.details);
           setIsCorrect(res.isAllCorrect);
           setIsChecked(true);
