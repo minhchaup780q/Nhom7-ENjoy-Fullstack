@@ -70,6 +70,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   const [speakingResult, setSpeakingResult] = useState<{ word: string; status: 'correct' | 'wrong' }[] | null>(null);
   const [isAssessing, setIsAssessing] = useState(false);
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
+  const [sessionStartTime] = useState<number>(() => Date.now());
 
   const [playItems, setPlayItems] = useState<InteractiveItem[]>([]);
 
@@ -669,7 +670,8 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   };
 
   const handleFinishSession = async () => {
-    await completeSession(session.id);
+    const elapsedSeconds = Math.max(1, Math.round((Date.now() - sessionStartTime) / 1000));
+    await completeSession(session.id, elapsedSeconds);
     onClose();
     resetSessionState();
   };

@@ -33,7 +33,7 @@ interface LearningState {
   selectTopic: (topic: Topic) => Promise<void>;
   selectPart: (part: Part) => Promise<void>;
   selectSession: (session: Session) => Promise<void>;
-  completeSession: (sessionId: number) => Promise<void>;
+  completeSession: (sessionId: number, durationSeconds?: number) => Promise<void>;
   
   // Điều hướng các bước học (session player)
   nextStep: () => void;
@@ -175,12 +175,12 @@ export const useLearningStore = create<LearningState>((set, get) => ({
   },
 
   // Hoàn thành bài học hiện tại (FINISH) và mở khóa bài tiếp theo (UNLOCK) cho User
-  completeSession: async (sessionId: number) => {
+  completeSession: async (sessionId: number, durationSeconds?: number) => {
     const { activeTopic, selectTopic } = get();
     
     try {
       // Gọi API completeUserSession để cập nhật tiến độ riêng cho User
-      await learningApi.completeUserSession(sessionId);
+      await learningApi.completeUserSession(sessionId, durationSeconds);
 
       // Tải lại toàn bộ dữ liệu Topic để cập nhật UI bản đồ học theo User
       if (activeTopic) {

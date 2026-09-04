@@ -2,15 +2,47 @@ import axios from 'axios';
 import { apiClient } from '../../../services/apiClient';
 import type { Level, Topic, Part, Session, SessionItemMapping, UserProgress } from '../types';
 
+export interface DailyStudyTime {
+  day: string;
+  date: string;
+  minutes: number;
+  targetMinutes: number;
+}
+
+export interface RecentSession {
+  id: number;
+  title: string;
+  topic: string;
+  completedAt: string;
+  durationMinutes: number;
+  score: number;
+}
+
+export interface UserStats {
+  totalCompletedLessons: number;
+  weeklyStudyMinutes: number;
+  dailyStudyTime: DailyStudyTime[];
+  recentSessions: RecentSession[];
+}
+
 export const learningApi = {
   // Lấy tiến độ học cá nhân của User hiện tại
   getUserProgress: () => {
     return apiClient.get<UserProgress[]>('/api/progress/my-progress');
   },
 
+  // Lấy thống kê học tập cá nhân của User hiện tại
+  getUserStats: () => {
+    return apiClient.get<UserStats>('/api/progress/stats');
+  },
+
   // Đánh dấu hoàn thành bài học và mở khóa bài tiếp theo cho User hiện tại
-  completeUserSession: (sessionId: number) => {
-    return apiClient.post<UserProgress>(`/api/progress/complete/${sessionId}`);
+  completeUserSession: (sessionId: number, durationSeconds?: number) => {
+    return apiClient.post<UserProgress>(
+      `/api/progress/complete/${sessionId}`,
+      null,
+      { params: durationSeconds !== undefined ? { durationSeconds } : {} }
+    );
   },
 
   // Lấy danh sách toàn bộ Levels active

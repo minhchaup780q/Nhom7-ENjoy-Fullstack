@@ -4,6 +4,7 @@ import { LearningMap } from '../features/learning/components/LearningMap';
 import { ExploreDashboard } from '../features/explore/components/ExploreDashboard';
 import { ProfilePage } from '../features/profile/components/ProfilePage';
 import { PracticeDashboard } from '../features/practice/components/PracticeDashboard';
+import { PersonalStatsPage } from '../features/stats/components/PersonalStatsPage';
 import { LoginPage } from '../features/auth/components/LoginPage';
 import { RegisterPage } from '../features/auth/components/RegisterPage';
 import { useAuthStore } from '../features/auth/store/useAuthStore';
@@ -62,6 +63,7 @@ export const AppRoutes: React.FC<AppRoutesProps> = ({ onStartSession }) => {
         <Route path="/quests" element={<FeatureUnderDevelopment tabName="NHIỆM VỤ" />} />
         <Route path="/shop" element={<FeatureUnderDevelopment tabName="CỬA HÀNG" />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/stats" element={<PersonalStatsPage />} />
       </Route>
 
       {/* Redirect Routes */}
