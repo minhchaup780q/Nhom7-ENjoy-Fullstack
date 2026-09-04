@@ -519,6 +519,10 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
 
     setDraggedItem(null);
     setDropIndicatorIndex(null);
+    if (dragTimeoutRef.current) clearTimeout(dragTimeoutRef.current);
+    dragTimeoutRef.current = setTimeout(() => {
+      isDraggingRef.current = false;
+    }, 100);
   };
 
   // 6. Thả từ trên khay trả về kho dưới
@@ -535,6 +539,10 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     }
     setDraggedItem(null);
     setDropIndicatorIndex(null);
+    if (dragTimeoutRef.current) clearTimeout(dragTimeoutRef.current);
+    dragTimeoutRef.current = setTimeout(() => {
+      isDraggingRef.current = false;
+    }, 100);
   };
 
   // 7. Nhấp từ ở kho dưới -> chuyển lên cuối khay trên
