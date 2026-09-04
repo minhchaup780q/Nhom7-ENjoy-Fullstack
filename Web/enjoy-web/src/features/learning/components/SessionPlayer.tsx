@@ -280,13 +280,23 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     // Dừng âm thanh và giọng đọc cũ
     if (currentAudio) {
       currentAudio.pause();
-      setIsPlayingAudio(false);
+      currentAudio.currentTime = 0;
+      setCurrentAudio(null);
     }
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
+    setIsPlayingAudio(false);
 
+    let hasFallbackRun = false;
     const speakWithTTS = () => {
+      if (hasFallbackRun) return;
+      hasFallbackRun = true;
+
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+
       const textToSpeak = currentItem.contentText?.replace(/[\[\]]/g, '') || currentItem.keyword || '';
       if (!textToSpeak || !('speechSynthesis' in window)) {
         setIsPlayingAudio(false);
@@ -880,12 +890,14 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                   <SpeakerWaveIcon className="w-8 h-8 text-white" />
                 </button>
 
-                {/* Turtle slow speed sound button */}
+                {/* Slow speed sound button (0.6x) */}
                 <button
                   onClick={() => playSound(0.6)}
-                  className={`btn-3d w-12 h-12 rounded-xl flex items-center justify-center cursor-pointer transition-all bg-amber-100 hover:scale-105 hover:bg-amber-200 border-b-4 border-amber-300 shadow-[0_2px_0_0_#d97706]`}
+                  className="btn-3d w-12 h-12 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all bg-[#fff4cc] hover:bg-[#ffeaa7] border-2 border-[#f5cd79] border-b-4 border-b-[#e5b955] shadow-[0_2px_0_0_#d4a237] hover:scale-105 text-[#d97706]"
+                  title="Nghe chậm (0.6x)"
                 >
-                  <span className="text-2xl select-none" title="Turtle Mode (Chậm)">🐢</span>
+                  <SpeakerWaveIcon className="w-5 h-5 text-[#d97706]" />
+                  <span className="text-[9px] font-black tracking-tight leading-none text-[#b45309]">0.6x</span>
                 </button>
 
                 <div className="text-left">
