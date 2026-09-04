@@ -41,11 +41,18 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
 
   
   // Trạng thái màn hình: 'levels' (Trình độ) | 'topics' (Chủ đề) | 'sessions' (Bản đồ bài học)
-  const [currentView, setCurrentView] = useState<'levels' | 'topics' | 'sessions'>('levels');
+  const [currentView, setCurrentView] = useState<'levels' | 'topics' | 'sessions'>(() => {
+    const state = useLearningStore.getState();
+    if (state.activeTopic && state.parts && state.parts.length > 0) return 'sessions';
+    if (state.activeLevel) return 'topics';
+    return 'levels';
+  });
 
   useEffect(() => {
-    fetchLevels();
-  }, [fetchLevels]);
+    if (levels.length === 0) {
+      fetchLevels();
+    }
+  }, [fetchLevels, levels.length]);
 
   const getLevelColors = (index: number) => {
     const palettes = [
@@ -118,6 +125,18 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
   const handleTopicClick = async (tpc: Topic) => {
     setCurrentView('sessions');
     await selectTopic(tpc);
+  };
+
+  // Quay lại màn hình Trình độ
+  const handleBackToLevels = () => {
+    useLearningStore.setState({ activeLevel: null, activeTopic: null });
+    setCurrentView('levels');
+  };
+
+  // Quay lại màn hình Chủ đề
+  const handleBackToTopics = () => {
+    useLearningStore.setState({ activeTopic: null });
+    setCurrentView('topics');
   };
 
   // Hàm tính toán độ dịch chuyển ngang (margin-left) để tạo đường cong hình chữ S
@@ -323,7 +342,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
         <div className="max-w-2xl mx-auto space-y-6 animate-fade-in-up">
           <div className="flex items-center justify-between pb-2">
             <button
-              onClick={() => setCurrentView('levels')}
+              onClick={handleBackToLevels}
               className="flex items-center gap-2 px-4 py-2.5 border-2 border-border-main rounded-xl hover:bg-bg-light font-display font-bold text-xs text-text-muted transition-all cursor-pointer shadow-[0_2px_0_0_#e5e5e5] active:translate-y-[1px]"
             >
               <ArrowLeftIcon className="w-4 h-4" />
@@ -461,7 +480,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
           <div className="max-w-2xl mx-auto sticky top-0 z-30 bg-[#a55eea] text-white rounded-2xl p-4 shadow-md flex items-center justify-between border-b-4 border-[#8854d0]">
             <div className="flex items-center gap-3 text-left">
               <button
-                onClick={() => setCurrentView('topics')}
+                onClick={handleBackToTopics}
                 className="w-10 h-10 rounded-xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors cursor-pointer text-white"
               >
                 <ArrowLeftIcon className="w-5 h-5 stroke-[2.5]" />
