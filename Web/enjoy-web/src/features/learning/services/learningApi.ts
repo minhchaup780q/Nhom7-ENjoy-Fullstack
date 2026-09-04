@@ -2,15 +2,47 @@ import axios from 'axios';
 import { apiClient } from '../../../services/apiClient';
 import type { Level, Topic, Part, Session, SessionItemMapping, UserProgress } from '../types';
 
+export interface DailyStudyTime {
+  day: string;
+  date: string;
+  minutes: number;
+  targetMinutes: number;
+}
+
+export interface RecentSession {
+  id: number;
+  title: string;
+  topic: string;
+  completedAt: string;
+  durationMinutes: number;
+  score: number;
+}
+
+export interface UserStats {
+  totalCompletedLessons: number;
+  weeklyStudyMinutes: number;
+  dailyStudyTime: DailyStudyTime[];
+  recentSessions: RecentSession[];
+}
+
 export const learningApi = {
   // Lấy tiến độ học cá nhân của User hiện tại
   getUserProgress: () => {
     return apiClient.get<UserProgress[]>('/api/progress/my-progress');
   },
 
+  // Lấy thống kê học tập cá nhân của User hiện tại
+  getUserStats: () => {
+    return apiClient.get<UserStats>('/api/progress/stats');
+  },
+
   // Đánh dấu hoàn thành bài học và mở khóa bài tiếp theo cho User hiện tại
-  completeUserSession: (sessionId: number) => {
-    return apiClient.post<UserProgress>(`/api/progress/complete/${sessionId}`);
+  completeUserSession: (sessionId: number, durationSeconds?: number) => {
+    return apiClient.post<UserProgress>(
+      `/api/progress/complete/${sessionId}`,
+      null,
+      { params: durationSeconds !== undefined ? { durationSeconds } : {} }
+    );
   },
 
   // Lấy danh sách toàn bộ Levels active
@@ -78,7 +110,7 @@ export const learningApi = {
   },
 
   // Chấm điểm phát âm bằng Python Faster-Whisper Service
-  assessPronunciation: async (audioBlob: Blob, targetSentence: string): Promise<{
+  assessPronunciation: async (audioBlob: Blob, targetSentence: string, keyword?: string): Promise<{
     isAllCorrect: boolean;
     accuracyScore: number;
     recognizedText: string;
@@ -87,9 +119,30 @@ export const learningApi = {
     const formData = new FormData();
     formData.append('audio', audioBlob, 'recording.webm');
     formData.append('target_sentence', targetSentence);
+    if (keyword) {
+      formData.append('keyword', keyword);
+    }
 
-    const response = await axios.post('http://localhost:8888/api/v1/speech/assess', formData);
-    return response.data;
+    const token = localStorage.getItem('enjoy_access_token');
+    const headers: Record<string, string> = {
+      'Content-Type': 'multipart/form-data',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      // 1. Gọi qua API Gateway
+      const response = await axios.post('http://localhost:8888/api/v1/speech/assess', formData, { headers });
+      return response.data;
+    } catch (gatewayError) {
+      console.warn("Gọi speech service qua Gateway thất bại, đang thử gọi trực tiếp port 8000...", gatewayError);
+      // 2. Fallback gọi trực tiếp speech-assessment-service port 8000
+      const directResponse = await axios.post('http://localhost:8000/api/v1/speech/assess', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      return directResponse.data;
+    }
   },
 };
 

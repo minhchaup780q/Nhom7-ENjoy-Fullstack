@@ -17,6 +17,13 @@ public class AuthenController {
 
     private final AuthenticationService authenticationService;
     private final edu.vn.iuh.fit.authservice.services.JWTService jwtService;
+    private final edu.vn.iuh.fit.authservice.services.EmailService emailService;
+
+    @PostMapping("/internal/send-family-invite")
+    public ResponseEntity<Void> sendFamilyInvite(@RequestBody SendFamilyInviteEmailRequest request) {
+        emailService.sendFamilyInviteMail(request.getRecipient(), request.getParentName(), request.getOtpCode());
+        return ResponseEntity.ok().build();
+    }
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {

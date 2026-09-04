@@ -26,9 +26,16 @@ spring:
         - id: learning-service
           uri: lb://learning-service
           predicates:
-            - Path=/api/topics/**, /api/sessions/**, /api/session-items/**, /api/parts/**, /api/levels/**, /api/progress/**
+            - Path=/api/topics/**, /api/sessions/**, /api/session-items/**, /api/parts/**, /api/levels/**, /api/progress/**, /api/progress, /api/mistakes/**, /api/mistakes
+        - id: chatbot-service
+          uri: lb://chatbot-service
+          predicates:
+            - Path=/api/v1/chatbot/**
 
 eureka:
+  instance:
+    prefer-ip-address: true
+    ip-address: 127.0.0.1
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/ # Trỏ về Discovery Server

@@ -1,6 +1,15 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { BookOpen, Compass, Trophy, Target, ShoppingBag, User, Sparkles } from 'lucide-react';
+import { 
+  BookOpenIcon, 
+  SparklesIcon, 
+  PuzzlePieceIcon, 
+  ChartBarIcon,
+  TrophyIcon, 
+  FlagIcon, 
+  ShoppingBagIcon, 
+  UserIcon 
+} from '@heroicons/react/24/outline';
 import { SettingsFlyoutMenu } from './SettingsFlyoutMenu';
 
 interface MenuItem {
@@ -12,13 +21,14 @@ interface MenuItem {
 
 export const SidebarLeft: React.FC = () => {
   const menuItems: MenuItem[] = [
-    { id: 'learn', label: 'HỌC', icon: <BookOpen className="w-6 h-6 stroke-[2.5]" />, path: '/learn' },
-    { id: 'explore', label: 'KHÁM PHÁ', icon: <Sparkles className="w-6 h-6 stroke-[2.5]" />, path: '/explore' },
-    { id: 'practice', label: 'LUYỆN TẬP', icon: <Compass className="w-6 h-6 stroke-[2.5]" />, path: '/practice' },
-    { id: 'leaderboard', label: 'BẢNG XẾP HẠNG', icon: <Trophy className="w-6 h-6 stroke-[2.5]" />, path: '/leaderboard' },
-    { id: 'quests', label: 'NHIỆM VỤ', icon: <Target className="w-6 h-6 stroke-[2.5]" />, path: '/quests' },
-    { id: 'shop', label: 'CỬA HÀNG', icon: <ShoppingBag className="w-6 h-6 stroke-[2.5]" />, path: '/shop' },
-    { id: 'profile', label: 'HỒ SƠ', icon: <User className="w-6 h-6 stroke-[2.5]" />, path: '/profile' },
+    { id: 'learn', label: 'HỌC', icon: <BookOpenIcon className="w-6 h-6 stroke-[2.5]" />, path: '/learn' },
+    { id: 'explore', label: 'KHÁM PHÁ', icon: <SparklesIcon className="w-6 h-6 stroke-[2.5]" />, path: '/explore' },
+    { id: 'practice', label: 'LUYỆN TẬP', icon: <PuzzlePieceIcon className="w-6 h-6 stroke-[2.5]" />, path: '/practice' },
+    { id: 'stats', label: 'THỐNG KÊ', icon: <ChartBarIcon className="w-6 h-6 stroke-[2.5]" />, path: '/stats' },
+    { id: 'leaderboard', label: 'BẢNG XẾP HẠNG', icon: <TrophyIcon className="w-6 h-6 stroke-[2.5]" />, path: '/leaderboard' },
+    { id: 'quests', label: 'NHIỆM VỤ', icon: <FlagIcon className="w-6 h-6 stroke-[2.5]" />, path: '/quests' },
+    { id: 'shop', label: 'CỬA HÀNG', icon: <ShoppingBagIcon className="w-6 h-6 stroke-[2.5]" />, path: '/shop' },
+    { id: 'profile', label: 'HỒ SƠ', icon: <UserIcon className="w-6 h-6 stroke-[2.5]" />, path: '/profile' },
   ];
 
   return (
