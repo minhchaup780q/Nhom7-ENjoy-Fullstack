@@ -6,24 +6,17 @@ spring:
     name: chatbot-service
 
   ai:
-    openai:
-      api-key: ${AI_API_KEY:dummy_key}
-      base-url: ${AI_BASE_URL:https://api.openai.com}
-      chat:
-        options:
-          model: ${AI_MODEL:gpt-4o-mini}
-          temperature: 0.7
-
     ollama:
       base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
       chat:
-        enabled: false
         options:
-          model: qwen2.5:7b
+          model: ${OLLAMA_MODEL:qwen2.5:7b}
+          temperature: 0.7
 
 eureka:
+  instance:
+    prefer-ip-address: true
+    ip-address: 127.0.0.1
   client:
     service-url:
       defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8761/eureka/}
-  instance:
-    prefer-ip-address: true
