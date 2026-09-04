@@ -60,7 +60,7 @@ export const chatbotApi = {
     let wrong = rawWrong;
     if (rawWrong.startsWith('http://') || rawWrong.startsWith('https://') || rawWrong.startsWith('/') || rawWrong.includes('.jpg') || rawWrong.includes('.png')) {
       const parts = rawWrong.split('/').pop()?.split('.')[0]?.split('-')[0]?.split('?')[0];
-      wrong = (parts && parts.length > 2 && isNaN(Number(parts))) ? parts : `lựa chọn khác`;
+      wrong = (parts && parts.length > 2 && isNaN(Number(parts))) ? parts : 'chưa chính xác';
     }
 
     let prompt = '';

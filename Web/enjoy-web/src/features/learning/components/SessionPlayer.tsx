@@ -548,7 +548,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       if (!correct) {
         setHearts(prev => Math.max(0, prev - 1));
         const wrongItem = currentItems.find(it => it.imageUrl === selectedOption);
-        const wrongText = wrongItem ? (wrongItem.keyword || wrongItem.contentText) : 'Hình ảnh khác';
+        const wrongText = wrongItem ? (wrongItem.keyword || wrongItem.contentText) : (selectedOption || 'chưa chính xác');
         recordMistakeIfWrong(wrongText);
       }
       return;

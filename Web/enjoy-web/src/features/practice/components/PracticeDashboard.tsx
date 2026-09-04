@@ -22,10 +22,32 @@ import { mistakeApi, type MistakeItem, type MistakeStats, type MistakeStatus } f
 import { chatbotApi } from '../../learning/services/chatbotApi';
 import { MistakePracticePlayer } from './MistakePracticePlayer';
 
-const getAssetUrl = (url?: string) => {
+const isImageUrl = (val?: string | null): boolean => {
+  if (!val) return false;
+  const s = val.trim().toLowerCase();
+  return (
+    s.startsWith('http://') ||
+    s.startsWith('https://') ||
+    s.startsWith('/') ||
+    s.startsWith('data:image') ||
+    s.includes('.webp') ||
+    s.includes('.png') ||
+    s.includes('.jpg') ||
+    s.includes('.jpeg') ||
+    s.includes('.svg') ||
+    s.includes('s3.') ||
+    s.includes('amazonaws.com') ||
+    s.includes('unsplash.com')
+  );
+};
+
+const getAssetUrl = (url?: string | null) => {
   if (!url) return '';
-  if (url.startsWith('http://') || url.startsWith('https://')) return url;
-  return `${BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+  const trimmed = url.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:')) {
+    return trimmed;
+  }
+  return `${BASE_URL.replace(/\/$/, '')}/${trimmed.replace(/^\//, '')}`;
 };
 
 const ROUND_INFO: Record<number, { name: string; color: string; badgeBg: string }> = {
@@ -413,9 +435,16 @@ export const PracticeDashboard: React.FC = () => {
                           <ExclamationTriangleIcon className="w-3.5 h-3.5" />
                           Đã chọn sai:
                         </span>
-                        {item.wrongAnswerSubmitted && item.wrongAnswerSubmitted.startsWith('http') ? (
-                          <div className="w-6 h-6 rounded border border-red-300 overflow-hidden shrink-0">
-                            <img src={getAssetUrl(item.wrongAnswerSubmitted)} alt="Wrong" className="w-full h-full object-cover" />
+                        {item.wrongAnswerSubmitted && isImageUrl(item.wrongAnswerSubmitted) ? (
+                          <div className="w-8 h-8 rounded-lg border-2 border-red-300 overflow-hidden shrink-0 bg-white p-0.5 inline-flex items-center justify-center">
+                            <img
+                              src={getAssetUrl(item.wrongAnswerSubmitted)}
+                              alt="Wrong"
+                              className="w-full h-full object-cover rounded-md"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400';
+                              }}
+                            />
                           </div>
                         ) : (
                           <strong className="line-through">{item.wrongAnswerSubmitted}</strong>
@@ -537,21 +566,52 @@ export const PracticeDashboard: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              <div className="bg-bg-light p-3.5 rounded-2xl border-2 border-border-main text-xs space-y-1">
-                <p className="font-bold text-[#2b2b2b]">
-                  Từ vựng / Câu hỏi: <strong>{aiModalItem.contentText}</strong>
-                </p>
-                {aiModalItem.translation && (
-                  <p className="text-text-muted">
-                    Nghĩa tiếng Việt: <strong>{aiModalItem.translation}</strong>
-                  </p>
-                )}
-                <p className="text-[#cf1322]">
-                  Lần trước bé chọn/đọc: <strong className="line-through">{aiModalItem.wrongAnswerSubmitted || 'Chưa đúng'}</strong>
-                </p>
-                <p className="text-[#389e0d]">
-                  Đáp án chuẩn: <strong>{aiModalItem.keyword || aiModalItem.contentText}</strong>
-                </p>
+              <div className="bg-bg-light p-3.5 rounded-2xl border-2 border-border-main text-xs space-y-2">
+                <div className="flex items-center gap-3">
+                  {aiModalItem.imageUrl && (
+                    <div className="w-16 h-16 rounded-xl border-2 border-border-main overflow-hidden shrink-0 bg-white p-1">
+                      <img
+                        src={getAssetUrl(aiModalItem.imageUrl)}
+                        alt="Question"
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400';
+                        }}
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1 space-y-0.5">
+                    <p className="font-bold text-[#2b2b2b]">
+                      Từ vựng / Câu hỏi: <strong className="text-primary">{aiModalItem.contentText}</strong>
+                    </p>
+                    {aiModalItem.translation && (
+                      <p className="text-text-muted text-[11px]">
+                        Nghĩa tiếng Việt: <strong>{aiModalItem.translation}</strong>
+                      </p>
+                    )}
+                    <p className="text-[#389e0d] text-[11px]">
+                      Đáp án chuẩn: <strong>{aiModalItem.keyword || aiModalItem.contentText}</strong>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-[#cf1322] font-semibold pt-2 border-t border-border-main/50">
+                  <span className="shrink-0">Lần trước bé chọn/đọc:</span>
+                  {isImageUrl(aiModalItem.wrongAnswerSubmitted) ? (
+                    <div className="w-10 h-10 rounded-lg border-2 border-red-300 overflow-hidden shrink-0 bg-white p-0.5 inline-flex items-center justify-center">
+                      <img
+                        src={getAssetUrl(aiModalItem.wrongAnswerSubmitted)}
+                        alt="Đã chọn sai"
+                        className="w-full h-full object-cover rounded-md"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400';
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <strong className="line-through">{aiModalItem.wrongAnswerSubmitted || 'Chưa đúng'}</strong>
+                  )}
+                </div>
               </div>
 
               <div className="bg-[#f0f5ff] border-2 border-[#adc6ff] rounded-2xl p-4 text-xs font-semibold text-[#1d39c4] leading-relaxed min-h-[100px] flex items-center">
