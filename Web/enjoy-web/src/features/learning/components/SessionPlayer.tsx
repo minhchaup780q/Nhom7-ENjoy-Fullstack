@@ -622,7 +622,9 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       setIsChecked(true);
       if (!correct) {
         setHearts(prev => Math.max(0, prev - 1));
-        recordMistakeIfWrong(selectedOption || 'Ảnh chưa đúng');
+        const wrongItem = currentItems.find(it => it.imageUrl === selectedOption);
+        const wrongText = wrongItem ? (wrongItem.keyword || wrongItem.contentText) : (selectedOption || 'chưa chính xác');
+        recordMistakeIfWrong(wrongText);
       }
       return;
     }

@@ -19,12 +19,35 @@ import { Button3D } from '../../../components/ui/Button3D';
 import { Mascot } from '../../../components/ui/Mascot';
 import { BASE_URL } from '../../../services/apiClient';
 import { mistakeApi, type MistakeItem, type MistakeStats, type MistakeStatus } from '../../learning/services/mistakeApi';
+import { chatbotApi } from '../../learning/services/chatbotApi';
 import { MistakePracticePlayer } from './MistakePracticePlayer';
 
-const getAssetUrl = (url?: string) => {
+const isImageUrl = (val?: string | null): boolean => {
+  if (!val) return false;
+  const s = val.trim().toLowerCase();
+  return (
+    s.startsWith('http://') ||
+    s.startsWith('https://') ||
+    s.startsWith('/') ||
+    s.startsWith('data:image') ||
+    s.includes('.webp') ||
+    s.includes('.png') ||
+    s.includes('.jpg') ||
+    s.includes('.jpeg') ||
+    s.includes('.svg') ||
+    s.includes('s3.') ||
+    s.includes('amazonaws.com') ||
+    s.includes('unsplash.com')
+  );
+};
+
+const getAssetUrl = (url?: string | null) => {
   if (!url) return '';
-  if (url.startsWith('http://') || url.startsWith('https://')) return url;
-  return `${BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+  const trimmed = url.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:')) {
+    return trimmed;
+  }
+  return `${BASE_URL.replace(/\/$/, '')}/${trimmed.replace(/^\//, '')}`;
 };
 
 const ROUND_INFO: Record<number, { name: string; color: string; badgeBg: string }> = {
@@ -56,6 +79,30 @@ export const PracticeDashboard: React.FC = () => {
 
   // Selected Mistake for AI Explanation Modal
   const [aiModalItem, setAiModalItem] = useState<MistakeItem | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiExplanation, setAiExplanation] = useState<string>('');
+
+  const handleOpenAiModal = async (item: MistakeItem) => {
+    setAiModalItem(item);
+    if (item.aiExplanationCache && item.aiExplanationCache.trim().length > 0) {
+      setAiExplanation(item.aiExplanationCache);
+      setAiLoading(false);
+    } else {
+      setAiLoading(true);
+      setAiExplanation('');
+      try {
+        const explanation = await chatbotApi.explainMistake(item);
+        setAiExplanation(explanation);
+        // Cập nhật cache lên database để lần sau mở lại ngay lập tức
+        mistakeApi.updateAiExplanation(item.id, explanation).catch(() => {});
+      } catch (err) {
+        console.error("Lỗi khi gọi AI phân tích:", err);
+        setAiExplanation('Trợ lý AI đang bận một chút. Bé hãy xem lại từ vựng và đáp án đúng nhé!');
+      } finally {
+        setAiLoading(false);
+      }
+    }
+  };
 
   // Tải dữ liệu theo trang hiện tại (Load trang nào hiển thị trang đó)
   const fetchMistakesData = useCallback(async (
@@ -388,9 +435,16 @@ export const PracticeDashboard: React.FC = () => {
                           <ExclamationTriangleIcon className="w-3.5 h-3.5" />
                           Đã chọn sai:
                         </span>
-                        {item.wrongAnswerSubmitted && item.wrongAnswerSubmitted.startsWith('http') ? (
-                          <div className="w-6 h-6 rounded border border-red-300 overflow-hidden shrink-0">
-                            <img src={getAssetUrl(item.wrongAnswerSubmitted)} alt="Wrong" className="w-full h-full object-cover" />
+                        {item.wrongAnswerSubmitted && isImageUrl(item.wrongAnswerSubmitted) ? (
+                          <div className="w-8 h-8 rounded-lg border-2 border-red-300 overflow-hidden shrink-0 bg-white p-0.5 inline-flex items-center justify-center">
+                            <img
+                              src={getAssetUrl(item.wrongAnswerSubmitted)}
+                              alt="Wrong"
+                              className="w-full h-full object-cover rounded-md"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400';
+                              }}
+                            />
                           </div>
                         ) : (
                           <strong className="line-through">{item.wrongAnswerSubmitted}</strong>
@@ -418,7 +472,7 @@ export const PracticeDashboard: React.FC = () => {
                     </button>
 
                     <button
-                      onClick={() => setAiModalItem(item)}
+                      onClick={() => handleOpenAiModal(item)}
                       className="p-2.5 bg-[#f0f5ff] hover:bg-[#d6e4ff] text-[#2f54eb] rounded-xl border-2 border-[#adc6ff] transition-colors cursor-pointer"
                       title="AI Phân tích lỗi sai"
                     >
@@ -450,7 +504,6 @@ export const PracticeDashboard: React.FC = () => {
                 {/* Numbered Page Buttons */}
                 <div className="flex items-center gap-1">
                   {Array.from({ length: totalPages }, (_, i) => i).map(pageIdx => {
-                    // Hiển thị các trang gần trang hiện tại nếu nhiều hơn 6 trang
                     if (
                       totalPages > 6 &&
                       pageIdx !== 0 &&
@@ -497,12 +550,12 @@ export const PracticeDashboard: React.FC = () => {
 
       {/* AI Explanation Modal */}
       {aiModalItem && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white border-4 border-border-main rounded-3xl p-6 md:p-8 max-w-lg w-full space-y-5 animate-in zoom-in-95 shadow-2xl">
             <div className="flex items-center justify-between border-b-2 border-border-main pb-3">
               <div className="flex items-center gap-2 text-primary font-display font-black text-base uppercase">
-                <CpuChipIcon className="w-5 h-5" />
-                AI Phân Tích Lỗi Sai
+                <CpuChipIcon className="w-5 h-5 text-primary" />
+                AI Phân Tích & Hướng Dẫn Lỗi Sai
               </div>
               <button
                 onClick={() => setAiModalItem(null)}
@@ -513,22 +566,74 @@ export const PracticeDashboard: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              <div className="bg-bg-light p-3.5 rounded-2xl border-2 border-border-main text-xs space-y-1">
-                <p className="font-bold text-[#2b2b2b]">Câu hỏi: <strong>{aiModalItem.contentText}</strong></p>
-                <p className="text-[#cf1322]">Đáp án sai đã chọn: <strong className="line-through">{aiModalItem.wrongAnswerSubmitted}</strong></p>
-                <p className="text-[#389e0d]">Đáp án đúng: <strong>{aiModalItem.keyword || aiModalItem.contentText}</strong></p>
+              <div className="bg-bg-light p-3.5 rounded-2xl border-2 border-border-main text-xs space-y-2">
+                <div className="flex items-center gap-3">
+                  {aiModalItem.imageUrl && (
+                    <div className="w-16 h-16 rounded-xl border-2 border-border-main overflow-hidden shrink-0 bg-white p-1">
+                      <img
+                        src={getAssetUrl(aiModalItem.imageUrl)}
+                        alt="Question"
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400';
+                        }}
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1 space-y-0.5">
+                    <p className="font-bold text-[#2b2b2b]">
+                      Từ vựng / Câu hỏi: <strong className="text-primary">{aiModalItem.contentText}</strong>
+                    </p>
+                    {aiModalItem.translation && (
+                      <p className="text-text-muted text-[11px]">
+                        Nghĩa tiếng Việt: <strong>{aiModalItem.translation}</strong>
+                      </p>
+                    )}
+                    <p className="text-[#389e0d] text-[11px]">
+                      Đáp án chuẩn: <strong>{aiModalItem.keyword || aiModalItem.contentText}</strong>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-[#cf1322] font-semibold pt-2 border-t border-border-main/50">
+                  <span className="shrink-0">Lần trước bé chọn/đọc:</span>
+                  {isImageUrl(aiModalItem.wrongAnswerSubmitted) ? (
+                    <div className="w-10 h-10 rounded-lg border-2 border-red-300 overflow-hidden shrink-0 bg-white p-0.5 inline-flex items-center justify-center">
+                      <img
+                        src={getAssetUrl(aiModalItem.wrongAnswerSubmitted)}
+                        alt="Đã chọn sai"
+                        className="w-full h-full object-cover rounded-md"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400';
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <strong className="line-through">{aiModalItem.wrongAnswerSubmitted || 'Chưa đúng'}</strong>
+                  )}
+                </div>
               </div>
 
-              <div className="bg-[#f0f5ff] border-2 border-[#adc6ff] rounded-2xl p-4 text-xs font-semibold text-[#1d39c4] leading-relaxed">
-                {aiModalItem.aiExplanationCache ? (
-                  <p>{aiModalItem.aiExplanationCache}</p>
+              <div className="bg-[#f0f5ff] border-2 border-[#adc6ff] rounded-2xl p-4 text-xs font-semibold text-[#1d39c4] leading-relaxed min-h-[100px] flex items-center">
+                {aiLoading ? (
+                  <div className="w-full flex flex-col items-center justify-center gap-3 py-4 text-primary">
+                    <div className="flex items-center gap-2 font-display font-black text-xs uppercase tracking-wide">
+                      <ArrowPathIcon className="w-5 h-5 animate-spin" />
+                      <span>Trợ lý AI đang suy nghĩ & phân tích...</span>
+                    </div>
+                    <div className="w-48 h-1.5 bg-blue-100 rounded-full overflow-hidden">
+                      <div className="w-full h-full bg-primary animate-pulse rounded-full" />
+                    </div>
+                    <p className="text-[11px] text-[#597ef7] font-medium">Đang tìm mẹo học và hướng dẫn khắc phục lỗi sai cho bé...</p>
+                  </div>
                 ) : (
-                  <div className="space-y-2">
-                    <p>
-                      💡 <strong>Gợi ý từ Enjoy AI:</strong>
+                  <div className="space-y-1.5 w-full">
+                    <p className="font-bold text-primary flex items-center gap-1.5 uppercase text-[11px]">
+                      <SparklesIcon className="w-4 h-4" />
+                      Lời khuyên từ Trợ lý AI:
                     </p>
-                    <p>
-                      Khi làm câu hỏi dạng này, bé cần chú ý từ khóa chính <strong>"{aiModalItem.keyword || aiModalItem.contentText}"</strong> thay vì chọn <em>"{aiModalItem.wrongAnswerSubmitted}"</em> nhé!
+                    <p className="text-slate-700 leading-relaxed whitespace-pre-line font-medium text-xs">
+                      {aiExplanation || 'Bé hãy chú ý từ vựng và lắng nghe âm thanh mẫu để phát âm chuẩn hơn nhé!'}
                     </p>
                   </div>
                 )}

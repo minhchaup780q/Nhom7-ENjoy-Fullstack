@@ -10,13 +10,16 @@ import {
   ClockIcon,
   MicrophoneIcon,
   StopIcon,
-  PlayIcon
+  PlayIcon,
+  CpuChipIcon,
+  SparklesIcon
 } from '@heroicons/react/24/solid';
 import { Button3D } from '../../../components/ui/Button3D';
 import { Mascot } from '../../../components/ui/Mascot';
 import { BASE_URL } from '../../../services/apiClient';
 import { mistakeApi, type MistakeItem } from '../../learning/services/mistakeApi';
 import { learningApi } from '../../learning/services/learningApi';
+import { chatbotApi } from '../../learning/services/chatbotApi';
 
 interface MistakePracticePlayerProps {
   mistakes: MistakeItem[];
@@ -24,12 +27,32 @@ interface MistakePracticePlayerProps {
   onFinished: (stats: { total: number; mastered: number; score: number }) => void;
 }
 
-const getAssetUrl = (path?: string) => {
+const isImageUrl = (val?: string | null): boolean => {
+  if (!val) return false;
+  const s = val.trim().toLowerCase();
+  return (
+    s.startsWith('http://') ||
+    s.startsWith('https://') ||
+    s.startsWith('/') ||
+    s.startsWith('data:image') ||
+    s.includes('.webp') ||
+    s.includes('.png') ||
+    s.includes('.jpg') ||
+    s.includes('.jpeg') ||
+    s.includes('.svg') ||
+    s.includes('s3.') ||
+    s.includes('amazonaws.com') ||
+    s.includes('unsplash.com')
+  );
+};
+
+const getAssetUrl = (path?: string | null) => {
   if (!path) return '';
-  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) {
-    return path;
+  const trimmed = path.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:')) {
+    return trimmed;
   }
-  return `${BASE_URL.replace(/\/$/, '')}${path.startsWith('/') ? '' : '/'}${path}`;
+  return `${BASE_URL.replace(/\/$/, '')}/${trimmed.replace(/^\//, '')}`;
 };
 
 const ROUND_NAMES: Record<number, string> = {
@@ -78,7 +101,29 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
   const [isAssessing, setIsAssessing] = useState(false);
   const [speakingResult, setSpeakingResult] = useState<{ word: string; status: 'correct' | 'wrong' }[] | null>(null);
 
+  // States dành cho AI Advice Modal
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiAdvice, setAiAdvice] = useState<string>('');
+  const [currentAttemptAnswer, setCurrentAttemptAnswer] = useState<string | null>(null);
+
   const currentItem = mistakes[currentIndex];
+
+  const handleOpenAiAdvice = async () => {
+    if (!currentItem) return;
+    setIsAiModalOpen(true);
+    setAiLoading(true);
+    setAiAdvice('');
+    try {
+      const explanation = await chatbotApi.explainMistake(currentItem, currentAttemptAnswer || undefined);
+      setAiAdvice(explanation);
+      mistakeApi.updateAiExplanation(currentItem.id, explanation).catch(() => {});
+    } catch (err) {
+      setAiAdvice('Trợ lý AI đang bận một chút. Bé hãy xem lại từ vựng và đáp án đúng nhé!');
+    } finally {
+      setAiLoading(false);
+    }
+  };
   const progressPercent = mistakes.length > 0 ? (currentIndex / mistakes.length) * 100 : 0;
 
   // Phát âm thanh mẫu
@@ -166,6 +211,7 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
     setRecordedAudioUrl(null);
     setRecordedBlob(null);
     setSpeakingResult(null);
+    setCurrentAttemptAnswer(null);
 
     if (currentItem.roundType === 2) {
       // VÒNG 2 (LISTENING): 4 hình ảnh
@@ -255,9 +301,10 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
       }
     } else if (currentItem.roundType === 2) {
       // Vòng Nghe: So sánh URL ảnh
-      userAns = selectedOption || '';
       const correctImage = currentItem.imageUrl || options[0];
       correct = selectedOption === correctImage || (!!currentItem.imageUrl && selectedOption === currentItem.imageUrl);
+      const chosenMistake = mistakes.find(m => m.imageUrl === selectedOption);
+      userAns = chosenMistake ? (chosenMistake.keyword || chosenMistake.contentText) : (selectedOption || 'chưa chính xác');
     } else if (currentItem.roundType === 5) {
       // Vòng Điền từ
       userAns = fillInputValue.trim().toLowerCase();
@@ -272,6 +319,7 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
 
     setIsCorrect(correct);
     setIsChecked(true);
+    setCurrentAttemptAnswer(userAns);
 
     if (correct) {
       setMasteredCount(prev => prev + 1);
@@ -484,12 +532,19 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
           )}
 
           {/* Previous Mistake Pill */}
-          <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-red-50 border border-red-200 rounded-full text-[11px] text-red-600 font-semibold">
-            <ExclamationTriangleIcon className="w-3 h-3 shrink-0" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 border border-red-200 rounded-full text-[11px] text-red-600 font-semibold">
+            <ExclamationTriangleIcon className="w-3.5 h-3.5 shrink-0" />
             <span>Lần trước bé chọn sai: </span>
-            {currentItem.wrongAnswerSubmitted && currentItem.wrongAnswerSubmitted.startsWith('http') ? (
-              <div className="w-4 h-4 rounded border border-red-300 overflow-hidden inline-block align-middle ml-1">
-                <img src={getAssetUrl(currentItem.wrongAnswerSubmitted)} alt="Wrong" className="w-full h-full object-cover" />
+            {currentItem.wrongAnswerSubmitted && isImageUrl(currentItem.wrongAnswerSubmitted) ? (
+              <div className="w-8 h-8 rounded-lg border-2 border-red-300 overflow-hidden inline-flex items-center justify-center bg-white p-0.5 align-middle ml-1">
+                <img
+                  src={getAssetUrl(currentItem.wrongAnswerSubmitted)}
+                  alt="Wrong"
+                  className="w-full h-full object-cover rounded-md"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = BACKUP_IMAGES[0];
+                  }}
+                />
               </div>
             ) : (
               <strong className="line-through">{currentItem.wrongAnswerSubmitted}</strong>
@@ -682,7 +737,18 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
             </div>
           )}
 
-          <div>
+          <div className="flex items-center gap-2">
+            {isChecked && !isCorrect && (
+              <button
+                type="button"
+                onClick={handleOpenAiAdvice}
+                className="px-3 py-2 bg-[#f0f5ff] hover:bg-[#d6e4ff] text-[#2f54eb] rounded-xl border-2 border-[#adc6ff] font-display font-black text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+              >
+                <CpuChipIcon className="w-4 h-4 text-[#2f54eb]" />
+                HỎI AI
+              </button>
+            )}
+
             {!isChecked ? (
               <Button3D
                 variant="green"
@@ -704,6 +770,100 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
           </div>
         </div>
       </div>
+
+      {/* AI Advice Modal inside Player */}
+      {isAiModalOpen && currentItem && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white border-4 border-border-main rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b-2 border-border-main pb-3">
+              <div className="flex items-center gap-2 text-primary font-display font-black text-sm uppercase">
+                <CpuChipIcon className="w-5 h-5 text-primary" />
+                Hướng Dẫn Lỗi Sai Từ AI
+              </div>
+              <button
+                onClick={() => setIsAiModalOpen(false)}
+                className="p-1 hover:bg-bg-light rounded-lg text-text-muted cursor-pointer"
+              >
+                <XMarkIcon className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div className="bg-bg-light p-3.5 rounded-2xl border-2 border-border-main text-xs space-y-2">
+                <div className="flex items-center gap-3">
+                  {currentItem.imageUrl && (
+                    <div className="w-16 h-16 rounded-xl border-2 border-border-main overflow-hidden shrink-0 bg-white p-1">
+                      <img
+                        src={getAssetUrl(currentItem.imageUrl)}
+                        alt="Question"
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = BACKUP_IMAGES[0];
+                        }}
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1 space-y-0.5">
+                    <p className="font-bold text-[#2b2b2b]">
+                      Câu / Từ chuẩn: <strong className="text-primary">{currentItem.contentText || currentItem.keyword}</strong>
+                    </p>
+                    {currentItem.translation && (
+                      <p className="text-text-muted text-[11px]">({currentItem.translation})</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-[#cf1322] font-semibold pt-2 border-t border-border-main/50">
+                  <span className="shrink-0">Bé đã đọc/chọn:</span>
+                  {isImageUrl(currentAttemptAnswer || currentItem.wrongAnswerSubmitted) ? (
+                    <div className="w-10 h-10 rounded-lg border-2 border-red-300 overflow-hidden shrink-0 bg-white p-0.5 inline-flex items-center justify-center">
+                      <img
+                        src={getAssetUrl(currentAttemptAnswer || currentItem.wrongAnswerSubmitted)}
+                        alt="Wrong answer"
+                        className="w-full h-full object-cover rounded-md"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = BACKUP_IMAGES[0];
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <strong className="line-through">{currentAttemptAnswer || currentItem.wrongAnswerSubmitted || 'Chưa chính xác'}</strong>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-[#f0f5ff] border-2 border-[#adc6ff] rounded-2xl p-4 text-xs font-semibold text-[#1d39c4] leading-relaxed min-h-[100px] flex items-center">
+                {aiLoading ? (
+                  <div className="w-full flex flex-col items-center justify-center gap-3 py-4 text-primary">
+                    <div className="flex items-center gap-2 font-display font-black text-xs uppercase tracking-wide">
+                      <ArrowPathIcon className="w-5 h-5 animate-spin" />
+                      <span>Trợ lý AI đang suy nghĩ & chuẩn bị lời khuyên...</span>
+                    </div>
+                    <div className="w-48 h-1.5 bg-blue-100 rounded-full overflow-hidden">
+                      <div className="w-full h-full bg-primary animate-pulse rounded-full" />
+                    </div>
+                    <p className="text-[11px] text-[#597ef7] font-medium">Bé chờ AI một chút nhé...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5 w-full">
+                    <p className="font-bold text-primary flex items-center gap-1.5 uppercase text-[11px]">
+                      <SparklesIcon className="w-4 h-4" />
+                      Lời khuyên từ Trợ lý AI:
+                    </p>
+                    <p className="text-slate-700 leading-relaxed whitespace-pre-line font-medium text-xs">
+                      {aiAdvice || 'Bé hãy chú ý từ vựng và luyện tập lại thật kỹ nhé!'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <Button3D variant="blue" fullWidth size="md" onClick={() => setIsAiModalOpen(false)}>
+              ĐÃ HIỂU RỒI!
+            </Button3D>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
