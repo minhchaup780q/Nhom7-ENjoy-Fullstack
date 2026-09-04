@@ -461,12 +461,14 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
                 <SpeakerWaveIcon className="w-7 h-7 text-white" />
               </button>
 
+              {/* Slow speed sound button (0.6x) */}
               <button
                 onClick={() => playAudio(0.6)}
-                className="btn-3d w-11 h-11 rounded-xl flex items-center justify-center cursor-pointer bg-amber-100 border-b-4 border-amber-300 shadow-[0_2px_0_0_#d97706]"
-                title="Nghe chậm"
+                className="btn-3d w-11 h-11 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all bg-[#fff4cc] hover:bg-[#ffeaa7] border-2 border-[#f5cd79] border-b-4 border-b-[#e5b955] shadow-[0_2px_0_0_#d4a237] hover:scale-105 text-[#d97706]"
+                title="Nghe chậm (0.6x)"
               >
-                <span className="text-xl select-none">🐢</span>
+                <SpeakerWaveIcon className="w-4 h-4 text-[#d97706]" />
+                <span className="text-[8px] font-black tracking-tight leading-none text-[#b45309]">0.6x</span>
               </button>
 
               <div className="text-left">
