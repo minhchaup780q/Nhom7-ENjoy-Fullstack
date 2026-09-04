@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLearningStore } from '../store/useLearningStore';
 import { SessionItemType } from '../types';
 import type { Session, SessionItem } from '../types';
@@ -31,6 +31,12 @@ interface InteractiveItem extends SessionItem {
   correctAnswer?: string;
 }
 
+// Đây là kiểu dữ liệu cho mỗi chữ khi cắt chữ đó ra khỏi câu (VÒNG GAME)
+interface WordChip {
+  id: string;
+  text: string;
+}
+
 export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }) => {
   const {
     sessionItems,
@@ -50,8 +56,20 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   // Trạng thái cho Vòng 4 (GAMIFIED_REVIEW & WORD_RECOGNITION)
   const [quizOptions, setQuizOptions] = useState<string[]>([]);
   const [showTranslationHint, setShowTranslationHint] = useState(false);
-  const [shuffledWords, setShuffledWords] = useState<{ id: number; text: string; selected: boolean }[]>([]);
-  const [blankAnswers, setBlankAnswers] = useState<Record<number, string>>({});
+
+  // Trạng thái cho Xếp từ thành câu (Sentence Builder & Drag-and-Drop) Vòng 5 (GAMIFIED_REVIEW)
+  const [availableWords, setAvailableWords] = useState<WordChip[]>([]);
+  const [placedWords, setPlacedWords] = useState<WordChip[]>([]);
+  const [draggedItem, setDraggedItem] = useState<{ from: 'available' | 'placed'; chip: WordChip } | null>(null);
+  const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null);
+  const isDraggingRef = useRef(false);
+  const dragTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (dragTimeoutRef.current) clearTimeout(dragTimeoutRef.current);
+    };
+  }, []);
 
   // Trạng thái layout ngẫu nhiên cho Vòng 5 (GAMIFIED_REVIEW)
   const [itemLayouts, setItemLayouts] = useState<Record<number, 'LISTENING' | 'SPEAKING' | 'QUIZ' | 'FILL_IN_BLANK'>>({});
@@ -98,45 +116,12 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       return currentItem.itemType === SessionItemType.QUIZ ? 'QUIZ' : 'FILL_IN_BLANK';
     }
     if (session.sessionType === 'GAMIFIED_REVIEW') {
-      return itemLayouts[currentItem.id] || 'UNKNOWN';
+      return 'FILL_IN_BLANK';
     }
     return 'UNKNOWN';
   };
 
   const activeLayout = getActiveLayout();
-
-  const parseSentence = (text: string) => {
-    const regex = /\[([^\]]+)\]/g;
-    const tokens: { type: 'text' | 'blank'; content: string; blankIndex?: number }[] = [];
-    let lastIndex = 0;
-    let blankIndex = 0;
-    let match;
-
-    while ((match = regex.exec(text)) !== null) {
-      const matchIndex = match.index;
-      if (matchIndex > lastIndex) {
-        tokens.push({
-          type: 'text',
-          content: text.substring(lastIndex, matchIndex)
-        });
-      }
-      tokens.push({
-        type: 'blank',
-        content: match[1],
-        blankIndex: blankIndex++
-      });
-      lastIndex = regex.lastIndex;
-    }
-
-    if (lastIndex < text.length) {
-      tokens.push({
-        type: 'text',
-        content: text.substring(lastIndex)
-      });
-    }
-
-    return tokens;
-  };
 
   const getAssetUrl = (path?: string) => {
     if (!path) return '';
@@ -203,32 +188,44 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     setShowTranslationHint(false);
   }, [currentItem, currentItems, session.sessionType, itemLayouts]);
 
-  // Tạo danh sách các từ xáo trộn cho Vòng 4/5 (FILL_IN_BLANK)
+  // Tạo danh sách các từ xáo trộn cho Vòng 4/5 (FILL_IN_BLANK / SENTENCE_BUILDER)
   useEffect(() => {
     const isFillLayout = (session.sessionType === 'WORD_RECOGNITION' && currentItem?.itemType === SessionItemType.FILL_IN_BLANK) ||
-      (session.sessionType === 'GAMIFIED_REVIEW' && itemLayouts[currentItem?.id] === 'FILL_IN_BLANK');
+      session.sessionType === 'GAMIFIED_REVIEW';
 
-    if (!currentItem || !isFillLayout) return;
-
-    // Chỉ trích xuất các từ trong ngoặc vuông [word] làm đáp án
-    const regex = /\[([^\]]+)\]/g;
-    const matches: string[] = [];
-    let match;
-    while ((match = regex.exec(currentItem.contentText)) !== null) {
-      matches.push(match[1]);
+    if (!currentItem || !isFillLayout) {
+      setAvailableWords([]);
+      setPlacedWords([]);
+      return;
     }
 
-    const wordsWithId = matches.map((word, index) => ({
-      id: index,
-      text: word,
-      selected: false
+    // Làm sạch câu: bỏ [ ], bỏ dấu câu cuối (? ! .)
+    const cleanText = (currentItem.contentText || '')
+      .replace(/[\[\]]/g, '')
+      .replace(/[.?!,]+$/g, '')
+      .trim();
+
+    // Tách các từ theo khoảng trắng
+    const rawWords = cleanText.split(/\s+/).filter(Boolean);
+
+    const chips: WordChip[] = rawWords.map((word, idx) => ({
+      id: `${word}-${idx}-${Math.random().toString(36).substr(2, 6)}`,
+      text: word
     }));
 
-    const shuffled = [...wordsWithId].sort(() => 0.5 - Math.random());
-    setShuffledWords(shuffled);
-    setBlankAnswers({});
+    // Xáo trộn ngẫu nhiên (nếu câu > 1 từ, đảo sao cho không trùng y hệt câu gốc)
+    let shuffled = [...chips].sort(() => 0.5 - Math.random());
+    if (chips.length > 1 && shuffled.every((c, i) => c.text === chips[i].text)) {
+      shuffled = [...chips].reverse();
+    }
+
+    setAvailableWords(shuffled);
+    setPlacedWords([]);
+    setDraggedItem(null);
+    setDropIndicatorIndex(null);
     setIsChecked(false);
-  }, [currentItem, session.sessionType, itemLayouts]);
+    setIsCorrect(false);
+  }, [currentStepIndex, currentItem?.id, currentItem?.contentText, session.sessionType]);
 
 
 
@@ -436,59 +433,137 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     setSelectedOption(option);
   };
 
-  const handleAddWordToBlank = (word: { id: number; text: string }) => {
-    if (isChecked || !currentItem) return;
-
-    // Tìm ô trống đầu tiên chưa được điền
-    const tokens = parseSentence(currentItem.contentText);
-    const expectedBlanks = tokens.filter(t => t.type === 'blank');
-
-    const firstEmptyBlank = expectedBlanks.find(blank => !blankAnswers[blank.blankIndex!]);
-    if (!firstEmptyBlank) return; // Đã điền đầy tất cả các ô trống rồi
-
-    const blankIndex = firstEmptyBlank.blankIndex!;
-    setBlankAnswers(prev => ({
-      ...prev,
-      [blankIndex]: word.text
-    }));
-
-    // Đánh dấu từ đã chọn
-    setShuffledWords(prev =>
-      prev.map(w => w.id === word.id ? { ...w, selected: true } : w)
-    );
+  // ==================== CƠ CHẾ KÉO THẢ & CHỌN TỪ (SENTENCE BUILDER) ====================
+  // 1. Bắt đầu kéo một từ (từ kho dưới hoặc từ khay trên)
+  const handleDragStart = (e: React.DragEvent, from: 'available' | 'placed', chip: WordChip) => {
+    if (isChecked) return;
+    isDraggingRef.current = true;
+    setDraggedItem({ from, chip });
+    e.dataTransfer.setData('text/plain', chip.id);
+    e.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleRemoveWordFromBlank = (blankIndex: number, text: string) => {
+  const handleDragEnd = () => {
+    setDraggedItem(null);
+    setDropIndicatorIndex(null);
+    if (dragTimeoutRef.current) clearTimeout(dragTimeoutRef.current);
+    dragTimeoutRef.current = setTimeout(() => {
+      isDraggingRef.current = false;
+    }, 100);
+  };
+
+  // 2. Rê chuột qua một từ cụ thể trên khay (tính toán nửa trái/nửa phải để chèn trước hoặc sau)
+  const handleDragOverChip = (e: React.DragEvent, idx: number) => {
     if (isChecked) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+    const rect = e.currentTarget.getBoundingClientRect();
+    const isRightHalf = e.clientX > rect.left + rect.width / 2;
+    setDropIndicatorIndex(isRightHalf ? idx + 1 : idx);
+  };
 
-    // Gỡ khỏi map điền từ
-    setBlankAnswers(prev => {
-      const copy = { ...prev };
-      delete copy[blankIndex];
-      return copy;
-    });
+  // 3. Thả từ trực tiếp lên một từ trên khay (thả vào vị trí bất kỳ)
+  const handleDropOnChip = (e: React.DragEvent, idx: number) => {
+    if (isChecked || !draggedItem) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const isRightHalf = e.clientX > rect.left + rect.width / 2;
+    finalizeDrop(isRightHalf ? idx + 1 : idx);
+  };
 
-    // Trả từ về trạng thái chưa được chọn
-    setShuffledWords(prev => {
-      // Tìm từ đầu tiên trùng text và đang selected = true để reset về false
-      let found = false;
-      return prev.map(w => {
-        if (!found && w.text === text && w.selected) {
-          found = true;
-          return { ...w, selected: false };
-        }
-        return w;
+  // 4. Rê chuột qua vùng trống trên khay (chèn vào cuối)
+  const handleDragOverTrayContainer = (e: React.DragEvent) => {
+    if (isChecked) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDropIndicatorIndex(placedWords.length);
+  };
+
+  // 5. Thả từ vào vùng trống trên khay
+  const handleDropOnTrayContainer = (e: React.DragEvent) => {
+    if (isChecked || !draggedItem) return;
+    e.preventDefault();
+    finalizeDrop(placedWords.length);
+  };
+
+  // Hàm xử lý hoàn tất việc thả từ vào vị trí chỉ định (chống double chữ triệt để)
+  const finalizeDrop = (targetIndex: number) => {
+    if (!draggedItem) return;
+    const { from, chip } = draggedItem;
+
+    if (from === 'available') {
+      // 1. Lấy từ kho dưới lên vị trí targetIndex trên khay
+      setAvailableWords(prev => prev.filter(c => c.id !== chip.id));
+      setPlacedWords(prev => {
+        if (prev.some(c => c.id === chip.id)) return prev; // Chống double chữ
+        const next = [...prev];
+        const boundedIndex = Math.max(0, Math.min(next.length, targetIndex));
+        next.splice(boundedIndex, 0, chip);
+        return next;
       });
+    } else if (from === 'placed') {
+      // 2. Đổi chỗ từ đang có trên khay đến vị trí targetIndex
+      setPlacedWords(prev => {
+        const currentIndex = prev.findIndex(c => c.id === chip.id);
+        if (currentIndex === -1) return prev;
+        const next = [...prev];
+        const [removed] = next.splice(currentIndex, 1);
+        const insertAt = currentIndex < targetIndex ? targetIndex - 1 : targetIndex;
+        const boundedIndex = Math.max(0, Math.min(next.length, insertAt));
+        next.splice(boundedIndex, 0, removed);
+        return next;
+      });
+    }
+
+    setDraggedItem(null);
+    setDropIndicatorIndex(null);
+  };
+
+  // 6. Thả từ trên khay trả về kho dưới
+  const handleDropOnAvailablePool = (e: React.DragEvent) => {
+    if (isChecked || !draggedItem) return;
+    e.preventDefault();
+    if (draggedItem.from === 'placed') {
+      const chip = draggedItem.chip;
+      setPlacedWords(prev => prev.filter(c => c.id !== chip.id));
+      setAvailableWords(prev => {
+        if (prev.some(c => c.id === chip.id)) return prev;
+        return [...prev, chip];
+      });
+    }
+    setDraggedItem(null);
+    setDropIndicatorIndex(null);
+  };
+
+  // 7. Nhấp từ ở kho dưới -> chuyển lên cuối khay trên
+  const handleWordClickAvailable = (chip: WordChip) => {
+    if (isChecked || isDraggingRef.current) return;
+    setAvailableWords(prev => prev.filter(c => c.id !== chip.id));
+    setPlacedWords(prev => {
+      if (prev.some(c => c.id === chip.id)) return prev; // Chống double chữ
+      return [...prev, chip];
+    });
+  };
+
+  // 8. Nhấp từ trên khay -> chuyển trả lại kho dưới
+  const handleWordClickPlaced = (chipId: string) => {
+    if (isChecked || isDraggingRef.current) return;
+    const chip = placedWords.find(c => c.id === chipId);
+    if (!chip) return;
+    setPlacedWords(prev => prev.filter(c => c.id !== chipId));
+    setAvailableWords(prev => {
+      if (prev.some(c => c.id === chipId)) return prev;
+      return [...prev, chip];
     });
   };
 
   const isCheckButtonEnabled = (() => {
     if (!currentItem) return false;
     if (activeLayout === 'FILL_IN_BLANK') {
-      const tokens = parseSentence(currentItem.contentText);
-      const expectedCount = tokens.filter(t => t.type === 'blank').length;
-      const filledCount = Object.keys(blankAnswers).length;
-      return filledCount === expectedCount;
+      // Đã ghép tất cả các từ vào khay (kho dưới rỗng)
+      return placedWords.length > 0 && availableWords.length === 0;
     }
     if (activeLayout === 'SPEAKING') {
       return !!recordedAudioUrl;
@@ -595,24 +670,22 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       return;
     }
 
-    // 5. FILL_IN_BLANK: So sánh câu xếp
+    // 5. FILL_IN_BLANK (SENTENCE BUILDER): So sánh câu đã ghép
     if (activeLayout === 'FILL_IN_BLANK') {
-      const tokens = parseSentence(currentItem.contentText);
-      const expectedBlanks = tokens.filter(t => t.type === 'blank');
-      let correct = true;
-      expectedBlanks.forEach(blank => {
-        const userVal = blankAnswers[blank.blankIndex!]?.trim().toLowerCase();
-        const expectedVal = blank.content.trim().toLowerCase();
-        if (userVal !== expectedVal) {
-          correct = false;
-        }
-      });
+      const userSentence = placedWords.map(w => w.text.trim().toLowerCase()).join(' ');
+      const expectedSentence = currentItem.contentText
+        .replace(/[\[\]]/g, '')
+        .replace(/[.?!,]+$/g, '')
+        .trim()
+        .toLowerCase();
+
+      const correct = userSentence === expectedSentence;
       setIsCorrect(correct);
       setIsChecked(true);
       if (!correct) {
         setHearts(prev => Math.max(0, prev - 1));
-        const userFilled = Object.values(blankAnswers).join(' ') || 'Điền từ chưa đúng';
-        recordMistakeIfWrong(userFilled);
+        const submitted = placedWords.map(w => w.text).join(' ') || 'Chưa ghép câu';
+        recordMistakeIfWrong(submitted);
       }
       return;
     }
@@ -641,6 +714,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     // Reset state câu hỏi cũ
     setSelectedOption(null);
     setIsChecked(false);
+    setIsCorrect(false);
     setListeningOptions([]);
     setRecordedAudioUrl(null);
     setRecordedBlob(null);
@@ -648,8 +722,10 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     setIsAssessing(false);
     setQuizOptions([]);
     setShowTranslationHint(false);
-    setShuffledWords([]);
-    setBlankAnswers({});
+    setAvailableWords([]);
+    setPlacedWords([]);
+    setDraggedItem(null);
+    setDropIndicatorIndex(null);
 
     if (hearts <= 0) {
       // Hết tim -> Thua cuộc
@@ -1168,80 +1244,147 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
           </div>
         ) : activeLayout === 'FILL_IN_BLANK' ? (
           <div className="flex flex-col items-center space-y-6 w-full animate-fade-in-up">
-            {/* Instruction Mascot */}
+            {/* Mascot hướng dẫn */}
             <div className="flex items-center justify-center py-2">
               <Mascot
                 expression={isChecked ? (isCorrect ? 'happy' : 'sad') : 'thinking'}
-                speechBubbleText="Hãy nhấp chọn các từ bên dưới để điền vào chỗ trống nhé!"
+                speechBubbleText="Kéo thả hoặc nhấp chọn các từ bên dưới để ghép thành câu hoàn chỉnh nhé!"
                 bubblePosition="right"
                 size={90}
               />
             </div>
 
-            {/* Translation hint */}
-            <div className="text-center bg-[#f0f9ff] border border-[#b3e5fc] px-5 py-3 rounded-2xl w-full">
-              <span className="text-[10px] font-extrabold text-[#0288d1] tracking-wider uppercase block mb-1">Dịch nghĩa:</span>
-              <p className="text-base font-display font-extrabold text-[#01579b]">{currentItem.translation}</p>
+            {/* Gợi ý dịch nghĩa & nút nghe mẫu */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#f0f9ff] border-2 border-[#b3e5fc] px-5 py-3 rounded-2xl w-full">
+              <div className="text-left">
+                <span className="text-[10px] font-extrabold text-[#0288d1] tracking-wider uppercase block mb-0.5">Dịch nghĩa:</span>
+                <p className="text-base font-display font-extrabold text-[#01579b]">{currentItem.translation}</p>
+              </div>
+              {currentItem.audioUrl && (
+                <button
+                  type="button"
+                  onClick={() => playAudioWithFallback(1.0)}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white border border-[#b3e5fc] hover:bg-sky-50 text-[#0288d1] rounded-xl text-xs font-extrabold shadow-sm transition-all cursor-pointer shrink-0 active:scale-95"
+                >
+                  <SpeakerWaveIcon className="w-4 h-4 text-[#0288d1]" />
+                  <span>Nghe câu</span>
+                </button>
+              )}
             </div>
 
-            {/* Image if available */}
+            {/* Ảnh minh họa (nếu có) */}
             {currentItem.imageUrl && (
-              <div className="w-full max-w-[200px] h-28 bg-white border border-border-main/50 rounded-2xl overflow-hidden shadow-sm flex items-center justify-center p-2">
-                <img src={getAssetUrl(currentItem.imageUrl)} alt="Gợi ý" className="w-full h-full object-contain" />
+              <div className="w-full max-w-[200px] h-28 bg-white border-2 border-border-main/50 rounded-2xl overflow-hidden shadow-sm flex items-center justify-center p-2">
+                <img src={getAssetUrl(currentItem.imageUrl)} alt="Minh họa" className="w-full h-full object-contain hover:scale-105 transition-transform" />
               </div>
             )}
 
-            {/* Câu hỏi có chứa các ô trống */}
-            <div className="w-full bg-[#f8fafc] border-2 border-border-main rounded-[2rem] p-6 shadow-sm flex flex-wrap items-center justify-center gap-y-3 gap-x-1.5 leading-relaxed text-center min-h-[5rem]">
-              {parseSentence(currentItem.contentText).map((token, index) => {
-                if (token.type === 'text') {
-                  return (
-                    <span key={index} className="text-lg font-sans font-extrabold text-text-main">
-                      {token.content}
-                    </span>
-                  );
-                } else {
-                  const filledWord = blankAnswers[token.blankIndex!];
-                  return (
-                    <button
-                      key={index}
-                      onClick={() => filledWord && handleRemoveWordFromBlank(token.blankIndex!, filledWord)}
-                      disabled={isChecked}
-                      className={`inline-flex items-center justify-center min-w-24 h-10 px-3 border-2 rounded-xl font-sans font-extrabold text-sm transition-all ${filledWord
-                          ? 'bg-white border-primary text-primary shadow-[0_2px_0_0_#d93d74] hover:bg-red-50 hover:border-red-300 cursor-pointer active:translate-y-[1px]'
-                          : 'bg-white/50 border-dashed border-border-main text-transparent pointer-events-none'
+            {/* KHAY GHÉP CÂU (SENTENCE DROP TRAY) */}
+            <div className="w-full space-y-2">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[11px] font-extrabold text-text-muted tracking-widest uppercase">
+                  CÂU CỦA BÉ:
+                </span>
+                {placedWords.length > 0 && !isChecked && (
+                  <span className="text-[11px] text-primary font-bold">
+                    💡 Nhấp từ để bỏ ra, hoặc kéo để đổi vị trí
+                  </span>
+                )}
+              </div>
+
+              <div
+                onDragOver={handleDragOverTrayContainer}
+                onDrop={handleDropOnTrayContainer}
+                className={`w-full min-h-[5.5rem] p-4 rounded-[2rem] border-2 transition-all flex flex-wrap items-center justify-center gap-2.5 ${
+                  placedWords.length === 0
+                    ? 'bg-slate-50/80 border-dashed border-border-main text-text-muted'
+                    : 'bg-white border-primary/40 shadow-sm'
+                }`}
+              >
+                {placedWords.length === 0 ? (
+                  <div className="flex items-center gap-2 text-text-muted select-none py-3 pointer-events-none">
+                    <span className="text-sm font-bold">Kéo hoặc chạm các từ bên dưới vào đây để ghép câu...</span>
+                  </div>
+                ) : (
+                  placedWords.map((chip, idx) => (
+                    <React.Fragment key={chip.id}>
+                      {/* Vạch chỉ thị vị trí chèn khi đang kéo rê qua */}
+                      {dropIndicatorIndex === idx && (
+                        <div className="w-1.5 h-10 bg-primary rounded-full animate-pulse transition-all shadow-[0_0_8px_rgba(217,61,116,0.6)]" />
+                      )}
+
+                      <div
+                        role="button"
+                        draggable={!isChecked}
+                        onDragStart={(e) => handleDragStart(e, 'placed', chip)}
+                        onDragOver={(e) => handleDragOverChip(e, idx)}
+                        onDrop={(e) => handleDropOnChip(e, idx)}
+                        onDragEnd={handleDragEnd}
+                        onClick={() => handleWordClickPlaced(chip.id)}
+                        className={`group relative px-4 py-2.5 rounded-xl font-display font-extrabold text-base transition-all select-none border-2 flex items-center gap-1.5 cursor-grab active:cursor-grabbing ${
+                          isChecked
+                            ? isCorrect
+                              ? 'bg-green-50 border-green-500 text-green-700 shadow-[0_3px_0_0_#22c55e]'
+                              : 'bg-red-50 border-red-400 text-red-600 shadow-[0_3px_0_0_#ef4444]'
+                            : 'bg-primary-soft border-primary text-primary shadow-[0_3px_0_0_#d93d74] hover:bg-red-50 hover:border-red-400 active:translate-y-[1px]'
                         }`}
-                    >
-                      {filledWord || '_______'}
-                    </button>
-                  );
-                }
-              })}
+                      >
+                        <span className="pointer-events-none">{chip.text}</span>
+                        {!isChecked && (
+                          <XMarkIcon className="w-3.5 h-3.5 text-primary/60 group-hover:text-red-500 transition-colors pointer-events-none" />
+                        )}
+                      </div>
+                    </React.Fragment>
+                  ))
+                )}
+
+                {/* Vạch chỉ thị ở cuối hàng */}
+                {dropIndicatorIndex === placedWords.length && placedWords.length > 0 && (
+                  <div className="w-1.5 h-10 bg-primary rounded-full animate-pulse transition-all shadow-[0_0_8px_rgba(217,61,116,0.6)]" />
+                )}
+              </div>
             </div>
 
-            {/* Danh sách các thẻ từ khóa để chọn */}
-            <div className="w-full space-y-2 pt-4">
-              <span className="text-[10px] font-extrabold text-text-muted tracking-widest uppercase block text-left">CHỌN TỪ ĐỂ ĐIỀN:</span>
-              <div className="flex flex-wrap gap-2.5 justify-center p-4 border border-border-main/40 rounded-2xl bg-white shadow-sm min-h-16">
-                {shuffledWords.map((word) => {
-                  if (word.selected) {
-                    return (
-                      <div key={word.id} className="px-4 py-2.5 rounded-xl bg-bg-light/30 border-2 border-dashed border-border-main/20 text-transparent pointer-events-none min-w-[4rem] text-center h-10 flex items-center justify-center text-sm font-bold">
-                        {word.text}
-                      </div>
-                    );
-                  }
-                  return (
-                    <button
-                      key={word.id}
-                      onClick={() => handleAddWordToBlank(word)}
-                      disabled={isChecked}
-                      className="px-4 py-2.5 bg-white border-2 border-border-main shadow-[0_4px_0_0_#e5e5e5] text-text-main hover:bg-bg-light cursor-pointer active:translate-y-[2px] rounded-xl font-sans font-bold text-sm min-w-[4rem] text-center"
+            {/* KHO TỪ BÊN DƯỚI (AVAILABLE WORD POOL) */}
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+              }}
+              onDrop={handleDropOnAvailablePool}
+              className="w-full space-y-2 pt-2"
+            >
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[11px] font-extrabold text-text-muted tracking-widest uppercase">
+                  TỪ CÒN LẠI ({availableWords.length}):
+                </span>
+                <span className="text-[11px] text-text-muted">
+                  Bé có thể kéo hoặc nhấp chọn
+                </span>
+              </div>
+
+              <div className="flex flex-wrap gap-3 justify-center p-5 border-2 border-border-main/50 rounded-2xl bg-white shadow-sm min-h-[5rem] items-center">
+                {availableWords.length === 0 ? (
+                  <span className="text-xs font-bold text-green-600 py-2">
+                    ✨ Bé đã chọn hết tất cả các từ! Hãy bấm KIỂM TRA nhé!
+                  </span>
+                ) : (
+                  availableWords.map((chip) => (
+                    <div
+                      key={chip.id}
+                      role="button"
+                      draggable={!isChecked}
+                      onDragStart={(e) => handleDragStart(e, 'available', chip)}
+                      onDragEnd={handleDragEnd}
+                      onClick={() => handleWordClickAvailable(chip)}
+                      className={`px-4 py-2.5 bg-white border-2 border-border-main shadow-[0_4px_0_0_#e5e5e5] text-text-main hover:bg-primary-soft hover:border-primary hover:text-primary active:translate-y-[2px] rounded-xl font-display font-bold text-base min-w-[3.5rem] text-center transition-all select-none ${
+                        isChecked ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'cursor-grab active:cursor-grabbing'
+                      }`}
                     >
-                      {word.text}
-                    </button>
-                  );
-                })}
+                      <span className="pointer-events-none">{chip.text}</span>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
