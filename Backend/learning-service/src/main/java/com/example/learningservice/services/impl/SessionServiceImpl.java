@@ -2,7 +2,6 @@ package com.example.learningservice.services.impl;
 
 import com.example.learningservice.entities.Part;
 import com.example.learningservice.entities.Session;
-import com.example.learningservice.entities.enums.SessionStatus;
 import com.example.learningservice.repositories.PartRepository;
 import com.example.learningservice.repositories.SessionRepository;
 import com.example.learningservice.services.SessionService;
@@ -35,9 +34,6 @@ public class SessionServiceImpl implements SessionService {
                 .orElseThrow(() -> new RuntimeException("Part không tồn tại hoặc đã bị xóa!"));
 
         session.setPart(part);
-        if (session.getStatus() == null) {
-            session.setStatus(SessionStatus.LOCK); // Mặc định bài học mới tạo sẽ bị Khóa
-        }
         session.setCreateAt(LocalDateTime.now());
         session.setIsDelete(false);
 
@@ -51,7 +47,6 @@ public class SessionServiceImpl implements SessionService {
         session.setDescription(sessionDetails.getDescription());
         session.setOrderIndex(sessionDetails.getOrderIndex());
         session.setSessionType(sessionDetails.getSessionType());
-        session.setStatus(sessionDetails.getStatus());
         session.setBadgeId(sessionDetails.getBadgeId());
         session.setUpdateAt(LocalDateTime.now());
         return sessionRepository.save(session);

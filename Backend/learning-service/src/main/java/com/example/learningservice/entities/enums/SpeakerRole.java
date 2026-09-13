@@ -1,6 +1,6 @@
 package com.example.learningservice.entities.enums;
 
-public enum SessionItemType {
-    TARGET,
-    SUPPORT
+public enum SpeakerRole {
+    SPEAKER_1,
+    SPEAKER_2
 }

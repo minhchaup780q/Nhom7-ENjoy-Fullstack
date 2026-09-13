@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useLearningStore } from '../store/useLearningStore';
-import { SessionItemType } from '../types';
+import { SessionItemType, SpeakerRole } from '../types';
 import type { Session, SessionItem } from '../types';
 import { Mascot } from '../../../components/ui/Mascot';
 import { Button3D } from '../../../components/ui/Button3D';
@@ -17,7 +17,8 @@ import {
   ArrowPathIcon, 
   CheckCircleIcon, 
   ExclamationTriangleIcon,
-  LightBulbIcon
+  LightBulbIcon,
+  ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/solid';
 
 interface SessionPlayerProps {
@@ -31,14 +32,19 @@ interface InteractiveItem extends SessionItem {
   correctAnswer?: string;
 }
 
-// Đây là kiểu dữ liệu cho mỗi chữ khi cắt chữ đó ra khỏi câu (VÒNG GAME)
+// Kiểu dữ liệu cho mỗi chữ khi cắt câu (VÒNG GAME - Sentence Builder)
 interface WordChip {
   id: string;
   text: string;
 }
 
+const AVATAR_A = "https://img.magnific.com/free-vector/cute-duck-walking-cartoon-vector-icon-illustration-animal-nature-icon-isolated-flat-vector_138676-11908.jpg?semt=ais_hybrid&w=740&q=80";
+const AVATAR_B = "https://img.magnific.com/vector-mien-phi/cau-be-bieu-tuong-tuoi-tho-hanh-phuc-co-lap_24640-134167.jpg?semt=ais_hybrid&w=740&q=80";
+
 export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }) => {
   const {
+    activePart,
+    parts,
     sessionItems,
     currentStepIndex,
     selectSession,
@@ -49,15 +55,26 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     loading,
   } = useLearningStore();
 
+  const currentPartTitle = activePart?.title || parts.find(p => p.id === session.partId)?.title || session.title || 'Hội thoại';
+
+  const [playingLineIndex, setPlayingLineIndex] = useState<number | null>(null);
+  const [isAutoPlayingAll, setIsAutoPlayingAll] = useState(false);
+  const hasAutoPlayedConvRef = useRef(false);
+  const chatContainerRef = useRef<HTMLDivElement | null>(null);
+
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isChecked, setIsChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
 
-  // Trạng thái cho Vòng 4 (GAMIFIED_REVIEW & WORD_RECOGNITION)
+  // Trạng thái cho Vòng 1 (INTRODUCTION): Giai đoạn 1 (Làm quen từ khóa) -> Giai đoạn 2 (Hội thoại)
+  const [introPhase, setIntroPhase] = useState<'PREVIEW' | 'CONVERSATION'>('PREVIEW');
+  const [previewIndex, setPreviewIndex] = useState(0);
+
+  // Trạng thái cho Vòng 4 (WORD_RECOGNITION - QUIZ)
   const [quizOptions, setQuizOptions] = useState<string[]>([]);
   const [showTranslationHint, setShowTranslationHint] = useState(false);
 
-  // Trạng thái cho Xếp từ thành câu (Sentence Builder & Drag-and-Drop) Vòng 5 (GAMIFIED_REVIEW)
+  // Trạng thái cho Xếp từ thành câu (Sentence Builder) Vòng 5 (GAMIFIED_REVIEW)
   const [availableWords, setAvailableWords] = useState<WordChip[]>([]);
   const [placedWords, setPlacedWords] = useState<WordChip[]>([]);
   const [draggedItem, setDraggedItem] = useState<{ from: 'available' | 'placed'; chip: WordChip } | null>(null);
@@ -70,9 +87,6 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       if (dragTimeoutRef.current) clearTimeout(dragTimeoutRef.current);
     };
   }, []);
-
-  // Trạng thái layout ngẫu nhiên cho Vòng 5 (GAMIFIED_REVIEW)
-  const [itemLayouts, setItemLayouts] = useState<Record<number, 'LISTENING' | 'SPEAKING' | 'QUIZ' | 'FILL_IN_BLANK'>>({});
 
   const [hearts, setHearts] = useState(5);
   const [sessionFinished, setSessionFinished] = useState(false);
@@ -92,33 +106,54 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
 
   const [playItems, setPlayItems] = useState<InteractiveItem[]>([]);
 
-  // Cập nhật và xáo trộn các câu hỏi mỗi khi chơi Vòng 5 (GAMIFIED_REVIEW)
+  // Lọc và chuẩn bị danh sách câu hỏi cho vòng chơi:
+  // - Vòng 1 (INTRODUCTION): Giữ nguyên toàn bộ items (TARGET + SUPPORT) theo thứ tự hội thoại
+  // - Các vòng 2, 3, 4, 5: Chỉ lọc lấy các câu TARGET
+  // - Vòng 5 (GAMIFIED_REVIEW): Xáo trộn ngẫu nhiên thứ tự các câu
   useEffect(() => {
     if (!sessionItems) return;
-    let items = [...sessionItems] as InteractiveItem[];
+    let items: InteractiveItem[] = [];
+    if (session.sessionType === 'INTRODUCTION') {
+      items = [...sessionItems] as InteractiveItem[];
+    } else {
+      items = (sessionItems.filter(item => item.itemType === SessionItemType.TARGET)) as InteractiveItem[];
+    }
+
     if (session.sessionType === 'GAMIFIED_REVIEW') {
-      items.sort(() => 0.5 - Math.random());
+      items = [...items].sort(() => 0.5 - Math.random());
     }
     setPlayItems(items);
   }, [sessionItems, session.sessionType]);
 
+  // Reset phase khi đổi session
+  useEffect(() => {
+    setIntroPhase('PREVIEW');
+    setPreviewIndex(0);
+    hasAutoPlayedConvRef.current = false;
+  }, [session.id]);
+
+  // Danh sách từ vựng preview cho Vòng 1 (các câu TARGET có keyword)
+  const previewKeywords = useMemo(() => {
+    if (!sessionItems) return [];
+    return sessionItems.filter(item => item.itemType === SessionItemType.TARGET && item.keyword);
+  }, [sessionItems]);
+
   const currentItems = playItems;
   const currentItem = currentItems[currentStepIndex];
-  const progressPercent = currentItems.length > 0
-    ? ((currentStepIndex) / currentItems.length) * 100
-    : 0;
 
+  // Tính thanh tiến trình
+  const progressPercent = session.sessionType === 'INTRODUCTION' && introPhase === 'PREVIEW'
+    ? (previewKeywords.length > 0 ? ((previewIndex + 1) / previewKeywords.length) * 100 : 0)
+    : (currentItems.length > 0 ? ((currentStepIndex) / currentItems.length) * 100 : 0);
+
+  // Xác định Layout hiển thị
   const getActiveLayout = (): 'INTRODUCTION' | 'LISTENING' | 'SPEAKING' | 'QUIZ' | 'FILL_IN_BLANK' | 'UNKNOWN' => {
     if (!session || !currentItem) return 'UNKNOWN';
     if (session.sessionType === 'INTRODUCTION') return 'INTRODUCTION';
     if (session.sessionType === 'LISTENING') return 'LISTENING';
     if (session.sessionType === 'SPEAKING') return 'SPEAKING';
-    if (session.sessionType === 'WORD_RECOGNITION') {
-      return currentItem.itemType === SessionItemType.QUIZ ? 'QUIZ' : 'FILL_IN_BLANK';
-    }
-    if (session.sessionType === 'GAMIFIED_REVIEW') {
-      return 'FILL_IN_BLANK';
-    }
+    if (session.sessionType === 'WORD_RECOGNITION') return 'QUIZ';
+    if (session.sessionType === 'GAMIFIED_REVIEW') return 'FILL_IN_BLANK';
     return 'UNKNOWN';
   };
 
@@ -137,47 +172,269 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     selectSession(session);
   }, [session, selectSession]);
 
-  // Tạo layout ngẫu nhiên cho các câu hỏi trong Vòng 5 (GAMIFIED_REVIEW)
-  useEffect(() => {
-    if (!sessionItems || session.sessionType !== 'GAMIFIED_REVIEW') return;
+  // Phát âm một từ vựng bằng Web Speech API
+  const speakWord = (word?: string) => {
+    if (!word || !('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.9;
+    window.speechSynthesis.speak(utterance);
+  };
 
-    const layouts: Record<number, 'LISTENING' | 'SPEAKING' | 'QUIZ' | 'FILL_IN_BLANK'> = {};
-    sessionItems.forEach((item) => {
-      if (item.itemType === SessionItemType.FILL_IN_BLANK) {
-        layouts[item.id] = 'FILL_IN_BLANK';
-      } else if (item.itemType === SessionItemType.QUIZ) {
-        layouts[item.id] = 'QUIZ';
+  // Phát âm thanh của từ vựng (ưu tiên file audio riêng của keyword nếu có)
+  const playKeywordAudio = (item?: InteractiveItem) => {
+    if (!item) return;
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      setCurrentAudio(null);
+    }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+
+    const audioUrl = item.keywordAudioUrl;
+    if (audioUrl) {
+      const fullUrl = getAssetUrl(audioUrl);
+      const audio = new Audio(fullUrl);
+      audio.playbackRate = 1.0;
+      setCurrentAudio(audio);
+      setIsPlayingAudio(true);
+
+      audio.onended = () => setIsPlayingAudio(false);
+      audio.onerror = () => speakWord(item.keyword);
+      audio.play().catch(() => speakWord(item.keyword));
+    } else {
+      speakWord(item.keyword);
+    }
+  };
+
+  const speakLineWithTTS = (text: string, onEnd?: () => void) => {
+    if (!('speechSynthesis' in window)) {
+      if (onEnd) onEnd();
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.9;
+    utterance.onend = () => {
+      setIsPlayingAudio(false);
+      if (onEnd) onEnd();
+    };
+    utterance.onerror = () => {
+      setIsPlayingAudio(false);
+      if (onEnd) onEnd();
+    };
+    setIsPlayingAudio(true);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // Phát một câu thoại trong cuộc trò chuyện (hỗ trợ tự động chạy lần lượt từ trên xuống)
+  const playConversationLine = (index: number, autoAdvance: boolean = false) => {
+    if (index < 0 || index >= playItems.length) {
+      setPlayingLineIndex(null);
+      setIsAutoPlayingAll(false);
+      setIsPlayingAudio(false);
+      return;
+    }
+
+    setPlayingLineIndex(index);
+    if (autoAdvance) {
+      setIsAutoPlayingAll(true);
+    }
+
+    const lineItem = playItems[index];
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      setCurrentAudio(null);
+    }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+
+    let isDone = false;
+    const onLineEnd = () => {
+      if (isDone) return;
+      isDone = true;
+      setIsPlayingAudio(false);
+      if (autoAdvance && index < playItems.length - 1) {
+        setTimeout(() => {
+          playConversationLine(index + 1, true);
+        }, 600);
       } else {
-        // Đối với FLASHCARD, chọn ngẫu nhiên giữa LISTENING (Vòng 2) hoặc SPEAKING (Vòng 3)
-        layouts[item.id] = Math.random() < 0.5 ? 'LISTENING' : 'SPEAKING';
+        setPlayingLineIndex(null);
+        setIsAutoPlayingAll(false);
       }
-    });
-    setItemLayouts(layouts);
-  }, [sessionItems, session.sessionType]);
+    };
 
-  // Tạo danh sách 4 lựa chọn cho Vòng 4/5 (QUIZ)
+    let hasFallbackRun = false;
+    const triggerTTSFallback = () => {
+      if (hasFallbackRun) return;
+      hasFallbackRun = true;
+      speakLineWithTTS(lineItem.contentText || '', onLineEnd);
+    };
+
+    const audioUrl = lineItem.audioUrl;
+    if (audioUrl) {
+      const fullUrl = getAssetUrl(audioUrl);
+      const audio = new Audio(fullUrl);
+      audio.playbackRate = 1.0;
+      setCurrentAudio(audio);
+      setIsPlayingAudio(true);
+
+      audio.onended = onLineEnd;
+      audio.onerror = triggerTTSFallback;
+
+      audio.play().catch(triggerTTSFallback);
+    } else {
+      triggerTTSFallback();
+    }
+  };
+
+  // Tự động phát âm từ vựng khi đang ở giai đoạn PREVIEW của Vòng 1
   useEffect(() => {
-    const isQuizLayout = (session.sessionType === 'WORD_RECOGNITION' && currentItem?.itemType === SessionItemType.QUIZ) ||
-      (session.sessionType === 'GAMIFIED_REVIEW' && itemLayouts[currentItem?.id] === 'QUIZ');
+    if (session.sessionType === 'INTRODUCTION' && introPhase === 'PREVIEW') {
+      const currentKeywordItem = previewKeywords[previewIndex];
+      if (currentKeywordItem) {
+        const timeout = setTimeout(() => {
+          playKeywordAudio(currentKeywordItem);
+        }, 400);
+        return () => clearTimeout(timeout);
+      }
+    }
+  }, [previewIndex, introPhase, previewKeywords, session.sessionType]);
 
-    if (!currentItem || !isQuizLayout) return;
+  // Nếu bài học INTRODUCTION không có từ khóa preview nào, tự động vào thẳng CONVERSATION
+  useEffect(() => {
+    if (session.sessionType === 'INTRODUCTION' && sessionItems && sessionItems.length > 0) {
+      const hasPreview = sessionItems.some(item => item.itemType === SessionItemType.TARGET && item.keyword);
+      if (!hasPreview) {
+        setIntroPhase('CONVERSATION');
+      }
+    }
+  }, [session.sessionType, sessionItems]);
 
-    const correctKeyword = currentItem.keyword || '';
+  // Tự động phát toàn bộ cuộc trò chuyện lần đầu tiên khi bắt đầu giai đoạn CONVERSATION
+  useEffect(() => {
+    if (session.sessionType === 'INTRODUCTION' && introPhase === 'CONVERSATION' && playItems.length > 0) {
+      if (!hasAutoPlayedConvRef.current) {
+        hasAutoPlayedConvRef.current = true;
+        const timer = setTimeout(() => {
+          playConversationLine(0, true);
+        }, 700);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [introPhase, session.sessionType, playItems.length]);
 
-    // Tìm các keyword của các items khác có cùng type QUIZ
+  // Cuộn mượt đến câu thoại đang được phát
+  useEffect(() => {
+    if (playingLineIndex !== null) {
+      const el = document.getElementById(`chat-line-${playingLineIndex}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [playingLineIndex]);
+
+  // Xác định vai nhân vật đang nói trong lượt hiện tại
+  const isSpeaker1Active = currentItem?.speakerRole === SpeakerRole.SPEAKER_1 || currentItem?.speakerRole === 'SPEAKER_1' || !currentItem?.speakerRole;
+  const isSpeaker2Active = currentItem?.speakerRole === SpeakerRole.SPEAKER_2 || currentItem?.speakerRole === 'SPEAKER_2';
+
+  // Helper highlight từ khóa trong hội thoại
+  const renderHighlightedSentence = (sentence?: string, keyword?: string) => {
+    if (!sentence) return null;
+    if (!keyword) return <span>{sentence}</span>;
+    const regex = new RegExp(`(${keyword})`, 'gi');
+    const parts = sentence.split(regex);
+    return (
+      <span>
+        {parts.map((part, i) =>
+          part.toLowerCase() === keyword.toLowerCase() ? (
+            <span key={i} className="text-[#d93d74] font-black bg-[#fff0f6] px-1.5 rounded-md">{part}</span>
+          ) : (
+            <span key={i}>{part}</span>
+          )
+        )}
+      </span>
+    );
+  };
+
+  // Helper ẩn từ khóa thành chỗ trống (______ hoặc từ đã chọn) cho Vòng 4 (QUIZ)
+  const renderMaskedSentence = (sentence?: string, keyword?: string) => {
+    if (!sentence) return null;
+    if (!keyword) return <span className="font-display font-extrabold">{sentence}</span>;
+
+    const trimmedKeyword = keyword.trim();
+    const escaped = trimmedKeyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(\\b${escaped}\\b)`, 'i');
+    let parts = sentence.split(regex);
+
+    if (parts.length <= 1) {
+      const simpleRegex = new RegExp(`(${escaped})`, 'i');
+      parts = sentence.split(simpleRegex);
+    }
+
+    return (
+      <span className="inline-flex flex-wrap items-center gap-1.5 leading-relaxed">
+        {parts.map((part, idx) => {
+          if (part.toLowerCase() === trimmedKeyword.toLowerCase()) {
+            const displayText = isChecked
+              ? isCorrect
+                ? part
+                : (selectedOption || '______')
+              : (selectedOption || '______');
+
+            return (
+              <span
+                key={idx}
+                className={`inline-block px-3 py-1 rounded-xl border-2 font-display font-extrabold text-base transition-all duration-200 ${
+                  isChecked
+                    ? isCorrect
+                      ? 'bg-green-100 border-green-500 text-green-700 shadow-sm'
+                      : 'bg-red-100 border-red-500 text-red-700 shadow-sm'
+                    : selectedOption
+                      ? 'bg-primary-soft border-primary text-primary shadow-[0_2px_0_0_#d93d74]'
+                      : 'bg-slate-100 border-dashed border-primary/60 text-primary min-w-[70px] text-center'
+                }`}
+              >
+                {displayText}
+              </span>
+            );
+          }
+          return (
+            <span key={idx} className="font-display font-extrabold text-text-main">
+              {part}
+            </span>
+          );
+        })}
+      </span>
+    );
+  };
+
+  // Tạo danh sách 4 lựa chọn cho Vòng 4 (WORD_RECOGNITION - QUIZ)
+  useEffect(() => {
+    if (!currentItem || session.sessionType !== 'WORD_RECOGNITION') return;
+
+    const correctKeyword = (currentItem.keyword || '').trim();
+
+    // Lấy các keyword của các câu TARGET khác trong bài học
     const otherKeywords = currentItems
-      .filter(item => item.itemType === SessionItemType.QUIZ && item.keyword && item.keyword !== correctKeyword)
-      .map(item => item.keyword as string);
+      .filter(item => item.keyword && item.keyword.trim().toLowerCase() !== correctKeyword.toLowerCase())
+      .map(item => item.keyword!.trim());
 
     const uniqueOthers = Array.from(new Set(otherKeywords));
-    const backupKeywords = ['cow', 'pig', 'duck', 'horse', 'sheep', 'run', 'swim', 'eat', 'sleep', 'fly', 'red', 'blue', 'green', 'yellow', 'black'];
+    const backupKeywords = ['cow', 'pig', 'duck', 'horse', 'sheep', 'cat', 'dog', 'zoo', 'elephant', 'hippo', 'monkey', 'giraffe', 'bird', 'fish'];
 
     const shuffledOthers = [...uniqueOthers].sort(() => 0.5 - Math.random());
     const selectedOthers = shuffledOthers.slice(0, 3);
 
     while (selectedOthers.length < 3) {
       const backup = backupKeywords[Math.floor(Math.random() * backupKeywords.length)];
-      if (backup !== correctKeyword && !selectedOthers.includes(backup)) {
+      if (backup.toLowerCase() !== correctKeyword.toLowerCase() && !selectedOthers.includes(backup)) {
         selectedOthers.push(backup);
       }
     }
@@ -187,26 +444,22 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     setSelectedOption(null);
     setIsChecked(false);
     setShowTranslationHint(false);
-  }, [currentItem, currentItems, session.sessionType, itemLayouts]);
+  }, [currentItem, currentItems, session.sessionType]);
 
-  // Tạo danh sách các từ xáo trộn cho Vòng 4/5 (FILL_IN_BLANK / SENTENCE_BUILDER)
+  // Tạo danh sách các từ xáo trộn cho Vòng 5 (GAMIFIED_REVIEW - FILL_IN_BLANK / SENTENCE_BUILDER)
   useEffect(() => {
-    const isFillLayout = (session.sessionType === 'WORD_RECOGNITION' && currentItem?.itemType === SessionItemType.FILL_IN_BLANK) ||
-      session.sessionType === 'GAMIFIED_REVIEW';
-
-    if (!currentItem || !isFillLayout) {
+    if (!currentItem || session.sessionType !== 'GAMIFIED_REVIEW') {
       setAvailableWords([]);
       setPlacedWords([]);
       return;
     }
 
-    // Làm sạch câu: bỏ [ ], bỏ dấu câu cuối (? ! .)
+    // Làm sạch câu: bỏ dấu câu cuối (? ! .)
     const cleanText = (currentItem.contentText || '')
-      .replace(/[\[\]]/g, '')
       .replace(/[.?!,]+$/g, '')
       .trim();
 
-    // Tách các từ theo khoảng trắng
+    // Tách các từ theo khoảng trắng (data mới rất sạch, không có ký tự [])
     const rawWords = cleanText.split(/\s+/).filter(Boolean);
 
     const chips: WordChip[] = rawWords.map((word, idx) => ({
@@ -228,14 +481,9 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     setIsCorrect(false);
   }, [currentStepIndex, currentItem?.id, currentItem?.contentText, session.sessionType]);
 
-
-
-  // Tạo danh sách 4 lựa chọn hình ảnh ngẫu nhiên cho Vòng 3 (LISTENING)
+  // Tạo danh sách 4 lựa chọn hình ảnh ngẫu nhiên cho Vòng 2 (LISTENING)
   useEffect(() => {
-    const isListeningLayout = session.sessionType === 'LISTENING' ||
-      (session.sessionType === 'GAMIFIED_REVIEW' && itemLayouts[currentItem?.id] === 'LISTENING');
-
-    if (!currentItem || !isListeningLayout) return;
+    if (!currentItem || session.sessionType !== 'LISTENING') return;
 
     const correctImage = currentItem.imageUrl || '';
     const otherImages = currentItems
@@ -266,7 +514,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
 
     setSelectedOption(null);
     setIsChecked(false);
-  }, [currentItem, currentItems, session.sessionType, itemLayouts]);
+  }, [currentItem, currentItems, session.sessionType]);
 
 
 
@@ -358,9 +606,9 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       window.speechSynthesis.cancel();
     }
 
-    // Auto-play âm thanh sau khi chuyển từ (ở chế độ INTRODUCTION hoặc LISTENING)
+    // Auto-play âm thanh sau khi chuyển từ (ở chế độ LISTENING)
     const playTimeout = setTimeout(() => {
-      if (session.sessionType === 'INTRODUCTION' || session.sessionType === 'LISTENING') {
+      if (session.sessionType === 'LISTENING') {
         playAudioWithFallback(1.0, true);
       }
     }, 500);
@@ -378,7 +626,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
         window.speechSynthesis.cancel();
       }
     };
-  }, [currentStepIndex, currentItem?.id, session.sessionType]);
+  }, [currentStepIndex, currentItem?.id, session.sessionType, introPhase]);
 
   const playSound = (speed: number = 1.0) => {
     playAudioWithFallback(speed, false);
@@ -580,6 +828,9 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
 
   const isCheckButtonEnabled = (() => {
     if (!currentItem) return false;
+    if (activeLayout === 'INTRODUCTION') {
+      return true;
+    }
     if (activeLayout === 'FILL_IN_BLANK') {
       // Đã ghép tất cả các từ vào khay (kho dưới rỗng)
       return placedWords.length > 0 && availableWords.length === 0;
@@ -593,7 +844,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   const getCorrectAnswerText = () => {
     if (!currentItem) return '';
     if (activeLayout === 'FILL_IN_BLANK') {
-      return currentItem.contentText.replace(/[\[\]]/g, '');
+      return currentItem.contentText.replace(/[.?!,]+$/g, '').trim();
     }
     if (activeLayout === 'QUIZ') {
       return currentItem.keyword || '';
@@ -679,9 +930,9 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       return;
     }
 
-    // 4. QUIZ: So sánh từ khóa
+    // 4. QUIZ (WORD_RECOGNITION): So sánh từ khóa
     if (activeLayout === 'QUIZ') {
-      const correct = selectedOption === currentItem.keyword;
+      const correct = (selectedOption?.trim().toLowerCase() === currentItem.keyword?.trim().toLowerCase());
       setIsCorrect(correct);
       setIsChecked(true);
       if (!correct) {
@@ -691,11 +942,10 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       return;
     }
 
-    // 5. FILL_IN_BLANK (SENTENCE BUILDER): So sánh câu đã ghép
+    // 5. FILL_IN_BLANK (Vòng 5 - SENTENCE BUILDER): So sánh câu đã ghép
     if (activeLayout === 'FILL_IN_BLANK') {
       const userSentence = placedWords.map(w => w.text.trim().toLowerCase()).join(' ');
       const expectedSentence = currentItem.contentText
-        .replace(/[\[\]]/g, '')
         .replace(/[.?!,]+$/g, '')
         .trim()
         .toLowerCase();
@@ -841,7 +1091,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   return (
     <div className="flex-grow flex flex-col justify-between bg-white min-h-svh select-none relative">
       {/* Top Header Bar */}
-      <header className="max-w-4xl w-full mx-auto px-6 py-6 flex items-center justify-between gap-6">
+      <header className={`max-w-4xl w-full mx-auto px-6 flex items-center justify-between gap-6 transition-all ${activeLayout === 'INTRODUCTION' && introPhase === 'CONVERSATION' ? 'py-3' : 'py-6'}`}>
         <button
           onClick={() => setShowExitModal(true)}
           className="text-text-muted hover:text-text-main transition-colors cursor-pointer"
@@ -865,99 +1115,289 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       </header>
 
       {/* Main Core Question Area */}
-      <main className="max-w-2xl w-full mx-auto px-6 py-8 flex-1 flex flex-col justify-center space-y-8">
+      <main className={`w-full mx-auto px-4 sm:px-6 flex-1 flex flex-col space-y-6 transition-all duration-300 ${
+        activeLayout === 'INTRODUCTION' && introPhase === 'CONVERSATION' 
+          ? 'w-full md:w-[50%] max-w-none py-2 justify-start' 
+          : 'max-w-2xl py-6 justify-center'
+      }`}>
 
         {/* Render Title/Task */}
-        {!(activeLayout === 'QUIZ') && (
+        {!(activeLayout === 'INTRODUCTION' && introPhase === 'CONVERSATION') && (
           <div className="text-left space-y-1">
             <span className="text-xs font-extrabold text-primary tracking-widest uppercase">
               {activeLayout === 'INTRODUCTION'
-                ? 'Giới thiệu từ mới'
+                ? 'Làm quen từ mới'
                 : activeLayout === 'LISTENING'
                   ? 'Chọn hình tương ứng'
                   : activeLayout === 'SPEAKING'
                     ? 'Tập phát âm chuẩn'
                     : activeLayout === 'FILL_IN_BLANK'
                       ? 'Sắp xếp câu đúng'
-                      : 'Chọn đáp án chính xác'}
+                      : 'Điền từ còn thiếu'}
             </span>
             <h2 className="text-2xl font-display font-extrabold text-text-main m-0 leading-tight">
               {activeLayout === 'INTRODUCTION'
-                ? 'Làm quen và phát âm từ mới nhé!'
+                ? 'Khám phá các từ vựng sẽ xuất hiện trong bài nhé!'
                 : activeLayout === 'LISTENING'
                   ? 'Nghe loa phát âm và chọn hình ảnh phù hợp nhé!'
                   : activeLayout === 'SPEAKING'
                     ? 'Nghe phát âm mẫu và ấn ghi âm để tập đọc nhé!'
                     : activeLayout === 'FILL_IN_BLANK'
                       ? 'Nhấp các từ bên dưới theo đúng thứ tự để xếp câu nhé!'
-                      : 'Nghĩa của từ/câu sau đây là gì?'}
+                      : 'Chọn từ đúng nhất để hoàn thành câu nhé!'}
             </h2>
           </div>
         )}
 
         {activeLayout === 'INTRODUCTION' ? (
-          <div className="flex flex-col items-center space-y-6 animate-fade-in-up">
-            {/* Flashcard container */}
-            <div className="w-full max-w-sm bg-white border-2 border-border-main rounded-[2.5rem] shadow-[0_8px_0_0_#e5e5e5] p-6 flex flex-col items-center space-y-6 hover:translate-y-[-2px] hover:shadow-[0_10px_0_0_#e5e5e5] transition-all duration-150 relative overflow-hidden group">
+          introPhase === 'PREVIEW' ? (
+            /* GIAI ĐOẠN 1: PREVIEW TỪ VỰNG TARGET TRONG HỘI THOẠI */
+            <div className="flex flex-col items-center space-y-6 animate-fade-in-up w-full">
+              {/* Indicator badge */}
+              <div className="flex items-center gap-2 bg-primary-soft/40 border border-primary/20 px-4 py-1.5 rounded-full">
+                <span className="text-xs font-black text-primary uppercase tracking-widest">
+                  Từ vựng {previewIndex + 1} / {previewKeywords.length}
+                </span>
+              </div>
 
-              {/* Image Frame */}
-              {currentItem.imageUrl ? (
-                <div className="w-full h-52 bg-slate-50/80 border-2 border-border-main/50 rounded-3xl overflow-hidden relative flex items-center justify-center p-3">
-                  <img
-                    src={getAssetUrl(currentItem.imageUrl)}
-                    alt={currentItem.contentText}
-                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-sm"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400";
-                    }}
-                  />
+              {/* Preview Flashcard */}
+              {previewKeywords.length > 0 && previewKeywords[previewIndex] ? (
+                <div className="w-full max-w-sm bg-white border-2 border-border-main rounded-[2.5rem] shadow-[0_8px_0_0_#e5e5e5] p-6 flex flex-col items-center space-y-5 hover:translate-y-[-2px] transition-all relative overflow-hidden group">
+                  {/* Image Frame */}
+                  {previewKeywords[previewIndex].imageUrl ? (
+                    <div className="w-full h-52 bg-slate-50 border-2 border-border-main/50 rounded-3xl overflow-hidden relative flex items-center justify-center p-3">
+                      <img
+                        src={getAssetUrl(previewKeywords[previewIndex].imageUrl)}
+                        alt={previewKeywords[previewIndex].keyword || ''}
+                        className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-sm"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400";
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-full h-48 bg-primary-soft/10 border-2 border-dashed border-primary/20 rounded-3xl flex items-center justify-center">
+                      <span className="text-sm text-text-muted font-bold">Hình ảnh minh họa</span>
+                    </div>
+                  )}
+
+                  {/* Keyword Text & Audio Button */}
+                  <div className="w-full text-center space-y-3">
+                    <div className="flex items-center justify-center gap-3">
+                      <h3 className="text-4xl sm:text-5xl font-display font-extrabold text-text-main tracking-wide capitalize">
+                        {previewKeywords[previewIndex].keyword}
+                      </h3>
+
+                      {/* Speaker Button: Speaks keyword using keywordAudioUrl or Web Speech API */}
+                      <button
+                        onClick={() => playKeywordAudio(previewKeywords[previewIndex])}
+                        className={`btn-3d w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                          isPlayingAudio
+                            ? 'btn-3d-pink scale-110 animate-pulse'
+                            : 'btn-3d-blue hover:scale-105'
+                        }`}
+                        title="Phát âm từ vựng"
+                      >
+                        <SpeakerWaveIcon className="w-6 h-6 text-white" />
+                      </button>
+                    </div>
+
+                    {/* Contextual Translation */}
+                    {(previewKeywords[previewIndex].keywordTranslation || previewKeywords[previewIndex].translation) && (
+                      <div className="border-t-2 border-border-main/30 my-2 pt-3">
+                        <span className="text-xs font-extrabold text-primary tracking-wider uppercase block mb-1">
+                          Nghĩa từ vựng
+                        </span>
+                        <p className="text-2xl font-display font-extrabold text-primary-dark">
+                          {previewKeywords[previewIndex].keywordTranslation || previewKeywords[previewIndex].translation}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ) : (
-                <div className="w-full h-48 bg-primary-soft/10 border-2 border-dashed border-primary/20 rounded-3xl flex items-center justify-center">
-                  <span className="text-sm text-text-muted font-bold">Hình ảnh minh họa</span>
+                <div className="text-center py-8">
+                  <p className="text-sm font-bold text-text-muted">Không có từ khóa preview, hãy bắt đầu hội thoại!</p>
                 </div>
               )}
 
-              {/* Text & Audio Controls */}
-              <div className="w-full text-center space-y-4">
-                <div className="flex items-center justify-center gap-4">
-                  <h3 className="text-4xl font-display font-extrabold text-text-main tracking-wide">
-                    {currentItem.contentText}
-                  </h3>
-
-                  {/* Speaker Button */}
-                  <button
-                    onClick={() => playSound(1.0)}
-                    className={`btn-3d w-14 h-14 rounded-full flex items-center justify-center transition-all cursor-pointer ${isPlayingAudio
-                        ? 'btn-3d-pink scale-110 animate-pulse'
-                        : 'btn-3d-blue hover:scale-105'
-                      }`}
-                  >
-                    <SpeakerWaveIcon className={`w-7 h-7 text-white ${isPlayingAudio ? 'animate-bounce-soft' : ''}`} />
-                  </button>
-                </div>
-
-                <div className="border-t-2 border-border-main/30 my-2 pt-3">
-                  <span className="text-xs font-extrabold text-primary tracking-wider uppercase block mb-1">
-                    Nghĩa tiếng Việt
-                  </span>
-                  <p className="text-xl font-display font-extrabold text-primary-dark">
-                    {currentItem.translation}
-                  </p>
-                </div>
+              {/* Mascot cheering */}
+              <div className="flex items-center gap-4 py-1">
+                <Mascot
+                  expression="thinking"
+                  speechBubbleText="Làm quen các từ này trước khi bước vào câu chuyện nhé!"
+                  bubblePosition="right"
+                  size={80}
+                />
               </div>
             </div>
+          ) : (
+            /* GIAI ĐOẠN 2: TOÀN BỘ CUỘC HỘI THOẠI DẠNG STREAM CUỘN XUỐNG */
+            <div className="flex flex-col items-center w-full space-y-4 animate-fade-in-up">
+              {/* Header Box: Bạn A (Left), Tên Part (Center), Bạn B (Right) */}
+              <div className="w-full bg-white border-2 border-border-main/80 rounded-3xl p-4 sm:p-5 shadow-sm flex items-center justify-between gap-4">
+                {/* Người A: Vịt con */}
+                <div className="flex flex-col items-center">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-4 border-amber-300 overflow-hidden shadow-sm bg-amber-50">
+                    <img src={AVATAR_A} alt="Bạn A" className="w-full h-full object-cover" />
+                  </div>
+                  <span className="text-xs font-display font-black text-amber-800 uppercase mt-1">BẠN A</span>
+                </div>
 
-            {/* Mascot cheering below the card */}
-            <div className="flex items-center gap-4 py-2">
-              <Mascot
-                expression={isPlayingAudio ? 'happy' : 'thinking'}
-                speechBubbleText="Bé hãy ấn nút loa để nghe và đọc to theo nhé!"
-                bubblePosition="right"
-                size={80}
-              />
+                {/* Tiêu đề Part ở giữa & Nút điều khiển phát */}
+                <div className="flex flex-col items-center gap-2 text-center flex-1">
+                  <div className="bg-gradient-to-r from-amber-50 via-pink-50 to-purple-50 border-2 border-primary/20 px-6 py-1.5 rounded-full shadow-xs">
+                    <span className="text-base sm:text-xl font-display font-black text-primary uppercase tracking-wider">
+                      {currentPartTitle.toUpperCase()}
+                    </span>
+                  </div>
+
+                  {isAutoPlayingAll ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (currentAudio) currentAudio.pause();
+                        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+                        setIsAutoPlayingAll(false);
+                        // Do not set playingLineIndex to null so we can resume
+                        setIsPlayingAudio(false);
+                      }}
+                      className="text-xs font-black flex items-center gap-1.5 px-3.5 py-1 rounded-full border transition-all cursor-pointer bg-amber-100 border-amber-400 text-amber-800 animate-pulse"
+                    >
+                      <SpeakerWaveIcon className="w-3.5 h-3.5" />
+                      <span>Đang đọc hội thoại (Bấm để dừng)</span>
+                    </button>
+                  ) : playingLineIndex !== null && playingLineIndex < playItems.length - 1 ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => playConversationLine(0, true)}
+                        className="text-xs font-black flex items-center gap-1.5 px-3 py-1 rounded-full border transition-all cursor-pointer bg-slate-50 hover:bg-white border-border-main text-text-muted hover:text-primary"
+                      >
+                        <ArrowPathIcon className="w-3.5 h-3.5" />
+                        <span>Nghe lại từ đầu</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => playConversationLine(playingLineIndex, true)}
+                        className="text-xs font-black flex items-center gap-1.5 px-3 py-1 rounded-full border transition-all cursor-pointer bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 shadow-sm"
+                      >
+                        <PlayIcon className="w-3.5 h-3.5" />
+                        <span>Tiếp tục nghe</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => playConversationLine(0, true)}
+                      className="text-xs font-black flex items-center gap-1.5 px-3.5 py-1 rounded-full border transition-all cursor-pointer bg-slate-50 hover:bg-white border-border-main text-text-muted hover:text-primary"
+                    >
+                      <SpeakerWaveIcon className="w-3.5 h-3.5" />
+                      <span>Phát lại toàn bộ cuộc trò chuyện</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Người B: Cậu bé */}
+                <div className="flex flex-col items-center">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-4 border-purple-300 overflow-hidden shadow-sm bg-purple-50">
+                    <img src={AVATAR_B} alt="Bạn B" className="w-full h-full object-cover" />
+                  </div>
+                  <span className="text-xs font-display font-black text-purple-800 uppercase mt-1">BẠN B</span>
+                </div>
+              </div>
+
+              {/* Chat Stream: Cuộn thẳng xuống */}
+              <div
+                ref={chatContainerRef}
+                className="w-full bg-slate-50/80 border-2 border-border-main/60 rounded-3xl p-4 sm:p-6 shadow-inner max-h-[60vh] overflow-y-auto space-y-5 scroll-smooth"
+              >
+                {playItems.map((item, idx) => {
+                  const isA = item.speakerRole === SpeakerRole.SPEAKER_1 || item.speakerRole === 'SPEAKER_1' || !item.speakerRole;
+                  const isLinePlaying = playingLineIndex === idx;
+
+                  return (
+                    <div
+                      key={item.id || idx}
+                      id={`chat-line-${idx}`}
+                      className={`flex flex-col w-full space-y-2 ${isA ? 'items-start' : 'items-end'} transition-all duration-300 scroll-mt-6`}
+                    >
+                      {/* BUBBLE CHỨA TEXT */}
+                      <div
+                        className={`relative w-fit max-w-[85%] sm:max-w-[75%] p-4 sm:p-5 rounded-3xl border-2 transition-all duration-300 shadow-sm ${
+                          isA
+                            ? 'bg-[#FFF9E6] border-[#FDE68A] text-slate-900 rounded-tl-sm'
+                            : 'bg-[#F5F3FF] border-[#DDD6FE] text-slate-900 rounded-tr-sm'
+                        } ${
+                          isLinePlaying
+                            ? isA
+                              ? 'ring-4 ring-amber-400/60 scale-[1.02] shadow-md border-amber-400'
+                              : 'ring-4 ring-purple-400/60 scale-[1.02] shadow-md border-purple-400'
+                            : ''
+                        }`}
+                      >
+                        {/* Triangle pointer */}
+                        {isA ? (
+                          <div className="absolute -left-2 top-3 w-0 h-0 border-t-8 border-t-transparent border-r-8 border-r-[#FDE68A] border-b-8 border-b-transparent" />
+                        ) : (
+                          <div className="absolute -right-2 top-3 w-0 h-0 border-t-8 border-t-transparent border-l-8 border-l-[#DDD6FE] border-b-8 border-b-transparent" />
+                        )}
+
+                        {/* Content text & Speaker radio button */}
+                        <div className="flex items-start justify-between gap-4">
+                          <p className="text-base sm:text-xl font-display font-extrabold text-slate-900 leading-snug m-0 flex-1">
+                            {renderHighlightedSentence(item.contentText, item.keyword)}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => playConversationLine(idx, false)}
+                            className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer mt-0.5 ${
+                              isLinePlaying
+                                ? isA
+                                  ? 'bg-amber-500 text-white scale-110 shadow-sm animate-pulse'
+                                  : 'bg-purple-600 text-white scale-110 shadow-sm animate-pulse'
+                                : isA
+                                  ? 'bg-amber-100 hover:bg-amber-200 text-amber-800'
+                                  : 'bg-purple-100 hover:bg-purple-200 text-purple-800'
+                            }`}
+                            title="Nghe câu này"
+                          >
+                            <SpeakerWaveIcon className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        {/* Translation */}
+                        {item.translation && (
+                          <p className={`text-xs sm:text-base font-bold border-t pt-2 mt-3 m-0 ${
+                            isA ? 'text-amber-900/80 border-amber-200/80' : 'text-purple-900/80 border-purple-200/80'
+                          }`}>
+                            {item.translation}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* BUBBLE CHỨA HÌNH ẢNH (TÁCH BIỆT HOÀN TOÀN KHỎI BUBBLE TEXT) */}
+                      {item.imageUrl && (
+                        <div className={`w-[85%] sm:w-[65%] rounded-3xl bg-white border-2 overflow-hidden shadow-sm relative flex items-center justify-center p-1.5 ${
+                          isA ? 'border-amber-200 ml-4' : 'border-purple-200 mr-4'
+                        } ${isLinePlaying ? 'ring-2 ring-primary/40' : ''}`}>
+                          <img
+                            src={getAssetUrl(item.imageUrl)}
+                            alt="Hình minh họa"
+                            className="w-full h-auto object-contain rounded-2xl"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400";
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                <div className="w-full h-12 flex-shrink-0" />
+              </div>
             </div>
-          </div>
+          )
 
         ) : activeLayout === 'LISTENING' ? (
           <div className="flex flex-col items-center space-y-8 animate-fade-in-up w-full">
@@ -1172,9 +1612,13 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
               {/* Speech Bubble Container */}
               <div className="relative bg-white border-2 border-border-main rounded-2xl p-3 sm:p-4 shadow-sm min-w-[240px] max-w-sm flex flex-col gap-2">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-base sm:text-lg font-display font-extrabold text-text-main m-0 leading-snug">
-                    {showTranslationHint && currentItem.translation ? currentItem.translation : currentItem.contentText}
-                  </p>
+                  <div className="text-base sm:text-lg m-0 leading-relaxed text-left flex-1">
+                    {showTranslationHint && currentItem.translation ? (
+                      <span className="font-display font-extrabold text-[#0288d1]">{currentItem.translation}</span>
+                    ) : (
+                      renderMaskedSentence(currentItem.contentText, currentItem.keyword)
+                    )}
+                  </div>
 
                   {/* Nút phát âm thanh nằm ngay cạnh câu hỏi */}
                   <button
@@ -1487,21 +1931,63 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
         <div className="max-w-2xl w-full mx-auto flex items-center justify-between gap-4">
           {session.sessionType === 'INTRODUCTION' ? (
             <div className="flex justify-between w-full">
-              <Button3D
-                variant="gray"
-                onClick={prevStep}
-                disabled={currentStepIndex === 0}
-                className="px-8 min-w-[120px] sm:min-w-[150px]"
-              >
-                TRỞ LẠI
-              </Button3D>
-              <Button3D
-                variant="pink"
-                onClick={handleContinue}
-                className="px-8 min-w-[120px] sm:min-w-[150px]"
-              >
-                {currentStepIndex === currentItems.length - 1 ? 'HOÀN THÀNH' : 'TIẾP THEO'}
-              </Button3D>
+              {introPhase === 'PREVIEW' ? (
+                <>
+                  <Button3D
+                    variant="gray"
+                    onClick={() => setPreviewIndex(prev => Math.max(0, prev - 1))}
+                    disabled={previewIndex === 0}
+                    className="px-8 min-w-[120px] sm:min-w-[150px]"
+                  >
+                    TRỞ LẠI
+                  </Button3D>
+                  <Button3D
+                    variant={previewIndex === previewKeywords.length - 1 ? "green" : "pink"}
+                    onClick={() => {
+                      if (previewIndex < previewKeywords.length - 1) {
+                        setPreviewIndex(prev => prev + 1);
+                      } else {
+                        setIntroPhase('CONVERSATION');
+                      }
+                    }}
+                    className="px-8 min-w-[120px] sm:min-w-[180px]"
+                  >
+                    {previewIndex === previewKeywords.length - 1 ? 'VÀO HỘI THOẠI 🚀' : 'TIẾP THEO'}
+                  </Button3D>
+                </>
+              ) : (
+                <>
+                  <Button3D
+                    variant="gray"
+                    onClick={() => {
+                      if (currentAudio) currentAudio.pause();
+                      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+                      setIsAutoPlayingAll(false);
+                      setPlayingLineIndex(null);
+                      setIsPlayingAudio(false);
+                      setIntroPhase('PREVIEW');
+                      setPreviewIndex(Math.max(0, previewKeywords.length - 1));
+                    }}
+                    className="px-8 min-w-[120px] sm:min-w-[150px]"
+                  >
+                    TRỞ LẠI
+                  </Button3D>
+                  <Button3D
+                    variant="pink"
+                    onClick={() => {
+                      if (currentAudio) currentAudio.pause();
+                      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+                      setIsAutoPlayingAll(false);
+                      setPlayingLineIndex(null);
+                      setIsPlayingAudio(false);
+                      setSessionFinished(true);
+                    }}
+                    className="px-8 min-w-[120px] sm:min-w-[150px]"
+                  >
+                    HOÀN THÀNH 🏆
+                  </Button3D>
+                </>
+              )}
             </div>
           ) : (
             <>

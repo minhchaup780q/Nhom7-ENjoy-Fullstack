@@ -1,6 +1,5 @@
 package com.example.learningservice.entities;
 
-import com.example.learningservice.entities.enums.SessionStatus;
 import com.example.learningservice.entities.enums.SessionType;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -23,9 +22,6 @@ public class Session extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "session_type")
     private SessionType sessionType;
-
-    @Enumerated(EnumType.STRING)
-    private SessionStatus status;
 
     @Column(name = "badge_id")
     private Long badgeId; // Service Gamification quản lý
