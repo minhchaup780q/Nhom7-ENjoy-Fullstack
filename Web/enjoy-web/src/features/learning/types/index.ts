@@ -56,7 +56,7 @@ export interface Session extends BaseEntity {
   badgeId?: number;
   title: string;
   description: string;
-  status: SessionStatus;
+  status?: SessionStatus;
   createdBy?: number;
   orderIndex: number;
   itemMappings?: SessionItemMapping[];
