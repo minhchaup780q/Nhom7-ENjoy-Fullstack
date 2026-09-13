@@ -15,9 +15,8 @@ export enum SessionStatus {
 }
 
 export enum SessionItemType {
-  FLASHCARD = 'FLASHCARD',
-  QUIZ = 'QUIZ',
-  FILL_IN_BLANK = 'FILL_IN_BLANK',
+  TARGET = 'TARGET',
+  SUPPORT = 'SUPPORT',
 }
 
 export interface Level extends BaseEntity {
@@ -76,6 +75,8 @@ export interface SessionItem extends BaseEntity {
   itemType: SessionItemType;
   speakerRole?: SpeakerRole;
   keyword?: string;
+  keywordTranslation?: string;
+  keywordAudioUrl?: string;
   sessionMappings?: SessionItemMapping[];
 }
 

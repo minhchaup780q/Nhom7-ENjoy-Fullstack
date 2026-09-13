@@ -37,6 +37,12 @@ public class SessionItem extends BaseEntity {
 
     private String keyword;
 
+    @Column(name = "keyword_translation", columnDefinition = "TEXT")
+    private String keywordTranslation;
+
+    @Column(name = "keyword_audio_url")
+    private String keywordAudioUrl;
+
     @OneToMany(mappedBy = "sessionItem", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("sessionItem")
     private List<SessionItemMapping> sessionMappings;

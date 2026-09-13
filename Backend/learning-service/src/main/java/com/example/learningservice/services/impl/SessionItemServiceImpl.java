@@ -41,6 +41,8 @@ public class SessionItemServiceImpl implements SessionItemService {
         item.setAudioUrl(sessionItemDetails.getAudioUrl());
         item.setItemType(sessionItemDetails.getItemType());
         item.setKeyword(sessionItemDetails.getKeyword());
+        item.setKeywordTranslation(sessionItemDetails.getKeywordTranslation());
+        item.setKeywordAudioUrl(sessionItemDetails.getKeywordAudioUrl());
         item.setSpeakerRole(sessionItemDetails.getSpeakerRole());
         item.setUpdateAt(LocalDateTime.now());
         return sessionItemRepository.save(item);
