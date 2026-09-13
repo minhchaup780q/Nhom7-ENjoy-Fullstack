@@ -62,6 +62,11 @@ export interface Session extends BaseEntity {
   itemMappings?: SessionItemMapping[];
 }
 
+export enum SpeakerRole {
+  SPEAKER_1 = 'SPEAKER_1',
+  SPEAKER_2 = 'SPEAKER_2',
+}
+
 export interface SessionItem extends BaseEntity {
   id: number;
   contentText: string;
@@ -69,6 +74,7 @@ export interface SessionItem extends BaseEntity {
   imageUrl?: string;
   audioUrl?: string;
   itemType: SessionItemType;
+  speakerRole?: SpeakerRole;
   keyword?: string;
   sessionMappings?: SessionItemMapping[];
 }

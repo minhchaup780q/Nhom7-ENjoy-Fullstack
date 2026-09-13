@@ -2,6 +2,7 @@ package com.example.learningservice.entities;
 
 
 import com.example.learningservice.entities.enums.SessionItemType;
+import com.example.learningservice.entities.enums.SpeakerRole;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
@@ -29,6 +30,10 @@ public class SessionItem extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "item_type")
     private SessionItemType itemType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "speaker_role")
+    private SpeakerRole speakerRole;
 
     private String keyword;
 
