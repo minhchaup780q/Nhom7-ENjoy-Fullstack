@@ -459,8 +459,8 @@ export const PersonalStatsPage: React.FC = () => {
   const handleSelectSelf = () => {
     setSelectedChild(null);
     setSearchParams({});
-    fetchStats();
-    fetchSkillStats(currentDate, previousDate);
+    fetchStats(null);
+    fetchSkillStats(currentDate, previousDate, null);
   };
 
   const handleSelectChild = (child: FamilyMember) => {
@@ -470,12 +470,26 @@ export const PersonalStatsPage: React.FC = () => {
     fetchSkillStats(currentDate, previousDate, child.studentId);
   };
 
-  const fetchStats = async (targetUserId?: number) => {
+  const fetchStats = async (targetUserId?: number | null) => {
     setLoading(true);
     try {
-      const res = await learningApi.getUserStats(targetUserId);
+      const activeUserId = targetUserId === null 
+        ? undefined 
+        : (targetUserId !== undefined ? targetUserId : (isParent ? selectedChild?.studentId : undefined));
+
+      const res = await learningApi.getUserStats(activeUserId);
       const data = (res as any)?.data !== undefined ? (res as any).data : res;
-      setStats(data);
+      setStats(data || {
+        totalCompletedLessons: 0,
+        weeklyStudyMinutes: 0,
+        dailyStudyTime: DEFAULT_WEEKLY_DAYS.map(day => ({
+          day,
+          date: '',
+          minutes: 0,
+          targetMinutes: 20
+        })),
+        recentSessions: []
+      });
     } catch (err) {
       console.error("Lỗi khi tải thống kê học tập:", err);
       setStats({
@@ -494,20 +508,47 @@ export const PersonalStatsPage: React.FC = () => {
     }
   };
 
-  const fetchSkillStats = async (curr: string, prev: string, targetUserId?: number) => {
+  const fetchSkillStats = async (curr: string, prev: string, targetUserId?: number | null) => {
     setSkillsLoading(true);
     try {
-      const activeUserId = targetUserId ?? (isParent ? selectedChild?.studentId : undefined);
+      const activeUserId = targetUserId === null 
+        ? undefined 
+        : (targetUserId !== undefined ? targetUserId : (isParent ? selectedChild?.studentId : undefined));
+
       const res = await learningApi.getSkillStats(curr, prev, activeUserId);
       const data = (res as any)?.data !== undefined ? (res as any).data : res;
-      if (data?.currentSkills) {
-        setSkillsCurrent(data.currentSkills);
-      }
-      if (data?.previousSkills) {
-        setSkillsPrevious(data.previousSkills);
-      }
+      
+      setSkillsCurrent(data?.currentSkills || {
+        listening: 0,
+        speaking: 0,
+        reading: 0,
+        writing: 0,
+        vocabGrammar: 0,
+      });
+
+      setSkillsPrevious(data?.previousSkills || {
+        listening: 0,
+        speaking: 0,
+        reading: 0,
+        writing: 0,
+        vocabGrammar: 0,
+      });
     } catch (err) {
       console.warn("Lỗi khi tải thống kê kỹ năng từ API:", err);
+      setSkillsCurrent({
+        listening: 0,
+        speaking: 0,
+        reading: 0,
+        writing: 0,
+        vocabGrammar: 0,
+      });
+      setSkillsPrevious({
+        listening: 0,
+        speaking: 0,
+        reading: 0,
+        writing: 0,
+        vocabGrammar: 0,
+      });
     } finally {
       setSkillsLoading(false);
     }
@@ -521,11 +562,11 @@ export const PersonalStatsPage: React.FC = () => {
 
     const prevStr = prev.toISOString().split('T')[0];
     setPreviousDate(prevStr);
-    fetchSkillStats(currentDate, prevStr, isParent ? selectedChild?.studentId : undefined);
+    fetchSkillStats(currentDate, prevStr, selectedChild ? selectedChild.studentId : null);
   };
 
   const handleApplyDates = () => {
-    fetchSkillStats(currentDate, previousDate, isParent ? selectedChild?.studentId : undefined);
+    fetchSkillStats(currentDate, previousDate, selectedChild ? selectedChild.studentId : null);
   };
 
   const totalWeeklyMinutes = stats?.weeklyStudyMinutes ?? 0;
@@ -572,7 +613,6 @@ export const PersonalStatsPage: React.FC = () => {
               <span className="text-xs font-bold text-[#ff5e97] uppercase tracking-wider flex items-center gap-1.5">
                 {isParent ? (
                   <>
-                    <HeartIcon className="w-4 h-4 text-primary stroke-[2.5]" />
                     Dành cho Phụ Huynh • Giám sát & Đồng hành
                   </>
                 ) : (
@@ -581,7 +621,7 @@ export const PersonalStatsPage: React.FC = () => {
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              {isParent ? 'THEO DÕI NĂNG LỰC & TIẾN ĐỘ HỌC CỦA CON' : 'THỐNG KÊ HỌC TẬP CÁ NHÂN'}
+              {isParent ? 'THEO DÕI NĂNG LỰC & TIẾN ĐỘ HỌC' : 'THỐNG KÊ HỌC TẬP CÁ NHÂN'}
             </h1>
             <p className="text-sm text-slate-600">
               {isParent
@@ -609,7 +649,7 @@ export const PersonalStatsPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <AcademicCapIcon className="w-5 h-5 text-primary stroke-[2.5]" />
                 <span className="text-xs font-display font-black text-slate-800 uppercase tracking-wide">
-                  Chọn hồ sơ xem thống kê ({linkedChildren.length} bé đã liên kết):
+                  Chọn hồ sơ xem thống kê ({linkedChildren.length} tài khoản đã liên kết):
                 </span>
               </div>
             </div>
@@ -632,7 +672,7 @@ export const PersonalStatsPage: React.FC = () => {
                 </div>
                 <div className="text-left">
                   <p className={`text-xs font-display font-black leading-tight ${selectedChild === null ? 'text-white' : 'text-slate-800'}`}>
-                    Bản thân (Tài khoản của tôi)
+                    Tài khoản của tôi
                   </p>
                   <p className={`text-[10px] font-medium leading-tight ${selectedChild === null ? 'text-white/80' : 'text-slate-400'}`}>
                     {user?.email || 'Phụ huynh'}
@@ -689,14 +729,13 @@ export const PersonalStatsPage: React.FC = () => {
 
             {/* Thông báo trạng thái đang xem hồ sơ nào */}
             <div className="text-[11px] font-bold text-slate-600 bg-white px-3.5 py-2 rounded-xl border border-primary/20 flex items-center gap-2">
-              <SparklesIcon className="w-4 h-4 text-primary shrink-0" />
               {selectedChild ? (
                 <span>
                   Đang hiển thị kết quả học tập & đánh giá 5 kỹ năng của bé: <strong className="text-primary">{selectedChild.studentName || selectedChild.studentEmail}</strong>
                 </span>
               ) : (
                 <span>
-                  Đang hiển thị thống kê học tập cá nhân của: <strong className="text-slate-900">{user?.username || user?.email} (Tài khoản phụ huynh)</strong>
+                  Đang hiển thị thống kê học tập cá nhân của: <strong className="text-slate-900">{user?.username || user?.email}</strong>
                 </span>
               )}
             </div>
