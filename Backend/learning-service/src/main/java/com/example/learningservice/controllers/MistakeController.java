@@ -75,6 +75,28 @@ public class MistakeController {
         return ResponseEntity.ok(mistakeService.updateAiExplanation(id, explanation));
     }
 
+    @PostMapping("/{id}/practice-step")
+    public ResponseEntity<MistakeResponse> submitPracticeStep(
+            @RequestHeader(value = "X-User-Id", required = false) Long headerUserId,
+            @RequestParam(value = "userId", required = false) Long queryUserId,
+            @PathVariable Long id,
+            @RequestBody Map<String, Boolean> body) {
+        Long userId = (headerUserId != null) ? headerUserId : queryUserId;
+        boolean isCorrect = Boolean.TRUE.equals(body.get("isCorrect"));
+        return ResponseEntity.ok(mistakeService.submitPracticeStep(userId, id, isCorrect));
+    }
+
+    @GetMapping("/roadmap")
+    public ResponseEntity<List<MistakeResponse>> getRoadmap(
+            @RequestHeader(value = "X-User-Id", required = false) Long headerUserId,
+            @RequestParam(value = "userId", required = false) Long queryUserId) {
+        Long userId = (headerUserId != null) ? headerUserId : queryUserId;
+        if (userId == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(mistakeService.getRoadmapMistakes(userId));
+    }
+
     @GetMapping("/stats")
     public ResponseEntity<MistakeStatsResponse> getStats(
             @RequestHeader(value = "X-User-Id", required = false) Long headerUserId,

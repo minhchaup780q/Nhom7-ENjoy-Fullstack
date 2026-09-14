@@ -25,6 +25,10 @@ public class MistakeResponse {
     private Integer durationSeconds;
     private String aiExplanationCache;
     private MistakeStatus status;
+    private Integer correctStreakDays;
+    private Double masteryScore;
+    private LocalDateTime lastPracticedAt;
+    private LocalDateTime nextReviewAt;
     private LocalDateTime createdAt;
 
     public static MistakeResponse fromEntity(Mistake mistake) {
@@ -37,6 +41,10 @@ public class MistakeResponse {
                 .durationSeconds(mistake.getDurationSeconds())
                 .aiExplanationCache(mistake.getAiExplanationCache())
                 .status(mistake.getStatus())
+                .correctStreakDays(mistake.getCorrectStreakDays() != null ? mistake.getCorrectStreakDays() : 0)
+                .masteryScore(mistake.getMasteryScore() != null ? mistake.getMasteryScore() : 0.0)
+                .lastPracticedAt(mistake.getLastPracticedAt())
+                .nextReviewAt(mistake.getNextReviewAt())
                 .createdAt(mistake.getCreatedAt());
 
         if (mistake.getQuestion() != null) {

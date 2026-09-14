@@ -19,6 +19,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -162,18 +163,104 @@ public class MistakeServiceImpl implements MistakeService {
     }
 
     @Override
+    @Transactional
+    public MistakeResponse submitPracticeStep(Long userId, Long mistakeId, boolean isCorrect) {
+        Mistake mistake = mistakeRepository.findById(mistakeId)
+                .orElseThrow(() -> new IllegalArgumentException("Mistake not found with ID: " + mistakeId));
+
+        if (userId != null && !mistake.getUserId().equals(userId)) {
+            throw new IllegalArgumentException("Unauthorized to modify this mistake.");
+        }
+
+        LocalDate today = LocalDate.now();
+        if (isCorrect) {
+            boolean canAdvance = (mistake.getLastPracticedAt() == null || mistake.getLastPracticedAt().toLocalDate().isBefore(today));
+            int currentStreak = mistake.getCorrectStreakDays() != null ? mistake.getCorrectStreakDays() : 0;
+            
+            if (canAdvance) {
+                int newStreak = Math.min(3, currentStreak + 1);
+                mistake.setCorrectStreakDays(newStreak);
+                mistake.setLastPracticedAt(LocalDateTime.now());
+                mistake.setNextReviewAt(today.plusDays(1).atStartOfDay());
+
+                if (newStreak >= 3) {
+                    mistake.setMasteryScore(1.0);
+                    mistake.setStatus(MistakeStatus.MASTERED);
+                } else if (newStreak == 2) {
+                    mistake.setMasteryScore(0.67);
+                    mistake.setStatus(MistakeStatus.REVIEWED);
+                } else {
+                    mistake.setMasteryScore(0.33);
+                    mistake.setStatus(MistakeStatus.REVIEWED);
+                }
+            } else {
+                mistake.setLastPracticedAt(LocalDateTime.now());
+            }
+        } else {
+            // Làm sai -> reset về cần ôn tập
+            mistake.setStatus(MistakeStatus.NEEDS_REVIEW);
+            mistake.setCorrectStreakDays(0);
+            mistake.setMasteryScore(0.0);
+            mistake.setNextReviewAt(null);
+            mistake.setLastPracticedAt(LocalDateTime.now());
+        }
+
+        Mistake saved = mistakeRepository.save(mistake);
+        return MistakeResponse.fromEntity(saved);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MistakeResponse> getRoadmapMistakes(Long userId) {
+        List<Mistake> mistakes = mistakeRepository.findByUserId(userId);
+        return mistakes.stream()
+                .map(MistakeResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public MistakeStatsResponse getUserMistakeStats(Long userId) {
-        long needsReview = mistakeRepository.countByUserIdAndStatus(userId, MistakeStatus.NEEDS_REVIEW);
-        long reviewed = mistakeRepository.countByUserIdAndStatus(userId, MistakeStatus.REVIEWED);
-        long mastered = mistakeRepository.countByUserIdAndStatus(userId, MistakeStatus.MASTERED);
-        long total = needsReview + reviewed + mastered;
+        List<Mistake> mistakes = mistakeRepository.findByUserId(userId);
+        LocalDate today = LocalDate.now();
+
+        long needsReview = 0;
+        long reviewed = 0;
+        long mastered = 0;
+        long dueToday = 0;
+        long waiting1Day = 0;
+        long waiting2Days = 0;
+
+        for (Mistake m : mistakes) {
+            MistakeStatus st = m.getStatus() != null ? m.getStatus() : MistakeStatus.NEEDS_REVIEW;
+            int streak = m.getCorrectStreakDays() != null ? m.getCorrectStreakDays() : 0;
+            boolean isDueToday = (m.getLastPracticedAt() == null || m.getLastPracticedAt().toLocalDate().isBefore(today));
+
+            if (st == MistakeStatus.MASTERED || streak >= 3) {
+                mastered++;
+            } else if (st == MistakeStatus.REVIEWED || streak > 0) {
+                reviewed++;
+                if (isDueToday) {
+                    dueToday++;
+                } else if (streak == 1) {
+                    waiting1Day++;
+                } else if (streak == 2) {
+                    waiting2Days++;
+                }
+            } else {
+                needsReview++;
+                dueToday++;
+            }
+        }
 
         return MistakeStatsResponse.builder()
-                .totalMistakes(total)
+                .totalMistakes(mistakes.size())
                 .needsReviewCount(needsReview)
                 .reviewedCount(reviewed)
                 .masteredCount(mastered)
+                .dueTodayCount(dueToday)
+                .waiting1DayCount(waiting1Day)
+                .waiting2DaysCount(waiting2Days)
                 .build();
     }
 

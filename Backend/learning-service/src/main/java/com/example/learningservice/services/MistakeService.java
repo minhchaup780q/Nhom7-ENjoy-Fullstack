@@ -24,6 +24,10 @@ public interface MistakeService {
 
     MistakeResponse updateAiExplanation(Long mistakeId, String explanation);
 
+    MistakeResponse submitPracticeStep(Long userId, Long mistakeId, boolean isCorrect);
+
+    List<MistakeResponse> getRoadmapMistakes(Long userId);
+
     MistakeStatsResponse getUserMistakeStats(Long userId);
 
     void deleteMistake(Long mistakeId);
