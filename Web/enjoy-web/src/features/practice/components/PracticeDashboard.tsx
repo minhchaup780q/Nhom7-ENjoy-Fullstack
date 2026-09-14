@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  ArrowPathIcon, 
-  CheckCircleIcon, 
-  ExclamationTriangleIcon, 
-  SpeakerWaveIcon, 
-  PlayIcon, 
-  SparklesIcon, 
-  TrophyIcon, 
-  ClockIcon, 
-  FunnelIcon, 
-  BookOpenIcon, 
+import {
+  ArrowPathIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  SpeakerWaveIcon,
+  PlayIcon,
+  SparklesIcon,
+  TrophyIcon,
+  ClockIcon,
+  FunnelIcon,
+  BookOpenIcon,
   CpuChipIcon,
   XMarkIcon,
   ChevronLeftIcon,
@@ -54,11 +54,11 @@ const getAssetUrl = (url?: string | null) => {
 };
 
 const ROUND_INFO: Record<number, { name: string; color: string; badgeBg: string }> = {
-  1: { name: 'Vòng 1: Từ vựng / Nhận diện', color: 'text-blue-500', badgeBg: 'bg-blue-50 border-blue-200' },
-  2: { name: 'Vòng 2: Luyện nghe', color: 'text-purple-500', badgeBg: 'bg-purple-50 border-purple-200' },
-  3: { name: 'Vòng 3: Phát âm', color: 'text-amber-500', badgeBg: 'bg-amber-50 border-amber-200' },
-  4: { name: 'Vòng 4: Đọc hiểu & Quiz', color: 'text-emerald-500', badgeBg: 'bg-emerald-50 border-emerald-200' },
-  5: { name: 'Vòng 5: Điền từ & Viết', color: 'text-pink-500', badgeBg: 'bg-pink-50 border-pink-200' }
+  1: { name: 'Vòng 1 • Từ vựng', color: 'text-indigo-600', badgeBg: 'bg-indigo-50 border-indigo-200/60' },
+  2: { name: 'Vòng 2 • Luyện nghe', color: 'text-purple-600', badgeBg: 'bg-purple-50 border-purple-200/60' },
+  3: { name: 'Vòng 3 • Luyện nói', color: 'text-rose-600', badgeBg: 'bg-rose-50 border-rose-200/60' },
+  4: { name: 'Vòng 4 • Đọc hiểu', color: 'text-emerald-600', badgeBg: 'bg-emerald-50 border-emerald-200/60' },
+  5: { name: 'Vòng 5 • Điền từ & Viết', color: 'text-sky-600', badgeBg: 'bg-sky-50 border-sky-200/60' }
 };
 
 const PAGE_SIZE = 6;
@@ -115,7 +115,7 @@ export const PracticeDashboard: React.FC = () => {
         const explanation = await chatbotApi.explainMistake(item);
         setAiExplanation(explanation);
         // Cập nhật cache lên database để lần sau mở lại ngay lập tức
-        mistakeApi.updateAiExplanation(item.id, explanation).catch(() => {});
+        mistakeApi.updateAiExplanation(item.id, explanation).catch(() => { });
       } catch (err) {
         console.error("Lỗi khi gọi AI phân tích:", err);
         setAiExplanation('Trợ lý AI đang bận một chút. Bé hãy xem lại từ vựng và đáp án đúng nhé!');
@@ -239,13 +239,13 @@ export const PracticeDashboard: React.FC = () => {
       )}
 
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-primary to-[#ff85a2] rounded-3xl p-6 md:p-8 text-white border-4 border-border-main shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+      <div className="bg-gradient-to-r from-rose-500 via-primary to-[#ff85a2] rounded-3xl p-6 md:p-8 text-white shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 border border-rose-300/40">
         <div className="space-y-2 text-center md:text-left">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-display font-black uppercase tracking-wider">
             <SparklesIcon className="w-4 h-4" />
-            CÁ NHÂN HÓA LỘ TRÌNH ÔN TẬP
+            LỘ TRÌNH ÔN TẬP CÁ NHÂN HÓA
           </div>
-          <h1 className="text-2xl md:text-3xl font-display font-black uppercase tracking-wide">
+          <h1 className="text-2xl md:text-3xl font-display font-black tracking-wide">
             Trung Tâm Luyện Tập & Khắc Phục Lỗi Sai
           </h1>
           <p className="text-xs md:text-sm text-white/90 font-semibold max-w-xl leading-relaxed">
@@ -258,37 +258,40 @@ export const PracticeDashboard: React.FC = () => {
             expression={needsReviewTotal === 0 ? "happy" : "thinking"}
             speechBubbleText={
               needsReviewTotal === 0
-                ? "Tuyệt đỉnh! Bé không có lỗi sai nào cần ôn tập cả!"
-                : `Bé có ${needsReviewTotal} câu cần ôn tập nè! Cùng Enjoy luyện tập nhé!`
+                ? "Tuyệt đỉnh! Bé đã hoàn thành tất cả các câu cần ôn hôm nay!"
+                : `Bé có ${needsReviewTotal} câu cần ôn hôm nay nè! Cùng Enjoy luyện tập nhé!`
             }
-            size={90}
+            size={85}
           />
         </div>
       </div>
 
-      {/* Top View Selector: Danh sách bài tập vs Lộ trình nhắc nhở 1-2-3 ngày */}
-      <div className="flex items-center gap-3 border-b-2 border-border-main pb-2">
+      {/* Top View Selector: Segmented Pill Controls */}
+      <div className="bg-slate-100 p-1.5 rounded-2xl inline-flex self-start border border-slate-200/60 gap-1.5 flex-wrap">
         <button
           onClick={() => setMainViewTab('list')}
-          className={`px-5 py-3 rounded-2xl font-display text-sm font-black transition-all flex items-center gap-2 cursor-pointer ${
-            mainViewTab === 'list'
-              ? 'bg-primary text-white shadow-[0_3px_0_0_#d83a6f]'
-              : 'bg-white border-2 border-border-main text-[#5c5c5c] hover:bg-bg-light'
-          }`}
+          className={`px-5 py-2.5 rounded-xl font-display text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${mainViewTab === 'list'
+              ? 'bg-white text-slate-800 shadow-sm'
+              : 'text-slate-500 hover:text-slate-800 hover:bg-white/50'
+            }`}
         >
-          <ListBulletIcon className="w-5 h-5" />
+          <ListBulletIcon className="w-4 h-4 text-primary" />
           <span>DANH SÁCH BÀI TẬP</span>
+          {needsReviewTotal > 0 && (
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-100 text-rose-600">
+              {needsReviewTotal}
+            </span>
+          )}
         </button>
 
         <button
           onClick={() => setMainViewTab('roadmap')}
-          className={`px-5 py-3 rounded-2xl font-display text-sm font-black transition-all flex items-center gap-2 cursor-pointer ${
-            mainViewTab === 'roadmap'
-              ? 'bg-[#1890ff] text-white shadow-[0_3px_0_0_#096dd9]'
-              : 'bg-white border-2 border-border-main text-[#5c5c5c] hover:bg-bg-light'
-          }`}
+          className={`px-5 py-2.5 rounded-xl font-display text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${mainViewTab === 'roadmap'
+              ? 'bg-white text-slate-800 shadow-sm'
+              : 'text-slate-500 hover:text-slate-800 hover:bg-white/50'
+            }`}
         >
-          <CalendarDaysIcon className="w-5 h-5" />
+          <CalendarDaysIcon className="w-4 h-4 text-indigo-500" />
           <span>LỘ TRÌNH ÔN TẬP (1 - 2 - 3 NGÀY)</span>
         </button>
       </div>
@@ -297,128 +300,119 @@ export const PracticeDashboard: React.FC = () => {
       {/* VIEW 1: DANH SÁCH BÀI TẬP (GRID + FILTERS + PAGINATION)                   */}
       {/* ========================================================================= */}
       {mainViewTab === 'list' && (
-        <div className="space-y-6">
+        <div className="space-y-5">
           {/* Overview Stat Cards */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div className="bg-[#fff7e6] border-4 border-[#ffd591] rounded-2xl p-4 shadow-sm text-center">
-              <p className="text-xs font-bold text-[#d46b08] uppercase">Cần Ôn Tập</p>
-              <p className="text-2xl md:text-3xl font-display font-black text-[#d46b08] mt-1">
-                {needsReviewTotal}
-              </p>
-            </div>
-
-            <div className="bg-[#f6ffed] border-4 border-[#b7eb8f] rounded-2xl p-4 shadow-sm text-center">
-              <p className="text-xs font-bold text-[#389e0d] uppercase">Đã Thành Thạo</p>
-              <p className="text-2xl md:text-3xl font-display font-black text-[#389e0d] mt-1">
-                {masteredTotal}
-              </p>
-            </div>
-
-            <div className="bg-primary-soft border-4 border-primary/30 rounded-2xl p-4 shadow-sm text-center col-span-2 md:col-span-1">
-              <p className="text-xs font-bold text-primary uppercase">Tỷ Lệ Khắc Phục</p>
-              <p className="text-2xl md:text-3xl font-display font-black text-primary mt-1">
-                {grandTotal > 0 ? `${Math.round((masteredTotal / grandTotal) * 100)}%` : '100%'}
-              </p>
-            </div>
-          </div>
-
-          {/* Main Action Bar */}
-          <div className="bg-white border-4 border-border-main rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary-soft text-primary flex items-center justify-center">
-                <BookOpenIcon className="w-5 h-5" />
-              </div>
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-4.5 shadow-xs flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-display font-black text-[#2b2b2b] uppercase">
-                  Danh sách câu hỏi cần rèn luyện
-                </h3>
-                <p className="text-xs font-semibold text-text-muted">
-                  Đang hiển thị {totalElements} câu hỏi ({statusFilter === 'NEEDS_REVIEW' ? 'Cần ôn tập' : 'Đã thành thạo'})
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Cần Ôn Hôm Nay</p>
+                <p className="text-2xl md:text-3xl font-display font-black text-amber-600 mt-1">
+                  {needsReviewTotal}
                 </p>
               </div>
+
             </div>
 
-            <Button3D
-              variant="green"
-              size="md"
-              disabled={needsReviewTotal === 0}
-              onClick={startPracticeAllNeedsReview}
-              className="flex items-center gap-2"
-            >
-              <PlayIcon className="w-4 h-4 fill-current" />
-              ÔN TẬP TẤT CẢ ({needsReviewTotal})
-            </Button3D>
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-4.5 shadow-xs flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Đã Thành Thạo</p>
+                <p className="text-2xl md:text-3xl font-display font-black text-emerald-600 mt-1">
+                  {masteredTotal}
+                </p>
+              </div>
+
+            </div>
+
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-4.5 shadow-xs flex items-center justify-between col-span-2 md:col-span-1">
+              <div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tỷ Lệ Khắc Phục</p>
+                <p className="text-2xl md:text-3xl font-display font-black text-primary mt-1">
+                  {grandTotal > 0 ? `${Math.round((masteredTotal / grandTotal) * 100)}%` : '100%'}
+                </p>
+              </div>
+
+            </div>
           </div>
 
-          {/* Filter Tabs: CHỈ 2 NÚT (CẦN ÔN TẬP & ĐÃ THÀNH THẠO) */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
+          {/* Action & Filter Bar */}
+          <div className="bg-white border border-slate-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
+            {/* Filter Buttons */}
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => handleStatusChange('NEEDS_REVIEW')}
-                className={`px-5 py-2.5 rounded-2xl border-2 font-display text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
-                  statusFilter === 'NEEDS_REVIEW'
-                    ? 'bg-[#d46b08] text-white border-[#d46b08] shadow-[0_3px_0_0_#ad4e00]'
-                    : 'bg-white border-border-main text-[#5c5c5c] hover:bg-bg-light'
-                }`}
+                className={`px-4 py-2 rounded-xl text-xs font-display font-black transition-all flex items-center gap-2 cursor-pointer ${statusFilter === 'NEEDS_REVIEW'
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
+                  }`}
               >
-                <span>CẦN ÔN TẬP</span>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-                  statusFilter === 'NEEDS_REVIEW' ? 'bg-white/20 text-white' : 'bg-amber-100 text-[#d46b08]'
-                }`}>
+                <span>CẦN ÔN HÔM NAY</span>
+                <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold ${statusFilter === 'NEEDS_REVIEW' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                  }`}>
                   {needsReviewTotal}
                 </span>
               </button>
 
               <button
                 onClick={() => handleStatusChange('MASTERED')}
-                className={`px-5 py-2.5 rounded-2xl border-2 font-display text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
-                  statusFilter === 'MASTERED'
-                    ? 'bg-[#389e0d] text-white border-[#389e0d] shadow-[0_3px_0_0_#237804]'
-                    : 'bg-white border-border-main text-[#5c5c5c] hover:bg-bg-light'
-                }`}
+                className={`px-4 py-2 rounded-xl text-xs font-display font-black transition-all flex items-center gap-2 cursor-pointer ${statusFilter === 'MASTERED'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
+                  }`}
               >
                 <span>ĐÃ THÀNH THẠO</span>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-                  statusFilter === 'MASTERED' ? 'bg-white/20 text-white' : 'bg-green-100 text-[#389e0d]'
-                }`}>
+                <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold ${statusFilter === 'MASTERED' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                  }`}>
                   {masteredTotal}
                 </span>
               </button>
             </div>
 
-            {/* Round Filter Dropdown */}
-            <div className="flex items-center gap-2">
-              <FunnelIcon className="w-4 h-4 text-text-muted" />
-              <select
-                value={roundFilter}
-                onChange={(e) => handleRoundChange(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))}
-                className="p-2 bg-white border-2 border-border-main rounded-xl text-xs font-display font-bold text-[#5c5c5c] outline-none cursor-pointer"
-              >
-                <option value="ALL">Tất cả kỹ năng / Vòng</option>
-                <option value="1">Vòng 1: Từ vựng / Nhận diện</option>
-                <option value="2">Vòng 2: Luyện nghe</option>
-                <option value="3">Vòng 3: Luyện nói</option>
-                <option value="4">Vòng 4: Đọc hiểu & Quiz</option>
-                <option value="5">Vòng 5: Điền từ & Viết</option>
-              </select>
+            {/* Right side: Round Filter & Practice All Button */}
+            <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+              <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5">
+                <FunnelIcon className="w-3.5 h-3.5 text-slate-400" />
+                <select
+                  value={roundFilter}
+                  onChange={(e) => handleRoundChange(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))}
+                  className="bg-transparent text-xs font-bold text-slate-600 outline-none cursor-pointer"
+                >
+                  <option value="ALL">Tất cả kỹ năng</option>
+                  <option value="1">Vòng 1: Từ vựng</option>
+                  <option value="2">Vòng 2: Nghe</option>
+                  <option value="3">Vòng 3: Nói</option>
+                  <option value="4">Vòng 4: Đọc hiểu</option>
+                  <option value="5">Vòng 5: Viết</option>
+                </select>
+              </div>
+
+              {statusFilter === 'NEEDS_REVIEW' && (
+                <button
+                  disabled={needsReviewTotal === 0}
+                  onClick={startPracticeAllNeedsReview}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:pointer-events-none text-white font-display font-black text-xs rounded-xl shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <PlayIcon className="w-3.5 h-3.5 fill-current" />
+                  <span>ÔN TẬP TẤT CẢ ({needsReviewTotal})</span>
+                </button>
+              )}
             </div>
           </div>
 
           {/* Mistake Cards List */}
           {loading ? (
-            <div className="p-16 text-center text-sm font-bold text-text-muted flex items-center justify-center gap-2">
+            <div className="p-16 text-center text-sm font-bold text-slate-400 flex items-center justify-center gap-2">
               <ArrowPathIcon className="w-5 h-5 animate-spin text-primary" />
               ĐANG TẢI DỮ LIỆU LUYỆN TẬP...
             </div>
           ) : mistakes.length === 0 ? (
-            <div className="bg-white border-4 border-border-main rounded-3xl p-12 text-center space-y-3">
-              <CheckCircleIcon className="w-12 h-12 text-[#52c41a] mx-auto" />
-              <h3 className="text-lg font-display font-black text-[#2b2b2b] uppercase">
-                Không có câu hỏi nào trong danh mục này!
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-12 text-center space-y-3 shadow-xs">
+              <CheckCircleIcon className="w-12 h-12 text-emerald-500 mx-auto" />
+              <h3 className="text-base font-display font-black text-slate-800 uppercase">
+                Không có câu hỏi nào cần ôn tập hôm nay!
               </h3>
-              <p className="text-xs font-semibold text-text-muted">
-                {statusFilter === 'NEEDS_REVIEW' 
-                  ? 'Bé đã hoàn thành các câu cần ôn hôm nay! Các bài tập đang theo dõi sẽ được nhắc lại vào ngày mai (bé có thể xem ở tab Lộ trình ôn tập).' 
+              <p className="text-xs font-semibold text-slate-500 max-w-md mx-auto">
+                {statusFilter === 'NEEDS_REVIEW'
+                  ? 'Bé đã hoàn thành xuất sắc các câu cần ôn hôm nay! Các bài tập đang theo dõi sẽ được nhắc lại vào ngày mai (bé có thể xem ở tab Lộ trình ôn tập).'
                   : 'Bé chưa có câu hỏi nào đạt trạng thái Đã thành thạo trong danh mục này.'}
               </p>
             </div>
@@ -428,56 +422,59 @@ export const PracticeDashboard: React.FC = () => {
                 {mistakes.map(item => {
                   const roundInfo = ROUND_INFO[item.roundType] || {
                     name: `Vòng ${item.roundType}`,
-                    color: 'text-primary',
-                    badgeBg: 'bg-primary-soft border-primary/20'
+                    color: 'text-slate-600',
+                    badgeBg: 'bg-slate-100 border-slate-200'
                   };
+
+                  const isMastered = item.status === 'MASTERED' || (item.correctStreakDays ?? 0) >= 3;
 
                   return (
                     <div
                       key={item.id}
-                      className="bg-white border-4 border-border-main rounded-3xl p-5 shadow-sm flex flex-col justify-between gap-4 hover:border-primary/50 transition-all"
+                      className="bg-white border border-slate-200/90 rounded-2xl p-4.5 shadow-xs flex flex-col justify-between gap-3.5 hover:border-slate-300 hover:shadow-sm transition-all"
                     >
                       <div className="space-y-3">
-                        {/* Card Top: Skill & Status */}
+                        {/* Top: Skill & Status */}
                         <div className="flex items-center justify-between gap-2">
-                          <span className={`px-2.5 py-1 rounded-full text-[11px] font-display font-black border ${roundInfo.badgeBg} ${roundInfo.color}`}>
+                          <span className={`px-2.5 py-0.5 rounded-lg text-[11px] font-display font-black border ${roundInfo.badgeBg} ${roundInfo.color}`}>
                             {roundInfo.name}
                           </span>
 
-                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-display font-black ${
-                            item.status === 'MASTERED' || (item.correctStreakDays ?? 0) >= 3
-                              ? 'bg-[#f6ffed] text-[#389e0d] border border-[#b7eb8f]'
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-display font-black ${isMastered
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                               : (item.correctStreakDays ?? 0) > 0
-                                ? 'bg-blue-50 text-blue-600 border border-blue-200'
-                                : 'bg-[#fff7e6] text-[#d46b08] border border-[#ffd591]'
-                          }`}>
-                            {item.status === 'MASTERED' || (item.correctStreakDays ?? 0) >= 3
+                                ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                : 'bg-amber-50 text-amber-700 border border-amber-200'
+                            }`}>
+                            {isMastered
                               ? '✓ ĐÃ THÀNH THẠO'
-                              : `⏳ ĐANG ÔN (${item.correctStreakDays || 0}/3 LẦN)`}
+                              : (item.correctStreakDays ?? 0) > 0
+                                ? `ĐANG ÔN (${item.correctStreakDays}/3 LẦN)`
+                                : 'CẦN ÔN TẬP'}
                           </span>
                         </div>
 
-                        {/* Word / Sentence Details */}
-                        <div className="flex items-center justify-between gap-3 pt-1">
-                          <div className="flex items-center gap-2.5">
+                        {/* Middle: Image & Details */}
+                        <div className="flex items-center justify-between gap-3 pt-0.5">
+                          <div className="flex items-center gap-3 min-w-0">
                             {item.imageUrl && (
-                              <div className="w-11 h-11 rounded-xl overflow-hidden border border-border-main bg-bg-light shrink-0">
+                              <div className="w-12 h-12 rounded-xl overflow-hidden border border-slate-100 bg-slate-50 shrink-0 p-0.5 flex items-center justify-center">
                                 <img
                                   src={getAssetUrl(item.imageUrl)}
                                   alt="thumbnail"
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full object-contain"
                                   onError={(e) => {
                                     (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400';
                                   }}
                                 />
                               </div>
                             )}
-                            <div>
-                              <h4 className="text-base font-display font-black text-[#2b2b2b]">
+                            <div className="min-w-0">
+                              <h4 className="text-sm font-display font-black text-slate-800 truncate">
                                 {item.contentText}
                               </h4>
                               {item.translation && (
-                                <p className="text-xs font-semibold text-text-muted mt-0.5">
+                                <p className="text-xs font-semibold text-slate-500 truncate mt-0.5">
                                   {item.translation}
                                 </p>
                               )}
@@ -486,22 +483,22 @@ export const PracticeDashboard: React.FC = () => {
 
                           <button
                             onClick={() => playSpeech(item.contentText)}
-                            className="p-2 bg-primary-soft hover:bg-primary/20 text-primary rounded-xl transition-colors shrink-0 cursor-pointer"
+                            className="p-2 bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-primary rounded-xl transition-colors shrink-0 cursor-pointer"
                             title="Nghe phát âm"
                           >
                             <SpeakerWaveIcon className="w-4 h-4" />
                           </button>
                         </div>
 
-                        {/* Previous Error & Duration */}
-                        <div className="bg-[#f8f9fa] border-2 border-border-main rounded-2xl p-3 space-y-1.5 text-xs">
-                          <div className="flex items-center justify-between text-[#cf1322] font-semibold">
-                            <span className="flex items-center gap-1">
-                              <ExclamationTriangleIcon className="w-3.5 h-3.5" />
-                              Đã chọn sai:
+                        {/* Error info box */}
+                        <div className="bg-slate-50/80 border border-slate-200/60 rounded-xl p-2.5 space-y-1.5 text-xs">
+                          <div className="flex items-center justify-between text-rose-600 font-semibold text-[11px]">
+                            <span className="flex items-center gap-1 text-slate-500">
+                              <ExclamationTriangleIcon className="w-3.5 h-3.5 text-rose-500" />
+                              Lần trước sai:
                             </span>
                             {item.wrongAnswerSubmitted && isImageUrl(item.wrongAnswerSubmitted) ? (
-                              <div className="w-8 h-8 rounded-lg border-2 border-red-300 overflow-hidden shrink-0 bg-white p-0.5 inline-flex items-center justify-center">
+                              <div className="w-7 h-7 rounded-lg border border-rose-200 overflow-hidden shrink-0 bg-white p-0.5 inline-flex items-center justify-center">
                                 <img
                                   src={getAssetUrl(item.wrongAnswerSubmitted)}
                                   alt="Wrong"
@@ -512,34 +509,30 @@ export const PracticeDashboard: React.FC = () => {
                                 />
                               </div>
                             ) : (
-                              <strong className="line-through">{item.wrongAnswerSubmitted}</strong>
+                              <strong className="line-through text-rose-600">{item.wrongAnswerSubmitted}</strong>
                             )}
                           </div>
 
-                          <div className="flex items-center justify-between text-text-muted text-[11px] font-medium pt-1 border-t border-border-main/50">
-                            <span className="flex items-center gap-1">
-                              <ClockIcon className="w-3.5 h-3.5" />
-                              Thời gian làm câu này:
-                            </span>
-                            <span className="font-mono font-bold text-[#2b2b2b]">{item.durationSeconds || 0} giây</span>
+                          <div className="flex items-center justify-between text-slate-400 text-[10px] font-medium pt-1 border-t border-slate-200/40">
+                            <span>Thời gian làm câu này:</span>
+                            <span className="font-mono font-bold text-slate-600">{item.durationSeconds || 0}s</span>
                           </div>
                         </div>
                       </div>
 
                       {/* Card Action Buttons */}
-                      <div className="flex items-center gap-2 pt-2">
+                      <div className="flex items-center gap-2 pt-1">
                         <button
                           onClick={() => startPracticeSingleItem(item)}
-                          className="flex-1 py-2.5 bg-primary-soft hover:bg-primary/20 text-primary font-display font-black rounded-xl text-xs uppercase tracking-wide transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                          className="flex-1 py-2 bg-primary hover:bg-primary-hover text-white font-display font-black rounded-xl text-xs uppercase tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                         >
-                          <ArrowPathIcon className="w-3.5 h-3.5" />
                           Luyện tập câu này
                         </button>
 
                         <button
                           onClick={() => handleOpenAiModal(item)}
-                          className="p-2.5 bg-[#f0f5ff] hover:bg-[#d6e4ff] text-[#2f54eb] rounded-xl border-2 border-[#adc6ff] transition-colors cursor-pointer"
-                          title="AI Phân tích lỗi sai"
+                          className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl border border-blue-200 transition-colors cursor-pointer"
+                          title="AI Hướng dẫn & Phân tích lỗi sai"
                         >
                           <CpuChipIcon className="w-4 h-4" />
                         </button>
@@ -551,18 +544,18 @@ export const PracticeDashboard: React.FC = () => {
 
               {/* ==================== PHÂN TRANG (PAGINATION BAR) ==================== */}
               {totalPages > 1 && (
-                <div className="bg-white border-2 border-border-main rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
-                  <div className="text-xs font-semibold text-text-muted">
-                    Trang <strong className="text-[#2b2b2b]">{currentPage + 1}</strong> / <strong className="text-[#2b2b2b]">{totalPages}</strong> (Tổng cộng {totalElements} câu hỏi)
+                <div className="bg-white border border-slate-200/80 rounded-2xl p-3.5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
+                  <div className="text-xs font-semibold text-slate-500">
+                    Trang <strong className="text-slate-800">{currentPage + 1}</strong> / <strong className="text-slate-800">{totalPages}</strong> (Tổng cộng {totalElements} câu hỏi)
                   </div>
 
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 0 || loading}
-                      className="px-3.5 py-2 rounded-xl border-2 border-border-main bg-white hover:bg-bg-light disabled:opacity-40 disabled:pointer-events-none font-display font-black text-xs text-[#5c5c5c] flex items-center gap-1 transition-all cursor-pointer"
+                      className="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none font-display font-black text-xs text-slate-600 flex items-center gap-1 transition-all cursor-pointer shadow-xs"
                     >
-                      <ChevronLeftIcon className="w-4 h-4" />
+                      <ChevronLeftIcon className="w-3.5 h-3.5" />
                       Trước
                     </button>
 
@@ -576,7 +569,7 @@ export const PracticeDashboard: React.FC = () => {
                           Math.abs(pageIdx - currentPage) > 1
                         ) {
                           if (pageIdx === 1 || pageIdx === totalPages - 2) {
-                            return <span key={pageIdx} className="px-1 text-xs text-text-muted">...</span>;
+                            return <span key={pageIdx} className="px-1 text-xs text-slate-400">...</span>;
                           }
                           return null;
                         }
@@ -587,11 +580,10 @@ export const PracticeDashboard: React.FC = () => {
                             key={pageIdx}
                             onClick={() => handlePageChange(pageIdx)}
                             disabled={loading}
-                            className={`w-8 h-8 rounded-xl font-display font-black text-xs transition-all cursor-pointer ${
-                              isCurrent
-                                ? 'bg-primary text-white border-2 border-primary shadow-sm scale-105'
-                                : 'bg-white border-2 border-border-main text-[#5c5c5c] hover:bg-bg-light'
-                            }`}
+                            className={`w-7 h-7 rounded-lg font-display font-black text-xs transition-all cursor-pointer ${isCurrent
+                                ? 'bg-primary text-white shadow-xs'
+                                : 'bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100'
+                              }`}
                           >
                             {pageIdx + 1}
                           </button>
@@ -602,10 +594,10 @@ export const PracticeDashboard: React.FC = () => {
                     <button
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={currentPage >= totalPages - 1 || loading}
-                      className="px-3.5 py-2 rounded-xl border-2 border-border-main bg-white hover:bg-bg-light disabled:opacity-40 disabled:pointer-events-none font-display font-black text-xs text-[#5c5c5c] flex items-center gap-1 transition-all cursor-pointer"
+                      className="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none font-display font-black text-xs text-slate-600 flex items-center gap-1 transition-all cursor-pointer shadow-xs"
                     >
                       Sau
-                      <ChevronRightIcon className="w-4 h-4" />
+                      <ChevronRightIcon className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -665,7 +657,7 @@ export const PracticeDashboard: React.FC = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
-                
+
                 {/* 1. HÔM NAY CẦN ÔN */}
                 <div className="bg-white border-4 border-amber-300 rounded-3xl p-4 shadow-sm flex flex-col space-y-3">
                   <div className="flex items-center justify-between border-b-2 border-amber-100 pb-2">
@@ -694,7 +686,7 @@ export const PracticeDashboard: React.FC = () => {
                               0/3 Lần đúng
                             </span>
                           </div>
-                          
+
                           <div className="flex items-center gap-2">
                             {item.imageUrl && (
                               <div className="w-8 h-8 rounded-lg overflow-hidden border border-amber-200 bg-white shrink-0">
@@ -746,7 +738,7 @@ export const PracticeDashboard: React.FC = () => {
                               1/3 Lần đúng
                             </span>
                           </div>
-                          
+
                           <div className="flex items-center gap-2">
                             {item.imageUrl && (
                               <div className="w-8 h-8 rounded-lg overflow-hidden border border-blue-200 bg-white shrink-0">
@@ -798,7 +790,7 @@ export const PracticeDashboard: React.FC = () => {
                               2/3 Lần đúng
                             </span>
                           </div>
-                          
+
                           <div className="flex items-center gap-2">
                             {item.imageUrl && (
                               <div className="w-8 h-8 rounded-lg overflow-hidden border border-purple-200 bg-white shrink-0">
@@ -850,7 +842,7 @@ export const PracticeDashboard: React.FC = () => {
                               3/3 Đúng
                             </span>
                           </div>
-                          
+
                           <div className="flex items-center gap-2">
                             {item.imageUrl && (
                               <div className="w-8 h-8 rounded-lg overflow-hidden border border-emerald-200 bg-white shrink-0">
