@@ -445,11 +445,15 @@ export const PracticeDashboard: React.FC = () => {
                           </span>
 
                           <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-display font-black ${
-                            item.status === 'MASTERED'
+                            item.status === 'MASTERED' || (item.correctStreakDays ?? 0) >= 3
                               ? 'bg-[#f6ffed] text-[#389e0d] border border-[#b7eb8f]'
-                              : 'bg-[#fff7e6] text-[#d46b08] border border-[#ffd591]'
+                              : (item.correctStreakDays ?? 0) > 0
+                                ? 'bg-blue-50 text-blue-600 border border-blue-200'
+                                : 'bg-[#fff7e6] text-[#d46b08] border border-[#ffd591]'
                           }`}>
-                            {item.status === 'MASTERED' ? '✓ ĐÃ THÀNH THẠO' : '⚡ CẦN ÔN TẬP'}
+                            {item.status === 'MASTERED' || (item.correctStreakDays ?? 0) >= 3
+                              ? '✓ ĐÃ THÀNH THẠO'
+                              : `⏳ ĐANG ÔN (${item.correctStreakDays || 0}/3 LẦN)`}
                           </span>
                         </div>
 

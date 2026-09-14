@@ -107,7 +107,15 @@ public class MistakeServiceImpl implements MistakeService {
         Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, size), Sort.by(Sort.Direction.DESC, "createdAt"));
         
         Page<Mistake> mistakePage;
-        if (status != null && roundType != null) {
+        if (status == MistakeStatus.NEEDS_REVIEW) {
+            // Khi xem danh sách CẦN ÔN TẬP, hiển thị tất cả các câu chưa Mastered (NEEDS_REVIEW và REVIEWED)
+            List<MistakeStatus> unmasteredStatuses = List.of(MistakeStatus.NEEDS_REVIEW, MistakeStatus.REVIEWED);
+            if (roundType != null) {
+                mistakePage = mistakeRepository.findByUserIdAndStatusInAndRoundType(userId, unmasteredStatuses, roundType, pageable);
+            } else {
+                mistakePage = mistakeRepository.findByUserIdAndStatusIn(userId, unmasteredStatuses, pageable);
+            }
+        } else if (status != null && roundType != null) {
             mistakePage = mistakeRepository.findByUserIdAndStatusAndRoundType(userId, status, roundType, pageable);
         } else if (status != null) {
             mistakePage = mistakeRepository.findByUserIdAndStatus(userId, status, pageable);
@@ -126,10 +134,11 @@ public class MistakeServiceImpl implements MistakeService {
     public List<MistakeResponse> getPracticeQueue(Long userId, Integer roundType, int limit) {
         Pageable pageable = PageRequest.of(0, Math.max(1, limit), Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<Mistake> mistakePage;
+        List<MistakeStatus> unmasteredStatuses = List.of(MistakeStatus.NEEDS_REVIEW, MistakeStatus.REVIEWED);
         if (roundType != null) {
-            mistakePage = mistakeRepository.findByUserIdAndStatusAndRoundType(userId, MistakeStatus.NEEDS_REVIEW, roundType, pageable);
+            mistakePage = mistakeRepository.findByUserIdAndStatusInAndRoundType(userId, unmasteredStatuses, roundType, pageable);
         } else {
-            mistakePage = mistakeRepository.findByUserIdAndStatus(userId, MistakeStatus.NEEDS_REVIEW, pageable);
+            mistakePage = mistakeRepository.findByUserIdAndStatusIn(userId, unmasteredStatuses, pageable);
         }
         return mistakePage.getContent().stream()
                 .map(MistakeResponse::fromEntity)
@@ -173,9 +182,12 @@ public class MistakeServiceImpl implements MistakeService {
         }
 
         LocalDate today = LocalDate.now();
+        int currentStreak = mistake.getCorrectStreakDays() != null ? mistake.getCorrectStreakDays() : 0;
+
         if (isCorrect) {
-            boolean canAdvance = (mistake.getLastPracticedAt() == null || mistake.getLastPracticedAt().toLocalDate().isBefore(today));
-            int currentStreak = mistake.getCorrectStreakDays() != null ? mistake.getCorrectStreakDays() : 0;
+            // Nếu currentStreak == 0: Luôn cho phép thăng cấp lên streak 1 (bắt đầu chu kỳ ôn tập)
+            // Nếu currentStreak >= 1: Chỉ cho phép thăng cấp tiếp nếu lần ôn tập trước đó diễn ra vào ngày trước đó
+            boolean canAdvance = (currentStreak == 0) || (mistake.getLastPracticedAt() == null || mistake.getLastPracticedAt().toLocalDate().isBefore(today));
             
             if (canAdvance) {
                 int newStreak = Math.min(3, currentStreak + 1);
@@ -194,15 +206,16 @@ public class MistakeServiceImpl implements MistakeService {
                     mistake.setStatus(MistakeStatus.REVIEWED);
                 }
             } else {
+                // Đã hoàn thành mục tiêu ngày hôm nay cho câu này, chỉ cập nhật timestamp
                 mistake.setLastPracticedAt(LocalDateTime.now());
             }
         } else {
-            // Làm sai -> reset về cần ôn tập
+            // Làm sai -> reset về cần ôn tập từ đầu
             mistake.setStatus(MistakeStatus.NEEDS_REVIEW);
             mistake.setCorrectStreakDays(0);
             mistake.setMasteryScore(0.0);
             mistake.setNextReviewAt(null);
-            mistake.setLastPracticedAt(LocalDateTime.now());
+            mistake.setLastPracticedAt(null);
         }
 
         Mistake saved = mistakeRepository.save(mistake);
