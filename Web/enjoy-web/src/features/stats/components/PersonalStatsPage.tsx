@@ -363,31 +363,38 @@ export const PersonalStatsPage: React.FC = () => {
   const [activeSkillTab, setActiveSkillTab] = useState<'current' | 'compare'>('current');
 
   // Bộ chọn ngày so sánh
-  const [currentDate, setCurrentDate] = useState<string>('2026-09-14');
-  const [previousDate, setPreviousDate] = useState<string>('2026-09-07');
+  const [currentDate, setCurrentDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
+  const [previousDate, setPreviousDate] = useState<string>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return d.toISOString().split('T')[0];
+  });
   
   // Highlight kỹ năng khi hover
   const [hoveredSkill, setHoveredSkill] = useState<string | null>(null);
 
   // Dữ liệu kỹ năng
   const [skillsCurrent, setSkillsCurrent] = useState<SkillScores>({
-    listening: 90,
-    speaking: 85,
-    reading: 88,
-    writing: 78,
-    vocabGrammar: 84,
+    listening: 100,
+    speaking: 100,
+    reading: 100,
+    writing: 100,
+    vocabGrammar: 100,
   });
 
   const [skillsPrevious, setSkillsPrevious] = useState<SkillScores>({
-    listening: 76,
-    speaking: 70,
-    reading: 78,
-    writing: 64,
-    vocabGrammar: 72,
+    listening: 100,
+    speaking: 100,
+    reading: 100,
+    writing: 100,
+    vocabGrammar: 100,
   });
+
+  const [skillsLoading, setSkillsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     fetchStats();
+    fetchSkillStats(currentDate, previousDate);
   }, []);
 
   const fetchStats = async () => {
@@ -414,6 +421,24 @@ export const PersonalStatsPage: React.FC = () => {
     }
   };
 
+  const fetchSkillStats = async (curr: string, prev: string) => {
+    setSkillsLoading(true);
+    try {
+      const res = await learningApi.getSkillStats(curr, prev);
+      const data = (res as any)?.data !== undefined ? (res as any).data : res;
+      if (data?.currentSkills) {
+        setSkillsCurrent(data.currentSkills);
+      }
+      if (data?.previousSkills) {
+        setSkillsPrevious(data.previousSkills);
+      }
+    } catch (err) {
+      console.warn("Lỗi khi tải thống kê kỹ năng từ API, dùng điểm mặc định:", err);
+    } finally {
+      setSkillsLoading(false);
+    }
+  };
+
   // Nút chọn nhanh độ lùi ngày (7 ngày trước, 14 ngày trước, 30 ngày trước)
   const handleQuickOffsetDays = (days: number) => {
     const curr = new Date(currentDate);
@@ -422,25 +447,11 @@ export const PersonalStatsPage: React.FC = () => {
 
     const prevStr = prev.toISOString().split('T')[0];
     setPreviousDate(prevStr);
-
-    if (days >= 30) {
-      setSkillsPrevious({ listening: 68, speaking: 62, reading: 70, writing: 56, vocabGrammar: 65 });
-    } else if (days >= 14) {
-      setSkillsPrevious({ listening: 72, speaking: 66, reading: 75, writing: 60, vocabGrammar: 68 });
-    } else {
-      setSkillsPrevious({ listening: 78, speaking: 72, reading: 80, writing: 66, vocabGrammar: 72 });
-    }
+    fetchSkillStats(currentDate, prevStr);
   };
 
   const handleApplyDates = () => {
-    const seed = Math.abs(currentDate.charCodeAt(currentDate.length - 1) - previousDate.charCodeAt(previousDate.length - 1));
-    setSkillsCurrent({
-      listening: Math.min(98, 88 + (seed % 8)),
-      speaking: Math.min(95, 82 + (seed % 10)),
-      reading: Math.min(96, 86 + (seed % 6)),
-      writing: Math.min(92, 76 + (seed % 9)),
-      vocabGrammar: Math.min(95, 83 + (seed % 7)),
-    });
+    fetchSkillStats(currentDate, previousDate);
   };
 
   const totalWeeklyMinutes = stats?.weeklyStudyMinutes ?? 0;
