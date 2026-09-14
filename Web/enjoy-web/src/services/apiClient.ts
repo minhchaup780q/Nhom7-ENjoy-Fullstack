@@ -51,11 +51,20 @@ axiosInstance.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    const userStr = localStorage.getItem('enjoy_user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user?.id) {
+          config.headers['X-User-Id'] = String(user.id);
+        }
+      } catch {}
+    }
     return config;
   },
 
   (error) => Promise.reject(error)
-)
+);
 
 // Response Interceptor: bộ chặn xử lý khi nhận dữ liệu từ server
 axiosInstance.interceptors.response.use(

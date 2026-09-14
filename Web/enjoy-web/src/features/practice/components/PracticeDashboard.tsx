@@ -229,9 +229,11 @@ export const PracticeDashboard: React.FC = () => {
           onClose={() => {
             setPracticeQueue(null);
             fetchMistakesData(currentPage, statusFilter, roundFilter);
+            fetchRoadmapData();
           }}
           onFinished={() => {
             fetchMistakesData(currentPage, statusFilter, roundFilter);
+            fetchRoadmapData();
           }}
         />
       )}
@@ -610,33 +612,22 @@ export const PracticeDashboard: React.FC = () => {
       )}
 
       {/* ========================================================================= */}
-      {/* VIEW 2: LỘ TRÌNH ÔN TẬP (1 - 2 - 3 NGÀY) SPACED REPETITION                */}
+      {/* VIEW 2: LỘ TRÌNH ÔN TẬP (1 - 2 - 3 NGÀY) SPACED REPETITION (CHỈ ĐỂ XEM)    */}
       {/* ========================================================================= */}
       {mainViewTab === 'roadmap' && (() => {
-        const todayStr = new Date().toISOString().split('T')[0];
-
         const dueTodayItems = roadmapMistakes.filter(m => {
           const isMastered = m.status === 'MASTERED' || (m.correctStreakDays ?? 0) >= 3;
-          if (isMastered) return false;
-          if (!m.lastPracticedAt) return true;
-          const lastDate = new Date(m.lastPracticedAt).toISOString().split('T')[0];
-          return lastDate < todayStr;
+          return !isMastered && (!m.correctStreakDays || m.correctStreakDays === 0);
         });
 
         const waiting1DayItems = roadmapMistakes.filter(m => {
           const isMastered = m.status === 'MASTERED' || (m.correctStreakDays ?? 0) >= 3;
-          if (isMastered) return false;
-          if (!m.lastPracticedAt) return false;
-          const lastDate = new Date(m.lastPracticedAt).toISOString().split('T')[0];
-          return lastDate >= todayStr && m.correctStreakDays === 1;
+          return !isMastered && m.correctStreakDays === 1;
         });
 
         const waiting2DaysItems = roadmapMistakes.filter(m => {
           const isMastered = m.status === 'MASTERED' || (m.correctStreakDays ?? 0) >= 3;
-          if (isMastered) return false;
-          if (!m.lastPracticedAt) return false;
-          const lastDate = new Date(m.lastPracticedAt).toISOString().split('T')[0];
-          return lastDate >= todayStr && m.correctStreakDays === 2;
+          return !isMastered && m.correctStreakDays === 2;
         });
 
         const masteredItems = roadmapMistakes.filter(m => {
@@ -650,16 +641,16 @@ export const PracticeDashboard: React.FC = () => {
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-blue-600 font-display font-black text-sm uppercase">
                   <SparklesIcon className="w-5 h-5 text-blue-500" />
-                  Quy Tắc Lặp Lại Ngắt Quãng (Spaced Repetition)
+                  Theo Dõi Lộ Trình Lặp Lại Ngắt Quãng (Spaced Repetition)
                 </div>
                 <p className="text-xs font-semibold text-slate-600 max-w-3xl leading-relaxed">
-                  Mỗi câu hỏi bé từng làm sai cần hoàn thành <strong>3 lần luyện tập đúng ở 3 ngày khác nhau</strong> (mỗi lần cách nhau $\ge 1$ ngày). Mỗi mốc ngày thành công sẽ phục hồi điểm số (+33% $\rightarrow$ +67% $\rightarrow$ 100%) và tự động nâng cao biểu đồ năng lực 5 kỹ năng của bé!
+                  Tab này dùng để <strong>theo dõi tiến độ nhắc nhở</strong> qua các ngày. Mỗi câu hỏi làm sai cần hoàn thành <strong>3 lần luyện tập đúng ở 3 ngày khác nhau</strong> (mỗi lần cách nhau $\ge 1$ ngày). Khi bé luyện tập đúng tại tab <em>Danh sách bài tập</em>, câu hỏi sẽ tự động nhảy lần lượt qua các cột bên dưới!
                 </p>
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                <span className="px-3 py-1.5 bg-white text-blue-600 border border-blue-200 rounded-xl text-xs font-bold font-mono">
-                  Tổng câu theo dõi: {roadmapMistakes.length}
+                <span className="px-3 py-1.5 bg-white text-blue-600 border border-blue-200 rounded-xl text-xs font-bold font-mono shadow-xs">
+                  Tổng theo dõi: {roadmapMistakes.length} câu
                 </span>
               </div>
             </div>
@@ -670,167 +661,214 @@ export const PracticeDashboard: React.FC = () => {
                 ĐANG TẢI LỘ TRÌNH ÔN TẬP...
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
                 
                 {/* 1. HÔM NAY CẦN ÔN */}
-                <div className="bg-white border-4 border-amber-300 rounded-3xl p-4 shadow-sm flex flex-col justify-between space-y-3">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between border-b-2 border-amber-100 pb-2">
-                      <div>
-                        <h4 className="text-xs font-display font-black text-amber-700 uppercase">
-                          1. Cần ôn hôm nay
-                        </h4>
-                        <p className="text-[10px] text-amber-600 font-semibold">Chưa ôn / Đến hạn</p>
-                      </div>
-                      <span className="px-2.5 py-0.5 bg-amber-100 text-amber-800 rounded-full text-xs font-bold font-mono">
-                        {dueTodayItems.length}
-                      </span>
+                <div className="bg-white border-4 border-amber-300 rounded-3xl p-4 shadow-sm flex flex-col space-y-3">
+                  <div className="flex items-center justify-between border-b-2 border-amber-100 pb-2">
+                    <div>
+                      <h4 className="text-xs font-display font-black text-amber-700 uppercase">
+                        1. Cần ôn hôm nay
+                      </h4>
+                      <p className="text-[10px] text-amber-600 font-semibold">Chưa ôn lần nào (0% đ)</p>
                     </div>
+                    <span className="px-2.5 py-0.5 bg-amber-100 text-amber-800 rounded-full text-xs font-bold font-mono">
+                      {dueTodayItems.length}
+                    </span>
+                  </div>
 
-                    <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
-                      {dueTodayItems.length === 0 ? (
-                        <p className="text-xs text-slate-400 text-center py-8">Hôm nay không có câu nào cần ôn tập!</p>
-                      ) : (
-                        dueTodayItems.map(item => (
-                          <div key={item.id} className="p-3 bg-amber-50/60 rounded-2xl border border-amber-200 space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-bold text-amber-700">
-                                {ROUND_INFO[item.roundType]?.name || `Vòng ${item.roundType}`}
-                              </span>
-                              <span className="text-[10px] font-mono font-bold text-amber-600">
-                                {item.correctStreakDays || 0}/3 lần
-                              </span>
-                            </div>
-                            <p className="text-xs font-bold text-slate-800">{item.contentText}</p>
-                            {item.translation && (
-                              <p className="text-[11px] text-slate-500">{item.translation}</p>
-                            )}
-                            <button
-                              onClick={() => startPracticeSingleItem(item)}
-                              className="w-full py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-[11px] font-black uppercase transition-colors cursor-pointer flex items-center justify-center gap-1"
-                            >
-                              <PlayIcon className="w-3.5 h-3.5" />
-                              Ôn câu này ngay
-                            </button>
+                  <div className="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
+                    {dueTodayItems.length === 0 ? (
+                      <p className="text-xs text-slate-400 text-center py-8">Không có câu nào ở mốc này</p>
+                    ) : (
+                      dueTodayItems.map(item => (
+                        <div key={item.id} className="p-3 bg-amber-50/70 rounded-2xl border border-amber-200 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-amber-700">
+                              {ROUND_INFO[item.roundType]?.name || `Vòng ${item.roundType}`}
+                            </span>
+                            <span className="text-[10px] font-mono font-bold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">
+                              0/3 Lần đúng
+                            </span>
                           </div>
-                        ))
-                      )}
-                    </div>
+                          
+                          <div className="flex items-center gap-2">
+                            {item.imageUrl && (
+                              <div className="w-8 h-8 rounded-lg overflow-hidden border border-amber-200 bg-white shrink-0">
+                                <img src={getAssetUrl(item.imageUrl)} alt="thumb" className="w-full h-full object-cover" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-bold text-slate-800 truncate">{item.contentText}</p>
+                              {item.translation && (
+                                <p className="text-[10px] text-slate-500 truncate">{item.translation}</p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="text-[10px] text-amber-700 font-semibold bg-white/80 p-1.5 rounded-lg border border-amber-200 flex items-center gap-1">
+                            <span>⚡ Vào tab "Danh sách bài tập" để ôn lượt 1</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
 
                 {/* 2. NHẮC SAU 1 NGÀY */}
-                <div className="bg-white border-4 border-blue-200 rounded-3xl p-4 shadow-sm flex flex-col justify-between space-y-3">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between border-b-2 border-blue-100 pb-2">
-                      <div>
-                        <h4 className="text-xs font-display font-black text-blue-700 uppercase">
-                          2. Nhắc sau 1 ngày
-                        </h4>
-                        <p className="text-[10px] text-blue-600 font-semibold">Đã xong lần 1 (+33% đ)</p>
-                      </div>
-                      <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-bold font-mono">
-                        {waiting1DayItems.length}
-                      </span>
+                <div className="bg-white border-4 border-blue-200 rounded-3xl p-4 shadow-sm flex flex-col space-y-3">
+                  <div className="flex items-center justify-between border-b-2 border-blue-100 pb-2">
+                    <div>
+                      <h4 className="text-xs font-display font-black text-blue-700 uppercase">
+                        2. Nhắc sau 1 ngày
+                      </h4>
+                      <p className="text-[10px] text-blue-600 font-semibold">Đã xong lần 1 (+33% đ)</p>
                     </div>
+                    <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-bold font-mono">
+                      {waiting1DayItems.length}
+                    </span>
+                  </div>
 
-                    <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
-                      {waiting1DayItems.length === 0 ? (
-                        <p className="text-xs text-slate-400 text-center py-8">Chưa có câu nào ở mốc này</p>
-                      ) : (
-                        waiting1DayItems.map(item => (
-                          <div key={item.id} className="p-3 bg-blue-50/50 rounded-2xl border border-blue-200 space-y-1.5">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-bold text-blue-600">
-                                {ROUND_INFO[item.roundType]?.name || `Vòng ${item.roundType}`}
-                              </span>
-                              <span className="text-[10px] font-mono font-bold text-blue-600">1/3 đúng</span>
-                            </div>
-                            <p className="text-xs font-bold text-slate-800">{item.contentText}</p>
-                            <p className="text-[10px] text-blue-600 font-medium bg-blue-100/70 px-2 py-1 rounded-lg">
-                              ⏳ Hẹn gặp lại ngày mai để ôn lần 2!
-                            </p>
+                  <div className="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
+                    {waiting1DayItems.length === 0 ? (
+                      <p className="text-xs text-slate-400 text-center py-8">Chưa có câu nào ở mốc này</p>
+                    ) : (
+                      waiting1DayItems.map(item => (
+                        <div key={item.id} className="p-3 bg-blue-50/70 rounded-2xl border border-blue-200 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-blue-600">
+                              {ROUND_INFO[item.roundType]?.name || `Vòng ${item.roundType}`}
+                            </span>
+                            <span className="text-[10px] font-mono font-bold text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded">
+                              1/3 Lần đúng
+                            </span>
                           </div>
-                        ))
-                      )}
-                    </div>
+                          
+                          <div className="flex items-center gap-2">
+                            {item.imageUrl && (
+                              <div className="w-8 h-8 rounded-lg overflow-hidden border border-blue-200 bg-white shrink-0">
+                                <img src={getAssetUrl(item.imageUrl)} alt="thumb" className="w-full h-full object-cover" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-bold text-slate-800 truncate">{item.contentText}</p>
+                              {item.translation && (
+                                <p className="text-[10px] text-slate-500 truncate">{item.translation}</p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="text-[10px] text-blue-700 font-semibold bg-white/80 p-1.5 rounded-lg border border-blue-200 flex items-center gap-1">
+                            <span>⏳ Đã xong lượt 1! Hẹn gặp lại ngày mai</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
 
                 {/* 3. NHẮC SAU 2 NGÀY */}
-                <div className="bg-white border-4 border-purple-200 rounded-3xl p-4 shadow-sm flex flex-col justify-between space-y-3">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between border-b-2 border-purple-100 pb-2">
-                      <div>
-                        <h4 className="text-xs font-display font-black text-purple-700 uppercase">
-                          3. Nhắc sau 2 ngày
-                        </h4>
-                        <p className="text-[10px] text-purple-600 font-semibold">Đã xong lần 2 (+67% đ)</p>
-                      </div>
-                      <span className="px-2.5 py-0.5 bg-purple-100 text-purple-800 rounded-full text-xs font-bold font-mono">
-                        {waiting2DaysItems.length}
-                      </span>
+                <div className="bg-white border-4 border-purple-200 rounded-3xl p-4 shadow-sm flex flex-col space-y-3">
+                  <div className="flex items-center justify-between border-b-2 border-purple-100 pb-2">
+                    <div>
+                      <h4 className="text-xs font-display font-black text-purple-700 uppercase">
+                        3. Nhắc sau 2 ngày
+                      </h4>
+                      <p className="text-[10px] text-purple-600 font-semibold">Đã xong lần 2 (+67% đ)</p>
                     </div>
+                    <span className="px-2.5 py-0.5 bg-purple-100 text-purple-800 rounded-full text-xs font-bold font-mono">
+                      {waiting2DaysItems.length}
+                    </span>
+                  </div>
 
-                    <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
-                      {waiting2DaysItems.length === 0 ? (
-                        <p className="text-xs text-slate-400 text-center py-8">Chưa có câu nào ở mốc này</p>
-                      ) : (
-                        waiting2DaysItems.map(item => (
-                          <div key={item.id} className="p-3 bg-purple-50/50 rounded-2xl border border-purple-200 space-y-1.5">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-bold text-purple-600">
-                                {ROUND_INFO[item.roundType]?.name || `Vòng ${item.roundType}`}
-                              </span>
-                              <span className="text-[10px] font-mono font-bold text-purple-600">2/3 đúng</span>
-                            </div>
-                            <p className="text-xs font-bold text-slate-800">{item.contentText}</p>
-                            <p className="text-[10px] text-purple-600 font-medium bg-purple-100/70 px-2 py-1 rounded-lg">
-                              🎯 Còn 1 lần ngày mai là đạt 100%!
-                            </p>
+                  <div className="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
+                    {waiting2DaysItems.length === 0 ? (
+                      <p className="text-xs text-slate-400 text-center py-8">Chưa có câu nào ở mốc này</p>
+                    ) : (
+                      waiting2DaysItems.map(item => (
+                        <div key={item.id} className="p-3 bg-purple-50/70 rounded-2xl border border-purple-200 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-purple-600">
+                              {ROUND_INFO[item.roundType]?.name || `Vòng ${item.roundType}`}
+                            </span>
+                            <span className="text-[10px] font-mono font-bold text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded">
+                              2/3 Lần đúng
+                            </span>
                           </div>
-                        ))
-                      )}
-                    </div>
+                          
+                          <div className="flex items-center gap-2">
+                            {item.imageUrl && (
+                              <div className="w-8 h-8 rounded-lg overflow-hidden border border-purple-200 bg-white shrink-0">
+                                <img src={getAssetUrl(item.imageUrl)} alt="thumb" className="w-full h-full object-cover" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-bold text-slate-800 truncate">{item.contentText}</p>
+                              {item.translation && (
+                                <p className="text-[10px] text-slate-500 truncate">{item.translation}</p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="text-[10px] text-purple-700 font-semibold bg-white/80 p-1.5 rounded-lg border border-purple-200 flex items-center gap-1">
+                            <span>🎯 Đã xong lượt 2! Còn 1 lần ngày mai</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
 
                 {/* 4. ĐÃ THÀNH THẠO (100%) */}
-                <div className="bg-white border-4 border-emerald-300 rounded-3xl p-4 shadow-sm flex flex-col justify-between space-y-3">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between border-b-2 border-emerald-100 pb-2">
-                      <div>
-                        <h4 className="text-xs font-display font-black text-emerald-700 uppercase">
-                          4. Đã thành thạo
-                        </h4>
-                        <p className="text-[10px] text-emerald-600 font-semibold">Phục hồi 100% điểm</p>
-                      </div>
-                      <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold font-mono">
-                        {masteredItems.length}
-                      </span>
+                <div className="bg-white border-4 border-emerald-300 rounded-3xl p-4 shadow-sm flex flex-col space-y-3">
+                  <div className="flex items-center justify-between border-b-2 border-emerald-100 pb-2">
+                    <div>
+                      <h4 className="text-xs font-display font-black text-emerald-700 uppercase">
+                        4. Đã thành thạo
+                      </h4>
+                      <p className="text-[10px] text-emerald-600 font-semibold">Phục hồi 100% điểm</p>
                     </div>
+                    <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold font-mono">
+                      {masteredItems.length}
+                    </span>
+                  </div>
 
-                    <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
-                      {masteredItems.length === 0 ? (
-                        <p className="text-xs text-slate-400 text-center py-8">Chưa có câu nào đạt thành thạo</p>
-                      ) : (
-                        masteredItems.map(item => (
-                          <div key={item.id} className="p-3 bg-emerald-50/60 rounded-2xl border border-emerald-200 space-y-1.5">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-bold text-emerald-600">
-                                {ROUND_INFO[item.roundType]?.name || `Vòng ${item.roundType}`}
-                              </span>
-                              <span className="text-[10px] font-mono font-bold text-emerald-600">✓ 3/3 Đúng</span>
-                            </div>
-                            <p className="text-xs font-bold text-slate-800">{item.contentText}</p>
-                            <div className="flex items-center gap-1 text-[10px] text-emerald-700 font-bold bg-emerald-100/80 px-2 py-1 rounded-lg">
-                              <CheckBadgeIcon className="w-3.5 h-3.5 text-emerald-600" />
-                              Đã phục hồi 100% điểm số!
+                  <div className="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
+                    {masteredItems.length === 0 ? (
+                      <p className="text-xs text-slate-400 text-center py-8">Chưa có câu nào đạt thành thạo</p>
+                    ) : (
+                      masteredItems.map(item => (
+                        <div key={item.id} className="p-3 bg-emerald-50/70 rounded-2xl border border-emerald-200 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-emerald-600">
+                              {ROUND_INFO[item.roundType]?.name || `Vòng ${item.roundType}`}
+                            </span>
+                            <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">
+                              ✓ 3/3 Đúng
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            {item.imageUrl && (
+                              <div className="w-8 h-8 rounded-lg overflow-hidden border border-emerald-200 bg-white shrink-0">
+                                <img src={getAssetUrl(item.imageUrl)} alt="thumb" className="w-full h-full object-cover" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-bold text-slate-800 truncate">{item.contentText}</p>
+                              {item.translation && (
+                                <p className="text-[10px] text-slate-500 truncate">{item.translation}</p>
+                              )}
                             </div>
                           </div>
-                        ))
-                      )}
-                    </div>
+
+                          <div className="text-[10px] text-emerald-800 font-bold bg-emerald-100 p-1.5 rounded-lg border border-emerald-200 flex items-center gap-1">
+                            <CheckBadgeIcon className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <span>Đã phục hồi 100% điểm kỹ năng!</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
 
