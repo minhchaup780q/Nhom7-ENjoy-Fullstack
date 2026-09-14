@@ -13,7 +13,10 @@ import {
   CpuChipIcon,
   XMarkIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  CalendarDaysIcon,
+  ListBulletIcon,
+  CheckBadgeIcon
 } from '@heroicons/react/24/solid';
 import { Button3D } from '../../../components/ui/Button3D';
 import { Mascot } from '../../../components/ui/Mascot';
@@ -65,6 +68,11 @@ export const PracticeDashboard: React.FC = () => {
   const [stats, setStats] = useState<MistakeStats | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Main View Tab: 'list' (Danh sách câu hỏi) | 'roadmap' (Lộ trình nhắc nhở 1-2-3 ngày)
+  const [mainViewTab, setMainViewTab] = useState<'list' | 'roadmap'>('list');
+  const [roadmapMistakes, setRoadmapMistakes] = useState<MistakeItem[]>([]);
+  const [roadmapLoading, setRoadmapLoading] = useState(false);
+
   // Pagination states (0-indexed)
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -81,6 +89,19 @@ export const PracticeDashboard: React.FC = () => {
   const [aiModalItem, setAiModalItem] = useState<MistakeItem | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiExplanation, setAiExplanation] = useState<string>('');
+
+  const fetchRoadmapData = useCallback(async () => {
+    setRoadmapLoading(true);
+    try {
+      const res = await mistakeApi.getRoadmapMistakes();
+      const data = (res as any)?.data !== undefined ? (res as any).data : res;
+      setRoadmapMistakes(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Lỗi khi tải lộ trình ôn tập:", err);
+    } finally {
+      setRoadmapLoading(false);
+    }
+  }, []);
 
   const handleOpenAiModal = async (item: MistakeItem) => {
     setAiModalItem(item);
@@ -140,6 +161,12 @@ export const PracticeDashboard: React.FC = () => {
   useEffect(() => {
     fetchMistakesData(0, statusFilter, roundFilter);
   }, [statusFilter, roundFilter]);
+
+  useEffect(() => {
+    if (mainViewTab === 'roadmap') {
+      fetchRoadmapData();
+    }
+  }, [mainViewTab, fetchRoadmapData]);
 
   const handlePageChange = (newPage: number) => {
     if (newPage < 0 || newPage >= totalPages || newPage === currentPage) return;
@@ -237,316 +264,581 @@ export const PracticeDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Overview Stat Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <div className="bg-[#fff7e6] border-4 border-[#ffd591] rounded-2xl p-4 shadow-sm text-center">
-          <p className="text-xs font-bold text-[#d46b08] uppercase">Cần Ôn Tập</p>
-          <p className="text-2xl md:text-3xl font-display font-black text-[#d46b08] mt-1">
-            {needsReviewTotal}
-          </p>
-        </div>
-
-        <div className="bg-[#f6ffed] border-4 border-[#b7eb8f] rounded-2xl p-4 shadow-sm text-center">
-          <p className="text-xs font-bold text-[#389e0d] uppercase">Đã Thành Thạo</p>
-          <p className="text-2xl md:text-3xl font-display font-black text-[#389e0d] mt-1">
-            {masteredTotal}
-          </p>
-        </div>
-
-        <div className="bg-primary-soft border-4 border-primary/30 rounded-2xl p-4 shadow-sm text-center col-span-2 md:col-span-1">
-          <p className="text-xs font-bold text-primary uppercase">Tỷ Lệ Khắc Phục</p>
-          <p className="text-2xl md:text-3xl font-display font-black text-primary mt-1">
-            {grandTotal > 0 ? `${Math.round((masteredTotal / grandTotal) * 100)}%` : '100%'}
-          </p>
-        </div>
-      </div>
-
-      {/* Main Action Bar */}
-      <div className="bg-white border-4 border-border-main rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary-soft text-primary flex items-center justify-center">
-            <BookOpenIcon className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-sm font-display font-black text-[#2b2b2b] uppercase">
-              Danh sách câu hỏi cần rèn luyện
-            </h3>
-            <p className="text-xs font-semibold text-text-muted">
-              Đang hiển thị {totalElements} câu hỏi ({statusFilter === 'NEEDS_REVIEW' ? 'Cần ôn tập' : 'Đã thành thạo'})
-            </p>
-          </div>
-        </div>
-
-        <Button3D
-          variant="green"
-          size="md"
-          disabled={needsReviewTotal === 0}
-          onClick={startPracticeAllNeedsReview}
-          className="flex items-center gap-2"
+      {/* Top View Selector: Danh sách bài tập vs Lộ trình nhắc nhở 1-2-3 ngày */}
+      <div className="flex items-center gap-3 border-b-2 border-border-main pb-2">
+        <button
+          onClick={() => setMainViewTab('list')}
+          className={`px-5 py-3 rounded-2xl font-display text-sm font-black transition-all flex items-center gap-2 cursor-pointer ${
+            mainViewTab === 'list'
+              ? 'bg-primary text-white shadow-[0_3px_0_0_#d83a6f]'
+              : 'bg-white border-2 border-border-main text-[#5c5c5c] hover:bg-bg-light'
+          }`}
         >
-          <PlayIcon className="w-4 h-4 fill-current" />
-          ÔN TẬP TẤT CẢ ({needsReviewTotal})
-        </Button3D>
+          <ListBulletIcon className="w-5 h-5" />
+          <span>DANH SÁCH BÀI TẬP</span>
+        </button>
+
+        <button
+          onClick={() => setMainViewTab('roadmap')}
+          className={`px-5 py-3 rounded-2xl font-display text-sm font-black transition-all flex items-center gap-2 cursor-pointer ${
+            mainViewTab === 'roadmap'
+              ? 'bg-[#1890ff] text-white shadow-[0_3px_0_0_#096dd9]'
+              : 'bg-white border-2 border-border-main text-[#5c5c5c] hover:bg-bg-light'
+          }`}
+        >
+          <CalendarDaysIcon className="w-5 h-5" />
+          <span>LỘ TRÌNH ÔN TẬP (1 - 2 - 3 NGÀY)</span>
+        </button>
       </div>
 
-      {/* Filter Tabs: CHỈ 2 NÚT (CẦN ÔN TẬP & ĐÃ THÀNH THẠO) */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => handleStatusChange('NEEDS_REVIEW')}
-            className={`px-5 py-2.5 rounded-2xl border-2 font-display text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
-              statusFilter === 'NEEDS_REVIEW'
-                ? 'bg-[#d46b08] text-white border-[#d46b08] shadow-[0_3px_0_0_#ad4e00]'
-                : 'bg-white border-border-main text-[#5c5c5c] hover:bg-bg-light'
-            }`}
-          >
-            <span>CẦN ÔN TẬP</span>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-              statusFilter === 'NEEDS_REVIEW' ? 'bg-white/20 text-white' : 'bg-amber-100 text-[#d46b08]'
-            }`}>
-              {needsReviewTotal}
-            </span>
-          </button>
-
-          <button
-            onClick={() => handleStatusChange('MASTERED')}
-            className={`px-5 py-2.5 rounded-2xl border-2 font-display text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
-              statusFilter === 'MASTERED'
-                ? 'bg-[#389e0d] text-white border-[#389e0d] shadow-[0_3px_0_0_#237804]'
-                : 'bg-white border-border-main text-[#5c5c5c] hover:bg-bg-light'
-            }`}
-          >
-            <span>ĐÃ THÀNH THẠO</span>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-              statusFilter === 'MASTERED' ? 'bg-white/20 text-white' : 'bg-green-100 text-[#389e0d]'
-            }`}>
-              {masteredTotal}
-            </span>
-          </button>
-        </div>
-
-        {/* Round Filter Dropdown */}
-        <div className="flex items-center gap-2">
-          <FunnelIcon className="w-4 h-4 text-text-muted" />
-          <select
-            value={roundFilter}
-            onChange={(e) => handleRoundChange(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))}
-            className="p-2 bg-white border-2 border-border-main rounded-xl text-xs font-display font-bold text-[#5c5c5c] outline-none cursor-pointer"
-          >
-            <option value="ALL">Tất cả kỹ năng / Vòng</option>
-            <option value="1">Vòng 1: Từ vựng / Nhận diện</option>
-            <option value="2">Vòng 2: Luyện nghe</option>
-            <option value="3">Vòng 3: Luyện nói</option>
-            <option value="4">Vòng 4: Đọc hiểu & Quiz</option>
-            <option value="5">Vòng 5: Điền từ & Viết</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Mistake Cards List */}
-      {loading ? (
-        <div className="p-16 text-center text-sm font-bold text-text-muted flex items-center justify-center gap-2">
-          <ArrowPathIcon className="w-5 h-5 animate-spin text-primary" />
-          ĐANG TẢI DỮ LIỆU LUYỆN TẬP...
-        </div>
-      ) : mistakes.length === 0 ? (
-        <div className="bg-white border-4 border-border-main rounded-3xl p-12 text-center space-y-3">
-          <CheckCircleIcon className="w-12 h-12 text-[#52c41a] mx-auto" />
-          <h3 className="text-lg font-display font-black text-[#2b2b2b] uppercase">
-            Không có câu hỏi nào trong danh mục này!
-          </h3>
-          <p className="text-xs font-semibold text-text-muted">
-            {statusFilter === 'NEEDS_REVIEW' 
-              ? 'Bé không có lỗi sai nào cần ôn tập cả! Hãy tiếp tục luyện tập bài mới nhé!' 
-              : 'Bé chưa có câu hỏi nào đạt trạng thái Đã thành thạo trong danh mục này.'}
-          </p>
-        </div>
-      ) : (
+      {/* ========================================================================= */}
+      {/* VIEW 1: DANH SÁCH BÀI TẬP (GRID + FILTERS + PAGINATION)                   */}
+      {/* ========================================================================= */}
+      {mainViewTab === 'list' && (
         <div className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-4">
-            {mistakes.map(item => {
-              const roundInfo = ROUND_INFO[item.roundType] || {
-                name: `Vòng ${item.roundType}`,
-                color: 'text-primary',
-                badgeBg: 'bg-primary-soft border-primary/20'
-              };
+          {/* Overview Stat Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="bg-[#fff7e6] border-4 border-[#ffd591] rounded-2xl p-4 shadow-sm text-center">
+              <p className="text-xs font-bold text-[#d46b08] uppercase">Cần Ôn Tập</p>
+              <p className="text-2xl md:text-3xl font-display font-black text-[#d46b08] mt-1">
+                {needsReviewTotal}
+              </p>
+            </div>
 
-              return (
-                <div
-                  key={item.id}
-                  className="bg-white border-4 border-border-main rounded-3xl p-5 shadow-sm flex flex-col justify-between gap-4 hover:border-primary/50 transition-all"
-                >
-                  <div className="space-y-3">
-                    {/* Card Top: Skill & Status */}
-                    <div className="flex items-center justify-between gap-2">
-                      <span className={`px-2.5 py-1 rounded-full text-[11px] font-display font-black border ${roundInfo.badgeBg} ${roundInfo.color}`}>
-                        {roundInfo.name}
-                      </span>
+            <div className="bg-[#f6ffed] border-4 border-[#b7eb8f] rounded-2xl p-4 shadow-sm text-center">
+              <p className="text-xs font-bold text-[#389e0d] uppercase">Đã Thành Thạo</p>
+              <p className="text-2xl md:text-3xl font-display font-black text-[#389e0d] mt-1">
+                {masteredTotal}
+              </p>
+            </div>
 
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-display font-black ${
-                        item.status === 'MASTERED'
-                          ? 'bg-[#f6ffed] text-[#389e0d] border border-[#b7eb8f]'
-                          : 'bg-[#fff7e6] text-[#d46b08] border border-[#ffd591]'
-                      }`}>
-                        {item.status === 'MASTERED' ? '✓ ĐÃ THÀNH THẠO' : '⚡ CẦN ÔN TẬP'}
-                      </span>
-                    </div>
+            <div className="bg-primary-soft border-4 border-primary/30 rounded-2xl p-4 shadow-sm text-center col-span-2 md:col-span-1">
+              <p className="text-xs font-bold text-primary uppercase">Tỷ Lệ Khắc Phục</p>
+              <p className="text-2xl md:text-3xl font-display font-black text-primary mt-1">
+                {grandTotal > 0 ? `${Math.round((masteredTotal / grandTotal) * 100)}%` : '100%'}
+              </p>
+            </div>
+          </div>
 
-                    {/* Word / Sentence Details */}
-                    <div className="flex items-center justify-between gap-3 pt-1">
-                      <div className="flex items-center gap-2.5">
-                        {item.imageUrl && (
-                          <div className="w-11 h-11 rounded-xl overflow-hidden border border-border-main bg-bg-light shrink-0">
-                            <img
-                              src={getAssetUrl(item.imageUrl)}
-                              alt="thumbnail"
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400';
-                              }}
-                            />
+          {/* Main Action Bar */}
+          <div className="bg-white border-4 border-border-main rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary-soft text-primary flex items-center justify-center">
+                <BookOpenIcon className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-display font-black text-[#2b2b2b] uppercase">
+                  Danh sách câu hỏi cần rèn luyện
+                </h3>
+                <p className="text-xs font-semibold text-text-muted">
+                  Đang hiển thị {totalElements} câu hỏi ({statusFilter === 'NEEDS_REVIEW' ? 'Cần ôn tập' : 'Đã thành thạo'})
+                </p>
+              </div>
+            </div>
+
+            <Button3D
+              variant="green"
+              size="md"
+              disabled={needsReviewTotal === 0}
+              onClick={startPracticeAllNeedsReview}
+              className="flex items-center gap-2"
+            >
+              <PlayIcon className="w-4 h-4 fill-current" />
+              ÔN TẬP TẤT CẢ ({needsReviewTotal})
+            </Button3D>
+          </div>
+
+          {/* Filter Tabs: CHỈ 2 NÚT (CẦN ÔN TẬP & ĐÃ THÀNH THẠO) */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => handleStatusChange('NEEDS_REVIEW')}
+                className={`px-5 py-2.5 rounded-2xl border-2 font-display text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
+                  statusFilter === 'NEEDS_REVIEW'
+                    ? 'bg-[#d46b08] text-white border-[#d46b08] shadow-[0_3px_0_0_#ad4e00]'
+                    : 'bg-white border-border-main text-[#5c5c5c] hover:bg-bg-light'
+                }`}
+              >
+                <span>CẦN ÔN TẬP</span>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                  statusFilter === 'NEEDS_REVIEW' ? 'bg-white/20 text-white' : 'bg-amber-100 text-[#d46b08]'
+                }`}>
+                  {needsReviewTotal}
+                </span>
+              </button>
+
+              <button
+                onClick={() => handleStatusChange('MASTERED')}
+                className={`px-5 py-2.5 rounded-2xl border-2 font-display text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
+                  statusFilter === 'MASTERED'
+                    ? 'bg-[#389e0d] text-white border-[#389e0d] shadow-[0_3px_0_0_#237804]'
+                    : 'bg-white border-border-main text-[#5c5c5c] hover:bg-bg-light'
+                }`}
+              >
+                <span>ĐÃ THÀNH THẠO</span>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                  statusFilter === 'MASTERED' ? 'bg-white/20 text-white' : 'bg-green-100 text-[#389e0d]'
+                }`}>
+                  {masteredTotal}
+                </span>
+              </button>
+            </div>
+
+            {/* Round Filter Dropdown */}
+            <div className="flex items-center gap-2">
+              <FunnelIcon className="w-4 h-4 text-text-muted" />
+              <select
+                value={roundFilter}
+                onChange={(e) => handleRoundChange(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))}
+                className="p-2 bg-white border-2 border-border-main rounded-xl text-xs font-display font-bold text-[#5c5c5c] outline-none cursor-pointer"
+              >
+                <option value="ALL">Tất cả kỹ năng / Vòng</option>
+                <option value="1">Vòng 1: Từ vựng / Nhận diện</option>
+                <option value="2">Vòng 2: Luyện nghe</option>
+                <option value="3">Vòng 3: Luyện nói</option>
+                <option value="4">Vòng 4: Đọc hiểu & Quiz</option>
+                <option value="5">Vòng 5: Điền từ & Viết</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Mistake Cards List */}
+          {loading ? (
+            <div className="p-16 text-center text-sm font-bold text-text-muted flex items-center justify-center gap-2">
+              <ArrowPathIcon className="w-5 h-5 animate-spin text-primary" />
+              ĐANG TẢI DỮ LIỆU LUYỆN TẬP...
+            </div>
+          ) : mistakes.length === 0 ? (
+            <div className="bg-white border-4 border-border-main rounded-3xl p-12 text-center space-y-3">
+              <CheckCircleIcon className="w-12 h-12 text-[#52c41a] mx-auto" />
+              <h3 className="text-lg font-display font-black text-[#2b2b2b] uppercase">
+                Không có câu hỏi nào trong danh mục này!
+              </h3>
+              <p className="text-xs font-semibold text-text-muted">
+                {statusFilter === 'NEEDS_REVIEW' 
+                  ? 'Bé không có lỗi sai nào cần ôn tập cả! Hãy tiếp tục luyện tập bài mới nhé!' 
+                  : 'Bé chưa có câu hỏi nào đạt trạng thái Đã thành thạo trong danh mục này.'}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-4">
+                {mistakes.map(item => {
+                  const roundInfo = ROUND_INFO[item.roundType] || {
+                    name: `Vòng ${item.roundType}`,
+                    color: 'text-primary',
+                    badgeBg: 'bg-primary-soft border-primary/20'
+                  };
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="bg-white border-4 border-border-main rounded-3xl p-5 shadow-sm flex flex-col justify-between gap-4 hover:border-primary/50 transition-all"
+                    >
+                      <div className="space-y-3">
+                        {/* Card Top: Skill & Status */}
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`px-2.5 py-1 rounded-full text-[11px] font-display font-black border ${roundInfo.badgeBg} ${roundInfo.color}`}>
+                            {roundInfo.name}
+                          </span>
+
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-display font-black ${
+                            item.status === 'MASTERED'
+                              ? 'bg-[#f6ffed] text-[#389e0d] border border-[#b7eb8f]'
+                              : 'bg-[#fff7e6] text-[#d46b08] border border-[#ffd591]'
+                          }`}>
+                            {item.status === 'MASTERED' ? '✓ ĐÃ THÀNH THẠO' : '⚡ CẦN ÔN TẬP'}
+                          </span>
+                        </div>
+
+                        {/* Word / Sentence Details */}
+                        <div className="flex items-center justify-between gap-3 pt-1">
+                          <div className="flex items-center gap-2.5">
+                            {item.imageUrl && (
+                              <div className="w-11 h-11 rounded-xl overflow-hidden border border-border-main bg-bg-light shrink-0">
+                                <img
+                                  src={getAssetUrl(item.imageUrl)}
+                                  alt="thumbnail"
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400';
+                                  }}
+                                />
+                              </div>
+                            )}
+                            <div>
+                              <h4 className="text-base font-display font-black text-[#2b2b2b]">
+                                {item.contentText}
+                              </h4>
+                              {item.translation && (
+                                <p className="text-xs font-semibold text-text-muted mt-0.5">
+                                  {item.translation}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                        )}
-                        <div>
-                          <h4 className="text-base font-display font-black text-[#2b2b2b]">
-                            {item.contentText}
-                          </h4>
-                          {item.translation && (
-                            <p className="text-xs font-semibold text-text-muted mt-0.5">
-                              {item.translation}
-                            </p>
-                          )}
+
+                          <button
+                            onClick={() => playSpeech(item.contentText)}
+                            className="p-2 bg-primary-soft hover:bg-primary/20 text-primary rounded-xl transition-colors shrink-0 cursor-pointer"
+                            title="Nghe phát âm"
+                          >
+                            <SpeakerWaveIcon className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        {/* Previous Error & Duration */}
+                        <div className="bg-[#f8f9fa] border-2 border-border-main rounded-2xl p-3 space-y-1.5 text-xs">
+                          <div className="flex items-center justify-between text-[#cf1322] font-semibold">
+                            <span className="flex items-center gap-1">
+                              <ExclamationTriangleIcon className="w-3.5 h-3.5" />
+                              Đã chọn sai:
+                            </span>
+                            {item.wrongAnswerSubmitted && isImageUrl(item.wrongAnswerSubmitted) ? (
+                              <div className="w-8 h-8 rounded-lg border-2 border-red-300 overflow-hidden shrink-0 bg-white p-0.5 inline-flex items-center justify-center">
+                                <img
+                                  src={getAssetUrl(item.wrongAnswerSubmitted)}
+                                  alt="Wrong"
+                                  className="w-full h-full object-cover rounded-md"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400';
+                                  }}
+                                />
+                              </div>
+                            ) : (
+                              <strong className="line-through">{item.wrongAnswerSubmitted}</strong>
+                            )}
+                          </div>
+
+                          <div className="flex items-center justify-between text-text-muted text-[11px] font-medium pt-1 border-t border-border-main/50">
+                            <span className="flex items-center gap-1">
+                              <ClockIcon className="w-3.5 h-3.5" />
+                              Thời gian làm câu này:
+                            </span>
+                            <span className="font-mono font-bold text-[#2b2b2b]">{item.durationSeconds || 0} giây</span>
+                          </div>
                         </div>
                       </div>
 
-                      <button
-                        onClick={() => playSpeech(item.contentText)}
-                        className="p-2 bg-primary-soft hover:bg-primary/20 text-primary rounded-xl transition-colors shrink-0 cursor-pointer"
-                        title="Nghe phát âm"
-                      >
-                        <SpeakerWaveIcon className="w-4 h-4" />
-                      </button>
-                    </div>
+                      {/* Card Action Buttons */}
+                      <div className="flex items-center gap-2 pt-2">
+                        <button
+                          onClick={() => startPracticeSingleItem(item)}
+                          className="flex-1 py-2.5 bg-primary-soft hover:bg-primary/20 text-primary font-display font-black rounded-xl text-xs uppercase tracking-wide transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <ArrowPathIcon className="w-3.5 h-3.5" />
+                          Luyện tập câu này
+                        </button>
 
-                    {/* Previous Error & Duration */}
-                    <div className="bg-[#f8f9fa] border-2 border-border-main rounded-2xl p-3 space-y-1.5 text-xs">
-                      <div className="flex items-center justify-between text-[#cf1322] font-semibold">
-                        <span className="flex items-center gap-1">
-                          <ExclamationTriangleIcon className="w-3.5 h-3.5" />
-                          Đã chọn sai:
-                        </span>
-                        {item.wrongAnswerSubmitted && isImageUrl(item.wrongAnswerSubmitted) ? (
-                          <div className="w-8 h-8 rounded-lg border-2 border-red-300 overflow-hidden shrink-0 bg-white p-0.5 inline-flex items-center justify-center">
-                            <img
-                              src={getAssetUrl(item.wrongAnswerSubmitted)}
-                              alt="Wrong"
-                              className="w-full h-full object-cover rounded-md"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400';
-                              }}
-                            />
-                          </div>
-                        ) : (
-                          <strong className="line-through">{item.wrongAnswerSubmitted}</strong>
-                        )}
-                      </div>
-
-                      <div className="flex items-center justify-between text-text-muted text-[11px] font-medium pt-1 border-t border-border-main/50">
-                        <span className="flex items-center gap-1">
-                          <ClockIcon className="w-3.5 h-3.5" />
-                          Thời gian làm câu này:
-                        </span>
-                        <span className="font-mono font-bold text-[#2b2b2b]">{item.durationSeconds || 0} giây</span>
+                        <button
+                          onClick={() => handleOpenAiModal(item)}
+                          className="p-2.5 bg-[#f0f5ff] hover:bg-[#d6e4ff] text-[#2f54eb] rounded-xl border-2 border-[#adc6ff] transition-colors cursor-pointer"
+                          title="AI Phân tích lỗi sai"
+                        >
+                          <CpuChipIcon className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
+                  );
+                })}
+              </div>
+
+              {/* ==================== PHÂN TRANG (PAGINATION BAR) ==================== */}
+              {totalPages > 1 && (
+                <div className="bg-white border-2 border-border-main rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+                  <div className="text-xs font-semibold text-text-muted">
+                    Trang <strong className="text-[#2b2b2b]">{currentPage + 1}</strong> / <strong className="text-[#2b2b2b]">{totalPages}</strong> (Tổng cộng {totalElements} câu hỏi)
                   </div>
 
-                  {/* Card Action Buttons */}
-                  <div className="flex items-center gap-2 pt-2">
+                  <div className="flex items-center gap-2">
                     <button
-                      onClick={() => startPracticeSingleItem(item)}
-                      className="flex-1 py-2.5 bg-primary-soft hover:bg-primary/20 text-primary font-display font-black rounded-xl text-xs uppercase tracking-wide transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 0 || loading}
+                      className="px-3.5 py-2 rounded-xl border-2 border-border-main bg-white hover:bg-bg-light disabled:opacity-40 disabled:pointer-events-none font-display font-black text-xs text-[#5c5c5c] flex items-center gap-1 transition-all cursor-pointer"
                     >
-                      <ArrowPathIcon className="w-3.5 h-3.5" />
-                      Luyện tập câu này
+                      <ChevronLeftIcon className="w-4 h-4" />
+                      Trước
                     </button>
 
+                    {/* Numbered Page Buttons */}
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: totalPages }, (_, i) => i).map(pageIdx => {
+                        if (
+                          totalPages > 6 &&
+                          pageIdx !== 0 &&
+                          pageIdx !== totalPages - 1 &&
+                          Math.abs(pageIdx - currentPage) > 1
+                        ) {
+                          if (pageIdx === 1 || pageIdx === totalPages - 2) {
+                            return <span key={pageIdx} className="px-1 text-xs text-text-muted">...</span>;
+                          }
+                          return null;
+                        }
+
+                        const isCurrent = pageIdx === currentPage;
+                        return (
+                          <button
+                            key={pageIdx}
+                            onClick={() => handlePageChange(pageIdx)}
+                            disabled={loading}
+                            className={`w-8 h-8 rounded-xl font-display font-black text-xs transition-all cursor-pointer ${
+                              isCurrent
+                                ? 'bg-primary text-white border-2 border-primary shadow-sm scale-105'
+                                : 'bg-white border-2 border-border-main text-[#5c5c5c] hover:bg-bg-light'
+                            }`}
+                          >
+                            {pageIdx + 1}
+                          </button>
+                        );
+                      })}
+                    </div>
+
                     <button
-                      onClick={() => handleOpenAiModal(item)}
-                      className="p-2.5 bg-[#f0f5ff] hover:bg-[#d6e4ff] text-[#2f54eb] rounded-xl border-2 border-[#adc6ff] transition-colors cursor-pointer"
-                      title="AI Phân tích lỗi sai"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage >= totalPages - 1 || loading}
+                      className="px-3.5 py-2 rounded-xl border-2 border-border-main bg-white hover:bg-bg-light disabled:opacity-40 disabled:pointer-events-none font-display font-black text-xs text-[#5c5c5c] flex items-center gap-1 transition-all cursor-pointer"
                     >
-                      <CpuChipIcon className="w-4 h-4" />
+                      Sau
+                      <ChevronRightIcon className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-
-          {/* ==================== PHÂN TRANG (PAGINATION BAR) ==================== */}
-          {totalPages > 1 && (
-            <div className="bg-white border-2 border-border-main rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
-              <div className="text-xs font-semibold text-text-muted">
-                Trang <strong className="text-[#2b2b2b]">{currentPage + 1}</strong> / <strong className="text-[#2b2b2b]">{totalPages}</strong> (Tổng cộng {totalElements} câu hỏi)
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 0 || loading}
-                  className="px-3.5 py-2 rounded-xl border-2 border-border-main bg-white hover:bg-bg-light disabled:opacity-40 disabled:pointer-events-none font-display font-black text-xs text-[#5c5c5c] flex items-center gap-1 transition-all cursor-pointer"
-                >
-                  <ChevronLeftIcon className="w-4 h-4" />
-                  Trước
-                </button>
-
-                {/* Numbered Page Buttons */}
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i).map(pageIdx => {
-                    if (
-                      totalPages > 6 &&
-                      pageIdx !== 0 &&
-                      pageIdx !== totalPages - 1 &&
-                      Math.abs(pageIdx - currentPage) > 1
-                    ) {
-                      if (pageIdx === 1 || pageIdx === totalPages - 2) {
-                        return <span key={pageIdx} className="px-1 text-xs text-text-muted">...</span>;
-                      }
-                      return null;
-                    }
-
-                    const isCurrent = pageIdx === currentPage;
-                    return (
-                      <button
-                        key={pageIdx}
-                        onClick={() => handlePageChange(pageIdx)}
-                        disabled={loading}
-                        className={`w-8 h-8 rounded-xl font-display font-black text-xs transition-all cursor-pointer ${
-                          isCurrent
-                            ? 'bg-primary text-white border-2 border-primary shadow-sm scale-105'
-                            : 'bg-white border-2 border-border-main text-[#5c5c5c] hover:bg-bg-light'
-                        }`}
-                      >
-                        {pageIdx + 1}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage >= totalPages - 1 || loading}
-                  className="px-3.5 py-2 rounded-xl border-2 border-border-main bg-white hover:bg-bg-light disabled:opacity-40 disabled:pointer-events-none font-display font-black text-xs text-[#5c5c5c] flex items-center gap-1 transition-all cursor-pointer"
-                >
-                  Sau
-                  <ChevronRightIcon className="w-4 h-4" />
-                </button>
-              </div>
+              )}
             </div>
           )}
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* VIEW 2: LỘ TRÌNH ÔN TẬP (1 - 2 - 3 NGÀY) SPACED REPETITION                */}
+      {/* ========================================================================= */}
+      {mainViewTab === 'roadmap' && (() => {
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        const dueTodayItems = roadmapMistakes.filter(m => {
+          const isMastered = m.status === 'MASTERED' || (m.correctStreakDays ?? 0) >= 3;
+          if (isMastered) return false;
+          if (!m.lastPracticedAt) return true;
+          const lastDate = new Date(m.lastPracticedAt).toISOString().split('T')[0];
+          return lastDate < todayStr;
+        });
+
+        const waiting1DayItems = roadmapMistakes.filter(m => {
+          const isMastered = m.status === 'MASTERED' || (m.correctStreakDays ?? 0) >= 3;
+          if (isMastered) return false;
+          if (!m.lastPracticedAt) return false;
+          const lastDate = new Date(m.lastPracticedAt).toISOString().split('T')[0];
+          return lastDate >= todayStr && m.correctStreakDays === 1;
+        });
+
+        const waiting2DaysItems = roadmapMistakes.filter(m => {
+          const isMastered = m.status === 'MASTERED' || (m.correctStreakDays ?? 0) >= 3;
+          if (isMastered) return false;
+          if (!m.lastPracticedAt) return false;
+          const lastDate = new Date(m.lastPracticedAt).toISOString().split('T')[0];
+          return lastDate >= todayStr && m.correctStreakDays === 2;
+        });
+
+        const masteredItems = roadmapMistakes.filter(m => {
+          return m.status === 'MASTERED' || (m.correctStreakDays ?? 0) >= 3;
+        });
+
+        return (
+          <div className="space-y-6 animate-fadeIn">
+            {/* Roadmap Explanation Guide Card */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-3xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-blue-600 font-display font-black text-sm uppercase">
+                  <SparklesIcon className="w-5 h-5 text-blue-500" />
+                  Quy Tắc Lặp Lại Ngắt Quãng (Spaced Repetition)
+                </div>
+                <p className="text-xs font-semibold text-slate-600 max-w-3xl leading-relaxed">
+                  Mỗi câu hỏi bé từng làm sai cần hoàn thành <strong>3 lần luyện tập đúng ở 3 ngày khác nhau</strong> (mỗi lần cách nhau $\ge 1$ ngày). Mỗi mốc ngày thành công sẽ phục hồi điểm số (+33% $\rightarrow$ +67% $\rightarrow$ 100%) và tự động nâng cao biểu đồ năng lực 5 kỹ năng của bé!
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="px-3 py-1.5 bg-white text-blue-600 border border-blue-200 rounded-xl text-xs font-bold font-mono">
+                  Tổng câu theo dõi: {roadmapMistakes.length}
+                </span>
+              </div>
+            </div>
+
+            {roadmapLoading ? (
+              <div className="p-16 text-center text-sm font-bold text-text-muted flex items-center justify-center gap-2">
+                <ArrowPathIcon className="w-5 h-5 animate-spin text-primary" />
+                ĐANG TẢI LỘ TRÌNH ÔN TẬP...
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                {/* 1. HÔM NAY CẦN ÔN */}
+                <div className="bg-white border-4 border-amber-300 rounded-3xl p-4 shadow-sm flex flex-col justify-between space-y-3">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between border-b-2 border-amber-100 pb-2">
+                      <div>
+                        <h4 className="text-xs font-display font-black text-amber-700 uppercase">
+                          1. Cần ôn hôm nay
+                        </h4>
+                        <p className="text-[10px] text-amber-600 font-semibold">Chưa ôn / Đến hạn</p>
+                      </div>
+                      <span className="px-2.5 py-0.5 bg-amber-100 text-amber-800 rounded-full text-xs font-bold font-mono">
+                        {dueTodayItems.length}
+                      </span>
+                    </div>
+
+                    <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+                      {dueTodayItems.length === 0 ? (
+                        <p className="text-xs text-slate-400 text-center py-8">Hôm nay không có câu nào cần ôn tập!</p>
+                      ) : (
+                        dueTodayItems.map(item => (
+                          <div key={item.id} className="p-3 bg-amber-50/60 rounded-2xl border border-amber-200 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-bold text-amber-700">
+                                {ROUND_INFO[item.roundType]?.name || `Vòng ${item.roundType}`}
+                              </span>
+                              <span className="text-[10px] font-mono font-bold text-amber-600">
+                                {item.correctStreakDays || 0}/3 lần
+                              </span>
+                            </div>
+                            <p className="text-xs font-bold text-slate-800">{item.contentText}</p>
+                            {item.translation && (
+                              <p className="text-[11px] text-slate-500">{item.translation}</p>
+                            )}
+                            <button
+                              onClick={() => startPracticeSingleItem(item)}
+                              className="w-full py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-[11px] font-black uppercase transition-colors cursor-pointer flex items-center justify-center gap-1"
+                            >
+                              <PlayIcon className="w-3.5 h-3.5" />
+                              Ôn câu này ngay
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. NHẮC SAU 1 NGÀY */}
+                <div className="bg-white border-4 border-blue-200 rounded-3xl p-4 shadow-sm flex flex-col justify-between space-y-3">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between border-b-2 border-blue-100 pb-2">
+                      <div>
+                        <h4 className="text-xs font-display font-black text-blue-700 uppercase">
+                          2. Nhắc sau 1 ngày
+                        </h4>
+                        <p className="text-[10px] text-blue-600 font-semibold">Đã xong lần 1 (+33% đ)</p>
+                      </div>
+                      <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-bold font-mono">
+                        {waiting1DayItems.length}
+                      </span>
+                    </div>
+
+                    <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+                      {waiting1DayItems.length === 0 ? (
+                        <p className="text-xs text-slate-400 text-center py-8">Chưa có câu nào ở mốc này</p>
+                      ) : (
+                        waiting1DayItems.map(item => (
+                          <div key={item.id} className="p-3 bg-blue-50/50 rounded-2xl border border-blue-200 space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-bold text-blue-600">
+                                {ROUND_INFO[item.roundType]?.name || `Vòng ${item.roundType}`}
+                              </span>
+                              <span className="text-[10px] font-mono font-bold text-blue-600">1/3 đúng</span>
+                            </div>
+                            <p className="text-xs font-bold text-slate-800">{item.contentText}</p>
+                            <p className="text-[10px] text-blue-600 font-medium bg-blue-100/70 px-2 py-1 rounded-lg">
+                              ⏳ Hẹn gặp lại ngày mai để ôn lần 2!
+                            </p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. NHẮC SAU 2 NGÀY */}
+                <div className="bg-white border-4 border-purple-200 rounded-3xl p-4 shadow-sm flex flex-col justify-between space-y-3">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between border-b-2 border-purple-100 pb-2">
+                      <div>
+                        <h4 className="text-xs font-display font-black text-purple-700 uppercase">
+                          3. Nhắc sau 2 ngày
+                        </h4>
+                        <p className="text-[10px] text-purple-600 font-semibold">Đã xong lần 2 (+67% đ)</p>
+                      </div>
+                      <span className="px-2.5 py-0.5 bg-purple-100 text-purple-800 rounded-full text-xs font-bold font-mono">
+                        {waiting2DaysItems.length}
+                      </span>
+                    </div>
+
+                    <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+                      {waiting2DaysItems.length === 0 ? (
+                        <p className="text-xs text-slate-400 text-center py-8">Chưa có câu nào ở mốc này</p>
+                      ) : (
+                        waiting2DaysItems.map(item => (
+                          <div key={item.id} className="p-3 bg-purple-50/50 rounded-2xl border border-purple-200 space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-bold text-purple-600">
+                                {ROUND_INFO[item.roundType]?.name || `Vòng ${item.roundType}`}
+                              </span>
+                              <span className="text-[10px] font-mono font-bold text-purple-600">2/3 đúng</span>
+                            </div>
+                            <p className="text-xs font-bold text-slate-800">{item.contentText}</p>
+                            <p className="text-[10px] text-purple-600 font-medium bg-purple-100/70 px-2 py-1 rounded-lg">
+                              🎯 Còn 1 lần ngày mai là đạt 100%!
+                            </p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. ĐÃ THÀNH THẠO (100%) */}
+                <div className="bg-white border-4 border-emerald-300 rounded-3xl p-4 shadow-sm flex flex-col justify-between space-y-3">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between border-b-2 border-emerald-100 pb-2">
+                      <div>
+                        <h4 className="text-xs font-display font-black text-emerald-700 uppercase">
+                          4. Đã thành thạo
+                        </h4>
+                        <p className="text-[10px] text-emerald-600 font-semibold">Phục hồi 100% điểm</p>
+                      </div>
+                      <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold font-mono">
+                        {masteredItems.length}
+                      </span>
+                    </div>
+
+                    <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+                      {masteredItems.length === 0 ? (
+                        <p className="text-xs text-slate-400 text-center py-8">Chưa có câu nào đạt thành thạo</p>
+                      ) : (
+                        masteredItems.map(item => (
+                          <div key={item.id} className="p-3 bg-emerald-50/60 rounded-2xl border border-emerald-200 space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-bold text-emerald-600">
+                                {ROUND_INFO[item.roundType]?.name || `Vòng ${item.roundType}`}
+                              </span>
+                              <span className="text-[10px] font-mono font-bold text-emerald-600">✓ 3/3 Đúng</span>
+                            </div>
+                            <p className="text-xs font-bold text-slate-800">{item.contentText}</p>
+                            <div className="flex items-center gap-1 text-[10px] text-emerald-700 font-bold bg-emerald-100/80 px-2 py-1 rounded-lg">
+                              <CheckBadgeIcon className="w-3.5 h-3.5 text-emerald-600" />
+                              Đã phục hồi 100% điểm số!
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* AI Explanation Modal */}
       {aiModalItem && (
