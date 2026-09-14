@@ -623,11 +623,7 @@ export const PersonalStatsPage: React.FC = () => {
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
               {isParent ? 'THEO DÕI NĂNG LỰC & TIẾN ĐỘ HỌC' : 'THỐNG KÊ HỌC TẬP CÁ NHÂN'}
             </h1>
-            <p className="text-sm text-slate-600">
-              {isParent
-                ? 'Xem chi tiết đánh giá năng lực 5 kỹ năng, thời lượng học và các bài học gần đây của các con'
-                : 'Theo dõi chi tiết thời lượng học tập và năng lực 5 kỹ năng của bạn'}
-            </p>
+            
           </div>
 
           {isParent && (
