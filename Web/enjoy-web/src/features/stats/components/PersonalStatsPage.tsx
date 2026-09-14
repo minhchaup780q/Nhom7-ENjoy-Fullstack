@@ -373,21 +373,21 @@ export const PersonalStatsPage: React.FC = () => {
   // Highlight kỹ năng khi hover
   const [hoveredSkill, setHoveredSkill] = useState<string | null>(null);
 
-  // Dữ liệu kỹ năng
+  // Dữ liệu kỹ năng (Mặc định 0 khi chưa tải hoặc chưa học)
   const [skillsCurrent, setSkillsCurrent] = useState<SkillScores>({
-    listening: 100,
-    speaking: 100,
-    reading: 100,
-    writing: 100,
-    vocabGrammar: 100,
+    listening: 0,
+    speaking: 0,
+    reading: 0,
+    writing: 0,
+    vocabGrammar: 0,
   });
 
   const [skillsPrevious, setSkillsPrevious] = useState<SkillScores>({
-    listening: 100,
-    speaking: 100,
-    reading: 100,
-    writing: 100,
-    vocabGrammar: 100,
+    listening: 0,
+    speaking: 0,
+    reading: 0,
+    writing: 0,
+    vocabGrammar: 0,
   });
 
   const [skillsLoading, setSkillsLoading] = useState<boolean>(false);
@@ -433,7 +433,7 @@ export const PersonalStatsPage: React.FC = () => {
         setSkillsPrevious(data.previousSkills);
       }
     } catch (err) {
-      console.warn("Lỗi khi tải thống kê kỹ năng từ API, dùng điểm mặc định:", err);
+      console.warn("Lỗi khi tải thống kê kỹ năng từ API:", err);
     } finally {
       setSkillsLoading(false);
     }
@@ -463,8 +463,10 @@ export const PersonalStatsPage: React.FC = () => {
   const recentSessions: RecentSession[] = stats?.recentSessions || [];
 
   const calcAverage = (skills: SkillScores) => {
-    const total = skills.listening + skills.speaking + skills.reading + skills.writing + skills.vocabGrammar;
-    return Math.round(total / 5);
+    const scores = [skills.listening, skills.speaking, skills.reading, skills.writing, skills.vocabGrammar];
+    const learnedScores = scores.filter(s => s > 0);
+    if (learnedScores.length === 0) return 0;
+    return Math.round(learnedScores.reduce((a, b) => a + b, 0) / learnedScores.length);
   };
 
   const currentAvg = calcAverage(skillsCurrent);

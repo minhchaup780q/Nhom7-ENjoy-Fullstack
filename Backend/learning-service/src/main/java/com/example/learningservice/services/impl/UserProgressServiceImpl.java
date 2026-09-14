@@ -224,7 +224,7 @@ public class UserProgressServiceImpl implements UserProgressService {
                 .filter(up -> {
                     LocalDateTime comp = up.getCompletedAt() != null ? up.getCompletedAt()
                             : (up.getUpdateAt() != null ? up.getUpdateAt() : up.getCreateAt());
-                    return comp != null && !comp.toLocalDate().isAfter(targetDate);
+                    return comp == null || !comp.toLocalDate().isAfter(targetDate);
                 })
                 .collect(Collectors.toList());
 
@@ -240,12 +240,13 @@ public class UserProgressServiceImpl implements UserProgressService {
 
         Map<String, Mistake> mistakeMap = new HashMap<>();
         for (Mistake m : allMistakes) {
-            LocalDateTime mCreated = m.getCreatedAt() != null ? m.getCreatedAt() : m.getCreateAt();
-            if (mCreated != null && !mCreated.toLocalDate().isAfter(targetDate)) {
-                if (m.getQuestion() != null) {
-                    String key = m.getQuestion().getId() + "_" + m.getRoundType();
-                    mistakeMap.put(key, m);
-                }
+            LocalDateTime mCreated = m.getCreatedAt() != null ? m.getCreatedAt()
+                    : (m.getCreateAt() != null ? m.getCreateAt() : null);
+            boolean isEligibleDate = (mCreated == null || !mCreated.toLocalDate().isAfter(targetDate));
+            if (isEligibleDate && m.getQuestion() != null) {
+                int rType = (m.getRoundType() != null) ? m.getRoundType() : 1;
+                mistakeMap.put(m.getQuestion().getId() + "_" + rType, m);
+                mistakeMap.putIfAbsent("q_" + m.getQuestion().getId(), m);
             }
         }
 
@@ -268,8 +269,12 @@ public class UserProgressServiceImpl implements UserProgressService {
                 String key = questionId + "_" + roundType;
 
                 double itemScore = 1.0;
-                if (mistakeMap.containsKey(key)) {
-                    Mistake m = mistakeMap.get(key);
+                Mistake m = mistakeMap.get(key);
+                if (m == null) {
+                    m = mistakeMap.get("q_" + questionId);
+                }
+
+                if (m != null) {
                     if (m.getLastPracticedAt() != null && !m.getLastPracticedAt().toLocalDate().isAfter(targetDate)) {
                         itemScore = (m.getMasteryScore() != null) ? m.getMasteryScore() : 0.0;
                     } else {
@@ -288,11 +293,11 @@ public class UserProgressServiceImpl implements UserProgressService {
         }
 
         return SkillComparisonResponse.SkillScoresDto.builder()
-                .listening(listeningCount > 0 ? Math.min(100, (int) Math.round((listeningScore / listeningCount) * 100.0)) : 100)
-                .speaking(speakingCount > 0 ? Math.min(100, (int) Math.round((speakingScore / speakingCount) * 100.0)) : 100)
-                .reading(readingCount > 0 ? Math.min(100, (int) Math.round((readingScore / readingCount) * 100.0)) : 100)
-                .writing(writingCount > 0 ? Math.min(100, (int) Math.round((writingScore / writingCount) * 100.0)) : 100)
-                .vocabGrammar(vocabGrammarCount > 0 ? Math.min(100, (int) Math.round((vocabGrammarScore / vocabGrammarCount) * 100.0)) : 100)
+                .listening(listeningCount > 0 ? Math.min(100, Math.max(0, (int) Math.round((listeningScore / listeningCount) * 100.0))) : 0)
+                .speaking(speakingCount > 0 ? Math.min(100, Math.max(0, (int) Math.round((speakingScore / speakingCount) * 100.0))) : 0)
+                .reading(readingCount > 0 ? Math.min(100, Math.max(0, (int) Math.round((readingScore / readingCount) * 100.0))) : 0)
+                .writing(writingCount > 0 ? Math.min(100, Math.max(0, (int) Math.round((writingScore / writingCount) * 100.0))) : 0)
+                .vocabGrammar(vocabGrammarCount > 0 ? Math.min(100, Math.max(0, (int) Math.round((vocabGrammarScore / vocabGrammarCount) * 100.0))) : 0)
                 .build();
     }
 
