@@ -21,7 +21,11 @@ public interface MistakeRepository extends JpaRepository<Mistake, Long> {
 
     Page<Mistake> findByUserIdAndStatus(Long userId, MistakeStatus status, Pageable pageable);
 
+    Page<Mistake> findByUserIdAndStatusIn(Long userId, List<MistakeStatus> statuses, Pageable pageable);
+
     Page<Mistake> findByUserIdAndStatusAndRoundType(Long userId, MistakeStatus status, Integer roundType, Pageable pageable);
+
+    Page<Mistake> findByUserIdAndStatusInAndRoundType(Long userId, List<MistakeStatus> statuses, Integer roundType, Pageable pageable);
 
     Page<Mistake> findByUserIdAndRoundType(Long userId, Integer roundType, Pageable pageable);
 
