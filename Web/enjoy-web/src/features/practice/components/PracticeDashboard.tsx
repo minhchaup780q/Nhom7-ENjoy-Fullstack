@@ -418,7 +418,7 @@ export const PracticeDashboard: React.FC = () => {
               </h3>
               <p className="text-xs font-semibold text-text-muted">
                 {statusFilter === 'NEEDS_REVIEW' 
-                  ? 'Bé không có lỗi sai nào cần ôn tập cả! Hãy tiếp tục luyện tập bài mới nhé!' 
+                  ? 'Bé đã hoàn thành các câu cần ôn hôm nay! Các bài tập đang theo dõi sẽ được nhắc lại vào ngày mai (bé có thể xem ở tab Lộ trình ôn tập).' 
                   : 'Bé chưa có câu hỏi nào đạt trạng thái Đã thành thạo trong danh mục này.'}
               </p>
             </div>
@@ -644,11 +644,10 @@ export const PracticeDashboard: React.FC = () => {
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-3xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-blue-600 font-display font-black text-sm uppercase">
-                  <SparklesIcon className="w-5 h-5 text-blue-500" />
-                  Theo Dõi Lộ Trình Lặp Lại Ngắt Quãng (Spaced Repetition)
+                  Theo Dõi Lộ Trình Lặp Lại
                 </div>
                 <p className="text-xs font-semibold text-slate-600 max-w-3xl leading-relaxed">
-                  Tab này dùng để <strong>theo dõi tiến độ nhắc nhở</strong> qua các ngày. Mỗi câu hỏi làm sai cần hoàn thành <strong>3 lần luyện tập đúng ở 3 ngày khác nhau</strong> (mỗi lần cách nhau $\ge 1$ ngày). Khi bé luyện tập đúng tại tab <em>Danh sách bài tập</em>, câu hỏi sẽ tự động nhảy lần lượt qua các cột bên dưới!
+                  Tab này dùng để <strong>theo dõi tiến độ nhắc nhở</strong> qua các ngày. Mỗi câu hỏi làm sai cần hoàn thành <strong>3 lần luyện tập đúng ở 3 ngày khác nhau</strong> (mỗi lần cách nhau 1 ngày).
                 </p>
               </div>
 
@@ -711,7 +710,7 @@ export const PracticeDashboard: React.FC = () => {
                           </div>
 
                           <div className="text-[10px] text-amber-700 font-semibold bg-white/80 p-1.5 rounded-lg border border-amber-200 flex items-center gap-1">
-                            <span>⚡ Vào tab "Danh sách bài tập" để ôn lượt 1</span>
+                            <span>Vào tab "Danh sách bài tập" để ôn lượt 1</span>
                           </div>
                         </div>
                       ))
@@ -763,7 +762,7 @@ export const PracticeDashboard: React.FC = () => {
                           </div>
 
                           <div className="text-[10px] text-blue-700 font-semibold bg-white/80 p-1.5 rounded-lg border border-blue-200 flex items-center gap-1">
-                            <span>⏳ Đã xong lượt 1! Hẹn gặp lại ngày mai</span>
+                            <span>Đã xong lượt 1! Hẹn gặp lại ngày mai</span>
                           </div>
                         </div>
                       ))
@@ -815,7 +814,7 @@ export const PracticeDashboard: React.FC = () => {
                           </div>
 
                           <div className="text-[10px] text-purple-700 font-semibold bg-white/80 p-1.5 rounded-lg border border-purple-200 flex items-center gap-1">
-                            <span>🎯 Đã xong lượt 2! Còn 1 lần ngày mai</span>
+                            <span>Đã xong lượt 2! Còn 1 lần ngày mai</span>
                           </div>
                         </div>
                       ))
@@ -848,7 +847,7 @@ export const PracticeDashboard: React.FC = () => {
                               {ROUND_INFO[item.roundType]?.name || `Vòng ${item.roundType}`}
                             </span>
                             <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">
-                              ✓ 3/3 Đúng
+                              3/3 Đúng
                             </span>
                           </div>
                           
