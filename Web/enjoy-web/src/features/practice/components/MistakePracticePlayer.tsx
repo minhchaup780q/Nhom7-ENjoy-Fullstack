@@ -324,14 +324,10 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
     if (correct) {
       setMasteredCount(prev => prev + 1);
       setTotalScore(prev => prev + 20);
-      mistakeApi.updateMistakeStatus(currentItem.id, 'MASTERED').catch(err => console.warn(err));
+      mistakeApi.submitPracticeStep(currentItem.id, true).catch(err => console.warn(err));
     } else {
       setHearts(prev => Math.max(0, prev - 1));
-      mistakeApi.logMistake({
-        questionId: currentItem.questionId,
-        roundType: currentItem.roundType,
-        wrongAnswerSubmitted: userAns || 'Chưa đúng',
-      }).catch(err => console.warn(err));
+      mistakeApi.submitPracticeStep(currentItem.id, false).catch(err => console.warn(err));
     }
   };
 

@@ -16,6 +16,10 @@ export interface MistakeItem {
   durationSeconds?: number;
   aiExplanationCache?: string | null;
   status: MistakeStatus;
+  correctStreakDays?: number; // 0, 1, 2, 3
+  masteryScore?: number; // 0.0 -> 0.33 -> 0.67 -> 1.0
+  lastPracticedAt?: string | null;
+  nextReviewAt?: string | null;
   createdAt: string;
 }
 
@@ -41,6 +45,9 @@ export interface MistakeStats {
   needsReviewCount: number;
   reviewedCount: number;
   masteredCount: number;
+  dueTodayCount?: number;
+  waiting1DayCount?: number;
+  waiting2DaysCount?: number;
 }
 
 export const mistakeApi = {
@@ -79,6 +86,16 @@ export const mistakeApi = {
         limit,
       },
     });
+  },
+
+  // Nộp kết quả luyện tập theo bước ngắt quãng (Spaced Repetition)
+  submitPracticeStep: (id: number, isCorrect: boolean) => {
+    return apiClient.post<MistakeItem>(`/api/mistakes/${id}/practice-step`, { isCorrect });
+  },
+
+  // Lấy toàn bộ danh sách câu hỏi để hiển thị Lộ trình nhắc nhở (1-2-3 Ngày)
+  getRoadmapMistakes: () => {
+    return apiClient.get<MistakeItem[]>('/api/mistakes/roadmap');
   },
 
   // Cập nhật trạng thái lỗi sai (NEEDS_REVIEW -> REVIEWED -> MASTERED)
