@@ -5,8 +5,11 @@ import com.example.learningservice.entities.enums.MistakeStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,12 +24,32 @@ public interface MistakeRepository extends JpaRepository<Mistake, Long> {
 
     Page<Mistake> findByUserIdAndStatus(Long userId, MistakeStatus status, Pageable pageable);
 
+    Page<Mistake> findByUserIdAndStatusIn(Long userId, List<MistakeStatus> statuses, Pageable pageable);
+
     Page<Mistake> findByUserIdAndStatusAndRoundType(Long userId, MistakeStatus status, Integer roundType, Pageable pageable);
+
+    Page<Mistake> findByUserIdAndStatusInAndRoundType(Long userId, List<MistakeStatus> statuses, Integer roundType, Pageable pageable);
 
     Page<Mistake> findByUserIdAndRoundType(Long userId, Integer roundType, Pageable pageable);
 
     Optional<Mistake> findByUserIdAndQuestionIdAndRoundType(Long userId, Long questionId, Integer roundType);
 
     long countByUserIdAndStatus(Long userId, MistakeStatus status);
+
+    @Query("SELECT m FROM Mistake m WHERE m.userId = :userId " +
+           "AND m.status != com.example.learningservice.entities.enums.MistakeStatus.MASTERED " +
+           "AND (m.lastPracticedAt IS NULL OR m.lastPracticedAt < :todayStart)")
+    Page<Mistake> findDueMistakesByUserId(@Param("userId") Long userId, 
+                                          @Param("todayStart") LocalDateTime todayStart, 
+                                          Pageable pageable);
+
+    @Query("SELECT m FROM Mistake m WHERE m.userId = :userId " +
+           "AND m.roundType = :roundType " +
+           "AND m.status != com.example.learningservice.entities.enums.MistakeStatus.MASTERED " +
+           "AND (m.lastPracticedAt IS NULL OR m.lastPracticedAt < :todayStart)")
+    Page<Mistake> findDueMistakesByUserIdAndRoundType(@Param("userId") Long userId, 
+                                                     @Param("roundType") Integer roundType, 
+                                                     @Param("todayStart") LocalDateTime todayStart, 
+                                                     Pageable pageable);
 }
 
