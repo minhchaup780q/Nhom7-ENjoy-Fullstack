@@ -69,6 +69,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   // Trạng thái cho Vòng 1 (INTRODUCTION): Giai đoạn 1 (Làm quen từ khóa) -> Giai đoạn 2 (Hội thoại)
   const [introPhase, setIntroPhase] = useState<'PREVIEW' | 'CONVERSATION'>('PREVIEW');
   const [previewIndex, setPreviewIndex] = useState(0);
+  const [maxConversationIndex, setMaxConversationIndex] = useState<number>(-1);
 
   // Trạng thái cho Vòng 4 (WORD_RECOGNITION - QUIZ)
   const [quizOptions, setQuizOptions] = useState<string[]>([]);
@@ -125,10 +126,11 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     setPlayItems(items);
   }, [sessionItems, session.sessionType]);
 
-  // Reset phase khi đổi session
+  // Reset phase (phase chỉ tính ở INTRODUCTION, gồm 2 phase là PREVIEW và CONVERSATION) khi đổi session
   useEffect(() => {
     setIntroPhase('PREVIEW');
     setPreviewIndex(0);
+    setMaxConversationIndex(-1);
     hasAutoPlayedConvRef.current = false;
   }, [session.id]);
 
@@ -141,10 +143,22 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   const currentItems = playItems;
   const currentItem = currentItems[currentStepIndex];
 
-  // Tính thanh tiến trình
-  const progressPercent = session.sessionType === 'INTRODUCTION' && introPhase === 'PREVIEW'
-    ? (previewKeywords.length > 0 ? ((previewIndex + 1) / previewKeywords.length) * 100 : 0)
-    : (currentItems.length > 0 ? ((currentStepIndex) / currentItems.length) * 100 : 0);
+  // Tính thanh tiến trình (INTRODUCTION: 50% Preview + 50% Conversation chia theo từng câu thoại)
+  const progressPercent = useMemo(() => {
+    if (session.sessionType === 'INTRODUCTION') {
+      if (introPhase === 'PREVIEW') {
+        if (previewKeywords.length === 0) return 50;
+        return Math.min(50, Math.round(((previewIndex + 1) / previewKeywords.length) * 50));
+      } else {
+        // Giai đoạn CONVERSATION: khởi điểm từ 50%, tăng dần theo từng câu thoại được xem/nghe
+        if (playItems.length === 0) return 100;
+        const reachedStep = maxConversationIndex >= 0 ? maxConversationIndex + 1 : 0;
+        const convProgress = Math.round((reachedStep / playItems.length) * 50);
+        return Math.min(100, Math.max(50, 50 + convProgress));
+      }
+    }
+    return currentItems.length > 0 ? Math.min(100, Math.round((currentStepIndex / currentItems.length) * 100)) : 0;
+  }, [session.sessionType, introPhase, previewKeywords.length, previewIndex, playItems.length, maxConversationIndex, currentStepIndex, currentItems.length]);
 
   // Xác định Layout hiển thị
   const getActiveLayout = (): 'INTRODUCTION' | 'LISTENING' | 'SPEAKING' | 'QUIZ' | 'FILL_IN_BLANK' | 'UNKNOWN' => {
@@ -241,6 +255,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     }
 
     setPlayingLineIndex(index);
+    setMaxConversationIndex(prev => Math.max(prev, index));
     if (autoAdvance) {
       setIsAutoPlayingAll(true);
     }
@@ -1310,6 +1325,12 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
               {/* Chat Stream: Cuộn thẳng xuống */}
               <div
                 ref={chatContainerRef}
+                onScroll={(e) => {
+                  const target = e.currentTarget;
+                  if (target.scrollTop + target.clientHeight >= target.scrollHeight - 50) {
+                    setMaxConversationIndex(playItems.length - 1);
+                  }
+                }}
                 className="w-full bg-slate-50/80 border-2 border-border-main/60 rounded-3xl p-4 sm:p-6 shadow-inner max-h-[60vh] overflow-y-auto space-y-5 scroll-smooth"
               >
                 {playItems.map((item, idx) => {
@@ -1973,7 +1994,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                     TRỞ LẠI
                   </Button3D>
                   <Button3D
-                    variant="pink"
+                    variant={maxConversationIndex >= playItems.length - 1 ? "green" : "pink"}
                     onClick={() => {
                       if (currentAudio) currentAudio.pause();
                       if ('speechSynthesis' in window) window.speechSynthesis.cancel();
