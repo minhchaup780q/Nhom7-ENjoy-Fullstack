@@ -105,15 +105,15 @@ public class MistakeServiceImpl implements MistakeService {
     @Transactional(readOnly = true)
     public PageResponse<MistakeResponse> getUserMistakesPaged(Long userId, MistakeStatus status, Integer roundType, int page, int size) {
         Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, size), Sort.by(Sort.Direction.DESC, "createdAt"));
+        LocalDateTime todayStart = LocalDate.now().atStartOfDay();
         
         Page<Mistake> mistakePage;
         if (status == MistakeStatus.NEEDS_REVIEW) {
-            // Khi xem danh sách CẦN ÔN TẬP, hiển thị tất cả các câu chưa Mastered (NEEDS_REVIEW và REVIEWED)
-            List<MistakeStatus> unmasteredStatuses = List.of(MistakeStatus.NEEDS_REVIEW, MistakeStatus.REVIEWED);
+            // Khi xem danh sách CẦN ÔN TẬP: Chỉ hiển thị các câu đến hạn ôn hôm nay (câu nào ôn rồi hôm nay sẽ ẩn đi)
             if (roundType != null) {
-                mistakePage = mistakeRepository.findByUserIdAndStatusInAndRoundType(userId, unmasteredStatuses, roundType, pageable);
+                mistakePage = mistakeRepository.findDueMistakesByUserIdAndRoundType(userId, roundType, todayStart, pageable);
             } else {
-                mistakePage = mistakeRepository.findByUserIdAndStatusIn(userId, unmasteredStatuses, pageable);
+                mistakePage = mistakeRepository.findDueMistakesByUserId(userId, todayStart, pageable);
             }
         } else if (status != null && roundType != null) {
             mistakePage = mistakeRepository.findByUserIdAndStatusAndRoundType(userId, status, roundType, pageable);
@@ -133,12 +133,12 @@ public class MistakeServiceImpl implements MistakeService {
     @Transactional(readOnly = true)
     public List<MistakeResponse> getPracticeQueue(Long userId, Integer roundType, int limit) {
         Pageable pageable = PageRequest.of(0, Math.max(1, limit), Sort.by(Sort.Direction.DESC, "createdAt"));
+        LocalDateTime todayStart = LocalDate.now().atStartOfDay();
         Page<Mistake> mistakePage;
-        List<MistakeStatus> unmasteredStatuses = List.of(MistakeStatus.NEEDS_REVIEW, MistakeStatus.REVIEWED);
         if (roundType != null) {
-            mistakePage = mistakeRepository.findByUserIdAndStatusInAndRoundType(userId, unmasteredStatuses, roundType, pageable);
+            mistakePage = mistakeRepository.findDueMistakesByUserIdAndRoundType(userId, roundType, todayStart, pageable);
         } else {
-            mistakePage = mistakeRepository.findByUserIdAndStatusIn(userId, unmasteredStatuses, pageable);
+            mistakePage = mistakeRepository.findDueMistakesByUserId(userId, todayStart, pageable);
         }
         return mistakePage.getContent().stream()
                 .map(MistakeResponse::fromEntity)
@@ -251,18 +251,16 @@ public class MistakeServiceImpl implements MistakeService {
 
             if (st == MistakeStatus.MASTERED || streak >= 3) {
                 mastered++;
-            } else if (st == MistakeStatus.REVIEWED || streak > 0) {
-                reviewed++;
-                if (isDueToday) {
-                    dueToday++;
-                } else if (streak == 1) {
+            } else if (isDueToday) {
+                dueToday++;
+                needsReview++; // Số câu cần ôn tập hôm nay
+            } else {
+                reviewed++; // Đang trong lịch chờ ngày tiếp theo
+                if (streak == 1) {
                     waiting1Day++;
                 } else if (streak == 2) {
                     waiting2Days++;
                 }
-            } else {
-                needsReview++;
-                dueToday++;
             }
         }
 
