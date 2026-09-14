@@ -245,8 +245,8 @@ public class UserProgressServiceImpl implements UserProgressService {
             boolean isEligibleDate = (mCreated == null || !mCreated.toLocalDate().isAfter(targetDate));
             if (isEligibleDate && m.getQuestion() != null) {
                 int rType = (m.getRoundType() != null) ? m.getRoundType() : 1;
+                // Lưu chính xác theo questionId_roundType để tránh nhầm lẫn giữa các kỹ năng
                 mistakeMap.put(m.getQuestion().getId() + "_" + rType, m);
-                mistakeMap.putIfAbsent("q_" + m.getQuestion().getId(), m);
             }
         }
 
@@ -270,9 +270,6 @@ public class UserProgressServiceImpl implements UserProgressService {
 
                 double itemScore = 1.0;
                 Mistake m = mistakeMap.get(key);
-                if (m == null) {
-                    m = mistakeMap.get("q_" + questionId);
-                }
 
                 if (m != null) {
                     if (m.getLastPracticedAt() != null && !m.getLastPracticedAt().toLocalDate().isAfter(targetDate)) {
