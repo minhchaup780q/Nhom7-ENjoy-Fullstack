@@ -49,15 +49,18 @@ export const learningApi = {
     return apiClient.get<UserProgress[]>('/api/progress/my-progress');
   },
 
-  // Lấy thống kê học tập cá nhân của User hiện tại
-  getUserStats: () => {
-    return apiClient.get<UserStats>('/api/progress/stats');
+  // Lấy thống kê học tập cá nhân của User hiện tại hoặc của con (dành cho phụ huynh)
+  getUserStats: (userId?: number) => {
+    return apiClient.get<UserStats>('/api/progress/stats', {
+      params: userId ? { userId } : {}
+    });
   },
 
-  // Lấy thống kê 5 kỹ năng và so sánh 2 mốc ngày
-  getSkillStats: (date?: string, compareDate?: string) => {
+  // Lấy thống kê 5 kỹ năng và so sánh 2 mốc ngày (hỗ trợ userId cho phụ huynh xem của con)
+  getSkillStats: (date?: string, compareDate?: string, userId?: number) => {
     return apiClient.get<SkillComparisonStats>('/api/progress/stats/skills', {
       params: {
+        ...(userId ? { userId } : {}),
         ...(date ? { date } : {}),
         ...(compareDate ? { compareDate } : {})
       }

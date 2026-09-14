@@ -28,7 +28,10 @@ public class UserProgressController {
     }
 
     @GetMapping("/stats")
-    public ResponseEntity<UserStatsResponse> getMyStats(@RequestHeader(value = "X-User-Id", required = false) Long userId) {
+    public ResponseEntity<UserStatsResponse> getMyStats(
+            @RequestHeader(value = "X-User-Id", required = false) Long headerUserId,
+            @RequestParam(value = "userId", required = false) Long queryUserId) {
+        Long userId = (queryUserId != null) ? queryUserId : headerUserId;
         if (userId == null) {
             return ResponseEntity.badRequest().build();
         }
@@ -41,7 +44,7 @@ public class UserProgressController {
             @RequestParam(value = "userId", required = false) Long queryUserId,
             @RequestParam(value = "date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(value = "compareDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate compareDate) {
-        Long userId = (headerUserId != null) ? headerUserId : queryUserId;
+        Long userId = (queryUserId != null) ? queryUserId : headerUserId;
         if (userId == null) {
             return ResponseEntity.badRequest().build();
         }

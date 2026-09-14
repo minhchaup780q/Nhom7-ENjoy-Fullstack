@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   XMarkIcon, 
   UserGroupIcon, 
@@ -13,7 +14,8 @@ import {
   AcademicCapIcon,
   UserIcon,
   InformationCircleIcon,
-  HeartIcon
+  HeartIcon,
+  ChartBarIcon
 } from '@heroicons/react/24/outline';
 import { Button3D } from '../../../components/ui/Button3D';
 import { familyApi, type FamilyMember } from '../services/familyApi';
@@ -37,6 +39,7 @@ export const FamilyManagementModal: React.FC<FamilyManagementModalProps> = ({
   const user = useAuthStore((state) => state.user);
   const accessToken = useAuthStore((state) => state.accessToken);
   const setAuth = useAuthStore((state) => state.setAuth);
+  const navigate = useNavigate();
 
   const [currentRole, setCurrentRole] = useState<string | undefined>(user?.role);
   const [currentUserEmail, setCurrentUserEmail] = useState<string | undefined>(user?.email || propUserEmail);
@@ -356,14 +359,29 @@ export const FamilyManagementModal: React.FC<FamilyManagementModalProps> = ({
                           </div>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveLink(child.id)}
-                          className="p-2 text-text-muted hover:text-red-600 hover:bg-red-50 rounded-xl border border-transparent hover:border-red-200 transition cursor-pointer"
-                          title="Hủy liên kết"
-                        >
-                          <TrashIcon className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onClose();
+                              navigate(`/stats?childId=${child.studentId}`);
+                            }}
+                            className="px-3 py-1.5 text-[11px] font-bold text-primary bg-primary-soft hover:bg-pink-100 rounded-xl border border-primary/20 transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                            title="Xem thống kê của con"
+                          >
+                            <ChartBarIcon className="w-4 h-4 stroke-[2.5]" />
+                            <span>Xem thống kê</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveLink(child.id)}
+                            className="p-2 text-text-muted hover:text-red-600 hover:bg-red-50 rounded-xl border border-transparent hover:border-red-200 transition cursor-pointer"
+                            title="Hủy liên kết"
+                          >
+                            <TrashIcon className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>

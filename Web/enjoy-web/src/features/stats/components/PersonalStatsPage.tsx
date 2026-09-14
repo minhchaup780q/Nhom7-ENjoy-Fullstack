@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { learningApi, type UserStats, type DailyStudyTime, type RecentSession } from '../../learning/services/learningApi';
+import { familyApi, type FamilyMember } from '../../profile/services/familyApi';
+import { FamilyManagementModal } from '../../profile/components/FamilyManagementModal';
+import { useAuthStore } from '../../auth/store/useAuthStore';
 import { 
   ArrowPathIcon,
   CalendarDaysIcon,
@@ -12,7 +16,11 @@ import {
   BookOpenIcon,
   PencilSquareIcon,
   LanguageIcon,
-  CheckCircleIcon,
+  AcademicCapIcon,
+  UserGroupIcon,
+  HeartIcon,
+  PlusIcon,
+  CheckBadgeIcon
 } from '@heroicons/react/24/outline';
 
 const DEFAULT_WEEKLY_DAYS = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN'];
@@ -356,8 +364,17 @@ const SpiderChart5D: React.FC<SpiderChart5DProps> = ({
 };
 
 export const PersonalStatsPage: React.FC = () => {
+  const user = useAuthStore((state) => state.user);
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+
+  // Phụ huynh và con cái
+  const [isParent, setIsParent] = useState<boolean>(user?.role === 'ROLE_PARENT');
+  const [linkedChildren, setLinkedChildren] = useState<FamilyMember[]>([]);
+  const [selectedChild, setSelectedChild] = useState<FamilyMember | null>(null);
+  const [isFamilyModalOpen, setIsFamilyModalOpen] = useState<boolean>(false);
 
   // Tab chuyển đổi: 'current' (Biểu đồ hiện tại) | 'compare' (So sánh 2 ngày)
   const [activeSkillTab, setActiveSkillTab] = useState<'current' | 'compare'>('current');
@@ -393,14 +410,62 @@ export const PersonalStatsPage: React.FC = () => {
   const [skillsLoading, setSkillsLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    fetchStats();
-    fetchSkillStats(currentDate, previousDate);
-  }, []);
+    initPageData();
+  }, [user?.role]);
 
-  const fetchStats = async () => {
+  const initPageData = async () => {
+    const isParentRole = user?.role === 'ROLE_PARENT';
+    setIsParent(isParentRole);
+
+    if (isParentRole) {
+      setLoading(true);
+      try {
+        const familyData = await familyApi.getOverview();
+        const children = familyData.linkedMembers || [];
+        setLinkedChildren(children);
+
+        const childIdParam = searchParams.get('childId');
+        let targetChild: FamilyMember | null = null;
+        if (childIdParam) {
+          targetChild = children.find(c => c.studentId === Number(childIdParam)) || null;
+        }
+        if (!targetChild && children.length > 0) {
+          targetChild = children[0];
+        }
+
+        setSelectedChild(targetChild);
+
+        if (targetChild) {
+          await Promise.all([
+            fetchStats(targetChild.studentId),
+            fetchSkillStats(currentDate, previousDate, targetChild.studentId)
+          ]);
+        } else {
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("Lỗi khi tải dữ liệu gia đình:", err);
+        setLoading(false);
+      }
+    } else {
+      await Promise.all([
+        fetchStats(),
+        fetchSkillStats(currentDate, previousDate)
+      ]);
+    }
+  };
+
+  const handleSelectChild = (child: FamilyMember) => {
+    setSelectedChild(child);
+    setSearchParams({ childId: String(child.studentId) });
+    fetchStats(child.studentId);
+    fetchSkillStats(currentDate, previousDate, child.studentId);
+  };
+
+  const fetchStats = async (targetUserId?: number) => {
     setLoading(true);
     try {
-      const res = await learningApi.getUserStats();
+      const res = await learningApi.getUserStats(targetUserId);
       const data = (res as any)?.data !== undefined ? (res as any).data : res;
       setStats(data);
     } catch (err) {
@@ -421,10 +486,11 @@ export const PersonalStatsPage: React.FC = () => {
     }
   };
 
-  const fetchSkillStats = async (curr: string, prev: string) => {
+  const fetchSkillStats = async (curr: string, prev: string, targetUserId?: number) => {
     setSkillsLoading(true);
     try {
-      const res = await learningApi.getSkillStats(curr, prev);
+      const activeUserId = targetUserId ?? (isParent ? selectedChild?.studentId : undefined);
+      const res = await learningApi.getSkillStats(curr, prev, activeUserId);
       const data = (res as any)?.data !== undefined ? (res as any).data : res;
       if (data?.currentSkills) {
         setSkillsCurrent(data.currentSkills);
@@ -447,11 +513,11 @@ export const PersonalStatsPage: React.FC = () => {
 
     const prevStr = prev.toISOString().split('T')[0];
     setPreviousDate(prevStr);
-    fetchSkillStats(currentDate, prevStr);
+    fetchSkillStats(currentDate, prevStr, isParent ? selectedChild?.studentId : undefined);
   };
 
   const handleApplyDates = () => {
-    fetchSkillStats(currentDate, previousDate);
+    fetchSkillStats(currentDate, previousDate, isParent ? selectedChild?.studentId : undefined);
   };
 
   const totalWeeklyMinutes = stats?.weeklyStudyMinutes ?? 0;
@@ -478,7 +544,7 @@ export const PersonalStatsPage: React.FC = () => {
     return dateStr.split('-').reverse().join('/');
   };
 
-  if (loading) {
+  if (loading && !stats) {
     return (
       <div className="flex-1 w-full max-w-5xl mx-auto px-4 py-20 flex flex-col items-center justify-center space-y-3">
         <ArrowPathIcon className="w-8 h-8 text-[#ff5e97] animate-spin" />
@@ -490,19 +556,134 @@ export const PersonalStatsPage: React.FC = () => {
   return (
     <div className="flex-1 w-full max-w-5xl mx-auto px-4 py-8 space-y-8 select-none">
       
-      {/* 1. Header Trang */}
-      <div className="border-b border-slate-200 pb-5 space-y-1">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-[#ff5e97] uppercase tracking-wider">
-            Phân tích & Tiến trình
-          </span>
+      {/* 1. Header Trang & Bộ chọn Con dành cho Phụ huynh */}
+      <div className="border-b border-slate-200 pb-5 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-[#ff5e97] uppercase tracking-wider flex items-center gap-1.5">
+                {isParent ? (
+                  <>
+                    <HeartIcon className="w-4 h-4 text-primary stroke-[2.5]" />
+                    Dành cho Phụ Huynh • Giám sát & Đồng hành
+                  </>
+                ) : (
+                  'Phân tích & Tiến trình'
+                )}
+              </span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              {isParent ? 'THEO DÕI NĂNG LỰC & TIẾN ĐỘ HỌC CỦA CON' : 'THỐNG KÊ HỌC TẬP CÁ NHÂN'}
+            </h1>
+            <p className="text-sm text-slate-600">
+              {isParent
+                ? 'Xem chi tiết đánh giá năng lực 5 kỹ năng, thời lượng học và các bài học gần đây của các con'
+                : 'Theo dõi chi tiết thời lượng học tập và năng lực 5 kỹ năng của bạn'}
+            </p>
+          </div>
+
+          {isParent && (
+            <button
+              type="button"
+              onClick={() => setIsFamilyModalOpen(true)}
+              className="self-start sm:self-auto px-4 py-2.5 rounded-2xl bg-white border-2 border-primary/30 hover:border-primary text-primary font-display font-extrabold text-xs tracking-wider flex items-center gap-2 shadow-xs hover:bg-pink-50/50 transition cursor-pointer"
+            >
+              <UserGroupIcon className="w-4 h-4 stroke-[2.5]" />
+              QUẢN LÝ GIA ĐÌNH
+            </button>
+          )}
         </div>
-        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-          THỐNG KÊ HỌC TẬP CÁ NHÂN
-        </h1>
-        <p className="text-sm text-slate-600">
-          Theo dõi chi tiết thời lượng học tập và năng lực 5 kỹ năng của bạn
-        </p>
+
+        {/* Thanh chọn hồ sơ con cái */}
+        {isParent && (
+          <div className="bg-gradient-to-r from-pink-50/60 via-slate-50 to-pink-50/40 border-2 border-primary/20 rounded-3xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <AcademicCapIcon className="w-5 h-5 text-primary stroke-[2.5]" />
+                <span className="text-xs font-display font-black text-slate-800 uppercase tracking-wide">
+                  Chọn hồ sơ con ({linkedChildren.length} bé đã liên kết):
+                </span>
+              </div>
+            </div>
+
+            {linkedChildren.length === 0 ? (
+              <div className="bg-white border-2 border-dashed border-primary/30 rounded-2xl p-5 text-center space-y-3">
+                <div className="w-10 h-10 rounded-2xl bg-primary-soft text-primary flex items-center justify-center mx-auto">
+                  <UserGroupIcon className="w-6 h-6 stroke-[2]" />
+                </div>
+                <div>
+                  <p className="text-xs font-display font-black text-slate-800">
+                    Bạn chưa liên kết tài khoản con nào
+                  </p>
+                  <p className="text-[11px] text-slate-500 max-w-md mx-auto mt-0.5">
+                    Hãy liên kết tài khoản của con để theo dõi biểu đồ 5 kỹ năng, so sánh sự tiến bộ và xem các bài học bé đã hoàn thành!
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsFamilyModalOpen(true)}
+                  className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary-dark transition shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+                >
+                  <PlusIcon className="w-4 h-4 stroke-[2.5]" />
+                  Liên kết tài khoản con ngay
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2.5">
+                {linkedChildren.map((child) => {
+                  const isSelected = selectedChild?.studentId === child.studentId;
+                  return (
+                    <button
+                      key={child.id}
+                      type="button"
+                      onClick={() => handleSelectChild(child)}
+                      className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl border-2 transition-all cursor-pointer ${
+                        isSelected
+                          ? 'bg-primary text-white border-primary shadow-md scale-[1.02]'
+                          : 'bg-white text-slate-700 border-border-main hover:border-primary/40 hover:bg-pink-50/30'
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                        isSelected ? 'bg-white/20 text-white' : 'bg-primary-soft text-primary'
+                      }`}>
+                        <AcademicCapIcon className="w-4 h-4 stroke-[2.5]" />
+                      </div>
+                      <div className="text-left">
+                        <p className={`text-xs font-display font-black leading-tight ${isSelected ? 'text-white' : 'text-slate-800'}`}>
+                          {child.studentName || 'Học sinh'}
+                        </p>
+                        <p className={`text-[10px] font-medium leading-tight ${isSelected ? 'text-white/80' : 'text-slate-400'}`}>
+                          {child.studentEmail}
+                        </p>
+                      </div>
+                      {isSelected && (
+                        <CheckBadgeIcon className="w-5 h-5 text-white shrink-0 ml-1" />
+                      )}
+                    </button>
+                  );
+                })}
+
+                <button
+                  type="button"
+                  onClick={() => setIsFamilyModalOpen(true)}
+                  className="px-3.5 py-2.5 rounded-2xl border-2 border-dashed border-primary/40 hover:border-primary text-primary text-xs font-display font-bold flex items-center gap-1.5 bg-white/60 hover:bg-pink-50/50 transition cursor-pointer"
+                >
+                  <PlusIcon className="w-4 h-4 stroke-[2.5]" />
+                  Thêm con
+                </button>
+              </div>
+            )}
+
+            {selectedChild && (
+              <div className="text-[11px] font-bold text-slate-600 bg-white px-3.5 py-2 rounded-xl border border-primary/20 flex items-center gap-2">
+                <SparklesIcon className="w-4 h-4 text-primary shrink-0" />
+                <span>
+                  Đang hiển thị dữ liệu của bé: <strong className="text-primary">{selectedChild.studentName || selectedChild.studentEmail}</strong>
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 2. Thẻ chỉ số tổng quan */}
@@ -585,8 +766,9 @@ export const PersonalStatsPage: React.FC = () => {
         {/* Header & 2 Tabs Switcher */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
           <div>
-            <h2 className="text-lg font-black text-slate-800 uppercase tracking-wide">
+            <h2 className="text-lg font-black text-slate-800 uppercase tracking-wide flex items-center gap-2">
               Đánh giá năng lực 5 kỹ năng
+              {skillsLoading && <ArrowPathIcon className="w-4 h-4 text-primary animate-spin" />}
             </h2>
             <p className="text-xs text-slate-500">
               {activeSkillTab === 'current'
@@ -996,7 +1178,19 @@ export const PersonalStatsPage: React.FC = () => {
         )}
       </div>
 
+      {/* Modal Quản lý gia đình khi phụ huynh muốn thêm hoặc sửa đổi danh sách con */}
+      <FamilyManagementModal
+        isOpen={isFamilyModalOpen}
+        onClose={() => {
+          setIsFamilyModalOpen(false);
+          initPageData();
+        }}
+        isParent={isParent}
+        userEmail={user?.email}
+      />
+
     </div>
   );
 };
+
 
