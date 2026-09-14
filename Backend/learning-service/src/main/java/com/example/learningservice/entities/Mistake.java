@@ -48,6 +48,20 @@ public class Mistake extends BaseEntity {
     @Builder.Default
     private MistakeStatus status = MistakeStatus.NEEDS_REVIEW;
 
+    @Column(name = "correct_streak_days")
+    @Builder.Default
+    private Integer correctStreakDays = 0; // 0, 1, 2, 3 lần đúng cách ngày
+
+    @Column(name = "mastery_score")
+    @Builder.Default
+    private Double masteryScore = 0.0; // 0.0 -> 0.33 -> 0.67 -> 1.0
+
+    @Column(name = "last_practiced_at")
+    private LocalDateTime lastPracticedAt; // Lần gần nhất làm đúng trong bài luyện tập
+
+    @Column(name = "next_review_at")
+    private LocalDateTime nextReviewAt; // Ngày tiếp theo có thể ôn tập (+1 ngày)
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -58,6 +72,12 @@ public class Mistake extends BaseEntity {
         }
         if (this.status == null) {
             this.status = MistakeStatus.NEEDS_REVIEW;
+        }
+        if (this.correctStreakDays == null) {
+            this.correctStreakDays = 0;
+        }
+        if (this.masteryScore == null) {
+            this.masteryScore = 0.0;
         }
         if (getCreateAt() == null) {
             setCreateAt(LocalDateTime.now());
