@@ -25,6 +25,24 @@ export interface UserStats {
   recentSessions: RecentSession[];
 }
 
+export interface SkillScores {
+  listening: number;
+  speaking: number;
+  reading: number;
+  writing: number;
+  vocabGrammar: number;
+}
+
+export interface SkillComparisonStats {
+  currentDate: string;
+  previousDate: string;
+  currentSkills: SkillScores;
+  previousSkills: SkillScores;
+  totalCompletedLessons: number;
+  totalMistakes: number;
+  masteredMistakes: number;
+}
+
 export const learningApi = {
   // Lấy tiến độ học cá nhân của User hiện tại
   getUserProgress: () => {
@@ -34,6 +52,16 @@ export const learningApi = {
   // Lấy thống kê học tập cá nhân của User hiện tại
   getUserStats: () => {
     return apiClient.get<UserStats>('/api/progress/stats');
+  },
+
+  // Lấy thống kê 5 kỹ năng và so sánh 2 mốc ngày
+  getSkillStats: (date?: string, compareDate?: string) => {
+    return apiClient.get<SkillComparisonStats>('/api/progress/stats/skills', {
+      params: {
+        ...(date ? { date } : {}),
+        ...(compareDate ? { compareDate } : {})
+      }
+    });
   },
 
   // Đánh dấu hoàn thành bài học và mở khóa bài tiếp theo cho User hiện tại
