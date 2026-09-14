@@ -1,12 +1,15 @@
 package com.example.learningservice.controllers;
 
+import com.example.learningservice.dto.SkillComparisonResponse;
 import com.example.learningservice.dto.UserStatsResponse;
 import com.example.learningservice.entities.UserProgress;
 import com.example.learningservice.services.UserProgressService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -30,6 +33,19 @@ public class UserProgressController {
             return ResponseEntity.badRequest().build();
         }
         return ResponseEntity.ok(userProgressService.getUserStats(userId));
+    }
+
+    @GetMapping("/stats/skills")
+    public ResponseEntity<SkillComparisonResponse> getSkillStats(
+            @RequestHeader(value = "X-User-Id", required = false) Long headerUserId,
+            @RequestParam(value = "userId", required = false) Long queryUserId,
+            @RequestParam(value = "date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(value = "compareDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate compareDate) {
+        Long userId = (headerUserId != null) ? headerUserId : queryUserId;
+        if (userId == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(userProgressService.getSkillComparisonStats(userId, date, compareDate));
     }
 
     @PostMapping("/complete/{sessionId}")
