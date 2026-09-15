@@ -7,15 +7,15 @@ import { Button3D } from '../../../components/ui/Button3D';
 import { BASE_URL } from '../../../services/apiClient';
 import { learningApi } from '../services/learningApi';
 import { mistakeApi } from '../services/mistakeApi';
-import { 
-  XMarkIcon, 
-  HeartIcon, 
-  SpeakerWaveIcon, 
-  MicrophoneIcon, 
-  StopIcon, 
-  PlayIcon, 
-  ArrowPathIcon, 
-  CheckCircleIcon, 
+import {
+  XMarkIcon,
+  HeartIcon,
+  SpeakerWaveIcon,
+  MicrophoneIcon,
+  StopIcon,
+  PlayIcon,
+  ArrowPathIcon,
+  CheckCircleIcon,
   ExclamationTriangleIcon,
   LightBulbIcon,
   ChatBubbleLeftRightIcon
@@ -406,15 +406,14 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
             return (
               <span
                 key={idx}
-                className={`inline-block px-3 py-1 rounded-xl border-2 font-display font-extrabold text-base transition-all duration-200 ${
-                  isChecked
+                className={`inline-block px-3 py-1 rounded-xl border-2 font-display font-extrabold text-base transition-all duration-200 ${isChecked
                     ? isCorrect
                       ? 'bg-green-100 border-green-500 text-green-700 shadow-sm'
                       : 'bg-red-100 border-red-500 text-red-700 shadow-sm'
                     : selectedOption
                       ? 'bg-primary-soft border-primary text-primary shadow-[0_2px_0_0_#d93d74]'
                       : 'bg-slate-100 border-dashed border-primary/60 text-primary min-w-[70px] text-center'
-                }`}
+                  }`}
               >
                 {displayText}
               </span>
@@ -1130,11 +1129,10 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       </header>
 
       {/* Main Core Question Area */}
-      <main className={`w-full mx-auto px-4 sm:px-6 flex-1 flex flex-col space-y-6 transition-all duration-300 ${
-        activeLayout === 'INTRODUCTION' && introPhase === 'CONVERSATION' 
-          ? 'w-full md:w-[50%] max-w-none py-2 justify-start' 
+      <main className={`w-full mx-auto px-4 sm:px-6 flex-1 flex flex-col space-y-6 transition-all duration-300 ${activeLayout === 'INTRODUCTION' && introPhase === 'CONVERSATION'
+          ? 'w-full md:w-[50%] max-w-none py-2 justify-start'
           : 'max-w-2xl py-6 justify-center'
-      }`}>
+        }`}>
 
         {/* Render Title/Task */}
         {!(activeLayout === 'INTRODUCTION' && introPhase === 'CONVERSATION') && (
@@ -1206,11 +1204,10 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                       {/* Speaker Button: Speaks keyword using keywordAudioUrl or Web Speech API */}
                       <button
                         onClick={() => playKeywordAudio(previewKeywords[previewIndex])}
-                        className={`btn-3d w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer ${
-                          isPlayingAudio
+                        className={`btn-3d w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer ${isPlayingAudio
                             ? 'btn-3d-pink scale-110 animate-pulse'
                             : 'btn-3d-blue hover:scale-105'
-                        }`}
+                          }`}
                         title="Phát âm từ vựng"
                       >
                         <SpeakerWaveIcon className="w-6 h-6 text-white" />
@@ -1331,7 +1328,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                     setMaxConversationIndex(playItems.length - 1);
                   }
                 }}
-                className="w-full bg-slate-50/80 border-2 border-border-main/60 rounded-3xl p-4 sm:p-6 shadow-inner max-h-[60vh] overflow-y-auto space-y-5 scroll-smooth"
+                className="w-full bg-slate-50/80 border-2 border-border-main/60 rounded-3xl p-4 sm:p-6 shadow-inner max-h-[65vh] overflow-y-auto space-y-5 scroll-smooth"
               >
                 {playItems.map((item, idx) => {
                   const isA = item.speakerRole === SpeakerRole.SPEAKER_1 || item.speakerRole === 'SPEAKER_1' || !item.speakerRole;
@@ -1345,17 +1342,15 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                     >
                       {/* BUBBLE CHỨA TEXT */}
                       <div
-                        className={`relative w-fit max-w-[85%] sm:max-w-[75%] p-4 sm:p-5 rounded-3xl border-2 transition-all duration-300 shadow-sm ${
-                          isA
+                        className={`relative w-fit max-w-[85%] sm:max-w-[75%] p-4 sm:p-5 rounded-3xl border-2 transition-all duration-300 shadow-sm ${isA
                             ? 'bg-[#FFF9E6] border-[#FDE68A] text-slate-900 rounded-tl-sm'
                             : 'bg-[#F5F3FF] border-[#DDD6FE] text-slate-900 rounded-tr-sm'
-                        } ${
-                          isLinePlaying
+                          } ${isLinePlaying
                             ? isA
                               ? 'ring-4 ring-amber-400/60 scale-[1.02] shadow-md border-amber-400'
                               : 'ring-4 ring-purple-400/60 scale-[1.02] shadow-md border-purple-400'
                             : ''
-                        }`}
+                          }`}
                       >
                         {/* Triangle pointer */}
                         {isA ? (
@@ -1372,15 +1367,14 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                           <button
                             type="button"
                             onClick={() => playConversationLine(idx, false)}
-                            className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer mt-0.5 ${
-                              isLinePlaying
+                            className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer mt-0.5 ${isLinePlaying
                                 ? isA
                                   ? 'bg-amber-500 text-white scale-110 shadow-sm animate-pulse'
                                   : 'bg-purple-600 text-white scale-110 shadow-sm animate-pulse'
                                 : isA
                                   ? 'bg-amber-100 hover:bg-amber-200 text-amber-800'
                                   : 'bg-purple-100 hover:bg-purple-200 text-purple-800'
-                            }`}
+                              }`}
                             title="Nghe câu này"
                           >
                             <SpeakerWaveIcon className="w-4 h-4" />
@@ -1389,9 +1383,8 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
 
                         {/* Translation */}
                         {item.translation && (
-                          <p className={`text-xs sm:text-base font-bold border-t pt-2 mt-3 m-0 ${
-                            isA ? 'text-amber-900/80 border-amber-200/80' : 'text-purple-900/80 border-purple-200/80'
-                          }`}>
+                          <p className={`text-xs sm:text-base font-bold border-t pt-2 mt-3 m-0 ${isA ? 'text-amber-900/80 border-amber-200/80' : 'text-purple-900/80 border-purple-200/80'
+                            }`}>
                             {item.translation}
                           </p>
                         )}
@@ -1399,9 +1392,8 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
 
                       {/* BUBBLE CHỨA HÌNH ẢNH (TÁCH BIỆT HOÀN TOÀN KHỎI BUBBLE TEXT) */}
                       {item.imageUrl && (
-                        <div className={`w-[85%] sm:w-[65%] rounded-3xl bg-white border-2 overflow-hidden shadow-sm relative flex items-center justify-center p-1.5 ${
-                          isA ? 'border-amber-200 ml-4' : 'border-purple-200 mr-4'
-                        } ${isLinePlaying ? 'ring-2 ring-primary/40' : ''}`}>
+                        <div className={`w-[85%] sm:w-[50%] rounded-3xl bg-white border-2 overflow-hidden shadow-sm relative flex items-center justify-center p-1.5 ${isA ? 'border-amber-200 ml-4' : 'border-purple-200 mr-4'
+                          } ${isLinePlaying ? 'ring-2 ring-primary/40' : ''}`}>
                           <img
                             src={getAssetUrl(item.imageUrl)}
                             alt="Hình minh họa"
@@ -1463,8 +1455,8 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                     key={imageUrl + '-' + idx}
                     onClick={() => handleSelectOption(imageUrl)}
                     className={`card-3d p-2 border-2 transition-all flex flex-col items-center gap-2 cursor-pointer relative ${isSelected
-                        ? 'border-primary bg-primary-soft ring-2 ring-primary/10 shadow-[0_4px_0_0_#d93d74] scale-[1.03]'
-                        : 'border-border-main hover:bg-bg-light bg-white shadow-[0_4px_0_0_#e5e5e5]'
+                      ? 'border-primary bg-primary-soft ring-2 ring-primary/10 shadow-[0_4px_0_0_#d93d74] scale-[1.03]'
+                      : 'border-border-main hover:bg-bg-light bg-white shadow-[0_4px_0_0_#e5e5e5]'
                       }`}
                     style={{
                       pointerEvents: isChecked ? 'none' : 'auto',
@@ -1520,8 +1512,8 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                         <span
                           key={idx}
                           className={`text-3xl font-display font-extrabold px-3 py-1.5 rounded-2xl border-2 transition-all ${res.status === 'correct'
-                              ? 'bg-emerald-50 text-emerald-600 border-emerald-300 shadow-sm'
-                              : 'bg-rose-50 text-rose-600 border-rose-400 font-extrabold shadow-sm animate-pulse'
+                            ? 'bg-emerald-50 text-emerald-600 border-emerald-300 shadow-sm'
+                            : 'bg-rose-50 text-rose-600 border-rose-400 font-extrabold shadow-sm animate-pulse'
                             }`}
                         >
                           {res.word}
@@ -1538,8 +1530,8 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                   <button
                     onClick={() => playSound(1.0)}
                     className={`btn-3d w-14 h-14 rounded-full flex items-center justify-center transition-all cursor-pointer ${isPlayingAudio
-                        ? 'btn-3d-pink scale-110 animate-pulse'
-                        : 'btn-3d-blue hover:scale-105'
+                      ? 'btn-3d-pink scale-110 animate-pulse'
+                      : 'btn-3d-blue hover:scale-105'
                       }`}
                   >
                     <SpeakerWaveIcon className={`w-7 h-7 text-white ${isPlayingAudio ? 'animate-bounce-soft' : ''}`} />
@@ -1644,11 +1636,10 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                   {/* Nút phát âm thanh nằm ngay cạnh câu hỏi */}
                   <button
                     onClick={() => playSound(1.0)}
-                    className={`btn-3d w-10 h-10 shrink-0 rounded-full flex items-center justify-center transition-all cursor-pointer ${
-                      isPlayingAudio
+                    className={`btn-3d w-10 h-10 shrink-0 rounded-full flex items-center justify-center transition-all cursor-pointer ${isPlayingAudio
                         ? 'btn-3d-pink scale-110 animate-pulse'
                         : 'btn-3d-blue hover:scale-105'
-                    }`}
+                      }`}
                     title="Nghe câu hỏi"
                   >
                     <SpeakerWaveIcon className={`w-5 h-5 text-white ${isPlayingAudio ? 'animate-bounce-soft' : ''}`} />
@@ -1661,11 +1652,10 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                     <button
                       type="button"
                       onClick={() => setShowTranslationHint(prev => !prev)}
-                      className={`text-[11px] font-extrabold flex items-center gap-1 px-2 py-0.5 rounded-lg border transition-all cursor-pointer ${
-                        showTranslationHint
+                      className={`text-[11px] font-extrabold flex items-center gap-1 px-2 py-0.5 rounded-lg border transition-all cursor-pointer ${showTranslationHint
                           ? 'bg-amber-100 border-amber-300 text-amber-800'
                           : 'bg-slate-50 hover:bg-amber-50 border-border-main/60 text-text-muted hover:text-amber-700'
-                      }`}
+                        }`}
                     >
                       <LightBulbIcon className="w-3.5 h-3.5 text-amber-500" />
                       <span>{showTranslationHint ? 'Xem câu tiếng Anh' : 'Gợi ý nghĩa'}</span>
@@ -1710,8 +1700,8 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                     key={option + '-' + idx}
                     onClick={() => handleSelectOption(option)}
                     className={`card-3d p-4 text-left font-sans font-bold text-sm tracking-wide transition-all border-2 select-none cursor-pointer flex items-center gap-4 ${isSelected
-                        ? 'border-primary bg-primary-soft text-primary ring-2 ring-primary/10 shadow-[0_4px_0_0_#d93d74] scale-[1.01]'
-                        : 'border-border-main hover:bg-bg-light text-text-main bg-white shadow-[0_4px_0_0_#e5e5e5]'
+                      ? 'border-primary bg-primary-soft text-primary ring-2 ring-primary/10 shadow-[0_4px_0_0_#d93d74] scale-[1.01]'
+                      : 'border-border-main hover:bg-bg-light text-text-main bg-white shadow-[0_4px_0_0_#e5e5e5]'
                       }`}
                     style={{
                       pointerEvents: isChecked ? 'none' : 'auto',
@@ -1719,8 +1709,8 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                   >
                     <span
                       className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center font-display text-xs ${isSelected
-                          ? 'border-primary bg-primary text-white font-extrabold'
-                          : 'border-border-main text-text-muted bg-white'
+                        ? 'border-primary bg-primary text-white font-extrabold'
+                        : 'border-border-main text-text-muted bg-white'
                         }`}
                     >
                       {optionLabel}
@@ -1784,11 +1774,10 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
               <div
                 onDragOver={handleDragOverTrayContainer}
                 onDrop={handleDropOnTrayContainer}
-                className={`w-full min-h-[5.5rem] p-4 rounded-[2rem] border-2 transition-all flex flex-wrap items-center justify-center gap-2.5 ${
-                  placedWords.length === 0
+                className={`w-full min-h-[5.5rem] p-4 rounded-[2rem] border-2 transition-all flex flex-wrap items-center justify-center gap-2.5 ${placedWords.length === 0
                     ? 'bg-slate-50/80 border-dashed border-border-main text-text-muted'
                     : 'bg-white border-primary/40 shadow-sm'
-                }`}
+                  }`}
               >
                 {placedWords.length === 0 ? (
                   <div className="flex items-center gap-2 text-text-muted select-none py-3 pointer-events-none">
@@ -1810,13 +1799,12 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                         onDrop={(e) => handleDropOnChip(e, idx)}
                         onDragEnd={handleDragEnd}
                         onClick={() => handleWordClickPlaced(chip.id)}
-                        className={`group relative px-4 py-2.5 rounded-xl font-display font-extrabold text-base transition-all select-none border-2 flex items-center gap-1.5 cursor-grab active:cursor-grabbing ${
-                          isChecked
+                        className={`group relative px-4 py-2.5 rounded-xl font-display font-extrabold text-base transition-all select-none border-2 flex items-center gap-1.5 cursor-grab active:cursor-grabbing ${isChecked
                             ? isCorrect
                               ? 'bg-green-50 border-green-500 text-green-700 shadow-[0_3px_0_0_#22c55e]'
                               : 'bg-red-50 border-red-400 text-red-600 shadow-[0_3px_0_0_#ef4444]'
                             : 'bg-primary-soft border-primary text-primary shadow-[0_3px_0_0_#d93d74] hover:bg-red-50 hover:border-red-400 active:translate-y-[1px]'
-                        }`}
+                          }`}
                       >
                         <span className="pointer-events-none">{chip.text}</span>
                         {!isChecked && (
@@ -1866,9 +1854,8 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                       onDragStart={(e) => handleDragStart(e, 'available', chip)}
                       onDragEnd={handleDragEnd}
                       onClick={() => handleWordClickAvailable(chip)}
-                      className={`px-4 py-2.5 bg-white border-2 border-border-main shadow-[0_4px_0_0_#e5e5e5] text-text-main hover:bg-primary-soft hover:border-primary hover:text-primary active:translate-y-[2px] rounded-xl font-display font-bold text-base min-w-[3.5rem] text-center transition-all select-none ${
-                        isChecked ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'cursor-grab active:cursor-grabbing'
-                      }`}
+                      className={`px-4 py-2.5 bg-white border-2 border-border-main shadow-[0_4px_0_0_#e5e5e5] text-text-main hover:bg-primary-soft hover:border-primary hover:text-primary active:translate-y-[2px] rounded-xl font-display font-bold text-base min-w-[3.5rem] text-center transition-all select-none ${isChecked ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'cursor-grab active:cursor-grabbing'
+                        }`}
                     >
                       <span className="pointer-events-none">{chip.text}</span>
                     </div>
@@ -1915,8 +1902,8 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                       key={option}
                       onClick={() => handleSelectOption(option)}
                       className={`card-3d p-4 text-left font-sans font-bold text-sm tracking-wide transition-all border-2 select-none cursor-pointer flex items-center gap-4 ${isSelected
-                          ? 'border-primary bg-primary-soft text-primary ring-2 ring-primary/10'
-                          : 'border-border-main hover:bg-bg-light text-text-main'
+                        ? 'border-primary bg-primary-soft text-primary ring-2 ring-primary/10'
+                        : 'border-border-main hover:bg-bg-light text-text-main'
                         }`}
                       style={{
                         pointerEvents: isChecked ? 'none' : 'auto',
@@ -1924,8 +1911,8 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
                     >
                       <span
                         className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center font-display text-xs ${isSelected
-                            ? 'border-primary bg-primary text-white font-extrabold'
-                            : 'border-border-main text-text-muted bg-white'
+                          ? 'border-primary bg-primary text-white font-extrabold'
+                          : 'border-border-main text-text-muted bg-white'
                           }`}
                       >
                         {optionLabel}
@@ -1943,10 +1930,10 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       {/* Footer Check Answer / Continue Bar */}
       <footer
         className={`w-full py-6 px-6 border-t-2 select-none transition-colors duration-200 ${session.sessionType !== 'INTRODUCTION' && isChecked
-            ? isCorrect
-              ? 'bg-[#d7f5b3] border-[#a0da5a]' // Đúng: Banner màu xanh
-              : 'bg-[#ffdfe0] border-[#ffb3b5]' // Sai: Banner màu đỏ
-            : 'bg-white border-border-main'
+          ? isCorrect
+            ? 'bg-[#d7f5b3] border-[#a0da5a]' // Đúng: Banner màu xanh
+            : 'bg-[#ffdfe0] border-[#ffb3b5]' // Sai: Banner màu đỏ
+          : 'bg-white border-border-main'
           }`}
       >
         <div className="max-w-2xl w-full mx-auto flex items-center justify-between gap-4">
