@@ -30,6 +30,12 @@ public class UserController {
         return ResponseEntity.ok().body(response);
     }
 
+    @GetMapping("/internal/count")
+    public ResponseEntity<Long> countTotalUsers() {
+        long count = userService.countTotalUsers();
+        return ResponseEntity.ok(count);
+    }
+
     @GetMapping("/profile")
     public ResponseEntity<UserProfileResponse> getProfile(
             @RequestHeader(value = "X-User-Id", required = false) Long headerUserId,

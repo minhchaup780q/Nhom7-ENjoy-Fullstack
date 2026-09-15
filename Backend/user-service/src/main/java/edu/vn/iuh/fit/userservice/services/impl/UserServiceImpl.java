@@ -129,4 +129,9 @@ public class UserServiceImpl implements UserService {
 
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Yêu cầu cung cấp User ID hoặc Email.");
     }
+
+    @Override
+    public long countTotalUsers() {
+        return userRepository.count();
+    }
 }

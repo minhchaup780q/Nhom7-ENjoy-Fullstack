@@ -14,4 +14,6 @@ public interface UserService {
     UserProfileResponse getProfile(Long userId, String email);
 
     UserProfileResponse updateProfile(Long userId, String email, UserUpdateRequest request);
+
+    long countTotalUsers();
 }
