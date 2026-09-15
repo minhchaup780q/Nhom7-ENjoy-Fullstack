@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -133,5 +135,39 @@ public class UserServiceImpl implements UserService {
     @Override
     public long countTotalUsers() {
         return userRepository.count();
+    }
+
+    @Override
+    @Transactional
+    public void updateUserActivity(Long userId) {
+        userRepository.findById(userId).ifPresent(user -> {
+            user.setLastActiveAt(LocalDateTime.now());
+            userRepository.save(user);
+        });
+    }
+
+    @Override
+    public Map<String, Long> countUsersByRole() {
+        Map<String, Long> result = new HashMap<>();
+        result.put("parents", userRepository.countByRole(UserRole.ROLE_PARENT));
+        result.put("children", userRepository.countByRole(UserRole.ROLE_CHILDREN));
+        return result;
+    }
+
+    @Override
+    public Map<String, Long> getParentActivityStats() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime sevenDaysAgo = now.minusDays(7);
+        LocalDateTime thirtyDaysAgo = now.minusDays(30);
+
+        long active = userRepository.countByRoleAndLastActiveAtAfter(UserRole.ROLE_PARENT, sevenDaysAgo);
+        long inactive = userRepository.countByRoleAndLastActiveAtBetween(UserRole.ROLE_PARENT, thirtyDaysAgo, sevenDaysAgo);
+        long dormant = userRepository.countByRoleAndLastActiveAtBeforeOrNull(UserRole.ROLE_PARENT, thirtyDaysAgo);
+
+        Map<String, Long> result = new HashMap<>();
+        result.put("active", active);
+        result.put("inactive", inactive);
+        result.put("dormant", dormant);
+        return result;
     }
 }

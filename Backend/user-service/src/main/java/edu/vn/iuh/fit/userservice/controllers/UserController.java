@@ -60,4 +60,20 @@ public class UserController {
         UserProfileResponse response = userService.updateProfile(userId, email, request);
         return ResponseEntity.ok(response);
     }
+
+    @PutMapping("/internal/activity/{userId}")
+    public ResponseEntity<Void> updateActivity(@PathVariable("userId") Long userId) {
+        userService.updateUserActivity(userId);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/internal/roles/count")
+    public ResponseEntity<java.util.Map<String, Long>> countUsersByRole() {
+        return ResponseEntity.ok(userService.countUsersByRole());
+    }
+
+    @GetMapping("/internal/activity/stats")
+    public ResponseEntity<java.util.Map<String, Long>> getParentActivityStats() {
+        return ResponseEntity.ok(userService.getParentActivityStats());
+    }
 }
