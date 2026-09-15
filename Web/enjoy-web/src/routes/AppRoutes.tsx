@@ -10,6 +10,12 @@ import { RegisterPage } from '../features/auth/components/RegisterPage';
 import { useAuthStore } from '../features/auth/store/useAuthStore';
 import type { Session } from '../features/learning/types';
 
+import { AdminDashboard } from '../features/admin/components/AdminDashboard';
+import { AdminLessons } from '../features/admin/components/AdminLessons';
+import { AdminUsers } from '../features/admin/components/AdminUsers';
+import { AdminSystem } from '../features/admin/components/AdminSystem';
+import { AdminProfile } from '../features/admin/components/AdminProfile';
+
 interface FeatureUnderDevelopmentProps {
   tabName: string;
 }
@@ -41,12 +47,27 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ isAuthenticated }) => {
   return <Outlet />;
 };
 
+interface AdminRouteProps {
+  isAuthenticated: boolean;
+  role?: string;
+}
+
+const AdminRoute: React.FC<AdminRouteProps> = ({ isAuthenticated, role }) => {
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  if (role !== 'ROLE_ADMIN') {
+    return <Navigate to="/learn" replace />;
+  }
+  return <Outlet />;
+};
+
 interface AppRoutesProps {
   onStartSession: (session: Session) => void;
 }
 
 export const AppRoutes: React.FC<AppRoutesProps> = ({ onStartSession }) => {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { isAuthenticated, user } = useAuthStore();
 
   return (
     <Routes>
@@ -66,14 +87,24 @@ export const AppRoutes: React.FC<AppRoutesProps> = ({ onStartSession }) => {
         <Route path="/stats" element={<PersonalStatsPage />} />
       </Route>
 
+      {/* Admin Routes */}
+      <Route element={<AdminRoute isAuthenticated={isAuthenticated} role={user?.role} />}>
+        <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/lessons" element={<AdminLessons />} />
+        <Route path="/admin/users" element={<AdminUsers />} />
+        <Route path="/admin/system" element={<AdminSystem />} />
+        <Route path="/admin/profile" element={<AdminProfile />} />
+      </Route>
+
       {/* Redirect Routes */}
       <Route
         path="/"
-        element={<Navigate to={isAuthenticated ? "/learn" : "/login"} replace />}
+        element={<Navigate to={isAuthenticated ? (user?.role === 'ROLE_ADMIN' ? '/admin/dashboard' : '/learn') : "/login"} replace />}
       />
       <Route
         path="*"
-        element={<Navigate to={isAuthenticated ? "/learn" : "/login"} replace />}
+        element={<Navigate to={isAuthenticated ? (user?.role === 'ROLE_ADMIN' ? '/admin/dashboard' : '/learn') : "/login"} replace />}
       />
     </Routes>
   );

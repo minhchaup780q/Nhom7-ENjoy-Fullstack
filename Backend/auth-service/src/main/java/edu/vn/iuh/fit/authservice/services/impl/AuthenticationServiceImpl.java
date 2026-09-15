@@ -5,6 +5,7 @@ import edu.vn.iuh.fit.authservice.dto.request.*;
 import edu.vn.iuh.fit.authservice.dto.response.LoginResponse;
 import edu.vn.iuh.fit.authservice.dto.response.UserAuthResponse;
 import edu.vn.iuh.fit.authservice.dto.response.UserCreateResponse;
+import edu.vn.iuh.fit.authservice.dto.response.UserInfoResponse;
 import edu.vn.iuh.fit.authservice.entities.Account;
 import edu.vn.iuh.fit.authservice.entities.enums.AuthProvider;
 import edu.vn.iuh.fit.authservice.entities.enums.UserRole;
@@ -53,10 +54,29 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String accessToken = jwtService.generateAccessToken(account.getId(), account.getEmail(), account.getRole().name());
         String refreshToken = jwtService.generateRefreshToken(account.getId(), account.getEmail(), account.getRole().name());
 
+        // Lấy thông tin user (username...) từ user-service qua OpenFeign
+        String username = null;
+        try {
+            UserAuthResponse userAuth = userClient.getUserByEmail(account.getEmail());
+            if (userAuth != null) {
+                username = userAuth.getUsername();
+            }
+        } catch (Exception e) {
+            System.err.println("⚠️ Could not fetch user details from user-service: " + e.getMessage());
+        }
+
+        UserInfoResponse userInfo = UserInfoResponse.builder()
+                .id(account.getId())
+                .email(account.getEmail())
+                .role(account.getRole().name())
+                .username(username)
+                .build();
+
         return LoginResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .hasPassword(account.getPasswordHash() != null && !account.getPasswordHash().isEmpty())
+                .user(userInfo)
                 .build();
     }
 
@@ -233,10 +253,28 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String accessToken = jwtService.generateAccessToken(account.getId(), account.getEmail(), roleStr);
         String refreshToken = jwtService.generateRefreshToken(account.getId(), account.getEmail(), roleStr);
 
+        String username = null;
+        try {
+            UserAuthResponse userAuth = userClient.getUserByEmail(account.getEmail());
+            if (userAuth != null) {
+                username = userAuth.getUsername();
+            }
+        } catch (Exception e) {
+            System.err.println("⚠️ Could not fetch user details from user-service on Google login: " + e.getMessage());
+        }
+
+        UserInfoResponse userInfo = UserInfoResponse.builder()
+                .id(account.getId())
+                .email(account.getEmail())
+                .role(roleStr)
+                .username(username)
+                .build();
+
         return LoginResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .hasPassword(account.getPasswordHash() != null && !account.getPasswordHash().isEmpty())
+                .user(userInfo)
                 .build();
     }
 
@@ -284,11 +322,29 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         Account account = accountRepository.findById(userId).orElse(null);
         boolean hasPwd = account != null && account.getPasswordHash() != null && !account.getPasswordHash().isEmpty();
 
+        String username = null;
+        try {
+            UserAuthResponse userAuth = userClient.getUserByEmail(email);
+            if (userAuth != null) {
+                username = userAuth.getUsername();
+            }
+        } catch (Exception e) {
+            System.err.println("⚠️ Could not fetch user details from user-service on token refresh: " + e.getMessage());
+        }
+
+        UserInfoResponse userInfo = UserInfoResponse.builder()
+                .id(userId)
+                .email(email)
+                .role(role)
+                .username(username)
+                .build();
+
         String newAccessToken = jwtService.generateAccessToken(userId, email, role);
         return LoginResponse.builder()
                 .accessToken(newAccessToken)
                 .refreshToken(refreshToken)
                 .hasPassword(hasPwd)
+                .user(userInfo)
                 .build();
     }
 }

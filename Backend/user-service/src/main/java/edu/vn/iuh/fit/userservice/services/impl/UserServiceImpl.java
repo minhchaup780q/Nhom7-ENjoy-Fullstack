@@ -71,6 +71,7 @@ public class UserServiceImpl implements UserService {
         return UserAuthResponse.builder()
                 .id(user.getId())
                 .email(user.getEmail())
+                .username(user.getUsername())
                 .role(user.getRole().name())
                 .build();
     }

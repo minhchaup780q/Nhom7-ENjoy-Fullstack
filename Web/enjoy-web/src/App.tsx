@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { SidebarLeft } from './layouts/SidebarLeft';
 import { SidebarRight } from './layouts/SidebarRight';
+import { SidebarAdmin } from './layouts/SidebarAdmin';
 import { AppRoutes } from './routes/AppRoutes';
 import { SessionPlayer } from './features/learning/components/SessionPlayer';
 import type { Session } from './features/learning/types';
@@ -14,6 +15,7 @@ function App() {
 
   // 1. Kiểm tra xem người dùng có đang ở trang Login hoặc Register hay không
   const isAuthPage = ['/login', '/register'].includes(location.pathname);
+  const isAdminPage = location.pathname.startsWith('/admin');
 
   // 2. Trường hợp 1: Người dùng đang học bài -> Ẩn toàn bộ Sidebar để hiển thị màn hình làm bài tập tràn màn hình (Full-screen)
   if (playingSession) {
@@ -34,7 +36,21 @@ function App() {
     );
   }
 
-  // Người dùng ở các trang bình thường -> Hiển thị đầy đủ Bố cục 3 cột (Sidebar trái - Nội dung chính AppRoutes - Sidebar phải)
+  // 4. Người dùng đang ở trang Admin => Hiển thị Sidebar Admin
+  if (isAdminPage) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] flex w-full relative">
+        <SidebarAdmin />
+        <main className="flex-grow min-h-screen pl-64 pr-0 flex flex-col bg-[#f8fafc]">
+          <div className="p-8 w-full flex-grow flex flex-col">
+            <AppRoutes onStartSession={(session) => setPlayingSession(session)} />
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // 5. Người dùng ở các trang bình thường -> Hiển thị đầy đủ Bố cục 3 cột (Sidebar trái - Nội dung chính AppRoutes - Sidebar phải)
   return (
     <div className="min-h-screen bg-white flex w-full relative">
       {/* Sidebar Left Navigation Menu */}
