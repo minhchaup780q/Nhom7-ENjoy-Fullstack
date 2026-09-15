@@ -6,6 +6,8 @@ import edu.vn.iuh.fit.userservice.dto.response.UserAuthResponse;
 import edu.vn.iuh.fit.userservice.dto.response.UserCreateResponse;
 import edu.vn.iuh.fit.userservice.dto.response.UserProfileResponse;
 
+import java.util.Map;
+
 public interface UserService {
     UserCreateResponse createUser(UserCreateRequest request);
 
@@ -14,4 +16,12 @@ public interface UserService {
     UserProfileResponse getProfile(Long userId, String email);
 
     UserProfileResponse updateProfile(Long userId, String email, UserUpdateRequest request);
+
+    long countTotalUsers();
+
+    void updateUserActivity(Long userId);
+
+    Map<String, Long> countUsersByRole();
+
+    Map<String, Long> getParentActivityStats();
 }

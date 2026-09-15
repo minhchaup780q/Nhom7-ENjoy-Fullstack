@@ -30,6 +30,12 @@ public class UserController {
         return ResponseEntity.ok().body(response);
     }
 
+    @GetMapping("/internal/count")
+    public ResponseEntity<Long> countTotalUsers() {
+        long count = userService.countTotalUsers();
+        return ResponseEntity.ok(count);
+    }
+
     @GetMapping("/profile")
     public ResponseEntity<UserProfileResponse> getProfile(
             @RequestHeader(value = "X-User-Id", required = false) Long headerUserId,
@@ -53,5 +59,21 @@ public class UserController {
         String email = headerEmail != null ? headerEmail : queryEmail;
         UserProfileResponse response = userService.updateProfile(userId, email, request);
         return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/internal/activity/{userId}")
+    public ResponseEntity<Void> updateActivity(@PathVariable("userId") Long userId) {
+        userService.updateUserActivity(userId);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/internal/roles/count")
+    public ResponseEntity<java.util.Map<String, Long>> countUsersByRole() {
+        return ResponseEntity.ok(userService.countUsersByRole());
+    }
+
+    @GetMapping("/internal/activity/stats")
+    public ResponseEntity<java.util.Map<String, Long>> getParentActivityStats() {
+        return ResponseEntity.ok(userService.getParentActivityStats());
     }
 }
