@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Camera, PenTool, Sparkles } from 'lucide-react';
+import { CameraIcon, PencilSquareIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { RealWorldExplorer } from './RealWorldExplorer';
 
 export const ExploreDashboard: React.FC = () => {
@@ -13,7 +13,7 @@ export const ExploreDashboard: React.FC = () => {
     <div className="flex-1 p-8 max-w-5xl mx-auto flex flex-col justify-center space-y-8 select-none">
       <div className="text-center space-y-3">
         <div className="inline-flex p-3 bg-primary-soft text-primary rounded-2xl animate-bounce">
-          <Sparkles className="w-8 h-8" />
+          <SparklesIcon className="w-8 h-8 stroke-[2.5]" />
         </div>
         <h1 className="text-4xl font-display font-extrabold text-[#2b2b2b] uppercase tracking-wide">
           Học Và Khám Phá Cùng Enjoy
@@ -30,7 +30,7 @@ export const ExploreDashboard: React.FC = () => {
           className="bg-white border-4 border-border-main hover:border-primary/50 rounded-3xl p-8 flex flex-col items-center text-center cursor-pointer transition-all duration-200 transform hover:-translate-y-2 hover:shadow-xl group"
         >
           <div className="w-20 h-20 bg-primary-soft text-primary rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-200">
-            <Camera className="w-10 h-10 stroke-[2]" />
+            <CameraIcon className="w-10 h-10 stroke-[2]" />
           </div>
           <h2 className="text-xl font-display font-extrabold text-[#2b2b2b] uppercase mb-3">
             Khám Phá Thế Giới Thực
@@ -38,7 +38,7 @@ export const ExploreDashboard: React.FC = () => {
           <p className="text-xs text-text-muted font-semibold leading-relaxed">
             Dùng camera để quét các đồ dùng học tập xung quanh bé. Enjoy sẽ giúp bé nhận diện và dạy bé tên tiếng Anh của chúng!
           </p>
-          <button className="mt-8 px-6 py-3 bg-primary text-white font-display font-extrabold rounded-2xl text-xs uppercase tracking-wider hover:bg-primary-dark transition-colors duration-150 border-b-4 border-primary-dark shadow-md">
+          <button className="mt-8 px-6 py-3 bg-primary text-white font-display font-extrabold rounded-2xl text-xs uppercase tracking-wider hover:bg-primary-dark transition-colors duration-150 border-b-4 border-primary-dark shadow-md cursor-pointer">
             Khám phá ngay
           </button>
         </div>
@@ -52,7 +52,7 @@ export const ExploreDashboard: React.FC = () => {
             Sắp ra mắt
           </div>
           <div className="w-20 h-20 bg-[#f5f5f5] text-[#8e8e8e] rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-6 transition-transform duration-200">
-            <PenTool className="w-10 h-10 stroke-[2]" />
+            <PencilSquareIcon className="w-10 h-10 stroke-[2]" />
           </div>
           <h2 className="text-xl font-display font-extrabold text-[#8e8e8e] uppercase mb-3">
             Vẽ Cùng Enjoy

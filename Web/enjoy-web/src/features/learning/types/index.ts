@@ -15,9 +15,8 @@ export enum SessionStatus {
 }
 
 export enum SessionItemType {
-  FLASHCARD = 'FLASHCARD',
-  QUIZ = 'QUIZ',
-  FILL_IN_BLANK = 'FILL_IN_BLANK',
+  TARGET = 'TARGET',
+  SUPPORT = 'SUPPORT',
 }
 
 export interface Level extends BaseEntity {
@@ -56,10 +55,15 @@ export interface Session extends BaseEntity {
   badgeId?: number;
   title: string;
   description: string;
-  status: SessionStatus;
+  status?: SessionStatus;
   createdBy?: number;
   orderIndex: number;
   itemMappings?: SessionItemMapping[];
+}
+
+export enum SpeakerRole {
+  SPEAKER_1 = 'SPEAKER_1',
+  SPEAKER_2 = 'SPEAKER_2',
 }
 
 export interface SessionItem extends BaseEntity {
@@ -69,7 +73,10 @@ export interface SessionItem extends BaseEntity {
   imageUrl?: string;
   audioUrl?: string;
   itemType: SessionItemType;
+  speakerRole?: SpeakerRole;
   keyword?: string;
+  keywordTranslation?: string;
+  keywordAudioUrl?: string;
   sessionMappings?: SessionItemMapping[];
 }
 

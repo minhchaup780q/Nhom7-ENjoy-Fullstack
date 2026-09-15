@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flame, Heart, Gem, Zap, Gift } from 'lucide-react';
+import { FireIcon, HeartIcon, SparklesIcon, BoltIcon, GiftIcon } from '@heroicons/react/24/solid';
 import { Button3D } from '../components/ui/Button3D';
 
 interface SidebarRightProps {
@@ -18,15 +18,15 @@ export const SidebarRight: React.FC<SidebarRightProps> = ({
       {/* Stats row */}
       <div className="flex items-center justify-between px-2">
         <div className="flex items-center gap-2 font-display font-extrabold text-sm text-warning hover:scale-110 transition-transform cursor-pointer">
-          <Flame className="w-6 h-6 fill-current stroke-[2.5]" />
+          <FireIcon className="w-6 h-6" />
           <span>{streak}</span>
         </div>
         <div className="flex items-center gap-2 font-display font-extrabold text-sm text-info hover:scale-110 transition-transform cursor-pointer">
-          <Gem className="w-6 h-6 fill-current stroke-[2.5]" />
+          <SparklesIcon className="w-6 h-6" />
           <span>{gems}</span>
         </div>
         <div className="flex items-center gap-2 font-display font-extrabold text-sm text-primary hover:scale-110 transition-transform cursor-pointer">
-          <Heart className="w-6 h-6 fill-current stroke-[2.5] animate-pulse" />
+          <HeartIcon className="w-6 h-6 animate-pulse" />
           <span>{hearts}</span>
         </div>
       </div>
@@ -34,7 +34,7 @@ export const SidebarRight: React.FC<SidebarRightProps> = ({
       {/* Super ENjoy Promo Box */}
       <div className="p-5 bg-gradient-to-br from-primary-soft to-[#fff0f3] border-2 border-primary/20 rounded-3xl space-y-4 shadow-sm text-left">
         <div className="flex items-center gap-2">
-          <Zap className="w-6 h-6 text-primary fill-current" />
+          <BoltIcon className="w-6 h-6 text-primary" />
           <h3 className="font-display font-extrabold text-base text-primary m-0">SUPER ENJOY</h3>
         </div>
         <div>
@@ -59,7 +59,7 @@ export const SidebarRight: React.FC<SidebarRightProps> = ({
         <div className="space-y-2">
           <div className="flex items-start justify-between text-xs font-bold">
             <span className="text-text-main/80 flex items-center gap-2">
-              <Zap className="w-4 h-4 text-warning fill-current" />
+              <BoltIcon className="w-4 h-4 text-warning" />
               Kiếm 10 Điểm kinh nghiệm (XP)
             </span>
             <span className="text-text-muted">7/10</span>
@@ -73,7 +73,7 @@ export const SidebarRight: React.FC<SidebarRightProps> = ({
         <div className="space-y-2">
           <div className="flex items-start justify-between text-xs font-bold">
             <span className="text-text-main/80 flex items-center gap-2">
-              <Gift className="w-4 h-4 text-primary" />
+              <GiftIcon className="w-4 h-4 text-primary" />
               Hoàn thành 1 bài học giới thiệu
             </span>
             <span className="text-text-muted">0/1</span>

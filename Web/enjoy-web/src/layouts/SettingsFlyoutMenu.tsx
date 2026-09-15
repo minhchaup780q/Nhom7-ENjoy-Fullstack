@@ -1,21 +1,28 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Settings, KeyRound, LogOut } from 'lucide-react';
+import { Cog6ToothIcon, KeyIcon, ArrowRightOnRectangleIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 import { ChangePasswordModal } from '../features/auth/components/ChangePasswordModal';
 import { LogoutConfirmModal } from '../features/auth/components/LogoutConfirmModal';
+import { FamilyManagementModal } from '../features/profile/components/FamilyManagementModal';
+import { profileApi } from '../features/profile/services/profileApi';
 import { useAuthStore } from '../features/auth/store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 
 export const SettingsFlyoutMenu: React.FC = () => {
   const [isFlyoutOpen, setIsFlyoutOpen] = useState(false);
+  const [isFamilyModalOpen, setIsFamilyModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const user = useAuthStore((state) => state.user);
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const setAuth = useAuthStore((state) => state.setAuth);
   const navigate = useNavigate();
-  const logout = useAuthStore((state) => state.logout)
+  const logout = useAuthStore((state) => state.logout);
 
-  // Đóng popup menu cài đặt khi click ra ngoài
+  const isParent = user?.role === 'ROLE_PARENT';
+
+  // Đóng popup menu cài đặt khi click ra ngoài & Fetch profile mới nhất khi mở menu
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -25,15 +32,21 @@ export const SettingsFlyoutMenu: React.FC = () => {
 
     if (isFlyoutOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      // Fetch latest profile
+      profileApi.getProfile().then((p) => {
+        if (p && user && accessToken && (p.role !== user.role || p.username !== user.username)) {
+          setAuth({ ...user, role: p.role, username: p.username }, accessToken);
+        }
+      }).catch(() => {});
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isFlyoutOpen]);
+  }, [isFlyoutOpen, user, accessToken, setAuth]);
 
   // Hàm xử lý xác nhận đăng xuất
   const handleConfirmLogout = () => {
-    logout()
+    logout();
     navigate('/login');
   };
 
@@ -49,24 +62,39 @@ export const SettingsFlyoutMenu: React.FC = () => {
             : 'border-transparent text-[#5c5c5c] hover:bg-bg-light hover:text-slate-700'
             }`}
         >
-          <Settings className="w-6 h-6 stroke-[2.5]" />
+          <Cog6ToothIcon className="w-6 h-6 stroke-[2.5]" />
           CÀI ĐẶT
         </button>
 
         {/* Popup Flyout Menu kế bên nút Cài đặt */}
         {isFlyoutOpen && (
-          <div className="absolute left-[calc(100%+12px)] bottom-0 w-56 bg-white rounded-2xl border-2 border-border-main shadow-xl p-2 z-30 animate-fade-in space-y-1">
-            {/* Tùy chọn 1: Đổi mật khẩu */}
+          <div className="absolute left-[calc(100%+12px)] bottom-0 w-60 bg-white rounded-2xl border-2 border-border-main shadow-xl p-2 z-30 animate-fade-in space-y-1">
+            {/* Tùy chọn 1: Quản lý gia đình / Liên kết gia đình */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsFlyoutOpen(false);
+                setIsFamilyModalOpen(true);
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left font-display font-bold text-sm text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              <div className="p-2 rounded-lg bg-primary-soft text-primary">
+                <UserGroupIcon className="w-4 h-4 stroke-[2.5]" />
+              </div>
+              <span>{isParent ? 'Quản lý gia đình' : 'Liên kết gia đình'}</span>
+            </button>
+
+            {/* Tùy chọn 2: Đổi mật khẩu */}
             <button
               type="button"
               onClick={() => {
                 setIsFlyoutOpen(false);
                 setIsPasswordModalOpen(true);
               }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left font-display font-bold text-sm text-slate-700 hover:bg-slate-100 transition-colors"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left font-display font-bold text-sm text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
             >
               <div className="p-2 rounded-lg bg-sky-50 text-sky-600">
-                <KeyRound className="w-4 h-4 stroke-[2.5]" />
+                <KeyIcon className="w-4 h-4 stroke-[2.5]" />
               </div>
               <span>Đổi mật khẩu</span>
             </button>
@@ -74,23 +102,31 @@ export const SettingsFlyoutMenu: React.FC = () => {
             {/* Đường kẻ phân cách */}
             <div className="h-[1px] bg-border-main my-1" />
 
-            {/* Tùy chọn 2: Đăng xuất */}
+            {/* Tùy chọn 3: Đăng xuất */}
             <button
               type="button"
               onClick={() => {
                 setIsFlyoutOpen(false);
                 setIsLogoutModalOpen(true);
               }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left font-display font-bold text-sm text-red-500 hover:bg-red-50 transition-colors"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left font-display font-bold text-sm text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
             >
               <div className="p-2 rounded-lg bg-red-50 text-red-500">
-                <LogOut className="w-4 h-4 stroke-[2.5]" />
+                <ArrowRightOnRectangleIcon className="w-4 h-4 stroke-[2.5]" />
               </div>
               <span>Đăng xuất</span>
             </button>
           </div>
         )}
       </div>
+
+      {/* Family Management Modal Pop-up */}
+      <FamilyManagementModal
+        isOpen={isFamilyModalOpen}
+        onClose={() => setIsFamilyModalOpen(false)}
+        isParent={isParent}
+        userEmail={user?.email}
+      />
 
       {/* Change Password Modal Pop-up (Đổi mật khẩu ở giữa màn hình) */}
       <ChangePasswordModal

@@ -25,19 +25,21 @@ export interface ChangePasswordData {
   confirmPassword: string;
 }
 
-export interface AuthResponse {
-  accessToken: string;
-  refreshToken?: string;
-  email?: string;
-  role?: string;
-  hasPassword?: boolean;
-  requiresBirthday?: boolean;
-}
-
 export interface User {
   id?: string | number;
   email: string;
   username?: string;
   role?: string;
   hasPassword?: boolean;
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  refreshToken?: string;
+  hasPassword?: boolean;
+  user?: User;
+  // Giữ lại các trường tùy chọn phòng trường hợp legacy
+  email?: string;
+  role?: string;
+  requiresBirthday?: boolean;
 }

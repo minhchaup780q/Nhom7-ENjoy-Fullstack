@@ -10,6 +10,7 @@ import lombok.Setter;
 public class UserAuthResponse {
     private Long id;
     private String email;
+    private String username;
     private String role;
 //    private String passwordHash;
 }

@@ -33,7 +33,7 @@ interface LearningState {
   selectTopic: (topic: Topic) => Promise<void>;
   selectPart: (part: Part) => Promise<void>;
   selectSession: (session: Session) => Promise<void>;
-  completeSession: (sessionId: number) => Promise<void>;
+  completeSession: (sessionId: number, durationSeconds?: number) => Promise<void>;
   
   // Điều hướng các bước học (session player)
   nextStep: () => void;
@@ -73,21 +73,31 @@ export const useLearningStore = create<LearningState>((set, get) => ({
   fetchLevels: async () => {
     set({ loading: true, error: null });
     try {
-      const levels = await learningApi.getLevels();
+      const res = await learningApi.getLevels();
+      const levels = Array.isArray(res) ? res : (res as any)?.data || [];
+      console.log("Danh sách Levels nhận được:", levels);
       set({ levels, loading: false });
     } catch (err: unknown) {
+      console.error("Lỗi khi lấy danh sách Level:", err);
       const errorMessage = err instanceof Error ? err.message : 'Không thể lấy danh sách Level';
       set({ error: errorMessage, loading: false });
     }
   },
 
-  // Chọn Level -> Lấy danh sách Topics tương ứng
+  // Chọn Level -> Lấy danh sách Topics tương ứng và UserProgress
   selectLevel: async (level: Level) => {
-    set({ activeLevel: level, topics: [], parts: [], sessions: [], activeTopic: null, activePart: null, activeSession: null, loading: true, error: null });
+    set({ activeLevel: level, topics: [], parts: [], sessions: [], loading: true, error: null });
     try {
-      const topics = await learningApi.getTopicsByLevel(level.id);
-      set({ topics, loading: false });
+      const [topicsRes, userProgressRes] = await Promise.all([
+        learningApi.getTopicsByLevel(level.id),
+        learningApi.getUserProgress().catch(() => [])
+      ]);
+      const topics = Array.isArray(topicsRes) ? topicsRes : (topicsRes as any)?.data || [];
+      const userProgress = Array.isArray(userProgressRes) ? userProgressRes : (userProgressRes as any)?.data || [];
+      console.log(`Danh sách Topics của level ${level.id}:`, topics);
+      set({ topics, userProgress, loading: false });
     } catch (err: unknown) {
+      console.error("Lỗi khi lấy danh sách Topic:", err);
       const errorMessage = err instanceof Error ? err.message : 'Không thể lấy danh sách Topic';
       set({ error: errorMessage, loading: false });
     }
@@ -97,22 +107,23 @@ export const useLearningStore = create<LearningState>((set, get) => ({
   selectTopic: async (topic: Topic) => {
     set({ activeTopic: topic, parts: [], sessionsByPart: {}, activePart: null, activeSession: null, loading: true, error: null });
     try {
-      const parts = await learningApi.getPartsByTopic(topic.id);
+      const [partsRes, userProgressRes] = await Promise.all([
+        learningApi.getPartsByTopic(topic.id),
+        learningApi.getUserProgress().catch(() => [])
+      ]);
+
+      const parts = Array.isArray(partsRes) ? partsRes : (partsRes as any)?.data || [];
+      const userProgress = Array.isArray(userProgressRes) ? userProgressRes : (userProgressRes as any)?.data || [];
+      console.log(`Danh sách Parts của topic ${topic.id}:`, parts);
       
       // Fetch sessions for all parts in parallel
       const sessionsMap: Record<number, Session[]> = {};
-      let userProgress: import('../types').UserProgress[] = [];
-      
-      try {
-        userProgress = await learningApi.getUserProgress();
-      } catch (e) {
-        console.warn("Chưa lấy được tiến độ user:", e);
-      }
 
       await Promise.all(
         parts.map(async (part) => {
           try {
-            const sessionsOfPart = await learningApi.getSessionsByPart(part.id);
+            const sessRes = await learningApi.getSessionsByPart(part.id);
+            const sessionsOfPart = Array.isArray(sessRes) ? sessRes : (sessRes as any)?.data || [];
             sessionsMap[part.id] = sessionsOfPart;
           } catch (err) {
             console.error(`Lỗi khi lấy sessions cho part ${part.id}:`, err);
@@ -121,8 +132,10 @@ export const useLearningStore = create<LearningState>((set, get) => ({
         })
       );
 
+      console.log("SessionsMap tải về:", sessionsMap);
       set({ parts, sessionsByPart: sessionsMap, userProgress, loading: false });
     } catch (err: unknown) {
+      console.error("Lỗi khi lấy chi tiết topic:", err);
       const errorMessage = err instanceof Error ? err.message : 'Không thể lấy thông tin chi tiết chủ đề';
       set({ error: errorMessage, loading: false });
     }
@@ -175,12 +188,12 @@ export const useLearningStore = create<LearningState>((set, get) => ({
   },
 
   // Hoàn thành bài học hiện tại (FINISH) và mở khóa bài tiếp theo (UNLOCK) cho User
-  completeSession: async (sessionId: number) => {
+  completeSession: async (sessionId: number, durationSeconds?: number) => {
     const { activeTopic, selectTopic } = get();
     
     try {
       // Gọi API completeUserSession để cập nhật tiến độ riêng cho User
-      await learningApi.completeUserSession(sessionId);
+      await learningApi.completeUserSession(sessionId, durationSeconds);
 
       // Tải lại toàn bộ dữ liệu Topic để cập nhật UI bản đồ học theo User
       if (activeTopic) {

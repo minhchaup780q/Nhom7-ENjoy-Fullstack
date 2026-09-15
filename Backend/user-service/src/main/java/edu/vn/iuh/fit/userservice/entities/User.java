@@ -55,4 +55,7 @@ public class User{
     @Column(name = "is_delete")
     private Boolean isDelete = false;
 
+    @Column(name = "last_active_at")
+    private LocalDateTime lastActiveAt;
+
 }

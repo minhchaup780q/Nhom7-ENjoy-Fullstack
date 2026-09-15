@@ -15,4 +15,5 @@ public class LoginResponse {
     private String accessToken;
     private String refreshToken;
     private Boolean hasPassword;
+    private UserInfoResponse user;
 }

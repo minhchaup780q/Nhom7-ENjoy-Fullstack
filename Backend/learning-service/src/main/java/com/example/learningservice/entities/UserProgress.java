@@ -36,4 +36,7 @@ public class UserProgress extends BaseEntity {
 
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
+
+    @Column(name = "duration_seconds")
+    private Integer durationSeconds;
 }

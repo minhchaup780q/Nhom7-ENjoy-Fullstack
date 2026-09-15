@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, LogOut } from 'lucide-react';
+import { XMarkIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 
 interface LogoutConfirmModalProps {
   isOpen: boolean;
@@ -21,15 +21,15 @@ export const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+          className="absolute top-4 right-4 p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
         >
-          <X className="w-5 h-5" />
+          <XMarkIcon className="w-5 h-5 stroke-[2.5]" />
         </button>
 
         {/* Modal Header / Icon */}
         <div className="flex flex-col items-center text-center mb-6">
           <div className="p-4 rounded-3xl bg-red-50 text-red-500 mb-4 border border-red-100">
-            <LogOut className="w-8 h-8" />
+            <ArrowRightOnRectangleIcon className="w-8 h-8 stroke-[2.5]" />
           </div>
           <h2 className="text-xl font-extrabold text-slate-700 font-display">
             Đăng Xuất
@@ -44,7 +44,7 @@ export const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-3 rounded-2xl border-2 border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-xs hover:bg-slate-100 transition"
+            className="flex-1 py-3 rounded-2xl border-2 border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-xs hover:bg-slate-100 transition cursor-pointer"
           >
             Hủy
           </button>
@@ -52,7 +52,7 @@ export const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({
           <button
             type="button"
             onClick={onConfirm}
-            className="flex-1 py-3 rounded-2xl bg-red-500 border-b-4 border-red-700 text-white font-extrabold uppercase tracking-wider text-xs hover:bg-red-600 active:translate-y-0.5 active:border-b-0 transition"
+            className="flex-1 py-3 rounded-2xl bg-red-500 border-b-4 border-red-700 text-white font-extrabold uppercase tracking-wider text-xs hover:bg-red-600 active:translate-y-0.5 active:border-b-0 transition cursor-pointer"
           >
             Xác nhận
           </button>

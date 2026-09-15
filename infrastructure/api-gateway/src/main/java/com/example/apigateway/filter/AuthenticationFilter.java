@@ -26,6 +26,9 @@ public class AuthenticationFilter implements GlobalFilter {
 
     private final JwtUtil jwtUtil;
     private final RouteValidator validator;
+    private final org.springframework.web.reactive.function.client.WebClient.Builder webClientBuilder;
+    
+    private final java.util.concurrent.ConcurrentHashMap<Long, java.time.Instant> lastActivityMap = new java.util.concurrent.ConcurrentHashMap<>();
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -50,6 +53,22 @@ public class AuthenticationFilter implements GlobalFilter {
                 String email = claims.get("email", String.class);
                 String role = claims.get("role", String.class);
 //              String sessionId = claims.get(""); quản lý thiết bị
+
+                // Update activity (throttle 15 mins)
+                if (userId != null) {
+                    java.time.Instant now = java.time.Instant.now();
+                    java.time.Instant lastActive = lastActivityMap.get(userId);
+                    if (lastActive == null || java.time.Duration.between(lastActive, now).toMinutes() >= 15) {
+                        lastActivityMap.put(userId, now);
+                        // Send async request to update DB
+                        webClientBuilder.build()
+                                .put()
+                                .uri("lb://user-service/api/user/internal/activity/" + userId)
+                                .retrieve()
+                                .bodyToMono(Void.class)
+                                .subscribe(); // fire and forget
+                    }
+                }
 
                 // 5. đưa x-Header vào Headers để gửi xuống các service con
                 ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()

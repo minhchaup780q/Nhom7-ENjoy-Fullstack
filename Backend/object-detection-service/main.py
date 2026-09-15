@@ -36,15 +36,14 @@ app = FastAPI(
     lifespan=lifespan # Thêm dòng này
 )
 
-# CORS configuration - Disabled because API Gateway handles CORS globally.
-# Adding CORSMiddleware here causes duplicate Access-Control-Allow-Origin headers when routed via Gateway.
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=["*"],
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
+# CORS configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Include routing
 app.include_router(detection_router)

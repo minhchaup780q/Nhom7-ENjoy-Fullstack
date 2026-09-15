@@ -5,7 +5,15 @@ import type { Session, Topic } from '../types';
 import { Button3D } from '../../../components/ui/Button3D';
 import { Mascot } from '../../../components/ui/Mascot';
 import mascotImg from '../../../assets/mascot.png';
-import { Star, Lock, CheckCircle, ArrowLeft, GraduationCap, Award, Crown, Trophy, Sparkles } from 'lucide-react';
+import { 
+  AcademicCapIcon, 
+  TrophyIcon, 
+  SparklesIcon, 
+  StarIcon, 
+  LockClosedIcon, 
+  CheckCircleIcon, 
+  ArrowLeftIcon 
+} from '@heroicons/react/24/solid';
 
 interface LearningMapProps {
   onStartSession: (session: Session) => void;
@@ -32,14 +40,19 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
 
 
   
-  // Trạng thái màn hình: 'levels' (Trình độ) | 'topics' (Chủ đề - Giống Ảnh 1) | 'sessions' (Bản đồ bài học - Giống Ảnh 2)
-  const [currentView, setCurrentView] = useState<'levels' | 'topics' | 'sessions'>(
-    activeTopic ? 'sessions' : activeLevel ? 'topics' : 'levels'
-  );
+  // Trạng thái màn hình: 'levels' (Trình độ) | 'topics' (Chủ đề) | 'sessions' (Bản đồ bài học)
+  const [currentView, setCurrentView] = useState<'levels' | 'topics' | 'sessions'>(() => {
+    const state = useLearningStore.getState();
+    if (state.activeTopic && state.parts && state.parts.length > 0) return 'sessions';
+    if (state.activeLevel) return 'topics';
+    return 'levels';
+  });
 
   useEffect(() => {
-    fetchLevels();
-  }, [fetchLevels]);
+    if (levels.length === 0) {
+      fetchLevels();
+    }
+  }, [fetchLevels, levels.length]);
 
   const getLevelColors = (index: number) => {
     const palettes = [
@@ -90,28 +103,40 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
   const getLevelIcon = (index: number) => {
     switch (index % 4) {
       case 0:
-        return <GraduationCap className="w-9 h-9" />;
+        return <AcademicCapIcon className="w-9 h-9" />;
       case 1:
-        return <Award className="w-9 h-9" />;
+        return <TrophyIcon className="w-9 h-9" />;
       case 2:
-        return <Crown className="w-9 h-9" />;
+        return <SparklesIcon className="w-9 h-9" />;
       case 3:
-        return <Trophy className="w-9 h-9" />;
+        return <TrophyIcon className="w-9 h-9" />;
       default:
-        return <Sparkles className="w-9 h-9" />;
+        return <SparklesIcon className="w-9 h-9" />;
     }
   };
 
-  // Hành động khi nhấp vào Trình độ
+  // Hành động khi nhấp vào Trình độ -> Chuyển sang màn hình Chủ đề và tải Topics
   const handleLevelClick = async (lvl: any) => {
-    await selectLevel(lvl);
     setCurrentView('topics');
+    await selectLevel(lvl);
   };
 
-  // Hành động khi nhấp vào Chủ đề -> Tải toàn bộ Parts và Sessions của Topic và vào bản đồ học
+  // Hành động khi nhấp vào Chủ đề -> Chuyển sang Bản đồ bài học và tải Parts + Sessions
   const handleTopicClick = async (tpc: Topic) => {
-    await selectTopic(tpc);
     setCurrentView('sessions');
+    await selectTopic(tpc);
+  };
+
+  // Quay lại màn hình Trình độ
+  const handleBackToLevels = () => {
+    useLearningStore.setState({ activeLevel: null, activeTopic: null });
+    setCurrentView('levels');
+  };
+
+  // Quay lại màn hình Chủ đề
+  const handleBackToTopics = () => {
+    useLearningStore.setState({ activeTopic: null });
+    setCurrentView('topics');
   };
 
   // Hàm tính toán độ dịch chuyển ngang (margin-left) để tạo đường cong hình chữ S
@@ -123,12 +148,12 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
 
   const getSessionIcon = (session: Session) => {
     if (session.status === SessionStatus.LOCK) {
-      return <Lock className="w-6 h-6 text-text-muted" />;
+      return <LockClosedIcon className="w-6 h-6 text-text-muted" />;
     }
     if (session.status === SessionStatus.FINISH) {
-      return <CheckCircle className="w-8 h-8 text-success fill-white stroke-[2.5]" />;
+      return <CheckCircleIcon className="w-8 h-8 text-success fill-white stroke-[2.5]" />;
     }
-    return <Star className="w-7 h-7 text-white fill-white animate-pulse" />;
+    return <StarIcon className="w-7 h-7 text-white fill-white animate-pulse" />;
   };
 
   const getNodeBackground = (session: Session, isSelected: boolean) => {
@@ -198,21 +223,48 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
     };
   });
 
-  // Tính toán tiến trình hoàn thành của một Chủ đề
+  // Tính toán tiến trình hoàn thành của một Chủ đề (%)
   const getTopicProgress = (topicId: number) => {
-    if (activeTopic && activeTopic.id === topicId && parts.length > 0) {
-      if (allSessionsInTopic.length === 0) return 0;
-      const finishedCount = allSessionsInTopic.filter(s => s.status === SessionStatus.FINISH).length;
-      return Math.round((finishedCount / allSessionsInTopic.length) * 100);
+    // Đếm số bài học đã hoàn thành (FINISH) thuộc topic này trong userProgress
+    const finishedCount = userProgress.filter(p => {
+      if (p.status !== SessionStatus.FINISH) return false;
+      if (p.session?.part?.topic?.id === topicId) return true;
+      if (activeTopic?.id === topicId && parts.some(part => part.id === p.session?.part?.id)) return true;
+      return false;
+    }).length;
+
+    // Tổng số bài học trong topic
+    if (activeTopic && activeTopic.id === topicId && rawSessionsInTopic.length > 0) {
+      return Math.min(100, Math.round((finishedCount / rawSessionsInTopic.length) * 100));
     }
-    return 0;
+
+    const topicObj = topics.find(t => t.id === topicId);
+    const totalSessions = (topicObj?.parts && topicObj.parts.length > 0)
+      ? topicObj.parts.reduce((sum, part) => sum + (part.sessions?.length || 5), 0)
+      : 10;
+
+    if (totalSessions === 0) return 0;
+    return Math.min(100, Math.round((finishedCount / totalSessions) * 100));
   };
 
-  const isTopicUnlocked = (_topic: Topic, index: number) => {
+  const isTopicUnlocked = (topic: Topic, index: number) => {
+    // Chủ đề đầu tiên (Chủ đề 1) luôn luôn được mở khóa mặc định
     if (index === 0) return true;
+
+    // Nếu chủ đề này đã có bài học nào được UNLOCK hoặc FINISH trong userProgress -> Đã mở khóa
+    const hasProgressInThisTopic = userProgress.some(
+      p => p.session?.part?.topic?.id === topic.id && (p.status === SessionStatus.FINISH || p.status === SessionStatus.UNLOCK)
+    );
+    if (hasProgressInThisTopic) return true;
+
+    // Hoặc nếu chủ đề liền trước đã hoàn thành (100%)
     const prevTopic = topics[index - 1];
-    if (!prevTopic) return false;
-    return getTopicProgress(prevTopic.id) === 100;
+    if (prevTopic) {
+      const prevTopicProgress = getTopicProgress(prevTopic.id);
+      if (prevTopicProgress === 100) return true;
+    }
+
+    return false;
   };
 
   // Tìm bài học đang học hiện tại (UNLOCK) để hiển thị thông tin động trên Sticky Header
@@ -222,7 +274,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-12 space-y-4">
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        <span className="text-sm font-bold text-text-muted">Đang tải dữ liệu trình độ...</span>
+        <span className="text-sm font-bold text-text-muted">Đang tải danh sách trình độ...</span>
       </div>
     );
   }
@@ -290,10 +342,10 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
         <div className="max-w-2xl mx-auto space-y-6 animate-fade-in-up">
           <div className="flex items-center justify-between pb-2">
             <button
-              onClick={() => setCurrentView('levels')}
+              onClick={handleBackToLevels}
               className="flex items-center gap-2 px-4 py-2.5 border-2 border-border-main rounded-xl hover:bg-bg-light font-display font-bold text-xs text-text-muted transition-all cursor-pointer shadow-[0_2px_0_0_#e5e5e5] active:translate-y-[1px]"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeftIcon className="w-4 h-4" />
               QUAY LẠI
             </button>
             <span className="text-xs font-extrabold text-primary tracking-widest uppercase">
@@ -303,7 +355,12 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
 
           {/* Topics List with Duolingo Cards Layout (Image 1 Style) */}
           <div className="space-y-6 pt-2">
-            {topics.length > 0 ? (
+            {loading && topics.length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-12 space-y-4">
+                <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                <span className="text-sm font-bold text-text-muted">Đang tải danh sách chủ đề...</span>
+              </div>
+            ) : topics.length > 0 ? (
               topics.map((tpc, index) => {
                 const progress = getTopicProgress(tpc.id);
                 const isUnlocked = isTopicUnlocked(tpc, index);
@@ -329,7 +386,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                   >
                     {/* Left details & progress & action button */}
                     <div className="flex-grow text-left space-y-4 w-full">
-                      <div className="space-y-1">
+                       <div className="space-y-1">
                         <span className="text-[10px] font-extrabold text-primary/70 tracking-widest uppercase block">Chủ đề {index + 1}</span>
                         <h3 className={`text-lg font-display font-extrabold ${isUnlocked ? 'text-[#0079b8]' : 'text-text-muted'}`}>
                           {tpc.title}
@@ -337,7 +394,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                         <p className="text-xs font-semibold text-text-muted line-clamp-2">{tpc.description}</p>
                         {!isUnlocked && (
                           <span className="inline-flex items-center gap-1.5 text-xs font-bold text-text-muted pt-1">
-                            <Lock className="w-3.5 h-3.5" /> CHƯA MỞ KHÓA
+                            <LockClosedIcon className="w-3.5 h-3.5" /> CHƯA MỞ KHÓA
                           </span>
                         )}
                       </div>
@@ -374,7 +431,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                             onClick={() => alert("Bé hãy hoàn thành các chủ đề trước để mở khóa nhé!")}
                             className="px-8 py-3 text-xs tracking-wider font-display font-extrabold uppercase border-2 border-border-main bg-white text-text-muted"
                           >
-                            <Lock className="w-4 h-4 mr-2 inline" />
+                            <LockClosedIcon className="w-4 h-4 mr-2 inline" />
                             NHẢY TỚI CHỦ ĐỀ {index + 1}
                           </Button3D>
                         )}
@@ -423,10 +480,10 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
           <div className="max-w-2xl mx-auto sticky top-0 z-30 bg-[#a55eea] text-white rounded-2xl p-4 shadow-md flex items-center justify-between border-b-4 border-[#8854d0]">
             <div className="flex items-center gap-3 text-left">
               <button
-                onClick={() => setCurrentView('topics')}
+                onClick={handleBackToTopics}
                 className="w-10 h-10 rounded-xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors cursor-pointer text-white"
               >
-                <ArrowLeft className="w-5 h-5 stroke-[2.5]" />
+                <ArrowLeftIcon className="w-5 h-5 stroke-[2.5]" />
               </button>
               <div>
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#f1e6ff] block mb-0.5">
@@ -446,11 +503,17 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
           </div>
 
           {/* Sessions Map Winding Road (Image 2) - EXPANSED to fit page, NO borders, NO bg-white, NO shadow */}
-          <div className="flex flex-col items-center py-12 w-full relative min-h-[500px]">
-            {/* The vertical road line */}
-            <div className="absolute top-0 bottom-0 w-2.5 bg-[#e5e5e5] -z-10" />
+          {loading && allSessionsInTopic.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-16 space-y-4 min-h-[400px]">
+              <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm font-bold text-text-muted">Đang tải bài học của chủ đề...</span>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center py-12 w-full relative min-h-[500px]">
+              {/* The vertical road line */}
+              <div className="absolute top-0 bottom-0 w-2.5 bg-[#e5e5e5] -z-10" />
 
-            {allSessionsInTopic.map((session, index) => {
+              {allSessionsInTopic.map((session, index) => {
               const isSelected = selectedNodeId === session.id;
               const isUnlocked = session.status === SessionStatus.UNLOCK;
               const curveStyle = getCurveMargin(index);
@@ -549,7 +612,8 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                 </React.Fragment>
               );
             })}
-          </div>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -27,12 +27,24 @@ export const LoginPage: React.FC = () => {
 
     try {
       const response = await authApi.login({ email: email.trim(), password });
+      
+      const user = response.user || {
+        email: response.email || email.trim(),
+        role: response.role,
+        hasPassword: response.hasPassword ?? true,
+      };
+
       setAuth(
-        { email: email.trim(), hasPassword: response.hasPassword ?? true },
+        user,
         response.accessToken,
         response.refreshToken
       );
-      navigate('/learn');
+
+      if (user.role === 'ROLE_ADMIN') {
+        navigate('/admin/dashboard', { replace: true });
+      } else {
+        navigate('/learn', { replace: true });
+      }
     } catch (err) {
       if (err instanceof ApiError) {
         setErrorMsg(err.message || 'Sai Email hoặc Mật khẩu. Vui lòng kiểm tra lại!');
@@ -64,14 +76,25 @@ export const LoginPage: React.FC = () => {
           googleId: googleId,
         });
 
+        const user = response.user || {
+          email: googleEmail,
+          username: googleName,
+          role: response.role,
+          hasPassword: response.hasPassword ?? false,
+        };
+
         // 3. Lưu Access Token và Refresh Token vào Zustand store / localStorage
         setAuth(
-          { email: googleEmail, username: googleName, hasPassword: response.hasPassword ?? false },
+          user,
           response.accessToken,
           response.refreshToken
         );
 
-        navigate('/learn');
+        if (user.role === 'ROLE_ADMIN') {
+          navigate('/admin/dashboard', { replace: true });
+        } else {
+          navigate('/learn', { replace: true });
+        }
       } catch (err) {
         if (err instanceof ApiError) {
           setErrorMsg(err.message || 'Đăng nhập Google thất bại!');
@@ -163,7 +186,7 @@ export const LoginPage: React.FC = () => {
         <div className="w-full">
           <button
             type="button"
-            onClick={handleGoogleLogin}
+            onClick={() => handleGoogleLogin()}
             className="w-full py-3 px-4 rounded-2xl border-2 border-slate-200 border-b-4 text-slate-700 font-extrabold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-slate-50 active:translate-y-0.5 transition"
           >
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">

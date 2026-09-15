@@ -87,3 +87,16 @@ Thumbs.db
 # =========================
 *.tmp
 *.temp
+
+__pycache__/
+*.pyc
+
+# =========================
+# Database Image Upload & Assets
+# =========================
+Database/Images/
+Database/images/
+Database/TransImage.py
+Database/.env
+Database/mapping_cache.json
+Database/*.bak
