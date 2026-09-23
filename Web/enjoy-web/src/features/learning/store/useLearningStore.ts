@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { learningApi } from '../services/learningApi';
-import type { Level, Topic, Part, Session, SessionItem } from '../types';
+import type { Level, Topic, Part, Session, Vocabulary } from '../types';
 import { SessionStatus } from '../types';
 
 interface LearningState {
@@ -10,7 +10,7 @@ interface LearningState {
   parts: Part[];
   sessions: Session[];
   sessionsByPart: Record<number, Session[]>;
-  sessionItems: SessionItem[];
+  partVocabularies: Record<number, Vocabulary[]>; // cache vocab theo partId
   userProgress: import('../types').UserProgress[];
   
   // Thực thể đang được kích hoạt (Đang học)
@@ -26,13 +26,13 @@ interface LearningState {
   loading: boolean;
   error: string | null;
 
-  // Các hàm hành động (Actions)
   fetchLevels: () => Promise<void>;
   fetchUserProgress: () => Promise<void>;
   selectLevel: (level: Level) => Promise<void>;
   selectTopic: (topic: Topic) => Promise<void>;
   selectPart: (part: Part) => Promise<void>;
-  selectSession: (session: Session) => Promise<void>;
+  selectSession: (session: Session) => void;
+  fetchPartVocabularies: (partId: number) => Promise<Vocabulary[]>;
   completeSession: (sessionId: number, durationSeconds?: number) => Promise<void>;
   
   // Điều hướng các bước học (session player)
@@ -48,7 +48,7 @@ export const useLearningStore = create<LearningState>((set, get) => ({
   parts: [],
   sessions: [],
   sessionsByPart: {},
-  sessionItems: [],
+  partVocabularies: {},
   userProgress: [],
   
   activeLevel: null,
@@ -153,30 +153,29 @@ export const useLearningStore = create<LearningState>((set, get) => ({
     }
   },
 
-  // Chọn Session -> Lấy danh sách Session Items được ánh xạ (câu hỏi/nội dung học)
-  selectSession: async (session: Session) => {
-    set({ activeSession: session, sessionItems: [], currentStepIndex: 0, loading: true, error: null });
+  // Chọn Session — payload đã nằm trong Session object, không cần fetch thêm
+  selectSession: (session: Session) => {
+    set({ activeSession: session, currentStepIndex: 0 });
+  },
+
+  // Fetch và cache danh sách từ vựng của Part (cho MATCH_WORD, SPEAKING, RE_ORDER)
+  fetchPartVocabularies: async (partId: number) => {
+    const cached = get().partVocabularies[partId];
+    if (cached) return cached;
     try {
-      const mappings = await learningApi.getSessionItemMappings(session.id);
-      
-      // Lọc và sắp xếp Session Items theo orderIndex của mapping
-      const sortedItems = mappings
-        .filter(m => m.sessionItem !== undefined && m.sessionItem !== null)
-        .map(m => m.sessionItem!); // Ép kiểu an toàn do đã filter
-        
-      set({ sessionItems: sortedItems, loading: false });
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Không thể lấy danh sách bài học';
-      set({ error: errorMessage, loading: false });
+      const vocabs = await learningApi.getPartVocabularies(partId);
+      const list = Array.isArray(vocabs) ? vocabs : (vocabs as any)?.data || [];
+      set(prev => ({ partVocabularies: { ...prev.partVocabularies, [partId]: list } }));
+      return list;
+    } catch (err) {
+      console.error(`Lỗi khi lấy vocabulary cho part ${partId}:`, err);
+      return [];
     }
   },
 
-  // Chuyển sang câu hỏi / nội dung tiếp theo
+  // Chuyển sang bước tiếp theo
   nextStep: () => {
-    const { currentStepIndex, sessionItems } = get();
-    if (currentStepIndex < sessionItems.length - 1) {
-      set({ currentStepIndex: currentStepIndex + 1 });
-    }
+    set(prev => ({ currentStepIndex: prev.currentStepIndex + 1 }));
   },
 
   // Quay lại câu hỏi / nội dung trước đó
@@ -209,7 +208,6 @@ export const useLearningStore = create<LearningState>((set, get) => ({
     set({
       currentStepIndex: 0,
       activeSession: null,
-      sessionItems: []
     });
   }
 }));

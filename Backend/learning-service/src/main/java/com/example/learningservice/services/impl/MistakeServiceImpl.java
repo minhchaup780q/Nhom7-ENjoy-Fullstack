@@ -5,10 +5,10 @@ import com.example.learningservice.dto.MistakeResponse;
 import com.example.learningservice.dto.MistakeStatsResponse;
 import com.example.learningservice.dto.PageResponse;
 import com.example.learningservice.entities.Mistake;
-import com.example.learningservice.entities.SessionItem;
+import com.example.learningservice.entities.Vocabulary;
 import com.example.learningservice.entities.enums.MistakeStatus;
 import com.example.learningservice.repositories.MistakeRepository;
-import com.example.learningservice.repositories.SessionItemRepository;
+import com.example.learningservice.repositories.VocabularyRepository;
 import com.example.learningservice.services.MistakeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 public class MistakeServiceImpl implements MistakeService {
 
     private final MistakeRepository mistakeRepository;
-    private final SessionItemRepository sessionItemRepository;
+    private final VocabularyRepository vocabularyRepository;
 
     @Override
     @Transactional
@@ -42,12 +42,12 @@ public class MistakeServiceImpl implements MistakeService {
             throw new IllegalArgumentException("User ID is required to log mistake.");
         }
 
-        SessionItem question = sessionItemRepository.findById(request.getQuestionId())
-                .orElseThrow(() -> new IllegalArgumentException("Question not found with ID: " + request.getQuestionId()));
+        Vocabulary vocabulary = vocabularyRepository.findById(request.getQuestionId())
+                .orElseThrow(() -> new IllegalArgumentException("Vocabulary not found with ID: " + request.getQuestionId()));
 
         // Kiểm tra xem user đã từng làm sai câu này ở vòng này chưa
         Optional<Mistake> existingMistakeOpt = mistakeRepository
-                .findByUserIdAndQuestionIdAndRoundType(targetUserId, request.getQuestionId(), request.getRoundType());
+                .findByUserIdAndVocabularyIdAndRoundType(targetUserId, request.getQuestionId(), request.getRoundType());
 
         Mistake mistake;
         if (existingMistakeOpt.isPresent()) {
@@ -61,7 +61,7 @@ public class MistakeServiceImpl implements MistakeService {
         } else {
             mistake = Mistake.builder()
                     .userId(targetUserId)
-                    .question(question)
+                    .vocabulary(vocabulary)
                     .roundType(request.getRoundType() != null ? request.getRoundType() : 1)
                     .wrongAnswerSubmitted(request.getWrongAnswerSubmitted())
                     .durationSeconds(request.getDurationSeconds())

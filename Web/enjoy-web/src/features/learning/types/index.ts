@@ -1,24 +1,27 @@
 import type { BaseEntity } from '../../../types';
 
+// ============================================================
+// Enums
+// ============================================================
 export enum SessionType {
-  INTRODUCTION = 'INTRODUCTION',
-  LISTENING = 'LISTENING',
-  SPEAKING = 'SPEAKING',
-  WORD_RECOGNITION = 'WORD_RECOGNITION',
-  GAMIFIED_REVIEW = 'GAMIFIED_REVIEW',
+  FLASHCARD     = 'FLASHCARD',
+  MATCH_WORD    = 'MATCH_WORD',
+  SPEAKING      = 'SPEAKING',
+  RE_ORDER      = 'RE_ORDER',
+  DRAG_DROP     = 'DRAG_DROP',
+  GRAMMAR       = 'GRAMMAR',
+  CONVERSATION  = 'CONVERSATION',
 }
 
 export enum SessionStatus {
-  LOCK = 'LOCK',
+  LOCK   = 'LOCK',
   UNLOCK = 'UNLOCK',
   FINISH = 'FINISH',
 }
 
-export enum SessionItemType {
-  TARGET = 'TARGET',
-  SUPPORT = 'SUPPORT',
-}
-
+// ============================================================
+// Entities
+// ============================================================
 export interface Level extends BaseEntity {
   id: number;
   name: string;
@@ -47,6 +50,14 @@ export interface Part extends BaseEntity {
   sessions?: Session[];
 }
 
+/** payload shape từ DB (JSON column) — mỗi exerciseType dùng một subset */
+export interface SessionPayload {
+  word?:        string;  // từ tiếng Anh chính
+  translation?: string;  // dịch nghĩa
+  image?:       string;  // URL ảnh
+  audio?:       string;  // URL audio
+}
+
 export interface Session extends BaseEntity {
   id: number;
   partId: number;
@@ -56,44 +67,17 @@ export interface Session extends BaseEntity {
   title: string;
   description: string;
   status?: SessionStatus;
-  createdBy?: number;
   orderIndex: number;
-  itemMappings?: SessionItemMapping[];
+  payload?: SessionPayload | null;
 }
 
-export enum SpeakerRole {
-  SPEAKER_1 = 'SPEAKER_1',
-  SPEAKER_2 = 'SPEAKER_2',
-}
-
-export interface SessionItem extends BaseEntity {
+/** Từ vựng trả về từ GET /api/parts/{partId}/vocabularies */
+export interface Vocabulary {
   id: number;
-  contentText: string;
-  translation?: string;
+  word: string;
+  translation: string;
   imageUrl?: string;
   audioUrl?: string;
-  itemType: SessionItemType;
-  speakerRole?: SpeakerRole;
-  keyword?: string;
-  keywordTranslation?: string;
-  keywordAudioUrl?: string;
-  sessionMappings?: SessionItemMapping[];
-}
-
-export interface SessionItemMapping extends BaseEntity {
-  sessionId: number;
-  sessionItemId: number;
-  session?: Session;
-  sessionItem?: SessionItem;
-  orderIndex: number;
-}
-
-export interface ChildItemStatus extends BaseEntity {
-  childId: number;
-  sessionItemId: number;
-  status: string; // e.g. 'MEMORIZED', 'STUDYING', 'NOT_STARTED'
-  countWrong: number;
-  lastUpdated: string;
 }
 
 export interface UserProgress extends BaseEntity {
@@ -103,4 +87,3 @@ export interface UserProgress extends BaseEntity {
   status: SessionStatus;
   completedAt?: string;
 }
-

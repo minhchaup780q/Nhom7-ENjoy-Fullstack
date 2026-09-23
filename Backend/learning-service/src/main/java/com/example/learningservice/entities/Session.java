@@ -2,10 +2,12 @@ package com.example.learningservice.entities;
 
 import com.example.learningservice.entities.enums.SessionType;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.JsonNode;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.util.List;
 
 @Entity
 @Table(name = "sessions")
@@ -34,7 +36,7 @@ public class Session extends BaseEntity {
     @Column(name = "order_index")
     private Integer orderIndex;
 
-    @OneToMany(mappedBy = "session", cascade = CascadeType.ALL)
-    @JsonIgnoreProperties("session")
-    private List<SessionItemMapping> itemMappings;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "json")
+    private JsonNode payload;
 }

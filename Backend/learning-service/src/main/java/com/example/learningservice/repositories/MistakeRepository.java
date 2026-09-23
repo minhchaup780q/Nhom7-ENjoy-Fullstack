@@ -32,7 +32,7 @@ public interface MistakeRepository extends JpaRepository<Mistake, Long> {
 
     Page<Mistake> findByUserIdAndRoundType(Long userId, Integer roundType, Pageable pageable);
 
-    Optional<Mistake> findByUserIdAndQuestionIdAndRoundType(Long userId, Long questionId, Integer roundType);
+    Optional<Mistake> findByUserIdAndVocabularyIdAndRoundType(Long userId, Long vocabularyId, Integer roundType);
 
     long countByUserIdAndStatus(Long userId, MistakeStatus status);
 
