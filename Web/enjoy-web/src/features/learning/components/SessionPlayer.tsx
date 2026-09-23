@@ -7,6 +7,7 @@ import { MatchWordExercise } from './exercises/MatchWordExercise';
 import { SpeakingExercise } from './exercises/SpeakingExercise';
 import { ReorderExercise } from './exercises/ReorderExercise';
 import { DragDropExercise } from './exercises/DragDropExercise';
+import { GrammarExercise } from './exercises/GrammarExercise';
 import { XMarkIcon, HeartIcon } from '@heroicons/react/24/solid';
 
 interface SessionPlayerProps {
@@ -211,6 +212,16 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
         );
 
       case SessionType.GRAMMAR:
+        if (!payload || Object.keys(payload).length === 0) return <div className="session-placeholder"><p>Dữ liệu bài tập trống.</p></div>;
+        return (
+          <GrammarExercise
+            payload={payload}
+            onComplete={handleSessionComplete}
+            onMistake={handleMistake}
+            onProgress={handleProgress}
+          />
+        );
+
       case SessionType.CONVERSATION:
         return (
           <div className="session-placeholder">

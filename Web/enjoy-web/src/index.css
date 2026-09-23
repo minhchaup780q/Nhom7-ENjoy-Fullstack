@@ -548,3 +548,119 @@ body {
 .dragdrop-result { padding: 12px 24px; border-radius: 12px; text-align: center; font-weight: 700; }
 .dragdrop-result.correct { background: var(--color-success-soft); color: var(--color-success-dark); }
 .dragdrop-result.incorrect { background: #fff0f0; color: #cc0000; }
+
+/* ============================================================
+   GRAMMAR EXERCISE
+   ============================================================ */
+.grammar-exercise {
+  width: 100%; max-width: 680px; margin: 0 auto;
+  display: flex; flex-direction: column; gap: 0;
+}
+.grammar-title {
+  text-align: center; font-size: 1.1rem; font-weight: 800;
+  color: var(--color-text-main); margin-bottom: 20px; 
+}
+
+/* Scroll container */
+.grammar-blocks-container {
+  display: flex; flex-direction: column; gap: 16px;
+  padding-bottom: 20px;
+}
+
+/* Mỗi block wrapper */
+.grammar-block { width: 100%; }
+.grammar-center { display: flex; flex-direction: column; align-items: center; }
+
+/* Hiệu ứng fade-in slide-up khi block mới xuất hiện */
+@keyframes grammarBlockEnter {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.grammar-block-enter { animation: grammarBlockEnter 0.35s ease forwards; }
+
+/* TEXT_SPEECH: bong bóng chat bên trái */
+.grammar-bubble-left {
+  display: inline-flex; align-items: flex-start; gap: 10px;
+  max-width: 75%;
+  background: white;
+  border: 2px solid var(--color-primary);
+  border-radius: 0 18px 18px 18px;
+  padding: 12px 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.grammar-bubble-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 2px; }
+.grammar-bubble-text { margin: 0; font-size: 1rem; font-weight: 600; color: var(--color-text-main); line-height: 1.5; }
+
+/* IMAGE */
+.grammar-image {
+  max-width: 80%; height: auto; border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+/* EXPLANATION */
+.grammar-explanation {
+  background: var(--color-bg-light);
+  border-left: 4px solid var(--color-primary);
+  border-radius: 0 12px 12px 0;
+  padding: 12px 16px; margin: 0;
+  font-size: 0.95rem; color: var(--color-text-main); line-height: 1.7;
+  width: 100%;
+}
+
+/* QUESTION card */
+.grammar-question-card {
+  background: white; border-radius: 16px;
+  border: 2px solid var(--color-border-main);
+  padding: 20px; 
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  display: flex; flex-direction: column; gap: 14px;
+}
+.grammar-audio-btn {
+  align-self: flex-start; background: none; border: none;
+  font-size: 1.5rem; cursor: pointer; padding: 0; line-height: 1;
+  transition: transform 0.15s;
+}
+.grammar-audio-btn:hover { transform: scale(1.2); }
+.grammar-question-text {
+  margin: 0; font-size: 1.1rem; font-weight: 700;
+  color: var(--color-text-main); line-height: 1.6;
+  /* hiển thị _____ rõ ràng */
+  letter-spacing: 0.01em;
+}
+.grammar-options {
+  display: flex; gap: 12px; flex-wrap: wrap;
+}
+.grammar-option-btn {
+  flex: 1; min-width: 100px; padding: 12px 16px;
+  border-radius: 12px; border: 2px solid var(--color-border-main);
+  background: var(--color-bg-light); font-size: 1rem; font-weight: 700;
+  cursor: pointer; transition: all 0.2s; color: var(--color-text-main);
+}
+.grammar-option-btn:hover:not(:disabled) {
+  border-color: var(--color-primary); background: white;
+  transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+/* Chọn đúng */
+.grammar-option-btn.correct {
+  border-color: var(--color-success); background: var(--color-success-soft);
+  color: var(--color-success-dark); cursor: default;
+}
+/* Chọn sai (làm mờ) */
+.grammar-option-btn.incorrect {
+  opacity: 0.35; cursor: not-allowed;
+}
+.grammar-option-btn:disabled { cursor: default; }
+
+/* Nút Tiếp tục */
+.grammar-next-area { display: flex; justify-content: center; padding-top: 8px; }
+.grammar-next-btn {
+  padding: 14px 40px; border-radius: 50px;
+  background: var(--color-primary); color: white;
+  border: none; font-size: 1rem; font-weight: 800;
+  cursor: pointer; transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(var(--color-primary-rgb, 0,153,255), 0.35);
+}
+.grammar-next-btn:hover:not(.disabled) { transform: translateY(-2px); filter: brightness(1.08); }
+.grammar-next-btn.disabled {
+  opacity: 0.45; cursor: not-allowed; transform: none; filter: none;
+}

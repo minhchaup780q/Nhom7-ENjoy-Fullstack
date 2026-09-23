@@ -192,7 +192,28 @@ VALUES
     JSON_OBJECT('word','nine',  'x',0.8649,'y',0.2924,'width',0.0675,'height',0.0442)
   )
 ), 'Drag Drop: Numbers 1-10', 1),
-(6, NOW(), 1, 0, NOW(), 1, NULL, 'Grammar numbers 1-10',      'GRAMMAR',      6, NULL, 'Grammar: Numbers 1-10',      1),
+(6, NOW(), 1, 0, NOW(), 1, NULL, 'Grammar numbers 1-10', 'GRAMMAR', 6,
+ JSON_OBJECT(
+  'title', 'Grammar: Greetings, Names & Age',
+  'blocks', JSON_ARRAY(
+    JSON_OBJECT('order', 1,  'type', 'TEXT_SPEECH',  'text', 'Let''s learn grammar!', 'audio_url', 'https://dict.youdao.com/dictvoice?audio=Let''s+learn+grammar!&type=2'),
+    JSON_OBJECT('order', 2,  'type', 'IMAGE',        'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/hihello.webp'),
+    JSON_OBJECT('order', 3,  'type', 'EXPLANATION',  'text', 'When you greet someone, you say "Hi" or "Hello".'),
+    JSON_OBJECT('order', 4,  'type', 'IMAGE',        'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/3name.webp'),
+    JSON_OBJECT('order', 5,  'type', 'EXPLANATION',  'text', '"Name" is what people call you.'),
+    JSON_OBJECT('order', 6,  'type', 'IMAGE',        'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/h1.webp'),
+    JSON_OBJECT('order', 7,  'type', 'EXPLANATION',  'text', 'When someone asks your name, they say: "What''s your name?" or "What is your name?".'),
+    JSON_OBJECT('order', 8,  'type', 'EXPLANATION',  'text', 'You say: "My name is" + [your name] OR "I''m" + [your name].'),
+    JSON_OBJECT('order', 9,  'type', 'IMAGE',        'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/h2.webp'),
+    JSON_OBJECT('order', 10, 'type', 'EXPLANATION',  'text', 'When someone asks your age, they say: "How old are you?".'),
+    JSON_OBJECT('order', 11, 'type', 'EXPLANATION',  'text', 'You say: "I''m/I am" + your age number. You can say "years old" at the end or not.'),
+    JSON_OBJECT('order', 12, 'type', 'TEXT_SPEECH',  'text', 'Now listen and choose!', 'audio_url', 'https://dict.youdao.com/dictvoice?audio=Now+listen+and+choose!&type=2'),
+    JSON_OBJECT('order', 13, 'type', 'QUESTION', 'text', 'Hi, [] Mymy.',    'audio_url', 'https://dict.youdao.com/dictvoice?audio=Hi,+I''m+Mymy.&type=2',         'options', JSON_ARRAY(JSON_OBJECT('id','opt_1','text','I''m',    'is_correct',TRUE), JSON_OBJECT('id','opt_2','text','My',      'is_correct',FALSE))),
+    JSON_OBJECT('order', 14, 'type', 'QUESTION', 'text', '[] your name?',   'audio_url', 'https://dict.youdao.com/dictvoice?audio=What''s+your+name?&type=2',    'options', JSON_ARRAY(JSON_OBJECT('id','opt_1','text','What''s','is_correct',TRUE), JSON_OBJECT('id','opt_2','text','How',     'is_correct',FALSE))),
+    JSON_OBJECT('order', 15, 'type', 'QUESTION', 'text', 'My [] is Kin.',   'audio_url', 'https://dict.youdao.com/dictvoice?audio=My+name+is+Kin.&type=2',       'options', JSON_ARRAY(JSON_OBJECT('id','opt_1','text','name',   'is_correct',TRUE), JSON_OBJECT('id','opt_2','text','am',      'is_correct',FALSE))),
+    JSON_OBJECT('order', 16, 'type', 'QUESTION', 'text', '[] old are you?', 'audio_url', 'https://dict.youdao.com/dictvoice?audio=How+old+are+you?&type=2',      'options', JSON_ARRAY(JSON_OBJECT('id','opt_1','text','How',    'is_correct',TRUE), JSON_OBJECT('id','opt_2','text','What',    'is_correct',FALSE)))
+  )
+ ), 'Grammar: Numbers 1-10', 1),
 (7, NOW(), 1, 0, NOW(), 1, NULL, 'Conversation numbers 1-10', 'CONVERSATION', 7, NULL, 'Conversation: Numbers 1-10', 1),
 
 -- ============================================================
