@@ -50,12 +50,25 @@ export interface Part extends BaseEntity {
   sessions?: Session[];
 }
 
+export interface DragDropCoordinate {
+  word: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 /** payload shape từ DB (JSON column) — mỗi exerciseType dùng một subset */
 export interface SessionPayload {
   word?:        string;  // từ tiếng Anh chính
   translation?: string;  // dịch nghĩa
-  image?:       string;  // URL ảnh
-  audio?:       string;  // URL audio
+  image?:       string;  // URL ảnh (các vòng cũ)
+  audio?:       string;  // URL audio (các vòng cũ)
+  
+  // Dùng cho DRAG_DROP
+  image_url?:   string;
+  audio_url?:   string;
+  coordinates?: DragDropCoordinate[];
 }
 
 export interface Session extends BaseEntity {

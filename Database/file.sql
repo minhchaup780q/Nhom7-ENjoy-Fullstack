@@ -175,7 +175,23 @@ VALUES
 (2, NOW(), 1, 0, NOW(), 1, NULL, 'Match word numbers 1-10', 'MATCH_WORD', 2, NULL, 'Match Word: Numbers 1-10', 1),
 (3, NOW(), 1, 0, NOW(), 1, NULL, 'Speaking numbers 1-10', 'SPEAKING', 3, NULL, 'Speaking: Numbers 1-10', 1),
 (4, NOW(), 1, 0, NOW(), 1, NULL, 'Re-order numbers 1-10', 'RE_ORDER', 4, NULL, 'Re-order: Numbers 1-10', 1),
-(5, NOW(), 1, 0, NOW(), 1, NULL, 'Drag drop numbers 1-10',    'DRAG_DROP',    5, NULL, 'Drag Drop: Numbers 1-10',    1),
+(5, NOW(), 1, 0, NOW(), 1, NULL, 'Drag drop numbers 1-10', 'DRAG_DROP', 5, 
+ JSON_OBJECT(
+  'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/number.jpg',
+  'audio_url', 'https://dict.youdao.com/dictvoice?audio=one&type=2',
+  'coordinates', JSON_ARRAY(
+    JSON_OBJECT('word','one',   'x',0.2949,'y',0.8578,'width',0.0762,'height',0.0405),
+    JSON_OBJECT('word','two',   'x',0.0737,'y',0.5263,'width',0.0937,'height',0.046),
+    JSON_OBJECT('word','three', 'x',0.7162,'y',0.7584,'width',0.0775,'height',0.0405),
+    JSON_OBJECT('word','four',  'x',0.8549,'y',0.6166,'width',0.0637,'height',0.0387),
+    JSON_OBJECT('word','seven', 'x',0.8587,'y',0.8744,'width',0.0575,'height',0.0313),
+    JSON_OBJECT('word','ten',   'x',0.4287,'y',0.3477,'width',0.0825,'height',0.046),
+    JSON_OBJECT('word','five',  'x',0.2174,'y',0.5281,'width',0.0675,'height',0.046),
+    JSON_OBJECT('word','eight', 'x',0.1662,'y',0.2998,'width',0.0787,'height',0.0387),
+    JSON_OBJECT('word','six',   'x',0.5712,'y',0.0751,'width',0.0787,'height',0.0424),
+    JSON_OBJECT('word','nine',  'x',0.8649,'y',0.2924,'width',0.0675,'height',0.0442)
+  )
+), 'Drag Drop: Numbers 1-10', 1),
 (6, NOW(), 1, 0, NOW(), 1, NULL, 'Grammar numbers 1-10',      'GRAMMAR',      6, NULL, 'Grammar: Numbers 1-10',      1),
 (7, NOW(), 1, 0, NOW(), 1, NULL, 'Conversation numbers 1-10', 'CONVERSATION', 7, NULL, 'Conversation: Numbers 1-10', 1),
 
