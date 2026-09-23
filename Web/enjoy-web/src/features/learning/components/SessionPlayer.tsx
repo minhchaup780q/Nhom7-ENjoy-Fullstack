@@ -6,6 +6,7 @@ import { FlashcardExercise } from './exercises/FlashcardExercise';
 import { MatchWordExercise } from './exercises/MatchWordExercise';
 import { SpeakingExercise } from './exercises/SpeakingExercise';
 import { ReorderExercise } from './exercises/ReorderExercise';
+import { DragDropExercise } from './exercises/DragDropExercise';
 import { XMarkIcon, HeartIcon } from '@heroicons/react/24/solid';
 
 interface SessionPlayerProps {
@@ -37,7 +38,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     sessionStartTime.current = Date.now();
   }, [session.id]);
 
-  // Fetch từ vựng của Part nếu cần (MATCH_WORD, SPEAKING, RE_ORDER, FLASHCARD)
+  // Fetch từ vựng của Part nếu cần
   const needsVocabs = [
     SessionType.FLASHCARD,
     SessionType.MATCH_WORD,
@@ -103,9 +104,15 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     );
   }
 
-  const payload = session.payload ?? {};
-
-  // ──────────────────────────────────────────────
+  let payload = session.payload ?? {};
+  if (typeof payload === 'string') {
+    try {
+      payload = JSON.parse(payload);
+    } catch (e) {
+      console.error('Failed to parse payload', e);
+      payload = {};
+    }
+  }
   // Header chung
   // ──────────────────────────────────────────────
   const Header = () => (
@@ -193,6 +200,16 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
         );
 
       case SessionType.DRAG_DROP:
+        if (!payload || Object.keys(payload).length === 0) return <div className="session-placeholder"><p>Dữ liệu bài tập trống.</p></div>;
+        return (
+          <DragDropExercise
+            payload={payload}
+            onComplete={handleSessionComplete}
+            onMistake={handleMistake}
+            onProgress={handleProgress}
+          />
+        );
+
       case SessionType.GRAMMAR:
       case SessionType.CONVERSATION:
         return (
