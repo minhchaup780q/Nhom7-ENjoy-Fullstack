@@ -1,9 +1,11 @@
 package com.example.learningservice.entities.enums;
 
 public enum SessionType {
-    INTRODUCTION,
-    LISTENING,
+    FLASHCARD,
+    MATCH_WORD,
     SPEAKING,
-    WORD_RECOGNITION,
-    GAMIFIED_REVIEW
+    RE_ORDER,
+    DRAG_DROP,
+    GRAMMAR,
+    CONVERSATION
 }

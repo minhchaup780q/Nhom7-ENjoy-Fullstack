@@ -4,11 +4,15 @@ import com.example.learningservice.entities.Part;
 import com.example.learningservice.entities.Topic;
 import com.example.learningservice.repositories.PartRepository;
 import com.example.learningservice.repositories.TopicRepository;
+import com.example.learningservice.repositories.PartVocabularyRepository;
+import com.example.learningservice.entities.PartVocabulary;
+import com.example.learningservice.dto.VocabularyDto;
 import com.example.learningservice.services.PartService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -16,10 +20,19 @@ public class PartServiceImpl implements PartService {
 
     private final PartRepository partRepository;
     private final TopicRepository topicRepository;
+    private final PartVocabularyRepository partVocabularyRepository;
 
     @Override
     public List<Part> getPartsByTopic(Long topicId) {
         return partRepository.findByTopicIdAndIsDeleteFalseOrderByOrderIndexAsc(topicId);
+    }
+
+    @Override
+    public List<VocabularyDto> getVocabulariesByPart(Long partId) {
+        List<PartVocabulary> pvList = partVocabularyRepository.findByPartIdOrderByOrderIndexAsc(partId);
+        return pvList.stream()
+                .map(pv -> VocabularyDto.fromEntity(pv.getVocabulary()))
+                .collect(Collectors.toList());
     }
 
     @Override

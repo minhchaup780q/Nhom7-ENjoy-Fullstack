@@ -47,7 +47,7 @@ public class SessionServiceImpl implements SessionService {
         session.setDescription(sessionDetails.getDescription());
         session.setOrderIndex(sessionDetails.getOrderIndex());
         session.setSessionType(sessionDetails.getSessionType());
-        session.setBadgeId(sessionDetails.getBadgeId());
+        session.setPayload(sessionDetails.getPayload());
         session.setUpdateAt(LocalDateTime.now());
         return sessionRepository.save(session);
     }

@@ -1,5 +1,6 @@
 package com.example.learningservice.controllers;
 
+import com.example.learningservice.dto.VocabularyDto;
 import com.example.learningservice.entities.Part;
 import com.example.learningservice.services.PartService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,14 @@ public class PartController {
     @GetMapping("/{id}")
     public ResponseEntity<Part> getPartById(@PathVariable Long id) {
         return ResponseEntity.ok(partService.getPartById(id));
+    }
+
+    /**
+     * Lấy danh sách từ vựng của một Part (dùng cho vòng MATCH_WORD, v.v.)
+     */
+    @GetMapping("/{partId}/vocabularies")
+    public ResponseEntity<List<VocabularyDto>> getVocabulariesByPart(@PathVariable Long partId) {
+        return ResponseEntity.ok(partService.getVocabulariesByPart(partId));
     }
 
     @PostMapping("/by-topic/{topicId}")
