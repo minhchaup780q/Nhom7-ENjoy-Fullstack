@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { apiClient } from '../../../services/apiClient';
-import type { Level, Topic, Part, Session, SessionItemMapping, UserProgress } from '../types';
+import type { Level, Topic, Part, Session, UserProgress, Vocabulary } from '../types';
 
 export interface DailyStudyTime {
   day: string;
@@ -116,23 +116,9 @@ export const learningApi = {
     return apiClient.get<Session>(`/api/sessions/${id}`);
   },
 
-  // Lấy danh sách ánh xạ câu hỏi/nội dung học của một Session cụ thể (kèm theo orderIndex)
-  getSessionItemMappings: (sessionId: number) => {
-    return apiClient.get<SessionItemMapping[]>(`/api/sessions/${sessionId}/items`);
-  },
-
-  // Thêm nội dung học vào Session (dành cho Admin quản lý)
-  addSessionItemToSession: (sessionId: number, itemId: number, orderIndex?: number) => {
-    return apiClient.post<SessionItemMapping>(
-      `/api/sessions/${sessionId}/items/${itemId}`,
-      null,
-      { params: orderIndex !== undefined ? { orderIndex } : {} }
-    );
-  },
-
-  // Xóa nội dung học khỏi Session (dành cho Admin quản lý)
-  removeSessionItemFromSession: (sessionId: number, itemId: number) => {
-    return apiClient.delete<void>(`/api/sessions/${sessionId}/items/${itemId}`);
+  // Lấy danh sách từ vựng của một Part (dùng cho MATCH_WORD, SPEAKING, RE_ORDER, ...)
+  getPartVocabularies: (partId: number) => {
+    return apiClient.get<Vocabulary[]>(`/api/parts/${partId}/vocabularies`);
   },
 
   // Cập nhật Session (ví dụ: đổi trạng thái LOCK, UNLOCK, FINISH)

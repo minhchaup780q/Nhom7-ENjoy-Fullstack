@@ -27,9 +27,9 @@ public class Mistake extends BaseEntity {
     private Long userId;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "question_id", nullable = false)
-    @JsonIgnoreProperties({"sessionMappings", "hibernateLazyInitializer", "handler"})
-    private SessionItem question;
+    @JoinColumn(name = "vocabulary_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Vocabulary vocabulary;
 
     @Column(name = "round_type", nullable = false)
     private Integer roundType; // Vòng 1 đến 5 (Nhận diện, Nghe, Đọc, Phát âm, Viết)

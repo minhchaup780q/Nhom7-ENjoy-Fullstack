@@ -47,13 +47,12 @@ public class MistakeResponse {
                 .nextReviewAt(mistake.getNextReviewAt())
                 .createdAt(mistake.getCreatedAt());
 
-        if (mistake.getQuestion() != null) {
-            builder.questionId(mistake.getQuestion().getId())
-                    .contentText(mistake.getQuestion().getContentText())
-                    .translation(mistake.getQuestion().getTranslation())
-                    .imageUrl(mistake.getQuestion().getImageUrl())
-                    .audioUrl(mistake.getQuestion().getAudioUrl())
-                    .keyword(mistake.getQuestion().getKeyword());
+        if (mistake.getVocabulary() != null) {
+            builder.questionId(mistake.getVocabulary().getId())
+                    .contentText(mistake.getVocabulary().getWord())
+                    .translation(mistake.getVocabulary().getTranslation())
+                    .imageUrl(mistake.getVocabulary().getImageUrl())
+                    .audioUrl(mistake.getVocabulary().getAudioUrl());
         }
 
         return builder.build();
