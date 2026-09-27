@@ -214,7 +214,7 @@ VALUES
     JSON_OBJECT('order', 16, 'type', 'QUESTION', 'text', '[] old are you?', 'audio_url', 'https://dict.youdao.com/dictvoice?audio=How+old+are+you?&type=2',      'options', JSON_ARRAY(JSON_OBJECT('id','opt_1','text','How',    'is_correct',TRUE), JSON_OBJECT('id','opt_2','text','What',    'is_correct',FALSE)))
   )
  ), 'Grammar: Numbers 1-10', 1),
-(7, NOW(), 1, 0, NOW(), 1, NULL, 'Conversation numbers 1-10', 'CONVERSATION', 7, NULL, 'Conversation: Numbers 1-10', 1),
+(7, NOW(), 1, 0, NOW(), 1, NULL, 'Practice numbers 1-10', 'PRACTICE', 7, NULL, 'Practice: Numbers 1-10', 1),
 
 -- ============================================================
 -- PART 2: Number 10-20
@@ -225,7 +225,7 @@ VALUES
 (11, NOW(), 1, 0, NOW(), 1, NULL, 'Re-order numbers 10-20', 'RE_ORDER', 4, NULL, 'Re-order: Numbers 10-20', 2),
 (12, NOW(), 1, 0, NOW(), 1, NULL, 'Drag drop numbers 10-20',    'DRAG_DROP',    5, NULL, 'Drag Drop: Numbers 10-20',    2),
 (13, NOW(), 1, 0, NOW(), 1, NULL, 'Grammar numbers 10-20',      'GRAMMAR',      6, NULL, 'Grammar: Numbers 10-20',      2),
-(14, NOW(), 1, 0, NOW(), 1, NULL, 'Conversation numbers 10-20', 'CONVERSATION', 7, NULL, 'Conversation: Numbers 10-20', 2),
+(14, NOW(), 1, 0, NOW(), 1, NULL, 'Practice numbers 10-20',     'PRACTICE',     7, NULL, 'Practice: Numbers 10-20',     2),
 
 -- ============================================================
 -- PART 3: Body Parts 1
@@ -236,7 +236,7 @@ VALUES
 (18, NOW(), 1, 0, NOW(), 1, NULL, 'Re-order body parts 1', 'RE_ORDER', 4, NULL, 'Re-order: Body Parts 1', 3),
 (19, NOW(), 1, 0, NOW(), 1, NULL, 'Drag drop body parts 1',    'DRAG_DROP',    5, NULL, 'Drag Drop: Body Parts 1',    3),
 (20, NOW(), 1, 0, NOW(), 1, NULL, 'Grammar body parts 1',      'GRAMMAR',      6, NULL, 'Grammar: Body Parts 1',      3),
-(21, NOW(), 1, 0, NOW(), 1, NULL, 'Conversation body parts 1', 'CONVERSATION', 7, NULL, 'Conversation: Body Parts 1', 3),
+(21, NOW(), 1, 0, NOW(), 1, NULL, 'Practice body parts 1',     'PRACTICE',     7, NULL, 'Practice: Body Parts 1',     3),
 
 -- ============================================================
 -- PART 4: Body Parts 2
@@ -247,4 +247,5 @@ VALUES
 (25, NOW(), 1, 0, NOW(), 1, NULL, 'Re-order body parts 2', 'RE_ORDER', 4, NULL, 'Re-order: Body Parts 2', 4),
 (26, NOW(), 1, 0, NOW(), 1, NULL, 'Drag drop body parts 2',    'DRAG_DROP',    5, NULL, 'Drag Drop: Body Parts 2',    4),
 (27, NOW(), 1, 0, NOW(), 1, NULL, 'Grammar body parts 2',      'GRAMMAR',      6, NULL, 'Grammar: Body Parts 2',      4),
-(28, NOW(), 1, 0, NOW(), 1, NULL, 'Conversation body parts 2', 'CONVERSATION', 7, NULL, 'Conversation: Body Parts 2', 4);
+(28, NOW(), 1, 0, NOW(), 1, NULL, 'Practice body parts 2',     'PRACTICE',     7, NULL, 'Practice: Body Parts 2',     4);
+

@@ -10,7 +10,7 @@ export enum SessionType {
   RE_ORDER      = 'RE_ORDER',
   DRAG_DROP     = 'DRAG_DROP',
   GRAMMAR       = 'GRAMMAR',
-  CONVERSATION  = 'CONVERSATION',
+  PRACTICE      = 'PRACTICE',
 }
 
 export enum SessionStatus {

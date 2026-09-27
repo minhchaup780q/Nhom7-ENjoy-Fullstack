@@ -222,7 +222,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
           />
         );
 
-      case SessionType.CONVERSATION:
+      case SessionType.PRACTICE:
         return (
           <div className="session-placeholder">
             <p>🚧 Vòng <strong>{session.sessionType}</strong> đang được xây dựng...</p>
