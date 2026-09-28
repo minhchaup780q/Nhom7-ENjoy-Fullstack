@@ -9,6 +9,7 @@ import { ReorderExercise } from './exercises/ReorderExercise';
 import { DragDropExercise } from './exercises/DragDropExercise';
 import { GrammarExercise } from './exercises/GrammarExercise';
 import { FillInBlankExercise } from './exercises/FillInBlankExercise';
+import { ReorderSentenceExercise } from './exercises/ReorderSentenceExercise';
 import { CongratulationScreen } from './ui/CongratulationScreen';
 import { XMarkIcon, HeartIcon } from '@heroicons/react/24/solid';
 
@@ -238,6 +239,17 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
           />
         );
 
+      case SessionType.RE_ORDER_SENTENCE:
+        if (!payload || !payload.items || payload.items.length === 0) return <div className="session-placeholder"><p>Dữ liệu bài tập trống.</p></div>;
+        return (
+          <ReorderSentenceExercise
+            payload={payload}
+            onComplete={handleSessionComplete}
+            onMistake={handleMistake}
+            onProgress={handleProgress}
+          />
+        );
+
       default:
         return (
           <div className="session-placeholder">
@@ -272,7 +284,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     <div className="session-player">
       <Header />
 
-      {session.sessionType !== SessionType.FILL_IN_BLANK && (
+      {session.sessionType !== SessionType.FILL_IN_BLANK && session.sessionType !== SessionType.RE_ORDER_SENTENCE && (
         <div className="session-player-title">
           <h2>{session.title}</h2>
         </div>
