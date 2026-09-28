@@ -17,6 +17,8 @@ interface MistakePracticePlayerProps {
   mistakes: MistakeItem[];
   onClose: () => void;
   onFinished: (stats: { total: number; mastered: number; score: number }) => void;
+  /** Khi true: không gọi API cập nhật status (dùng khi luyện tập cá nhân hoá) */
+  skipStatusUpdate?: boolean;
 }
 
 const isImageUrl = (val?: string | null): boolean => {
@@ -61,9 +63,9 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
   mistakes,
   onClose,
   onFinished,
+  skipStatusUpdate = false,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [hearts, setHearts] = useState(5);
   const [masteredCount, setMasteredCount] = useState(0);
   const [totalScore, setTotalScore] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
@@ -103,10 +105,13 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
 
   const handleStepSuccess = async () => {
     if (!currentItem) return;
-    try {
-      await mistakeApi.submitPracticeStep(currentItem.id, true);
-    } catch (err) {
-      console.warn('Lỗi khi nộp kết quả luyện tập:', err);
+    // Chỉ gọi API cập nhật status khi KHÔNG phải chế độ luyện cá nhân hoá
+    if (!skipStatusUpdate) {
+      try {
+        await mistakeApi.submitPracticeStep(currentItem.id, true);
+      } catch (err) {
+        console.warn('Lỗi khi nộp kết quả luyện tập:', err);
+      }
     }
     setMasteredCount(prev => prev + 1);
     setTotalScore(prev => prev + 20);
@@ -128,18 +133,21 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
     if (wrongAns) {
       setLastWrongAnswer(wrongAns);
     }
-    try {
-      await mistakeApi.submitPracticeStep(currentItem.id, false);
-    } catch (err) {
-      console.warn('Lỗi khi ghi nhận sai trong lúc luyện tập:', err);
-    }
-    setHearts(h => {
-      const next = Math.max(0, h - 1);
-      if (next === 0) {
-        setIsFinished(true);
+    // Chỉ gọi API cập nhật status khi KHÔNG phải chế độ luyện cá nhân hoá
+    if (!skipStatusUpdate) {
+      try {
+        await mistakeApi.submitPracticeStep(currentItem.id, false);
+      } catch (err) {
+        console.warn('Lỗi khi ghi nhận sai trong lúc luyện tập:', err);
       }
-      return next;
-    });
+    }
+    // Không trừ mạng, chỉ ghi nhận sai để chuyển câu tiếp theo
+    if (currentIndex < mistakes.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+    } else {
+      setIsFinished(true);
+      onFinished({ total: mistakes.length, mastered: masteredCount, score: totalScore });
+    }
   };
 
   // Tạo Vocabulary object cho item hiện tại
@@ -151,29 +159,16 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
       id: currentItem.questionId || currentItem.id,
       word: currentItem.contentText || currentItem.keyword || '',
       translation: currentItem.translation || '',
-      imageUrl: currentItem.imageUrl,
-      audioUrl: currentItem.audioUrl,
+      imageUrl: currentItem.imageUrl ? getAssetUrl(currentItem.imageUrl) : undefined,
+      audioUrl: currentItem.audioUrl ? getAssetUrl(currentItem.audioUrl) : undefined,
     };
   }, [currentItem]);
 
-  // Danh sách từ vựng cho bài tập ghép cặp (Vòng 2)
+  // Danh sách từ vựng cho bài tập ghép cặp (Vòng 2) - Lấy trực tiếp từ vựng của câu sai
   const matchVocabs: Vocabulary[] = useMemo(() => {
     if (!currentItem) return [];
-    const list: Vocabulary[] = [currentVocab];
-    const otherMistakes = mistakes.filter(m => m.id !== currentItem.id);
-    otherMistakes.forEach(m => {
-      if (list.length < 4) {
-        list.push({
-          id: m.questionId || m.id,
-          word: m.contentText || m.keyword || '',
-          translation: m.translation || '',
-          imageUrl: m.imageUrl,
-          audioUrl: m.audioUrl,
-        });
-      }
-    });
-    return list;
-  }, [currentItem, currentVocab, mistakes]);
+    return [currentVocab];
+  }, [currentVocab, currentItem]);
 
   // Payload cho các dạng bài nâng cao (DragDrop, Grammar, FillInBlank)
   const currentPayload: SessionPayload = useMemo(() => {
@@ -187,13 +182,6 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
         .map(m => m.keyword || m.contentText)
         .filter(Boolean);
       const distractors = Array.from(new Set(otherWords)).slice(0, 3);
-      if (distractors.length < 3) {
-        ['apple', 'banana', 'orange', 'cat', 'dog'].forEach(w => {
-          if (distractors.length < 3 && w.toLowerCase() !== wordText.toLowerCase() && !distractors.includes(w)) {
-            distractors.push(w);
-          }
-        });
-      }
 
       return {
         items: [{
@@ -255,32 +243,14 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
   // Màn hình kết thúc
   // ──────────────────────────────────────────────
   if (!currentItem || isFinished) {
-    if (hearts > 0) {
-      return <CongratulationScreen onNext={onClose} />;
-    }
-
-    return (
-      <div className="session-finished bg-slate-900/40">
-        <div className="session-finished-card bg-white border-2 border-slate-200 rounded-3xl p-8 max-w-md w-full text-center space-y-4 shadow-2xl">
-          <h2 className="text-xl font-display font-black text-slate-800">Hết lượt! Cố lên lần sau nhé!</h2>
-          <p className="text-xs text-slate-500 font-medium">
-            Bé đã hoàn thành {masteredCount}/{mistakes.length} câu trong phiên ôn tập này.
-          </p>
-          <div className="pt-2 flex justify-center">
-            <Button3D variant="pink" size="md" onClick={onClose}>
-              Quay lại danh sách ôn tập
-            </Button3D>
-          </div>
-        </div>
-      </div>
-    );
+    return <CongratulationScreen onNext={onClose} />;
   }
 
   // ──────────────────────────────────────────────
   // Header giống SessionPlayer
   // ──────────────────────────────────────────────
   const Header = () => (
-    <div className="session-player-header bg-white border-b border-slate-200">
+    <div className="session-player-header bg-white border-b border-slate-200 shrink-0">
       <button
         id="practice-player-exit-btn"
         className="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 font-bold text-xs cursor-pointer transition-colors"
@@ -294,12 +264,9 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
         <div className="session-progress-fill bg-pink-400" style={{ width: `${progressPercent}%` }} />
       </div>
 
-      <div className="flex items-center gap-1">
-        <span className="text-xs font-bold text-slate-500 mr-1">Lượt:</span>
-        <span className="text-sm font-mono font-bold text-pink-700 bg-pink-50 px-2 py-0.5 rounded-lg border border-pink-200">
-          {hearts}/5
-        </span>
-      </div>
+      <span className="text-xs font-bold text-slate-500">
+        {currentIndex + 1} / {mistakes.length}
+      </span>
     </div>
   );
 
@@ -394,7 +361,7 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
   };
 
   return (
-    <div className="session-player bg-slate-50/50">
+    <div className="fixed inset-0 z-50 bg-slate-50 flex flex-col overflow-y-auto session-player">
       <Header />
 
       {/* Top Banner Lỗi Sai Trước Đó & Trợ Lý AI */}

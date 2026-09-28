@@ -51,18 +51,36 @@ axiosInstance.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    let userId: string | number | null = null;
     const userStr = localStorage.getItem('enjoy_user');
     if (userStr) {
       try {
         const user = JSON.parse(userStr);
         if (user?.id) {
-          config.headers['X-User-Id'] = String(user.id);
+          userId = user.id;
         }
       } catch {}
     }
+
+    // Fallback: nếu enjoy_user chưa có id, trích xuất trực tiếp từ payload của JWT Token
+    if (!userId && token) {
+      try {
+        const payloadBase64 = token.split('.')[1];
+        if (payloadBase64) {
+          const base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+          const payloadJson = JSON.parse(decodeURIComponent(escape(atob(base64))));
+          userId = payloadJson.userId || payloadJson.id || payloadJson.sub;
+        }
+      } catch {}
+    }
+
+    if (userId) {
+      config.headers['X-User-Id'] = String(userId);
+    }
+
     return config;
   },
-
   (error) => Promise.reject(error)
 );
 

@@ -230,7 +230,7 @@ public class UserProgressServiceImpl implements UserProgressService {
                 })
                 .collect(Collectors.toList());
 
-        if (finishedByDate.isEmpty()) {
+        if (finishedByDate.isEmpty() && allMistakes.isEmpty()) {
             return SkillComparisonResponse.SkillScoresDto.builder()
                     .listening(0)
                     .speaking(0)
@@ -240,18 +240,23 @@ public class UserProgressServiceImpl implements UserProgressService {
                     .build();
         }
 
+        // Lọc danh sách mistakes trước hoặc trong targetDate
+        List<Mistake> mistakesByDate = allMistakes.stream()
+                .filter(m -> {
+                    LocalDateTime mCreated = m.getCreatedAt() != null ? m.getCreatedAt() : m.getCreateAt();
+                    return mCreated != null && !mCreated.toLocalDate().isAfter(targetDate);
+                })
+                .collect(Collectors.toList());
+
         // Gom nhóm lỗi sai của user trước hoặc trong targetDate theo key: vocabularyId_roundType hoặc wrongText_roundType
         Map<String, Mistake> mistakeMap = new HashMap<>();
-        for (Mistake m : allMistakes) {
-            LocalDateTime mCreated = m.getCreatedAt() != null ? m.getCreatedAt() : m.getCreateAt();
-            if (mCreated != null && !mCreated.toLocalDate().isAfter(targetDate)) {
-                if (m.getVocabulary() != null && m.getVocabulary().getId() != null) {
-                    String key = m.getVocabulary().getId() + "_" + m.getRoundType();
-                    mistakeMap.put(key, m);
-                } else if (m.getWrongAnswerSubmitted() != null) {
-                    String key = m.getWrongAnswerSubmitted().trim().toLowerCase() + "_" + m.getRoundType();
-                    mistakeMap.put(key, m);
-                }
+        for (Mistake m : mistakesByDate) {
+            if (m.getVocabulary() != null && m.getVocabulary().getId() != null) {
+                String key = m.getVocabulary().getId() + "_" + m.getRoundType();
+                mistakeMap.put(key, m);
+            } else if (m.getWrongAnswerSubmitted() != null) {
+                String key = m.getWrongAnswerSubmitted().trim().toLowerCase() + "_" + m.getRoundType();
+                mistakeMap.put(key, m);
             }
         }
 
@@ -358,6 +363,44 @@ public class UserProgressServiceImpl implements UserProgressService {
             }
         }
 
+        // Bổ sung: Nếu kỹ năng chưa có bài học FINISH từ lộ trình nhưng user có các câu sai trong bảng Mistake của vòng đó,
+        // tính điểm kỹ năng đó dựa trên độ thành thạo masteryScore trung bình của các câu sai đó:
+        if (vocabCount == 0) {
+            List<Mistake> r2 = mistakesByDate.stream().filter(m -> m.getRoundType() != null && m.getRoundType() == 2).collect(Collectors.toList());
+            if (!r2.isEmpty()) {
+                vocabScore = r2.stream().mapToDouble(m -> m.getMasteryScore() != null ? m.getMasteryScore() : 0.0).sum();
+                vocabCount = r2.size();
+            }
+        }
+        if (speakingCount == 0) {
+            List<Mistake> r3 = mistakesByDate.stream().filter(m -> m.getRoundType() != null && m.getRoundType() == 3).collect(Collectors.toList());
+            if (!r3.isEmpty()) {
+                speakingScore = r3.stream().mapToDouble(m -> m.getMasteryScore() != null ? m.getMasteryScore() : 0.0).sum();
+                speakingCount = r3.size();
+            }
+        }
+        if (writingCount == 0) {
+            List<Mistake> r4 = mistakesByDate.stream().filter(m -> m.getRoundType() != null && m.getRoundType() == 4).collect(Collectors.toList());
+            if (!r4.isEmpty()) {
+                writingScore = r4.stream().mapToDouble(m -> m.getMasteryScore() != null ? m.getMasteryScore() : 0.0).sum();
+                writingCount = r4.size();
+            }
+        }
+        if (listeningCount == 0) {
+            List<Mistake> r5 = mistakesByDate.stream().filter(m -> m.getRoundType() != null && m.getRoundType() == 5).collect(Collectors.toList());
+            if (!r5.isEmpty()) {
+                listeningScore = r5.stream().mapToDouble(m -> m.getMasteryScore() != null ? m.getMasteryScore() : 0.0).sum();
+                listeningCount = r5.size();
+            }
+        }
+        if (readingCount == 0) {
+            List<Mistake> r6 = mistakesByDate.stream().filter(m -> m.getRoundType() != null && (m.getRoundType() == 6 || m.getRoundType() == 7)).collect(Collectors.toList());
+            if (!r6.isEmpty()) {
+                readingScore = r6.stream().mapToDouble(m -> m.getMasteryScore() != null ? m.getMasteryScore() : 0.0).sum();
+                readingCount = r6.size();
+            }
+        }
+
         return SkillComparisonResponse.SkillScoresDto.builder()
                 .listening(listeningCount > 0 ? Math.min(100, (int) Math.round((listeningScore / listeningCount) * 100.0)) : 0)
                 .speaking(speakingCount > 0 ? Math.min(100, (int) Math.round((speakingScore / speakingCount) * 100.0)) : 0)
@@ -370,12 +413,14 @@ public class UserProgressServiceImpl implements UserProgressService {
     private double calculateItemScore(String key, Map<String, Mistake> mistakeMap, LocalDate targetDate) {
         if (mistakeMap.containsKey(key)) {
             Mistake m = mistakeMap.get(key);
-            if (m.getLastPracticedAt() != null && !m.getLastPracticedAt().toLocalDate().isAfter(targetDate)) {
-                return (m.getMasteryScore() != null) ? m.getMasteryScore() : 0.0;
-            } else {
-                return 0.0;
-            }
+            // Luôn trả masteryScore hiện tại của câu sai:
+            // - Mới sai (chưa ôn): masteryScore=0.0 → điểm = 0%
+            // - Đã ôn 1 ngày: masteryScore=0.33 → điểm = 33%
+            // - Đã ôn 2 ngày: masteryScore=0.67 → điểm = 67%
+            // - Đã ôn 3 ngày (MASTERED): masteryScore=1.0 → điểm = 100%
+            return (m.getMasteryScore() != null) ? m.getMasteryScore() : 0.0;
         }
+        // Không có trong mistakeMap = chưa sai bao giờ → điểm tuyệt đối
         return 1.0;
     }
 

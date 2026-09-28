@@ -7,6 +7,7 @@ import {
   type SpeakingDiagnosisResult,
 } from '../../learning/services/chatbotApi';
 import { learningApi } from '../../learning/services/learningApi';
+import { MistakePracticePlayer } from '../../practice/components/MistakePracticePlayer';
 
 interface Props {
   skillScore: number;
@@ -20,6 +21,7 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
   const [activeTab, setActiveTab] = useState<'completely_wrong' | 'near_correct'>('completely_wrong');
   const [loading, setLoading] = useState(true);
   const [diagnosis, setDiagnosis] = useState<SpeakingDiagnosisResult | null>(null);
+  const [activePracticeItems, setActivePracticeItems] = useState<MistakeItem[] | null>(null);
 
   // Audio playing state
   const [playingKey, setPlayingKey] = useState<string | null>(null);
@@ -33,53 +35,75 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
   // Video guide popup state
   const [videoModalItem, setVideoModalItem] = useState<AnalyzedSpeakingItem | null>(null);
 
-  // Mini Relearn Modal state (Vòng 1 - Flashcard hoặc Vòng 2 - Luyện nghe)
-  const [relearnModal, setRelearnModal] = useState<{
-    round: 1 | 2;
-    item: AnalyzedSpeakingItem;
-    flipped?: boolean;
-    selectedChoice?: string;
-    isListeningAnswered?: boolean;
-  } | null>(null);
-
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
   // Tải danh sách lỗi sai Speaking (Vòng 3) & AI chuẩn đoán 2 nhóm
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const res = await mistakeApi.getUserMistakesPaged({ roundType: 3, size: 30 });
-        const list: MistakeItem[] = (res as any)?.content || (res as any)?.data?.content || [];
-        if (isMounted) {
-          const result = await chatbotApi.diagnoseSpeakingMistakes(list);
-          if (isMounted) {
-            setDiagnosis(result);
-            if (result.completelyWrongItems.length === 0 && result.nearCorrectItems.length > 0) {
-              setActiveTab('near_correct');
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Lỗi khi phân tích lỗi phát âm:', err);
-      } finally {
-        if (isMounted) setLoading(false);
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await mistakeApi.getUserMistakesPaged({ roundType: 3, size: 30 });
+      const list: MistakeItem[] = (res as any)?.content || (res as any)?.data?.content || [];
+      const result = await chatbotApi.diagnoseSpeakingMistakes(list);
+      setDiagnosis(result);
+      if (result.completelyWrongItems.length === 0 && result.nearCorrectItems.length > 0) {
+        setActiveTab('near_correct');
       }
-    };
+    } catch (err) {
+      console.error('Lỗi khi phân tích lỗi phát âm:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
+  useEffect(() => {
     loadData();
 
     return () => {
-      isMounted = false;
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
         mediaRecorderRef.current.stop();
         mediaRecorderRef.current.stream.getTracks().forEach((t) => t.stop());
       }
     };
-  }, []);
+  }, [loadData]);
+
+  // Bắt đầu luyện tập bài học thật cho từ phát âm (kết nối trực tiếp Mistake API)
+  const startPracticeSingle = useCallback((item: AnalyzedSpeakingItem, targetRound: number) => {
+    const practiceItem: MistakeItem = {
+      id: Number(item.id) || 0,
+      userId: 0,
+      questionId: Number(item.questionId) || 0,
+      keyword: item.word,
+      contentText: item.word,
+      translation: item.translation,
+      imageUrl: item.imageUrl,
+      audioUrl: item.audioUrl,
+      wrongAnswerSubmitted: item.recognizedText,
+      roundType: targetRound,
+      status: 'NEEDS_REVIEW',
+      createdAt: new Date().toISOString(),
+    };
+    const allItems = [...(diagnosis?.completelyWrongItems || []), ...(diagnosis?.nearCorrectItems || [])];
+    const otherItems: MistakeItem[] = allItems
+      .filter((m) => m.id !== item.id)
+      .slice(0, 3)
+      .map((m) => ({
+        id: Number(m.id) || 0,
+        userId: 0,
+        questionId: Number(m.questionId) || 0,
+        keyword: m.word,
+        contentText: m.word,
+        translation: m.translation,
+        imageUrl: m.imageUrl,
+        audioUrl: m.audioUrl,
+        wrongAnswerSubmitted: m.recognizedText,
+        roundType: targetRound,
+        status: 'NEEDS_REVIEW',
+        createdAt: new Date().toISOString(),
+      }));
+
+    setActivePracticeItems([practiceItem, ...otherItems]);
+  }, [diagnosis]);
 
   // Phát âm thanh chuẩn US
   const playWord = useCallback((text: string, keyId: string) => {
@@ -124,6 +148,9 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
           const assessRes = await learningApi.assessPronunciation(blob, item.word);
           const score = Math.round(assessRes.accuracyScore * 100);
           const isCorrect = assessRes.isAllCorrect || score >= 75;
+          if (isCorrect) {
+            mistakeApi.submitPracticeStep(Number(item.id), true).catch(() => {});
+          }
           setWordAssessments((prev) => ({
             ...prev,
             [itemId]: {
@@ -135,6 +162,7 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
             },
           }));
         } catch {
+          mistakeApi.submitPracticeStep(Number(item.id), true).catch(() => {});
           setWordAssessments((prev) => ({
             ...prev,
             [itemId]: {
@@ -181,6 +209,23 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
     if (selectedTopic === 'Tất cả') return nearCorrectList;
     return nearCorrectList.filter((item) => (item.topic?.trim() || 'Chủ đề chung') === selectedTopic);
   }, [nearCorrectList, selectedTopic]);
+
+  // Mở trực tiếp UI bài học của MistakePracticePlayer (liên kết chuẩn Mistake API & tăng streak)
+  if (activePracticeItems && activePracticeItems.length > 0) {
+    return (
+      <MistakePracticePlayer
+        mistakes={activePracticeItems}
+        onClose={() => {
+          setActivePracticeItems(null);
+          loadData();
+        }}
+        onFinished={() => {
+          setActivePracticeItems(null);
+          loadData();
+        }}
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in select-none">
@@ -325,7 +370,7 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
                         {/* 2 Nút hành động */}
                         <div className="flex items-center gap-2 shrink-0">
                           <button
-                            onClick={() => setRelearnModal({ round: 1, item, flipped: false })}
+                            onClick={() => startPracticeSingle(item, 1)}
                             className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer border border-slate-200 transition-all shadow-2xs active:scale-95"
                           >
                             Học Vòng 1
@@ -334,7 +379,7 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
                           <Button3D
                             variant="pink"
                             size="sm"
-                            onClick={() => setRelearnModal({ round: 2, item, selectedChoice: undefined, isListeningAnswered: false })}
+                            onClick={() => startPracticeSingle(item, 2)}
                             className="text-[11px]"
                           >
                             Học Vòng 2
@@ -405,13 +450,22 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
                                 Nghe
                               </button>
 
+                              <button
+                                onClick={() => handleToggleRecordWord(item)}
+                                className={`px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer border border-slate-200 transition-all ${
+                                  isRec ? 'bg-pink-50 border-pink-400 text-pink-600 animate-pulse' : ''
+                                }`}
+                              >
+                                {isRec ? 'Đang nghe...' : 'Đọc thử'}
+                              </button>
+
                               <Button3D
                                 variant="pink"
                                 size="sm"
-                                onClick={() => handleToggleRecordWord(item)}
-                                className={`text-[11px] ${isRec ? 'animate-pulse' : ''}`}
+                                onClick={() => startPracticeSingle(item, 3)}
+                                className="text-[11px]"
                               >
-                                {isRec ? 'Đang nghe...' : 'Đọc thử'}
+                                Luyện Nói
                               </Button3D>
 
                               <button
@@ -492,120 +546,6 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
                   ĐÃ HIỂU
                 </Button3D>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* Modal Mini Vòng 1 / Vòng 2 */}
-        {relearnModal && (
-          <div className="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-2xs flex items-center justify-center p-4 animate-in fade-in">
-            <div className="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl animate-in zoom-in-95">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <span className="text-sm font-display font-black text-slate-800">
-                  {relearnModal.round === 1 ? 'Ôn Vòng 1: Thẻ Từ Vựng' : 'Ôn Vòng 2: Luyện Nghe'}
-                </span>
-                <button
-                  onClick={() => setRelearnModal(null)}
-                  className="p-1 hover:bg-slate-100 rounded-lg text-slate-400 cursor-pointer font-bold text-xs"
-                >
-                  Đóng
-                </button>
-              </div>
-
-              {/* Vòng 1: Flashcard */}
-              {relearnModal.round === 1 && (
-                <div className="space-y-4">
-                  <div
-                    onClick={() =>
-                      setRelearnModal((prev) => (prev ? { ...prev, flipped: !prev.flipped } : null))
-                    }
-                    className="h-36 rounded-2xl bg-slate-50 border-2 border-slate-200 flex flex-col items-center justify-center p-4 text-center cursor-pointer select-none hover:border-pink-300 transition-all"
-                  >
-                    {!relearnModal.flipped ? (
-                      <div className="space-y-1">
-                        <span className="text-3xl font-display font-black text-slate-800">
-                          {relearnModal.item.word}
-                        </span>
-                        <p className="text-xs text-slate-400 font-medium">(Bấm để xem nghĩa)</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-1 animate-in zoom-in-95">
-                        <span className="text-2xl font-display font-black text-pink-600">
-                          {relearnModal.item.translation}
-                        </span>
-                        <p className="text-xs text-slate-500 font-medium">({relearnModal.item.word})</p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-center gap-2">
-                    <button
-                      onClick={() => playWord(relearnModal.item.word, 'modal_flash_audio')}
-                      className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer border border-slate-200"
-                    >
-                      Nghe
-                    </button>
-                    <Button3D variant="pink" size="sm" onClick={() => setRelearnModal(null)} className="px-5">
-                      ĐÃ THUỘC
-                    </Button3D>
-                  </div>
-                </div>
-              )}
-
-              {/* Vòng 2: Luyện nghe */}
-              {relearnModal.round === 2 && (
-                <div className="space-y-4">
-                  <div className="text-center space-y-2">
-                    <p className="text-xs font-bold text-slate-700">Bấm nút để nghe và chọn nghĩa đúng:</p>
-                    <button
-                      onClick={() => playWord(relearnModal.item.word, 'modal_listen_audio')}
-                      className="px-5 py-2.5 rounded-2xl bg-pink-100 hover:bg-pink-200 text-pink-700 border border-pink-300 font-bold text-xs mx-auto flex items-center justify-center shadow-2xs cursor-pointer active:scale-95 transition-all"
-                    >
-                      Phát âm thanh
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-2">
-                    {[relearnModal.item.translation, 'quả táo', 'bàn học']
-                      .filter((val, idx, arr) => arr.indexOf(val) === idx)
-                      .slice(0, 3)
-                      .map((choice, idx) => {
-                        const isCorrect = choice === relearnModal.item.translation;
-                        let btnStyle = 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100';
-                        if (relearnModal.isListeningAnswered) {
-                          if (isCorrect) btnStyle = 'bg-emerald-50 border-emerald-400 text-emerald-800 font-bold';
-                          else btnStyle = 'bg-slate-50 border-slate-200 text-slate-400 opacity-60';
-                        }
-
-                        return (
-                          <button
-                            key={idx}
-                            onClick={() => {
-                              if (relearnModal.isListeningAnswered) return;
-                              setRelearnModal((prev) =>
-                                prev ? { ...prev, isListeningAnswered: true } : null
-                              );
-                            }}
-                            className={`p-2.5 rounded-xl border text-xs font-semibold text-left transition-all cursor-pointer flex items-center justify-between ${btnStyle}`}
-                          >
-                            <span>{choice}</span>
-                            {relearnModal.isListeningAnswered && isCorrect && (
-                              <span className="text-xs text-emerald-700 font-bold">Đúng</span>
-                            )}
-                          </button>
-                        );
-                      })}
-                  </div>
-
-                  {relearnModal.isListeningAnswered && (
-                    <div className="text-center pt-1">
-                      <Button3D variant="green" size="sm" onClick={() => setRelearnModal(null)} className="px-5">
-                        TIẾP TỤC
-                      </Button3D>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         )}

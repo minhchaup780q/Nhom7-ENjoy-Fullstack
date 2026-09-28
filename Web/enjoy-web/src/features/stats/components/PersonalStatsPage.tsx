@@ -41,7 +41,7 @@ export interface SkillDefinition {
   nameEn: string;
   color: string;
   bgLight: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
 }
 
 export const SKILL_DEFINITIONS: SkillDefinition[] = [
@@ -121,8 +121,9 @@ const SpiderChart5D: React.FC<SpiderChart5DProps> = ({
 
   // 5 đỉnh ngũ giác đều bắt đầu từ -90 độ (Đỉnh 1: Listening)
   const getPointCoordinates = (index: number, score: number, maxScore: number = 100) => {
+    const safeScore = typeof score === 'number' && !isNaN(score) ? score : 0;
     const angle = -Math.PI / 2 + (index * 2 * Math.PI) / 5;
-    const r = (Math.max(0, Math.min(score, maxScore)) / maxScore) * radius;
+    const r = (Math.max(0, Math.min(safeScore, maxScore)) / maxScore) * radius;
     const x = center + r * Math.cos(angle);
     const y = center + r * Math.sin(angle);
     return { x, y, angle };
@@ -132,7 +133,8 @@ const SpiderChart5D: React.FC<SpiderChart5DProps> = ({
 
   const getPolygonPoints = (skills: SkillScores) => {
     return SKILL_DEFINITIONS.map((def, idx) => {
-      const pt = getPointCoordinates(idx, skills[def.key]);
+      const rawScore = skills ? skills[def.key] : 0;
+      const pt = getPointCoordinates(idx, rawScore);
       return `${pt.x.toFixed(1)},${pt.y.toFixed(1)}`;
     }).join(' ');
   };
@@ -368,6 +370,198 @@ const SpiderChart5D: React.FC<SpiderChart5DProps> = ({
   );
 };
 
+// =========================================================================
+// BIỂU ĐỒ 1: THANH NĂNG LỰC 5 KỸ NĂNG (DỄ NHÌN, RÕ RÀNG % NHẤT)
+// =========================================================================
+interface SkillBarOverviewProps {
+  skills: SkillScores;
+  highlightedSkill?: string | null;
+  onHoverSkill?: (skillKey: string | null) => void;
+  onClickSkill?: (skillKey: string) => void;
+}
+
+const SkillBarOverview: React.FC<SkillBarOverviewProps> = ({
+  skills,
+  highlightedSkill,
+  onHoverSkill,
+  onClickSkill,
+}) => {
+  const getSkillEvaluation = (score: number) => {
+    if (score >= 80) return { label: 'Xuất sắc', color: 'text-emerald-600 bg-emerald-50 border-emerald-200' };
+    if (score >= 50) return { label: 'Khá tốt', color: 'text-blue-600 bg-blue-50 border-blue-200' };
+    if (score > 0) return { label: 'Đang rèn luyện', color: 'text-amber-600 bg-amber-50 border-amber-200' };
+    return { label: 'Chưa học bài nào', color: 'text-slate-500 bg-slate-100 border-slate-200' };
+  };
+
+  return (
+    <div className="w-full space-y-3.5 py-2">
+      {SKILL_DEFINITIONS.map((def) => {
+        const Icon = def.icon;
+        const score = skills ? (skills[def.key] ?? 0) : 0;
+        const isHighlighted = highlightedSkill === def.key;
+        const evalBadge = getSkillEvaluation(score);
+
+        return (
+          <div
+            key={def.key}
+            onMouseEnter={() => onHoverSkill?.(def.key)}
+            onMouseLeave={() => onHoverSkill?.(null)}
+            onClick={() => onClickSkill?.(def.key)}
+            className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer ${
+              isHighlighted
+                ? 'bg-white shadow-md ring-2 ring-purple-300 scale-[1.01]'
+                : 'bg-slate-50/90 hover:bg-white hover:border-slate-300 hover:shadow-xs'
+            }`}
+            style={{ borderColor: isHighlighted ? def.color : undefined }}
+          >
+            <div className="flex items-center justify-between gap-3 mb-2.5">
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-xs"
+                  style={{ backgroundColor: `${def.color}18`, color: def.color }}
+                >
+                  <Icon className="w-5 h-5 stroke-[2.2]" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-black text-slate-800">
+                      {def.index}. {def.nameVi}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-400">
+                      ({def.nameEn})
+                    </span>
+                  </div>
+                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md border inline-block mt-0.5 ${evalBadge.color}`}>
+                    {evalBadge.label}
+                  </span>
+                </div>
+              </div>
+
+              <div className="text-right">
+                <div className="flex items-baseline justify-end gap-0.5">
+                  <span className="text-2xl font-black" style={{ color: def.color }}>
+                    {score}
+                  </span>
+                  <span className="text-xs font-bold text-slate-400">%</span>
+                </div>
+                <span className="text-[10px] font-bold text-purple-600 block hover:underline">
+                  Mở lộ trình →
+                </span>
+              </div>
+            </div>
+
+            {/* Thanh Progress Bar */}
+            <div className="w-full bg-slate-200/80 h-3 rounded-full overflow-hidden p-0.5">
+              <div
+                className="h-full rounded-full transition-all duration-700 relative overflow-hidden"
+                style={{
+                  width: `${Math.max(score, score > 0 ? 5 : 2)}%`,
+                  backgroundColor: def.color,
+                }}
+              >
+                <div className="absolute inset-0 bg-white/20 animate-pulse" />
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// =========================================================================
+// BIỂU ĐỒ 2: 5 VÒNG TRÒN TIẾN TRÌNH NĂNG LỰC (CIRCULAR PROGRESS GAUGES)
+// =========================================================================
+interface SkillRingsOverviewProps {
+  skills: SkillScores;
+  highlightedSkill?: string | null;
+  onHoverSkill?: (skillKey: string | null) => void;
+  onClickSkill?: (skillKey: string) => void;
+}
+
+const SkillRingsOverview: React.FC<SkillRingsOverviewProps> = ({
+  skills,
+  highlightedSkill,
+  onHoverSkill,
+  onClickSkill,
+}) => {
+  const radius = 38;
+  const circumference = 2 * Math.PI * radius;
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 py-4 w-full">
+      {SKILL_DEFINITIONS.map((def) => {
+        const Icon = def.icon;
+        const score = skills ? (skills[def.key] ?? 0) : 0;
+        const strokeDashoffset = circumference - (score / 100) * circumference;
+        const isHighlighted = highlightedSkill === def.key;
+
+        return (
+          <div
+            key={def.key}
+            onMouseEnter={() => onHoverSkill?.(def.key)}
+            onMouseLeave={() => onHoverSkill?.(null)}
+            onClick={() => onClickSkill?.(def.key)}
+            className={`p-4 rounded-3xl border flex flex-col items-center justify-center text-center transition-all duration-200 cursor-pointer ${
+              isHighlighted
+                ? 'bg-white shadow-lg ring-2 ring-purple-300 scale-105'
+                : 'bg-slate-50/90 hover:bg-white hover:border-slate-300 hover:shadow-sm'
+            }`}
+            style={{ borderColor: isHighlighted ? def.color : undefined }}
+          >
+            {/* Vòng tròn SVG */}
+            <div className="relative w-24 h-24 flex items-center justify-center my-1">
+              <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 100 100">
+                <circle
+                  cx="50"
+                  cy="50"
+                  r={radius}
+                  stroke="#e2e8f0"
+                  strokeWidth="8"
+                  fill="transparent"
+                />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r={radius}
+                  stroke={def.color}
+                  strokeWidth="8"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={strokeDashoffset}
+                  strokeLinecap="round"
+                  fill="transparent"
+                  className="transition-all duration-700 ease-out"
+                />
+              </svg>
+
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <Icon className="w-4 h-4 mb-0.5" style={{ color: def.color }} />
+                <span className="text-base font-black text-slate-800 leading-none">
+                  {score}%
+                </span>
+              </div>
+            </div>
+
+            <span className="text-xs font-black text-slate-800 mt-2 block">
+              {def.nameVi}
+            </span>
+            <span className="text-[10px] font-semibold text-slate-400">
+              {def.nameEn}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+const formatLocalDate = (d: Date): string => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export const PersonalStatsPage: React.FC = () => {
   const user = useAuthStore((state) => state.user);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -384,16 +578,19 @@ export const PersonalStatsPage: React.FC = () => {
   // Tab chuyển đổi: 'current' (Biểu đồ hiện tại) | 'compare' (So sánh 2 ngày)
   const [activeSkillTab, setActiveSkillTab] = useState<'current' | 'compare'>('current');
 
-  // Bộ chọn ngày so sánh
-  const [currentDate, setCurrentDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
+  // Bộ chọn ngày so sánh (Sử dụng đúng ngày địa phương Local Timezone, không dùng toISOString vì bị lệch múi giờ UTC -7h)
+  const [currentDate, setCurrentDate] = useState<string>(() => formatLocalDate(new Date()));
   const [previousDate, setPreviousDate] = useState<string>(() => {
     const d = new Date();
     d.setDate(d.getDate() - 7);
-    return d.toISOString().split('T')[0];
+    return formatLocalDate(d);
   });
   
   // Highlight kỹ năng khi hover
   const [hoveredSkill, setHoveredSkill] = useState<string | null>(null);
+
+  // Kiểu hiển thị biểu đồ: 'bars' (Thanh năng lực trực quan) | 'rings' (Vòng tròn) | 'radar' (Ngũ giác)
+  const [chartDisplayType, setChartDisplayType] = useState<'bars' | 'rings' | 'radar'>('bars');
 
   // Dữ liệu kỹ năng (Mặc định 0 khi chưa tải hoặc chưa học)
   const [skillsCurrent, setSkillsCurrent] = useState<SkillScores>({
@@ -417,7 +614,7 @@ export const PersonalStatsPage: React.FC = () => {
 
   useEffect(() => {
     initPageData();
-  }, [user?.role]);
+  }, [user?.role, user?.id]);
 
   const initPageData = async () => {
     const isParentRole = user?.role === 'ROLE_PARENT';
@@ -438,25 +635,20 @@ export const PersonalStatsPage: React.FC = () => {
 
         setSelectedChild(targetChild);
 
-        if (targetChild) {
-          await Promise.all([
-            fetchStats(targetChild.studentId),
-            fetchSkillStats(currentDate, previousDate, targetChild.studentId)
-          ]);
-        } else {
-          await Promise.all([
-            fetchStats(),
-            fetchSkillStats(currentDate, previousDate)
-          ]);
-        }
+        const targetId = targetChild ? targetChild.studentId : (user?.id ? Number(user.id) : undefined);
+        await Promise.all([
+          fetchStats(targetId),
+          fetchSkillStats(currentDate, previousDate, targetId)
+        ]);
       } catch (err) {
         console.error("Lỗi khi tải dữ liệu gia đình:", err);
         setLoading(false);
       }
     } else {
+      const currentUserId = user?.id ? Number(user.id) : undefined;
       await Promise.all([
-        fetchStats(),
-        fetchSkillStats(currentDate, previousDate)
+        fetchStats(currentUserId),
+        fetchSkillStats(currentDate, previousDate, currentUserId)
       ]);
     }
   };
@@ -518,7 +710,7 @@ export const PersonalStatsPage: React.FC = () => {
     try {
       const activeUserId = targetUserId === null 
         ? undefined 
-        : (targetUserId !== undefined ? targetUserId : (isParent ? selectedChild?.studentId : undefined));
+        : (targetUserId !== undefined ? targetUserId : (isParent ? selectedChild?.studentId : (user?.id ? Number(user.id) : undefined)));
 
       const res = await learningApi.getSkillStats(curr, prev, activeUserId);
       const data = (res as any)?.data !== undefined ? (res as any).data : res;
@@ -539,7 +731,7 @@ export const PersonalStatsPage: React.FC = () => {
         vocabGrammar: 0,
       });
     } catch (err) {
-      console.warn("Lỗi khi tải thống kê kỹ năng từ API:", err);
+      console.warn("Lỗi khi tải thống kê kỹ năng:", err);
       setSkillsCurrent({
         listening: 0,
         speaking: 0,
@@ -561,18 +753,31 @@ export const PersonalStatsPage: React.FC = () => {
 
   // Nút chọn nhanh độ lùi ngày (7 ngày trước, 14 ngày trước, 30 ngày trước)
   const handleQuickOffsetDays = (days: number) => {
-    const curr = new Date(currentDate);
-    const prev = new Date(curr);
-    prev.setDate(curr.getDate() - days);
+    const parts = currentDate.split('-').map(Number);
+    const curr = new Date(parts[0], (parts[1] || 1) - 1, parts[2] || 1);
+    curr.setDate(curr.getDate() - days);
 
-    const prevStr = prev.toISOString().split('T')[0];
+    const prevStr = formatLocalDate(curr);
     setPreviousDate(prevStr);
-    fetchSkillStats(currentDate, prevStr, selectedChild ? selectedChild.studentId : null);
+    const targetId = selectedChild ? selectedChild.studentId : (user?.id ? Number(user.id) : undefined);
+    fetchSkillStats(currentDate, prevStr, targetId);
   };
 
   const handleApplyDates = () => {
-    fetchSkillStats(currentDate, previousDate, selectedChild ? selectedChild.studentId : null);
+    const targetId = selectedChild ? selectedChild.studentId : (user?.id ? Number(user.id) : undefined);
+    fetchSkillStats(currentDate, previousDate, targetId);
   };
+
+  // Tự động refresh khi user quay lại tab này (sau khi học xong bài) - đặt SAU khai báo fetchSkillStats
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchSkillStats(currentDate, previousDate, selectedChild ? selectedChild.studentId : null);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [currentDate, previousDate, selectedChild]);
 
   const totalWeeklyMinutes = stats?.weeklyStudyMinutes ?? 0;
   const dailyData: DailyStudyTime[] = stats?.dailyStudyTime?.length 
@@ -628,7 +833,6 @@ export const PersonalStatsPage: React.FC = () => {
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
               {isParent ? 'THEO DÕI NĂNG LỰC & TIẾN ĐỘ HỌC' : 'THỐNG KÊ HỌC TẬP CÁ NHÂN'}
             </h1>
-            
           </div>
 
           {isParent && (
@@ -860,99 +1064,198 @@ export const PersonalStatsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* ==================== TAB 1: BIỂU ĐỒ HIỆN TẠI (1 BIỂU ĐỒ) ==================== */}
+        {/* ==================== TAB 1: BIỂU ĐỒ HIỆN TẠI (3 KIỂU HIỂN THỊ) ==================== */}
         {activeSkillTab === 'current' && (
           <div className="space-y-6 animate-fadeIn">
-            {/* Biểu đồ hiện tại trung tâm */}
-            <div className="p-6 rounded-3xl bg-gradient-to-b from-pink-50/25 to-slate-50/80 border border-pink-100 flex flex-col items-center">
-              <div className="w-full flex items-center justify-between border-b border-pink-100 pb-3 mb-2 text-xs">
-                <span className="font-extrabold text-[#e03a74] uppercase">
-                  Năng lực hiện tại (Ngày {formatDateVN(currentDate)})
+            {/* Header chuyển đổi 3 kiểu biểu đồ */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 border border-slate-200 rounded-2xl p-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">
+                  Kiểu hiển thị:
                 </span>
-                <span className="text-[#ff5e97] bg-pink-100 px-3 py-1 rounded-xl font-bold">
+                <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
+                  <button
+                    type="button"
+                    onClick={() => setChartDisplayType('bars')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      chartDisplayType === 'bars'
+                        ? 'bg-[#ff5e97] text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>📊</span>
+                    <span>Thanh Năng Lực</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChartDisplayType('rings')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      chartDisplayType === 'rings'
+                        ? 'bg-[#ff5e97] text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>⭕</span>
+                    <span>Vòng Tròn %</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChartDisplayType('radar')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      chartDisplayType === 'radar'
+                        ? 'bg-[#ff5e97] text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>🕸️</span>
+                    <span>Ngũ Giác Radar</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 self-end sm:self-auto">
+                <span className="text-xs font-extrabold text-[#ff5e97] bg-pink-50 border border-pink-200 px-3 py-1 rounded-xl shadow-2xs">
                   Điểm TB: {currentAvg} / 100
                 </span>
               </div>
-
-              <SpiderChart5D
-                currentSkills={skillsCurrent}
-                currentLabel={`Hiện tại (${formatDateVN(currentDate)})`}
-                showComparison={false}
-                size={360}
-                highlightedSkill={hoveredSkill}
-                onHoverSkill={setHoveredSkill}
-                onClickSkill={(key) => setSelectedSkillForRemediation(key)}
-              />
             </div>
 
-            {/* 5 Thẻ chi tiết kỹ năng hiện tại */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">
-                  Chi tiết điểm số 5 kỹ năng hiện tại
-                </span>
-                <span className="text-[11px] text-purple-600 font-bold bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200">
-                  Bấm vào kỹ năng để mở lộ trình khắc phục
-                </span>
+            {/* Render Kiểu 1: Thanh Năng Lực 5 Kỹ Năng (Rõ ràng & Dễ nhìn nhất) */}
+            {chartDisplayType === 'bars' && (
+              <div className="space-y-3 animate-fadeIn">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">
+                    Đánh giá chi tiết từng kỹ năng & Lộ trình can thiệp
+                  </span>
+                  <span className="text-[11px] text-purple-600 font-bold bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200">
+                    Bấm vào kỹ năng để mở lộ trình khắc phục
+                  </span>
+                </div>
+
+                <SkillBarOverview
+                  skills={skillsCurrent}
+                  highlightedSkill={hoveredSkill}
+                  onHoverSkill={setHoveredSkill}
+                  onClickSkill={(key) => setSelectedSkillForRemediation(key)}
+                />
               </div>
+            )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {SKILL_DEFINITIONS.map((def) => {
-                  const Icon = def.icon;
-                  const score = skillsCurrent[def.key];
-                  const isHovered = hoveredSkill === def.key;
+            {/* Render Kiểu 2: Vòng Tròn Tiến Độ 5 Kỹ Năng */}
+            {chartDisplayType === 'rings' && (
+              <div className="space-y-4 animate-fadeIn">
+                <div className="p-5 rounded-3xl bg-gradient-to-b from-pink-50/25 to-slate-50/80 border border-pink-100">
+                  <div className="flex items-center justify-between border-b border-pink-100 pb-3 mb-2 text-xs">
+                    <span className="font-extrabold text-[#e03a74] uppercase">
+                      Vòng tròn tiến độ 5 kỹ năng (Ngày {formatDateVN(currentDate)})
+                    </span>
+                    <span className="text-xs text-slate-400 font-medium">Bấm vào vòng tròn để can thiệp</span>
+                  </div>
 
-                  return (
-                    <div
-                      key={def.key}
-                      onMouseEnter={() => setHoveredSkill(def.key)}
-                      onMouseLeave={() => setHoveredSkill(null)}
-                      onClick={() => setSelectedSkillForRemediation(def.key)}
-                      className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer ${
-                        isHovered
-                          ? 'bg-white shadow-md ring-2 ring-purple-300 scale-[1.02]'
-                          : 'bg-slate-50/80 hover:bg-white hover:border-purple-300 hover:shadow-xs'
-                      }`}
-                      style={{ borderColor: isHovered ? def.color : undefined }}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2.5">
-                          <div
-                            className="w-8 h-8 rounded-xl flex items-center justify-center"
-                            style={{ backgroundColor: `${def.color}15`, color: def.color }}
-                          >
-                            <Icon className="w-4 h-4" />
+                  <SkillRingsOverview
+                    skills={skillsCurrent}
+                    highlightedSkill={hoveredSkill}
+                    onHoverSkill={setHoveredSkill}
+                    onClickSkill={(key) => setSelectedSkillForRemediation(key)}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Render Kiểu 3: Biểu đồ Ngũ Giác Spider Chart */}
+            {chartDisplayType === 'radar' && (
+              <div className="space-y-6 animate-fadeIn">
+                <div className="p-6 rounded-3xl bg-gradient-to-b from-pink-50/25 to-slate-50/80 border border-pink-100 flex flex-col items-center">
+                  <div className="w-full flex items-center justify-between border-b border-pink-100 pb-3 mb-2 text-xs">
+                    <span className="font-extrabold text-[#e03a74] uppercase">
+                      Năng lực hiện tại (Ngày {formatDateVN(currentDate)})
+                    </span>
+                    <span className="text-[#ff5e97] bg-pink-100 px-3 py-1 rounded-xl font-bold">
+                      Điểm TB: {currentAvg} / 100
+                    </span>
+                  </div>
+
+                  <SpiderChart5D
+                    currentSkills={skillsCurrent}
+                    currentLabel={`Hiện tại (${formatDateVN(currentDate)})`}
+                    showComparison={false}
+                    size={360}
+                    highlightedSkill={hoveredSkill}
+                    onHoverSkill={setHoveredSkill}
+                    onClickSkill={(key) => setSelectedSkillForRemediation(key)}
+                  />
+                </div>
+
+                {/* 5 Thẻ chi tiết kỹ năng bên dưới */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">
+                      Chi tiết điểm số 5 kỹ năng
+                    </span>
+                    <span className="text-[11px] text-purple-600 font-bold bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200">
+                      Bấm vào kỹ năng để mở lộ trình khắc phục
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {SKILL_DEFINITIONS.map((def) => {
+                      const Icon = def.icon;
+                      const score = skillsCurrent[def.key];
+                      const isHovered = hoveredSkill === def.key;
+
+                      return (
+                        <div
+                          key={def.key}
+                          onMouseEnter={() => setHoveredSkill(def.key)}
+                          onMouseLeave={() => setHoveredSkill(null)}
+                          onClick={() => setSelectedSkillForRemediation(def.key)}
+                          className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer ${
+                            isHovered
+                              ? 'bg-white shadow-md ring-2 ring-purple-300 scale-[1.02]'
+                              : 'bg-slate-50/80 hover:bg-white hover:border-purple-300 hover:shadow-xs'
+                          }`}
+                          style={{ borderColor: isHovered ? def.color : undefined }}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2.5">
+                              <div
+                                className="w-8 h-8 rounded-xl flex items-center justify-center"
+                                style={{ backgroundColor: `${def.color}15`, color: def.color }}
+                              >
+                                <Icon className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <span className="text-xs font-extrabold text-slate-800 block leading-tight">
+                                  {def.index}. {def.nameVi}
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-medium">
+                                  {def.nameEn}
+                                </span>
+                              </div>
+                            </div>
+
+                            <span className="text-sm font-black text-slate-800">
+                              {score}%
+                            </span>
                           </div>
-                          <div>
-                            <span className="text-xs font-extrabold text-slate-800 block leading-tight">
-                              {def.index}. {def.nameVi}
-                            </span>
-                            <span className="text-[10px] text-slate-400 font-medium">
-                              {def.nameEn}
-                            </span>
+
+                          <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{ width: `${score}%`, backgroundColor: def.color }}
+                            />
+                          </div>
+
+                          <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-purple-600">
+                            <span>Mở lộ trình →</span>
                           </div>
                         </div>
-
-                        <span className="text-sm font-black text-slate-800">
-                          {score}%
-                        </span>
-                      </div>
-
-                      <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-500"
-                          style={{ width: `${score}%`, backgroundColor: def.color }}
-                        />
-                      </div>
-
-                      <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-purple-600">
-                        <span>Xem thêm →</span>
-                      </div>
-                    </div>
-                  );
-                })}
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -1263,7 +1566,11 @@ export const PersonalStatsPage: React.FC = () => {
           skillDef={
             SKILL_DEFINITIONS.find(d => d.key === selectedSkillForRemediation) || SKILL_DEFINITIONS[3]
           }
-          onClose={() => setSelectedSkillForRemediation(null)}
+          onClose={() => {
+            setSelectedSkillForRemediation(null);
+            fetchSkillStats(currentDate, previousDate, selectedChild ? selectedChild.studentId : null);
+            fetchStats(selectedChild ? selectedChild.studentId : null);
+          }}
         />
       )}
 

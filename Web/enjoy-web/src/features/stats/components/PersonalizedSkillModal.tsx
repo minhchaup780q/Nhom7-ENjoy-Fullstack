@@ -3,8 +3,6 @@ import { Button3D } from '../../../components/ui/Button3D';
 import { BASE_URL } from '../../../services/apiClient';
 import { mistakeApi, type MistakeItem } from '../../learning/services/mistakeApi';
 import { chatbotApi, type AdaptiveChallenge } from '../../learning/services/chatbotApi';
-import type { Vocabulary } from '../../learning/types';
-import { FlashcardExercise } from '../../learning/components/exercises/FlashcardExercise';
 import { MistakePracticePlayer } from '../../practice/components/MistakePracticePlayer';
 import { PersonalizedSpeakingModal } from './PersonalizedSpeakingModal';
 
@@ -51,14 +49,8 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
   const [loading, setLoading] = useState(true);
   const [playingKey, setPlayingKey] = useState<string | null>(null);
 
-  // Mini Relearn Modal state (Vòng 1 - Flashcard)
-  const [relearnItem, setRelearnItem] = useState<{
-    item: MistakeItem;
-    flipped?: boolean;
-  } | null>(null);
-
-  // Chế độ mở toàn màn hình (Session Player hoặc Batch Flashcard)
-  const [playerMode, setPlayerMode] = useState<'none' | 'flashcard' | 'practice'>('none');
+  // Chế độ mở phiên luyện tập bài học (kết nối trực tiếp MistakePracticePlayer & Mistake API)
+  const [activePracticeItems, setActivePracticeItems] = useState<MistakeItem[] | null>(null);
 
   // AI Challenge State
   const [aiChallenge, setAiChallenge] = useState<AdaptiveChallenge | null>(null);
@@ -86,12 +78,12 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
 
   const getRoundTypeBySkill = (key: string): number => {
     switch (key) {
-      case 'listening': return 5;
-      case 'speaking': return 3;
-      case 'reading': return 6;
-      case 'writing': return 4;
-      case 'vocabGrammar': return 2;
-      default: return 4;
+      case 'writing': return 4;        // Màn 4: Sắp xếp từ/chữ (Writing)
+      case 'vocabGrammar': return 2;   // Màn 2: Nối từ vựng (Vocabulary)
+      case 'listening': return 5;      // Màn 5: Kéo thả âm thanh (Listening)
+      case 'reading': return 6;        // Màn 6: Ngữ pháp trắc nghiệm (Reading)
+      case 'speaking': return 3;       // Màn 3: Phát âm (Speaking)
+      default: return 2;
     }
   };
 
@@ -100,39 +92,47 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
       case 'writing': return 'Luyện Viết';
       case 'listening': return 'Luyện Nghe';
       case 'reading': return 'Luyện Đọc';
-      case 'vocabGrammar': return 'Nối Từ';
+      case 'vocabGrammar': return 'Học Vòng 2';
       default: return 'Luyện Tập';
     }
   };
 
   const roundType = getRoundTypeBySkill(skillKey);
 
-  // Fetch dữ liệu từ Backend
+  // Fetch dữ liệu từ Backend - Phân tách dữ liệu chính xác theo từng vòng (Không lấy lẫn lộn)
   const fetchMistakes = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await mistakeApi.getUserMistakesPaged({ roundType, size: 50 });
-      if (res && res.content && res.content.length > 0) {
-        setMistakes(res.content);
-        return;
+      const targetRound = getRoundTypeBySkill(skillKey);
+      // Không truyền status để lấy TẤT CẢ trạng thái (NEEDS_REVIEW + REVIEWED)
+      // Backend khi status=null sẽ trả tất cả câu sai của roundType này
+      const res = await mistakeApi.getUserMistakesPaged({ roundType: targetRound, size: 50 });
+      if (res?.content && Array.isArray(res.content)) {
+        const filtered = res.content.filter((m) => m.roundType === targetRound);
+        setMistakes(filtered);
+      } else {
+        setMistakes([]);
       }
-      const allMistakes = await mistakeApi.getRoadmapMistakes();
-      if (allMistakes && allMistakes.length > 0) {
-        setMistakes(allMistakes.slice(0, 20));
-        return;
-      }
-      setMistakes([]);
     } catch (err) {
-      console.warn('Lỗi khi tải dữ liệu từ vựng:', err);
+      console.warn('Lỗi khi tải dữ liệu câu làm sai:', err);
       setMistakes([]);
     } finally {
       setLoading(false);
     }
-  }, [roundType]);
+  }, [skillKey]);
 
   useEffect(() => {
     fetchMistakes();
   }, [fetchMistakes]);
+
+  // Bắt đầu luyện tập bài học cho từ vựng / câu cụ thể (Màn 1 & Màn 2 liên tiếp)
+  const startPracticeWord = useCallback((item: MistakeItem, rounds: number[] = [1, 2]) => {
+    const practiceItems: MistakeItem[] = rounds.map((r) => ({
+      ...item,
+      roundType: r,
+    }));
+    setActivePracticeItems(practiceItems);
+  }, []);
 
   // Sinh thử thách thích ứng AI theo đúng chủ đề đang chọn
   const loadAiChallenge = useCallback(async (forceRefresh = false) => {
@@ -199,56 +199,20 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
     setAiAnswerCorrect(selectedAiOption.trim().toLowerCase() === aiChallenge.correctAnswer.trim().toLowerCase());
   };
 
-  // Convert filtered mistakes sang Vocabulary cho Flashcard toàn màn hình
-  const flashcardVocabs: Vocabulary[] = useMemo(() => {
-    const list = filteredMistakes.length > 0 ? filteredMistakes : mistakes;
-    return list.map(m => ({
-      id: m.questionId || m.id,
-      word: m.contentText || m.keyword || '',
-      translation: m.translation || '',
-      imageUrl: m.imageUrl,
-      audioUrl: m.audioUrl,
-    }));
-  }, [filteredMistakes, mistakes]);
-
-  // Nếu đang mở chế độ luyện tập toàn màn hình
-  if (playerMode === 'practice' && filteredMistakes.length > 0) {
+  // Mở trực tiếp UI bài học của MistakePracticePlayer (đã tích hợp đầy đủ chấm điểm & ghi nhận hoàn thành vào Mistake API)
+  if (activePracticeItems && activePracticeItems.length > 0) {
     return (
       <MistakePracticePlayer
-        mistakes={filteredMistakes}
+        mistakes={activePracticeItems}
         onClose={() => {
-          setPlayerMode('none');
+          setActivePracticeItems(null);
           fetchMistakes();
         }}
         onFinished={() => {
-          setPlayerMode('none');
+          setActivePracticeItems(null);
           fetchMistakes();
         }}
       />
-    );
-  }
-
-  if (playerMode === 'flashcard' && flashcardVocabs.length > 0) {
-    return (
-      <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 select-none">
-        <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <span className="font-display font-black text-slate-800 text-base">
-              Ôn Thẻ Ghi Nhớ ({flashcardVocabs.length} từ)
-            </span>
-            <button
-              onClick={() => setPlayerMode('none')}
-              className="p-1 hover:bg-slate-100 rounded-xl text-slate-400 cursor-pointer font-bold text-xs"
-            >
-              Đóng
-            </button>
-          </div>
-          <FlashcardExercise
-            vocabularies={flashcardVocabs}
-            onComplete={() => setPlayerMode('none')}
-          />
-        </div>
-      </div>
     );
   }
 
@@ -399,23 +363,43 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
                             </div>
                           </div>
 
-                          {/* 2 Nút hành động */}
-                          <div className="flex items-center gap-2 shrink-0">
-                            <button
-                              onClick={() => setRelearnItem({ item: m, flipped: false })}
-                              className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer border border-slate-200 transition-all shadow-2xs active:scale-95"
-                            >
-                              Học Vòng 1
-                            </button>
-
-                            <Button3D
-                              variant="pink"
-                              size="sm"
-                              onClick={() => setPlayerMode('practice')}
-                              className="text-[11px]"
-                            >
-                              {getSkillActionName(skillKey)}
-                            </Button3D>
+                          {/* Các nút hành động */}
+                          <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                            {skillKey === 'vocabGrammar' ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => startPracticeWord(m, [1])}
+                                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer border border-slate-200 transition-all shadow-2xs active:scale-95"
+                                >
+                                  Màn 1: Thẻ từ
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => startPracticeWord(m, [2])}
+                                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer border border-slate-200 transition-all shadow-2xs active:scale-95"
+                                >
+                                  Màn 2: Nối từ
+                                </button>
+                                <Button3D
+                                  variant="pink"
+                                  size="sm"
+                                  onClick={() => startPracticeWord(m, [1, 2])}
+                                  className="text-[11px]"
+                                >
+                                  Học Màn 1 & 2
+                                </Button3D>
+                              </>
+                            ) : (
+                              <Button3D
+                                variant="pink"
+                                size="sm"
+                                onClick={() => startPracticeWord(m, [roundType || 4])}
+                                className="text-[11px]"
+                              >
+                                {getSkillActionName(skillKey)}
+                              </Button3D>
+                            )}
                           </div>
                         </div>
                       );
@@ -543,62 +527,6 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
             </>
           )}
         </div>
-
-        {/* Modal Mini Flashcard Vòng 1 */}
-        {relearnItem && (
-          <div className="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-2xs flex items-center justify-center p-4 animate-in fade-in">
-            <div className="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl animate-in zoom-in-95 text-center">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <span className="text-sm font-display font-black text-slate-800">
-                  Ôn Vòng 1: Thẻ Từ Vựng
-                </span>
-                <button
-                  onClick={() => setRelearnItem(null)}
-                  className="p-1 hover:bg-slate-100 rounded-lg text-slate-400 cursor-pointer font-bold text-xs"
-                >
-                  Đóng
-                </button>
-              </div>
-
-              <div
-                onClick={() =>
-                  setRelearnItem((prev) => (prev ? { ...prev, flipped: !prev.flipped } : null))
-                }
-                className="h-36 rounded-2xl bg-slate-50 border-2 border-slate-200 flex flex-col items-center justify-center p-4 text-center cursor-pointer select-none hover:border-pink-300 transition-all"
-              >
-                {!relearnItem.flipped ? (
-                  <div className="space-y-1">
-                    <span className="text-3xl font-display font-black text-slate-800">
-                      {relearnItem.item.contentText || relearnItem.item.keyword}
-                    </span>
-                    <p className="text-xs text-slate-400 font-medium">(Bấm để xem nghĩa)</p>
-                  </div>
-                ) : (
-                  <div className="space-y-1 animate-in zoom-in-95">
-                    <span className="text-2xl font-display font-black text-pink-600">
-                      {relearnItem.item.translation}
-                    </span>
-                    <p className="text-xs text-slate-500 font-medium">
-                      ({relearnItem.item.contentText || relearnItem.item.keyword})
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center justify-center gap-2">
-                <button
-                  onClick={() => playWord(relearnItem.item.contentText || relearnItem.item.keyword || '', 'flash_item', relearnItem.item.audioUrl)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer border border-slate-200"
-                >
-                  Nghe
-                </button>
-                <Button3D variant="pink" size="sm" onClick={() => setRelearnItem(null)} className="px-5">
-                  ĐÃ THUỘC
-                </Button3D>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Footer */}
         <div className="p-3.5 border-t border-slate-200 bg-slate-50 flex justify-end">

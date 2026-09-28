@@ -59,6 +59,9 @@ export const mistakeApi = {
   logMistake: (payload: MistakeCreatePayload) => {
     return apiClient.post<MistakeItem>('/api/mistakes', payload);
   },
+  recordMistake: (payload: MistakeCreatePayload) => {
+    return apiClient.post<MistakeItem>('/api/mistakes', payload);
+  },
 
   // Ghi nhận nhiều lỗi sai cùng lúc
   logBatchMistakes: (payloads: MistakeCreatePayload[]) => {

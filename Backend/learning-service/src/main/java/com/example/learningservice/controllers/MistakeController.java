@@ -35,7 +35,7 @@ public class MistakeController {
     public ResponseEntity<PageResponse<MistakeResponse>> getUserMistakes(
             @RequestHeader(value = "X-User-Id", required = false) Long headerUserId,
             @RequestParam(value = "userId", required = false) Long queryUserId,
-            @RequestParam(value = "status", required = false, defaultValue = "NEEDS_REVIEW") MistakeStatus status,
+            @RequestParam(value = "status", required = false) MistakeStatus status,
             @RequestParam(value = "roundType", required = false) Integer roundType,
             @RequestParam(value = "page", required = false, defaultValue = "0") int page,
             @RequestParam(value = "size", required = false, defaultValue = "6") int size) {

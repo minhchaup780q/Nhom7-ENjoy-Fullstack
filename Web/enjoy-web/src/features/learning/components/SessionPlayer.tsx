@@ -11,7 +11,7 @@ import { DragDropExercise } from './exercises/DragDropExercise';
 import { GrammarExercise } from './exercises/GrammarExercise';
 import { FillInBlankExercise } from './exercises/FillInBlankExercise';
 import { CongratulationScreen } from './ui/CongratulationScreen';
-import { XMarkIcon, HeartIcon } from '@heroicons/react/24/solid';
+import { XMarkIcon } from '@heroicons/react/24/solid';
 
 interface SessionPlayerProps {
   session: Session;
@@ -27,10 +27,9 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     resetSessionState,
   } = useLearningStore();
 
-  const [hearts, setHearts] = useState(5);
   const [sessionFinished, setSessionFinished] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
-  const [progress, setProgress] = useState(0); // 0-100%
+  const [progress, setProgress] = useState(0);
   const [partVocabs, setPartVocabs] = useState<Vocabulary[]>([]);
   const [loadingVocabs, setLoadingVocabs] = useState(false);
   const [recordedMistakes, setRecordedMistakes] = useState<MistakeCreatePayload[]>([]);
@@ -56,12 +55,6 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   }, [session.id, session.part?.id, activePart?.id]);
 
   const handleMistake = (mistakeData?: MistakeCreatePayload) => {
-    setHearts(h => {
-      const next = Math.max(0, h - 1);
-      if (next === 0) handleSessionFailed();
-      return next;
-    });
-
     if (mistakeData && mistakeData.questionId) {
       setRecordedMistakes(prev => {
         const existingIdx = prev.findIndex(
@@ -81,7 +74,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     const durationSeconds = Math.round((Date.now() - sessionStartTime.current) / 1000);
     setSessionFinished(true);
 
-    // Gửi toàn bộ danh sách câu làm sai trong màn chơi vào hệ thống ôn tập
+    // Gửi toàn bộ danh sách câu làm sai khi hoàn thành bài học (không trùng lặp)
     if (recordedMistakes.length > 0) {
       try {
         await mistakeApi.logBatchMistakes(recordedMistakes);
@@ -93,11 +86,6 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     await completeSession(session.id, durationSeconds);
   };
 
-  const handleSessionFailed = () => {
-    setSessionFinished(true);
-    // không gọi completeSession vì học chưa xong
-  };
-
   const handleClose = () => {
     resetSessionState();
     onClose();
@@ -107,26 +95,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   // Màn hình hoàn thành
   // ──────────────────────────────────────────────
   if (sessionFinished) {
-    const failed = hearts === 0;
-    
-    if (!failed) {
-      return <CongratulationScreen onNext={handleClose} />;
-    }
-
-    // Nếu thất bại (hết tim) thì hiển thị màn hình báo lỗi
-    return (
-      <div className="session-finished">
-        <div className="session-finished-card">
-          <div className="session-finished-emoji">😢</div>
-          <h2 className="session-finished-title">
-            Hết lượt! Cố lên lần sau nhé!
-          </h2>
-          <button id="session-finished-close-btn" className="btn-primary" onClick={handleClose}>
-            Quay lại
-          </button>
-        </div>
-      </div>
-    );
+    return <CongratulationScreen onNext={handleClose} />;
   }
 
   let payload = session.payload ?? {};
@@ -153,15 +122,6 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
 
       <div className="session-progress-bar">
         <div className="session-progress-fill" style={{ width: `${progress}%` }} />
-      </div>
-
-      <div className="session-hearts">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <HeartIcon
-            key={i}
-            className={`w-5 h-5 ${i < hearts ? 'text-red-500' : 'text-gray-300'}`}
-          />
-        ))}
       </div>
     </div>
   );
