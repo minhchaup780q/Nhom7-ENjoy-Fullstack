@@ -11,8 +11,10 @@ export interface MistakeItem {
   imageUrl?: string;
   audioUrl?: string;
   keyword?: string;
-  roundType: number; // 1: Từ vựng/Nhận diện, 2: Nghe, 3: Đọc hiểu, 4: Phát âm, 5: Chính tả/Viết
+  roundType: number; // 1: Flashcard, 2: Match, 3: Speaking, 4: Reorder, 5: DragDrop, 6: Grammar, 7: FillInBlank
   wrongAnswerSubmitted: string;
+  phonemeErrorType?: string | null;
+  recognizedAudioTranscript?: string | null;
   durationSeconds?: number;
   aiExplanationCache?: string | null;
   status: MistakeStatus;
@@ -37,6 +39,8 @@ export interface MistakeCreatePayload {
   questionId: number;
   roundType: number;
   wrongAnswerSubmitted: string;
+  phonemeErrorType?: string;
+  recognizedAudioTranscript?: string;
   durationSeconds?: number;
 }
 
@@ -63,16 +67,18 @@ export const mistakeApi = {
 
   // Lấy danh sách lỗi sai phân trang của User (load theo trang)
   getUserMistakesPaged: (params?: {
-    status?: MistakeStatus;
+    status?: MistakeStatus | 'ALL';
     roundType?: number;
     page?: number;
     size?: number;
   }) => {
     const queryParams: Record<string, string | number> = {
-      status: params?.status || 'NEEDS_REVIEW',
       page: params?.page ?? 0,
-      size: params?.size ?? 6,
+      size: params?.size ?? 30,
     };
+    if (params?.status && params.status !== 'ALL') {
+      queryParams.status = params.status;
+    }
     if (params?.roundType !== undefined) {
       queryParams.roundType = params.roundType;
     }

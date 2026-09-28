@@ -22,6 +22,8 @@ public class MistakeResponse {
     private String keyword;
     private Integer roundType;
     private String wrongAnswerSubmitted;
+    private String phonemeErrorType;
+    private String recognizedAudioTranscript;
     private Integer durationSeconds;
     private String aiExplanationCache;
     private MistakeStatus status;
@@ -38,6 +40,8 @@ public class MistakeResponse {
                 .userId(mistake.getUserId())
                 .roundType(mistake.getRoundType())
                 .wrongAnswerSubmitted(mistake.getWrongAnswerSubmitted())
+                .phonemeErrorType(mistake.getPhonemeErrorType())
+                .recognizedAudioTranscript(mistake.getRecognizedAudioTranscript())
                 .durationSeconds(mistake.getDurationSeconds())
                 .aiExplanationCache(mistake.getAiExplanationCache())
                 .status(mistake.getStatus())

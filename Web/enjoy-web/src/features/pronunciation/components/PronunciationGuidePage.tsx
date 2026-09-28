@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import { SpeakerWaveIcon } from '@heroicons/react/24/solid';
+import { SpeakerWaveIcon, SparklesIcon } from '@heroicons/react/24/solid';
 import { Mascot } from '../../../components/ui/Mascot';
+import { PersonalizedSpeakingModal } from '../../stats/components/PersonalizedSpeakingModal';
 
 export interface PhoneticItem {
   symbol: string;
@@ -72,6 +73,7 @@ export const PronunciationGuidePage: React.FC = () => {
   const [playingKey, setPlayingKey] = useState<string | null>(null);
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoiceURI, setSelectedVoiceURI] = useState<string>('');
+  const [showPersonalizedModal, setShowPersonalizedModal] = useState(false);
 
   // Tải danh sách giọng đọc tiếng Anh từ hệ thống
   React.useEffect(() => {
@@ -157,23 +159,34 @@ export const PronunciationGuidePage: React.FC = () => {
           Nhấn vào từng âm để nghe cách phát âm chuẩn và từ ví dụ tương ứng
         </p>
 
-        {/* Bộ chọn người đọc / Giọng đọc tiếng Anh */}
-        {availableVoices.length > 0 && (
-          <div className="pt-2 flex flex-wrap items-center justify-center gap-2">
-            <span className="text-xs font-bold text-slate-600">Giọng đọc:</span>
-            <select
-              value={selectedVoiceURI}
-              onChange={(e) => setSelectedVoiceURI(e.target.value)}
-              className="px-3 py-1.5 rounded-xl border-2 border-rose-200 bg-white text-xs font-bold text-slate-700 shadow-2xs hover:border-primary focus:border-primary focus:outline-none cursor-pointer transition-colors max-w-xs"
-            >
-              {availableVoices.map((v) => (
-                <option key={v.voiceURI} value={v.voiceURI}>
-                  {v.name.replace(/Microsoft |Google |Apple /gi, '')} ({v.lang})
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+        {/* Bộ chọn người đọc & Nút Cá nhân hóa phát âm */}
+        <div className="pt-2 flex flex-wrap items-center justify-center gap-2.5">
+          {availableVoices.length > 0 && (
+            <div className="flex items-center gap-1.5 bg-rose-50 px-3 py-1 rounded-xl border border-rose-200/70">
+              <span className="text-xs font-bold text-slate-600">Giọng đọc:</span>
+              <select
+                value={selectedVoiceURI}
+                onChange={(e) => setSelectedVoiceURI(e.target.value)}
+                className="bg-transparent text-xs font-bold text-primary focus:outline-none cursor-pointer"
+              >
+                {availableVoices.map((v) => (
+                  <option key={v.voiceURI} value={v.voiceURI}>
+                    {v.name.replace(/Microsoft |Google |Apple /gi, '')} ({v.lang})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setShowPersonalizedModal(true)}
+            className="px-3.5 py-1.5 rounded-xl bg-primary text-white text-xs font-display font-black flex items-center gap-1.5 shadow-xs hover:bg-primary-dark transition-all cursor-pointer"
+          >
+            <SparklesIcon className="w-3.5 h-3.5 text-amber-300" />
+            <span>Cá nhân hoá Phát âm AI</span>
+          </button>
+        </div>
       </div>
 
       {/* KHỐI 1: NGUYÊN ÂM (VOWELS) */}
@@ -277,6 +290,14 @@ export const PronunciationGuidePage: React.FC = () => {
           })}
         </div>
       </div>
+
+      {/* Modal Cá nhân hóa Phát âm Speaking AI */}
+      {showPersonalizedModal && (
+        <PersonalizedSpeakingModal
+          skillScore={80}
+          onClose={() => setShowPersonalizedModal(false)}
+        />
+      )}
 
     </div>
   );

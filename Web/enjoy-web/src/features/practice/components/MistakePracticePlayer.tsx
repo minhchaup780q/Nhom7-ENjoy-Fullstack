@@ -420,16 +420,18 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          {currentItem.wrongAnswerSubmitted && (
+          {(currentItem.recognizedAudioTranscript || currentItem.wrongAnswerSubmitted) && (
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 border border-red-200 rounded-full text-xs text-red-600 font-semibold">
               <ExclamationTriangleIcon className="w-3.5 h-3.5 shrink-0" />
-              <span>Lần trước bé sai: </span>
+              <span>{currentItem.roundType === 3 || currentItem.recognizedAudioTranscript ? 'Lần trước bé đọc: ' : 'Lần trước bé sai: '}</span>
               {isImageUrl(currentItem.wrongAnswerSubmitted) ? (
                 <div className="w-6 h-6 rounded border border-red-300 overflow-hidden inline-flex items-center justify-center bg-white p-0.5">
                   <img src={getAssetUrl(currentItem.wrongAnswerSubmitted)} alt="Wrong" className="w-full h-full object-cover" />
                 </div>
               ) : (
-                <strong className="line-through">{currentItem.wrongAnswerSubmitted}</strong>
+                <strong className="line-through">
+                  {currentItem.recognizedAudioTranscript || currentItem.wrongAnswerSubmitted}
+                </strong>
               )}
             </div>
           )}

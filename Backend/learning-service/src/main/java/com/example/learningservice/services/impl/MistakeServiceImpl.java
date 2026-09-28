@@ -118,6 +118,8 @@ public class MistakeServiceImpl implements MistakeService {
             if (existing.getStatus() == MistakeStatus.MASTERED) {
                 // Đã ôn xong (MASTERED), nhưng tự học sai lại -> reset về NEEDS_REVIEW
                 existing.setWrongAnswerSubmitted(request.getWrongAnswerSubmitted());
+                existing.setPhonemeErrorType(request.getPhonemeErrorType());
+                existing.setRecognizedAudioTranscript(request.getRecognizedAudioTranscript());
                 existing.setDurationSeconds(request.getDurationSeconds());
                 existing.setStatus(MistakeStatus.NEEDS_REVIEW);
                 existing.setCorrectStreakDays(0);
@@ -129,8 +131,15 @@ public class MistakeServiceImpl implements MistakeService {
                 Mistake saved = mistakeRepository.save(existing);
                 return enrichMistakeResponse(MistakeResponse.fromEntity(saved));
             } else {
-                // Đang trong quá trình ôn tập (NEEDS_REVIEW hoặc REVIEWED) -> không cho ghi đè, bỏ qua
-                return enrichMistakeResponse(MistakeResponse.fromEntity(existing));
+                // Đang trong quá trình ôn tập (NEEDS_REVIEW hoặc REVIEWED) -> không cho ghi đè, cập nhật thông tin nhận diện mới nhất nếu có
+                if (request.getPhonemeErrorType() != null) {
+                    existing.setPhonemeErrorType(request.getPhonemeErrorType());
+                }
+                if (request.getRecognizedAudioTranscript() != null) {
+                    existing.setRecognizedAudioTranscript(request.getRecognizedAudioTranscript());
+                }
+                Mistake saved = mistakeRepository.save(existing);
+                return enrichMistakeResponse(MistakeResponse.fromEntity(saved));
             }
         }
 
@@ -139,6 +148,8 @@ public class MistakeServiceImpl implements MistakeService {
                 .vocabulary(vocabulary)
                 .roundType(request.getRoundType() != null ? request.getRoundType() : 1)
                 .wrongAnswerSubmitted(request.getWrongAnswerSubmitted())
+                .phonemeErrorType(request.getPhonemeErrorType())
+                .recognizedAudioTranscript(request.getRecognizedAudioTranscript())
                 .durationSeconds(request.getDurationSeconds())
                 .status(MistakeStatus.NEEDS_REVIEW)
                 .createdAt(LocalDateTime.now())
