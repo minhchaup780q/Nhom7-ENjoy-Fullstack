@@ -193,7 +193,7 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
               <h2 className="text-lg sm:text-xl font-display font-black text-slate-800">
                 Luyện Phát Âm Cùng AI
               </h2>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-blue-600 text-white shadow-xs">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-pink-100 text-pink-700 border border-pink-200 shadow-2xs">
                 {skillScore}%
               </span>
             </div>
@@ -223,7 +223,7 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
             <span>CẦN HỌC LẠI TỪ</span>
             <span
               className={`px-2 py-0.5 rounded-full text-xs font-mono font-bold ${
-                activeTab === 'completely_wrong' ? 'bg-rose-100 text-rose-700' : 'bg-slate-200 text-slate-600'
+                activeTab === 'completely_wrong' ? 'bg-pink-100 text-pink-700 border border-pink-200' : 'bg-slate-200 text-slate-600'
               }`}
             >
               {filteredCompletelyWrongList.length}
@@ -283,7 +283,7 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
         {/* Danh Sách Thẻ Từ */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3 bg-slate-50/40">
           {loading ? (
-            <div className="py-16 flex flex-col items-center justify-center gap-2 text-blue-600">
+            <div className="py-16 flex flex-col items-center justify-center gap-2 text-pink-500">
               <p className="text-xs font-bold text-slate-600">Đang chuẩn bị bài học cho bé...</p>
             </div>
           ) : (
@@ -316,7 +316,7 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
 
                           <div className="text-xs flex items-center gap-1.5">
                             <span className="text-slate-500 font-medium">Bé đọc:</span>
-                            <span className="font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200 line-through">
+                            <span className="font-bold text-pink-600 bg-pink-50 px-2 py-0.5 rounded-md border border-pink-200 line-through">
                               {item.recognizedText}
                             </span>
                           </div>
@@ -331,12 +331,14 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
                             Học Vòng 1
                           </button>
 
-                          <button
+                          <Button3D
+                            variant="pink"
+                            size="sm"
                             onClick={() => setRelearnModal({ round: 2, item, selectedChoice: undefined, isListeningAnswered: false })}
-                            className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs cursor-pointer transition-all shadow-2xs active:scale-95"
+                            className="text-[11px]"
                           >
                             Học Vòng 2
-                          </button>
+                          </Button3D>
                         </div>
                       </div>
                     ))
@@ -365,14 +367,14 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
                       return (
                         <div
                           key={item.id}
-                          className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs hover:border-blue-400 transition-all space-y-3"
+                          className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs hover:border-pink-300 transition-all space-y-3"
                         >
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             {/* Từ vựng & Điểm lệch âm */}
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
                                 <span className="text-xl font-display font-black text-slate-800">{item.word}</span>
-                                <span className="text-xs font-mono font-bold text-blue-700 px-1.5 py-0.5 bg-blue-50 rounded-md border border-blue-200">
+                                <span className="text-xs font-mono font-bold text-pink-700 px-1.5 py-0.5 bg-pink-50 rounded-md border border-pink-200">
                                   {item.ipa}
                                 </span>
                                 <span className="text-xs font-semibold text-slate-500">({item.translation})</span>
@@ -380,7 +382,7 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
 
                               <div className="text-xs flex items-center gap-2 flex-wrap">
                                 <span className="text-slate-500 font-medium">
-                                  Bé đọc: <strong className="text-rose-600 line-through">"{item.recognizedText}"</strong>
+                                  Bé đọc: <strong className="text-pink-600 line-through">"{item.recognizedText}"</strong>
                                 </span>
                                 {item.phonemeNameVi && (
                                   <span className="px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-amber-800 font-bold">
@@ -396,23 +398,21 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
                                 onClick={() => playWord(item.word, `near_${item.id}`)}
                                 className={`px-3.5 py-2 rounded-xl font-bold text-xs cursor-pointer border transition-all shadow-2xs ${
                                   playingKey === `near_${item.id}`
-                                    ? 'bg-blue-50 border-blue-300 text-blue-600'
+                                    ? 'bg-pink-50 border-pink-300 text-pink-600'
                                     : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
                                 }`}
                               >
                                 Nghe
                               </button>
 
-                              <button
+                              <Button3D
+                                variant="pink"
+                                size="sm"
                                 onClick={() => handleToggleRecordWord(item)}
-                                className={`px-4 py-2 rounded-xl text-white font-bold text-xs cursor-pointer transition-all shadow-xs ${
-                                  isRec
-                                    ? 'bg-rose-600 animate-pulse ring-2 ring-rose-400'
-                                    : 'bg-blue-600 hover:bg-blue-700'
-                                }`}
+                                className={`text-[11px] ${isRec ? 'animate-pulse' : ''}`}
                               >
                                 {isRec ? 'Đang nghe...' : 'Đọc thử'}
-                              </button>
+                              </Button3D>
 
                               <button
                                 onClick={() => setVideoModalItem(item)}
@@ -472,7 +472,7 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
               {/* Khung hướng dẫn khẩu hình */}
               <div className="h-28 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col items-center justify-center p-3 space-y-1">
                 <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Trọng tâm phát âm</span>
-                <span className="text-2xl font-display font-black text-blue-600">
+                <span className="text-2xl font-display font-black text-pink-600">
                   /{videoModalItem.focusPhoneme || videoModalItem.word}/
                 </span>
               </div>
@@ -488,7 +488,7 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
                 >
                   Nghe mẫu
                 </button>
-                <Button3D variant="blue" size="sm" onClick={() => setVideoModalItem(null)} className="px-5">
+                <Button3D variant="pink" size="sm" onClick={() => setVideoModalItem(null)} className="px-5">
                   ĐÃ HIỂU
                 </Button3D>
               </div>
@@ -519,7 +519,7 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
                     onClick={() =>
                       setRelearnModal((prev) => (prev ? { ...prev, flipped: !prev.flipped } : null))
                     }
-                    className="h-36 rounded-2xl bg-slate-50 border-2 border-slate-200 flex flex-col items-center justify-center p-4 text-center cursor-pointer select-none hover:border-blue-400 transition-all"
+                    className="h-36 rounded-2xl bg-slate-50 border-2 border-slate-200 flex flex-col items-center justify-center p-4 text-center cursor-pointer select-none hover:border-pink-300 transition-all"
                   >
                     {!relearnModal.flipped ? (
                       <div className="space-y-1">
@@ -530,7 +530,7 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
                       </div>
                     ) : (
                       <div className="space-y-1 animate-in zoom-in-95">
-                        <span className="text-2xl font-display font-black text-blue-600">
+                        <span className="text-2xl font-display font-black text-pink-600">
                           {relearnModal.item.translation}
                         </span>
                         <p className="text-xs text-slate-500 font-medium">({relearnModal.item.word})</p>
@@ -545,7 +545,7 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
                     >
                       Nghe
                     </button>
-                    <Button3D variant="blue" size="sm" onClick={() => setRelearnModal(null)} className="px-5">
+                    <Button3D variant="pink" size="sm" onClick={() => setRelearnModal(null)} className="px-5">
                       ĐÃ THUỘC
                     </Button3D>
                   </div>
@@ -559,7 +559,7 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
                     <p className="text-xs font-bold text-slate-700">Bấm nút để nghe và chọn nghĩa đúng:</p>
                     <button
                       onClick={() => playWord(relearnModal.item.word, 'modal_listen_audio')}
-                      className="px-5 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs mx-auto flex items-center justify-center shadow-md cursor-pointer active:scale-95 transition-all"
+                      className="px-5 py-2.5 rounded-2xl bg-pink-100 hover:bg-pink-200 text-pink-700 border border-pink-300 font-bold text-xs mx-auto flex items-center justify-center shadow-2xs cursor-pointer active:scale-95 transition-all"
                     >
                       Phát âm thanh
                     </button>

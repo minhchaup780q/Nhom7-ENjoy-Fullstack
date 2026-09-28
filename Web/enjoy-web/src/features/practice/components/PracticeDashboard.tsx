@@ -1,20 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  ArrowPathIcon,
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-  SpeakerWaveIcon,
-  PlayIcon,
-  SparklesIcon,
-  FunnelIcon,
-  CpuChipIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  CalendarDaysIcon,
-  ListBulletIcon,
-  CheckBadgeIcon,
-  XMarkIcon,
-} from '@heroicons/react/24/solid';
 import { Button3D } from '../../../components/ui/Button3D';
 import { Mascot } from '../../../components/ui/Mascot';
 import { BASE_URL } from '../../../services/apiClient';
@@ -50,14 +34,14 @@ const getAssetUrl = (url?: string | null) => {
   return `${BASE_URL.replace(/\/$/, '')}/${trimmed.replace(/^\//, '')}`;
 };
 
-const ROUND_INFO: Record<number, { name: string; color: string; badgeBg: string }> = {
-  1: { name: 'Màn 1 • Học từ vựng', color: 'text-slate-600', badgeBg: 'bg-slate-50 border-slate-200/60' },
-  2: { name: 'Màn 2 • Nối từ vựng (Từ vựng)', color: 'text-amber-600', badgeBg: 'bg-amber-50 border-amber-200/60' },
-  3: { name: 'Màn 3 • Luyện nói (Speaking)', color: 'text-rose-600', badgeBg: 'bg-rose-50 border-rose-200/60' },
-  4: { name: 'Màn 4 • Sắp xếp chữ (Viết)', color: 'text-purple-600', badgeBg: 'bg-purple-50 border-purple-200/60' },
-  5: { name: 'Màn 5 • Kéo thả toạ độ (Nghe)', color: 'text-blue-600', badgeBg: 'bg-blue-50 border-blue-200/60' },
-  6: { name: 'Màn 6 • Ngữ pháp (Đọc)', color: 'text-emerald-600', badgeBg: 'bg-emerald-50 border-emerald-200/60' },
-  7: { name: 'Màn 7 • Điền từ (Đọc)', color: 'text-teal-600', badgeBg: 'bg-teal-50 border-teal-200/60' },
+const ROUND_INFO: Record<number, { name: string }> = {
+  1: { name: 'Vòng 1: Học từ vựng' },
+  2: { name: 'Vòng 2: Nối từ vựng' },
+  3: { name: 'Vòng 3: Luyện nói' },
+  4: { name: 'Vòng 4: Sắp xếp chữ cái' },
+  5: { name: 'Vòng 5: Kéo thả toạ độ' },
+  6: { name: 'Vòng 6: Ngữ pháp trắc nghiệm' },
+  7: { name: 'Vòng 7: Điền từ vào chỗ trống' },
 };
 
 const PAGE_SIZE = 6;
@@ -96,7 +80,7 @@ export const PracticeDashboard: React.FC = () => {
       const data = (res as any)?.data !== undefined ? (res as any).data : res;
       setRoadmapMistakes(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Lỗi khi tải lộ trình ôn tập:", err);
+      console.error('Lỗi khi tải lộ trình ôn tập:', err);
     } finally {
       setRoadmapLoading(false);
     }
@@ -113,10 +97,9 @@ export const PracticeDashboard: React.FC = () => {
       try {
         const explanation = await chatbotApi.explainMistake(item);
         setAiExplanation(explanation);
-        // Cập nhật cache lên database để lần sau mở lại ngay lập tức
-        mistakeApi.updateAiExplanation(item.id, explanation).catch(() => { });
+        mistakeApi.updateAiExplanation(item.id, explanation).catch(() => {});
       } catch (err) {
-        console.error("Lỗi khi gọi AI phân tích:", err);
+        console.error('Lỗi khi gọi AI phân tích:', err);
         setAiExplanation('Trợ lý AI đang bận một chút. Bé hãy xem lại từ vựng và đáp án đúng nhé!');
       } finally {
         setAiLoading(false);
@@ -124,42 +107,47 @@ export const PracticeDashboard: React.FC = () => {
     }
   };
 
-  // Tải dữ liệu theo trang hiện tại (Load trang nào hiển thị trang đó)
-  const fetchMistakesData = useCallback(async (
-    pageToFetch: number = currentPage,
-    statusToFetch: MistakeStatus = statusFilter,
-    roundToFetch: number | 'ALL' = roundFilter
-  ) => {
-    setLoading(true);
-    try {
-      const [pageRes, statsRes] = await Promise.all([
-        mistakeApi.getUserMistakesPaged({
-          status: statusToFetch,
-          roundType: roundToFetch === 'ALL' ? undefined : roundToFetch,
-          page: pageToFetch,
-          size: PAGE_SIZE,
-        }),
-        mistakeApi.getMistakeStats(),
-      ]);
+  // Tải dữ liệu theo trang hiện tại
+  const fetchMistakesData = useCallback(
+    async (
+      pageToFetch: number = currentPage,
+      statusToFetch: MistakeStatus = statusFilter,
+      roundToFetch: number | 'ALL' = roundFilter
+    ) => {
+      setLoading(true);
+      try {
+        const [pageRes, statsRes] = await Promise.all([
+          mistakeApi.getUserMistakesPaged({
+            status: statusToFetch,
+            roundType: roundToFetch === 'ALL' ? undefined : roundToFetch,
+            page: pageToFetch,
+            size: PAGE_SIZE,
+          }),
+          mistakeApi.getMistakeStats(),
+        ]);
 
-      if (pageRes) {
-        setMistakes(pageRes.content || []);
-        setCurrentPage(pageRes.pageNumber || 0);
-        setTotalPages(Math.max(1, pageRes.totalPages || 1));
-        setTotalElements(pageRes.totalElements || 0);
+        if (pageRes) {
+          setMistakes(pageRes.content || []);
+          setCurrentPage(pageRes.pageNumber || 0);
+          setTotalPages(Math.max(1, pageRes.totalPages || 1));
+          setTotalElements(pageRes.totalElements || 0);
+        }
+
+        if (statsRes) {
+          setStats(statsRes);
+        }
+      } catch (err) {
+        console.error('Lỗi khi tải danh sách câu hỏi cần ôn:', err);
+      } finally {
+        setLoading(false);
       }
-      setStats(statsRes || null);
-    } catch (err) {
-      console.error("Lỗi khi tải danh sách lỗi sai:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, statusFilter, roundFilter]);
+    },
+    [currentPage, statusFilter, roundFilter]
+  );
 
-  // Initial load và khi đổi filter
   useEffect(() => {
     fetchMistakesData(0, statusFilter, roundFilter);
-  }, [statusFilter, roundFilter]);
+  }, [statusFilter, roundFilter, fetchMistakesData]);
 
   useEffect(() => {
     if (mainViewTab === 'roadmap') {
@@ -168,12 +156,12 @@ export const PracticeDashboard: React.FC = () => {
   }, [mainViewTab, fetchRoadmapData]);
 
   const handlePageChange = (newPage: number) => {
-    if (newPage < 0 || newPage >= totalPages || newPage === currentPage) return;
-    fetchMistakesData(newPage, statusFilter, roundFilter);
+    if (newPage >= 0 && newPage < totalPages && newPage !== currentPage) {
+      fetchMistakesData(newPage, statusFilter, roundFilter);
+    }
   };
 
   const handleStatusChange = (newStatus: MistakeStatus) => {
-    if (newStatus === statusFilter) return;
     setStatusFilter(newStatus);
     setCurrentPage(0);
   };
@@ -183,31 +171,22 @@ export const PracticeDashboard: React.FC = () => {
     setCurrentPage(0);
   };
 
-  const playSpeech = (text: string) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'en-US';
-      utterance.rate = 0.85;
-      window.speechSynthesis.speak(utterance);
-    }
-  };
-
   const startPracticeAllNeedsReview = async () => {
     try {
-      const queue = await mistakeApi.getPracticeQueue(
-        roundFilter === 'ALL' ? undefined : roundFilter,
-        20
-      );
-      if (queue && queue.length > 0) {
-        setPracticeQueue(queue);
-      } else if (mistakes.length > 0) {
-        setPracticeQueue(mistakes);
+      const res = await mistakeApi.getUserMistakesPaged({
+        status: 'NEEDS_REVIEW',
+        roundType: roundFilter === 'ALL' ? undefined : roundFilter,
+        page: 0,
+        size: 50,
+      });
+      const list = res.content || [];
+      if (list.length > 0) {
+        setPracticeQueue(list);
+      } else {
+        alert('Hiện tại không có câu hỏi nào cần ôn tập hôm nay!');
       }
     } catch (err) {
-      if (mistakes.length > 0) {
-        setPracticeQueue(mistakes);
-      }
+      console.error('Lỗi khi bắt đầu ôn tập hàng loạt:', err);
     }
   };
 
@@ -215,7 +194,18 @@ export const PracticeDashboard: React.FC = () => {
     setPracticeQueue([item]);
   };
 
-  const needsReviewTotal = stats?.needsReviewCount ?? 0;
+  const playSpeech = (text?: string) => {
+    if (!text) return;
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'en-US';
+      u.rate = 0.9;
+      window.speechSynthesis.speak(u);
+    }
+  };
+
+  const needsReviewTotal = stats?.needsReviewCount ?? totalElements;
   const masteredTotal = stats?.masteredCount ?? 0;
   const grandTotal = stats?.totalMistakes ?? (needsReviewTotal + masteredTotal);
 
@@ -237,28 +227,27 @@ export const PracticeDashboard: React.FC = () => {
         />
       )}
 
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-rose-500 via-primary to-[#ff85a2] rounded-3xl p-6 md:p-8 text-white shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 border border-rose-300/40">
+      {/* Header Banner - Clean Minimal Card */}
+      <div className="bg-white border-2 border-slate-200 rounded-3xl p-6 md:p-7 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="space-y-2 text-center md:text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-display font-black uppercase tracking-wider">
-            <SparklesIcon className="w-4 h-4" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 rounded-full text-xs font-display font-black text-slate-700 uppercase tracking-wider border border-slate-200">
             LỘ TRÌNH ÔN TẬP CÁ NHÂN HÓA
           </div>
-          <h1 className="text-2xl md:text-3xl font-display font-black tracking-wide">
+          <h1 className="text-2xl md:text-3xl font-display font-black text-slate-800 tracking-tight">
             Trung Tâm Luyện Tập & Khắc Phục Lỗi Sai
           </h1>
-          <p className="text-xs md:text-sm text-white/90 font-semibold max-w-xl leading-relaxed">
-            Hệ thống tự động ghi nhận những câu hỏi bé từng làm sai để giúp bé ôn tập đúng trọng tâm và nâng cao điểm số!
+          <p className="text-xs md:text-sm text-slate-500 font-medium max-w-xl leading-relaxed">
+            Hệ thống tự động ghi nhận những câu hỏi bé từng làm sai để giúp bé ôn tập đúng trọng tâm và nâng cao điểm số.
           </p>
         </div>
 
         <div className="shrink-0 flex items-center justify-center">
           <Mascot
-            expression={needsReviewTotal === 0 ? "happy" : "thinking"}
+            expression={needsReviewTotal === 0 ? 'happy' : 'thinking'}
             speechBubbleText={
               needsReviewTotal === 0
-                ? "Tuyệt đỉnh! Bé đã hoàn thành tất cả các câu cần ôn hôm nay!"
-                : `Bé có ${needsReviewTotal} câu cần ôn hôm nay nè! Cùng Enjoy luyện tập nhé!`
+                ? 'Tuyệt đỉnh! Bé đã hoàn thành tất cả các câu cần ôn hôm nay!'
+                : `Bé có ${needsReviewTotal} câu cần ôn hôm nay nè!`
             }
             size={85}
           />
@@ -266,18 +255,18 @@ export const PracticeDashboard: React.FC = () => {
       </div>
 
       {/* Top View Selector: Segmented Pill Controls */}
-      <div className="bg-slate-100 p-1.5 rounded-2xl inline-flex self-start border border-slate-200/60 gap-1.5 flex-wrap">
+      <div className="bg-slate-100/80 p-1.5 rounded-2xl inline-flex self-start border border-slate-200 gap-1.5 flex-wrap">
         <button
           onClick={() => setMainViewTab('list')}
-          className={`px-5 py-2.5 rounded-xl font-display text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${mainViewTab === 'list'
-              ? 'bg-white text-slate-800 shadow-sm'
-              : 'text-slate-500 hover:text-slate-800 hover:bg-white/50'
-            }`}
+          className={`px-5 py-2.5 rounded-xl font-display text-xs font-black transition-all flex items-center gap-2 cursor-pointer border ${
+            mainViewTab === 'list'
+              ? 'bg-white text-slate-900 border-slate-300 shadow-xs'
+              : 'bg-transparent text-slate-600 border-transparent hover:bg-white/60'
+          }`}
         >
-          <ListBulletIcon className="w-4 h-4 text-primary" />
           <span>DANH SÁCH BÀI TẬP</span>
           {needsReviewTotal > 0 && (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-100 text-rose-600">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-pink-100 text-pink-700 border border-pink-200">
               {needsReviewTotal}
             </span>
           )}
@@ -285,12 +274,12 @@ export const PracticeDashboard: React.FC = () => {
 
         <button
           onClick={() => setMainViewTab('roadmap')}
-          className={`px-5 py-2.5 rounded-xl font-display text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${mainViewTab === 'roadmap'
-              ? 'bg-white text-slate-800 shadow-sm'
-              : 'text-slate-500 hover:text-slate-800 hover:bg-white/50'
-            }`}
+          className={`px-5 py-2.5 rounded-xl font-display text-xs font-black transition-all flex items-center gap-2 cursor-pointer border ${
+            mainViewTab === 'roadmap'
+              ? 'bg-white text-slate-900 border-slate-300 shadow-xs'
+              : 'bg-transparent text-slate-600 border-transparent hover:bg-white/60'
+          }`}
         >
-          <CalendarDaysIcon className="w-4 h-4 text-indigo-500" />
           <span>LỘ TRÌNH ÔN TẬP (1 - 2 - 3 NGÀY)</span>
         </button>
       </div>
@@ -302,65 +291,66 @@ export const PracticeDashboard: React.FC = () => {
         <div className="space-y-5">
           {/* Overview Stat Cards */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div className="bg-white border border-slate-200/80 rounded-2xl p-4.5 shadow-xs flex items-center justify-between">
-              <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Cần Ôn Hôm Nay</p>
-                <p className="text-2xl md:text-3xl font-display font-black text-amber-600 mt-1">
-                  {needsReviewTotal}
-                </p>
-              </div>
-
+            <div className="bg-white border border-slate-200 rounded-2xl p-4.5 shadow-2xs">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Cần Ôn Hôm Nay</p>
+              <p className="text-2xl md:text-3xl font-display font-black text-slate-800 mt-1">
+                {needsReviewTotal}
+              </p>
             </div>
 
-            <div className="bg-white border border-slate-200/80 rounded-2xl p-4.5 shadow-xs flex items-center justify-between">
-              <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Đã Thành Thạo</p>
-                <p className="text-2xl md:text-3xl font-display font-black text-emerald-600 mt-1">
-                  {masteredTotal}
-                </p>
-              </div>
-
+            <div className="bg-white border border-slate-200 rounded-2xl p-4.5 shadow-2xs">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Đã Thành Thạo</p>
+              <p className="text-2xl md:text-3xl font-display font-black text-slate-800 mt-1">
+                {masteredTotal}
+              </p>
             </div>
 
-            <div className="bg-white border border-slate-200/80 rounded-2xl p-4.5 shadow-xs flex items-center justify-between col-span-2 md:col-span-1">
-              <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tỷ Lệ Khắc Phục</p>
-                <p className="text-2xl md:text-3xl font-display font-black text-primary mt-1">
-                  {grandTotal > 0 ? `${Math.round((masteredTotal / grandTotal) * 100)}%` : '100%'}
-                </p>
-              </div>
-
+            <div className="bg-white border border-slate-200 rounded-2xl p-4.5 shadow-2xs col-span-2 md:col-span-1">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tỷ Lệ Khắc Phục</p>
+              <p className="text-2xl md:text-3xl font-display font-black text-pink-600 mt-1">
+                {grandTotal > 0 ? `${Math.round((masteredTotal / grandTotal) * 100)}%` : '100%'}
+              </p>
             </div>
           </div>
 
           {/* Action & Filter Bar */}
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xs">
             {/* Filter Buttons */}
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handleStatusChange('NEEDS_REVIEW')}
-                className={`px-4 py-2 rounded-xl text-xs font-display font-black transition-all flex items-center gap-2 cursor-pointer ${statusFilter === 'NEEDS_REVIEW'
-                    ? 'bg-slate-900 text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
-                  }`}
+                className={`px-4 py-2 rounded-xl text-xs font-display font-black transition-all flex items-center gap-2 cursor-pointer border ${
+                  statusFilter === 'NEEDS_REVIEW'
+                    ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                }`}
               >
                 <span>CẦN ÔN HÔM NAY</span>
-                <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold ${statusFilter === 'NEEDS_REVIEW' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
-                  }`}>
+                <span
+                  className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold ${
+                    statusFilter === 'NEEDS_REVIEW'
+                      ? 'bg-white/20 text-white'
+                      : 'bg-slate-200 text-slate-700'
+                  }`}
+                >
                   {needsReviewTotal}
                 </span>
               </button>
 
               <button
                 onClick={() => handleStatusChange('MASTERED')}
-                className={`px-4 py-2 rounded-xl text-xs font-display font-black transition-all flex items-center gap-2 cursor-pointer ${statusFilter === 'MASTERED'
-                    ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
-                  }`}
+                className={`px-4 py-2 rounded-xl text-xs font-display font-black transition-all flex items-center gap-2 cursor-pointer border ${
+                  statusFilter === 'MASTERED'
+                    ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                }`}
               >
                 <span>ĐÃ THÀNH THẠO</span>
-                <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold ${statusFilter === 'MASTERED' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
-                  }`}>
+                <span
+                  className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold ${
+                    statusFilter === 'MASTERED' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                  }`}
+                >
                   {masteredTotal}
                 </span>
               </button>
@@ -368,32 +358,36 @@ export const PracticeDashboard: React.FC = () => {
 
             {/* Right side: Round Filter & Practice All Button */}
             <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
-              <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5">
-                <FunnelIcon className="w-3.5 h-3.5 text-slate-400" />
+              <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5">
+                <span className="text-[11px] font-bold text-slate-400 uppercase">Kỹ năng:</span>
                 <select
                   value={roundFilter}
-                  onChange={(e) => handleRoundChange(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))}
-                  className="bg-transparent text-xs font-bold text-slate-600 outline-none cursor-pointer"
+                  onChange={(e) =>
+                    handleRoundChange(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))
+                  }
+                  className="bg-transparent text-xs font-bold text-slate-700 outline-none cursor-pointer"
                 >
                   <option value="ALL">Tất cả kỹ năng</option>
-                  <option value="2">Màn 2: Nối từ vựng (Từ vựng)</option>
-                  <option value="3">Màn 3: Luyện nói (Speaking)</option>
-                  <option value="4">Màn 4: Sắp xếp chữ cái (Viết)</option>
-                  <option value="5">Màn 5: Kéo thả toạ độ (Nghe)</option>
-                  <option value="6">Màn 6: Ngữ pháp trắc nghiệm (Đọc)</option>
-                  <option value="7">Màn 7: Điền từ vào chỗ trống (Đọc)</option>
+                  <option value="1">Vòng 1: Học từ vựng</option>
+                  <option value="2">Vòng 2: Nối từ vựng</option>
+                  <option value="3">Vòng 3: Luyện nói</option>
+                  <option value="4">Vòng 4: Sắp xếp chữ cái</option>
+                  <option value="5">Vòng 5: Kéo thả toạ độ</option>
+                  <option value="6">Vòng 6: Ngữ pháp trắc nghiệm</option>
+                  <option value="7">Vòng 7: Điền từ vào chỗ trống</option>
                 </select>
               </div>
 
               {statusFilter === 'NEEDS_REVIEW' && (
-                <button
+                <Button3D
+                  variant="pink"
+                  size="sm"
                   disabled={needsReviewTotal === 0}
                   onClick={startPracticeAllNeedsReview}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:pointer-events-none text-white font-display font-black text-xs rounded-xl shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                  className="text-[11px]"
                 >
-                  <PlayIcon className="w-3.5 h-3.5 fill-current" />
-                  <span>ÔN TẬP TẤT CẢ ({needsReviewTotal})</span>
-                </button>
+                  ÔN TẬP TẤT CẢ ({needsReviewTotal})
+                </Button3D>
               )}
             </div>
           </div>
@@ -401,16 +395,14 @@ export const PracticeDashboard: React.FC = () => {
           {/* Mistake Cards List */}
           {loading ? (
             <div className="p-16 text-center text-sm font-bold text-slate-400 flex items-center justify-center gap-2">
-              <ArrowPathIcon className="w-5 h-5 animate-spin text-primary" />
-              ĐANG TẢI DỮ LIỆU LUYỆN TẬP...
+              Đang tải dữ liệu luyện tập...
             </div>
           ) : mistakes.length === 0 ? (
-            <div className="bg-white border border-slate-200/80 rounded-2xl p-12 text-center space-y-3 shadow-xs">
-              <CheckCircleIcon className="w-12 h-12 text-emerald-500 mx-auto" />
+            <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center space-y-3 shadow-2xs">
               <h3 className="text-base font-display font-black text-slate-800 uppercase">
-                Không có câu hỏi nào cần ôn tập hôm nay!
+                Không có câu hỏi nào cần ôn tập hôm nay
               </h3>
-              <p className="text-xs font-semibold text-slate-500 max-w-md mx-auto">
+              <p className="text-xs font-medium text-slate-500 max-w-md mx-auto">
                 {statusFilter === 'NEEDS_REVIEW'
                   ? 'Bé đã hoàn thành xuất sắc các câu cần ôn hôm nay! Các bài tập đang theo dõi sẽ được nhắc lại vào ngày mai (bé có thể xem ở tab Lộ trình ôn tập).'
                   : 'Bé chưa có câu hỏi nào đạt trạng thái Đã thành thạo trong danh mục này.'}
@@ -419,11 +411,9 @@ export const PracticeDashboard: React.FC = () => {
           ) : (
             <div className="space-y-6">
               <div className="grid md:grid-cols-2 gap-4">
-                {mistakes.map(item => {
+                {mistakes.map((item) => {
                   const roundInfo = ROUND_INFO[item.roundType] || {
                     name: `Vòng ${item.roundType}`,
-                    color: 'text-slate-600',
-                    badgeBg: 'bg-slate-100 border-slate-200'
                   };
 
                   const isMastered = item.status === 'MASTERED' || (item.correctStreakDays ?? 0) >= 3;
@@ -431,23 +421,26 @@ export const PracticeDashboard: React.FC = () => {
                   return (
                     <div
                       key={item.id}
-                      className="bg-white border border-slate-200/90 rounded-2xl p-4.5 shadow-xs flex flex-col justify-between gap-3.5 hover:border-slate-300 hover:shadow-sm transition-all"
+                      className="bg-white border border-slate-200 rounded-2xl p-4.5 shadow-2xs flex flex-col justify-between gap-3.5 hover:border-slate-400 transition-all"
                     >
                       <div className="space-y-3">
                         {/* Top: Skill & Status */}
                         <div className="flex items-center justify-between gap-2">
-                          <span className={`px-2.5 py-0.5 rounded-lg text-[11px] font-display font-black border ${roundInfo.badgeBg} ${roundInfo.color}`}>
+                          <span className="px-2.5 py-0.5 rounded-lg text-[11px] font-display font-black bg-slate-100 text-slate-700 border border-slate-200">
                             {roundInfo.name}
                           </span>
 
-                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-display font-black ${isMastered
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                              : (item.correctStreakDays ?? 0) > 0
-                                ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                : 'bg-amber-50 text-amber-700 border border-amber-200'
-                            }`}>
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-display font-black border ${
+                              isMastered
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : (item.correctStreakDays ?? 0) > 0
+                                  ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                  : 'bg-pink-50 text-pink-700 border-pink-200'
+                            }`}
+                          >
                             {isMastered
-                              ? '✓ ĐÃ THÀNH THẠO'
+                              ? 'ĐÃ THÀNH THẠO'
                               : (item.correctStreakDays ?? 0) > 0
                                 ? `ĐANG ÔN (${item.correctStreakDays}/3 LẦN)`
                                 : 'CẦN ÔN TẬP'}
@@ -458,83 +451,80 @@ export const PracticeDashboard: React.FC = () => {
                         <div className="flex items-center justify-between gap-3 pt-0.5">
                           <div className="flex items-center gap-3 min-w-0">
                             {item.imageUrl && (
-                              <div className="w-12 h-12 rounded-xl overflow-hidden border border-slate-100 bg-slate-50 shrink-0 p-0.5 flex items-center justify-center">
+                              <div className="w-12 h-12 rounded-xl overflow-hidden border border-slate-200 bg-slate-50 shrink-0 p-0.5 flex items-center justify-center">
                                 <img
                                   src={getAssetUrl(item.imageUrl)}
                                   alt="thumbnail"
                                   className="w-full h-full object-contain"
                                   onError={(e) => {
-                                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400';
+                                    (e.target as HTMLImageElement).src =
+                                      'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400';
                                   }}
                                 />
                               </div>
                             )}
                             <div className="min-w-0">
-                              <h4 className="text-sm font-display font-black text-slate-800 truncate">
-                                {item.contentText}
+                              <h4 className="text-base font-display font-black text-slate-800 truncate">
+                                {item.contentText || item.keyword}
                               </h4>
                               {item.translation && (
                                 <p className="text-xs font-semibold text-slate-500 truncate mt-0.5">
-                                  {item.translation}
+                                  ({item.translation})
                                 </p>
                               )}
                             </div>
                           </div>
 
                           <button
-                            onClick={() => playSpeech(item.contentText)}
-                            className="p-2 bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-primary rounded-xl transition-colors shrink-0 cursor-pointer"
-                            title="Nghe phát âm"
+                            onClick={() => playSpeech(item.contentText || item.keyword)}
+                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold border border-slate-200 transition-colors shrink-0 cursor-pointer"
                           >
-                            <SpeakerWaveIcon className="w-4 h-4" />
+                            Nghe
                           </button>
                         </div>
 
                         {/* Error info box */}
-                        <div className="bg-slate-50/80 border border-slate-200/60 rounded-xl p-2.5 space-y-1.5 text-xs">
-                          <div className="flex items-center justify-between text-rose-600 font-semibold text-[11px]">
-                            <span className="flex items-center gap-1 text-slate-500">
-                              <ExclamationTriangleIcon className="w-3.5 h-3.5 text-rose-500" />
-                              Lần trước sai:
-                            </span>
+                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 space-y-1.5 text-xs">
+                          <div className="flex items-center justify-between font-semibold text-[11px]">
+                            <span className="text-slate-500 font-medium">Lần trước sai:</span>
                             {item.wrongAnswerSubmitted && isImageUrl(item.wrongAnswerSubmitted) ? (
-                              <div className="w-7 h-7 rounded-lg border border-rose-200 overflow-hidden shrink-0 bg-white p-0.5 inline-flex items-center justify-center">
+                              <div className="w-7 h-7 rounded-lg border border-pink-200 overflow-hidden shrink-0 bg-white p-0.5 inline-flex items-center justify-center">
                                 <img
                                   src={getAssetUrl(item.wrongAnswerSubmitted)}
                                   alt="Wrong"
                                   className="w-full h-full object-cover rounded-md"
                                   onError={(e) => {
-                                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400';
+                                    (e.target as HTMLImageElement).src =
+                                      'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400';
                                   }}
                                 />
                               </div>
                             ) : (
-                              <strong className="line-through text-rose-600">{item.wrongAnswerSubmitted}</strong>
+                              <strong className="line-through text-pink-600 bg-pink-50 px-2 py-0.5 rounded border border-pink-200">
+                                {item.wrongAnswerSubmitted || 'chưa đúng'}
+                              </strong>
                             )}
-                          </div>
-
-                          <div className="flex items-center justify-between text-slate-400 text-[10px] font-medium pt-1 border-t border-slate-200/40">
-                            <span>Thời gian làm câu này:</span>
-                            <span className="font-mono font-bold text-slate-600">{item.durationSeconds || 0}s</span>
                           </div>
                         </div>
                       </div>
 
                       {/* Card Action Buttons */}
                       <div className="flex items-center gap-2 pt-1">
-                        <button
+                        <Button3D
+                          variant="pink"
+                          size="sm"
+                          fullWidth
                           onClick={() => startPracticeSingleItem(item)}
-                          className="flex-1 py-2 bg-primary hover:bg-primary-hover text-white font-display font-black rounded-xl text-xs uppercase tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                          className="text-[11px]"
                         >
                           Luyện tập câu này
-                        </button>
+                        </Button3D>
 
                         <button
                           onClick={() => handleOpenAiModal(item)}
-                          className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl border border-blue-200 transition-colors cursor-pointer"
-                          title="AI Hướng dẫn & Phân tích lỗi sai"
+                          className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl border border-slate-200 font-bold text-xs transition-colors cursor-pointer"
                         >
-                          <CpuChipIcon className="w-4 h-4" />
+                          Hỏi AI
                         </button>
                       </div>
                     </div>
@@ -544,24 +534,24 @@ export const PracticeDashboard: React.FC = () => {
 
               {/* ==================== PHÂN TRANG (PAGINATION BAR) ==================== */}
               {totalPages > 1 && (
-                <div className="bg-white border border-slate-200/80 rounded-2xl p-3.5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
+                <div className="bg-white border border-slate-200 rounded-2xl p-3.5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xs">
                   <div className="text-xs font-semibold text-slate-500">
-                    Trang <strong className="text-slate-800">{currentPage + 1}</strong> / <strong className="text-slate-800">{totalPages}</strong> (Tổng cộng {totalElements} câu hỏi)
+                    Trang <strong className="text-slate-800">{currentPage + 1}</strong> /{' '}
+                    <strong className="text-slate-800">{totalPages}</strong> ({totalElements} câu hỏi)
                   </div>
 
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 0 || loading}
-                      className="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none font-display font-black text-xs text-slate-600 flex items-center gap-1 transition-all cursor-pointer shadow-xs"
+                      className="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none font-display font-black text-xs text-slate-700 transition-all cursor-pointer"
                     >
-                      <ChevronLeftIcon className="w-3.5 h-3.5" />
                       Trước
                     </button>
 
                     {/* Numbered Page Buttons */}
                     <div className="flex items-center gap-1">
-                      {Array.from({ length: totalPages }, (_, i) => i).map(pageIdx => {
+                      {Array.from({ length: totalPages }, (_, i) => i).map((pageIdx) => {
                         if (
                           totalPages > 6 &&
                           pageIdx !== 0 &&
@@ -569,7 +559,11 @@ export const PracticeDashboard: React.FC = () => {
                           Math.abs(pageIdx - currentPage) > 1
                         ) {
                           if (pageIdx === 1 || pageIdx === totalPages - 2) {
-                            return <span key={pageIdx} className="px-1 text-xs text-slate-400">...</span>;
+                            return (
+                              <span key={pageIdx} className="px-1 text-xs text-slate-400">
+                                ...
+                              </span>
+                            );
                           }
                           return null;
                         }
@@ -580,10 +574,11 @@ export const PracticeDashboard: React.FC = () => {
                             key={pageIdx}
                             onClick={() => handlePageChange(pageIdx)}
                             disabled={loading}
-                            className={`w-7 h-7 rounded-lg font-display font-black text-xs transition-all cursor-pointer ${isCurrent
-                                ? 'bg-primary text-white shadow-xs'
-                                : 'bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100'
-                              }`}
+                            className={`w-7 h-7 rounded-lg font-display font-black text-xs transition-all cursor-pointer border ${
+                              isCurrent
+                                ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
+                            }`}
                           >
                             {pageIdx + 1}
                           </button>
@@ -594,10 +589,9 @@ export const PracticeDashboard: React.FC = () => {
                     <button
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={currentPage >= totalPages - 1 || loading}
-                      className="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none font-display font-black text-xs text-slate-600 flex items-center gap-1 transition-all cursor-pointer shadow-xs"
+                      className="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none font-display font-black text-xs text-slate-700 transition-all cursor-pointer"
                     >
                       Sau
-                      <ChevronRightIcon className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -610,362 +604,383 @@ export const PracticeDashboard: React.FC = () => {
       {/* ========================================================================= */}
       {/* VIEW 2: LỘ TRÌNH ÔN TẬP (1 - 2 - 3 NGÀY) SPACED REPETITION (CHỈ ĐỂ XEM)    */}
       {/* ========================================================================= */}
-      {mainViewTab === 'roadmap' && (() => {
-        const dueTodayItems = roadmapMistakes.filter(m => {
-          const isMastered = m.status === 'MASTERED' || (m.correctStreakDays ?? 0) >= 3;
-          return !isMastered && (!m.correctStreakDays || m.correctStreakDays === 0);
-        });
+      {mainViewTab === 'roadmap' &&
+        (() => {
+          const dueTodayItems = roadmapMistakes.filter((m) => {
+            const isMastered = m.status === 'MASTERED' || (m.correctStreakDays ?? 0) >= 3;
+            return !isMastered && (!m.correctStreakDays || m.correctStreakDays === 0);
+          });
 
-        const waiting1DayItems = roadmapMistakes.filter(m => {
-          const isMastered = m.status === 'MASTERED' || (m.correctStreakDays ?? 0) >= 3;
-          return !isMastered && m.correctStreakDays === 1;
-        });
+          const waiting1DayItems = roadmapMistakes.filter((m) => {
+            const isMastered = m.status === 'MASTERED' || (m.correctStreakDays ?? 0) >= 3;
+            return !isMastered && m.correctStreakDays === 1;
+          });
 
-        const waiting2DaysItems = roadmapMistakes.filter(m => {
-          const isMastered = m.status === 'MASTERED' || (m.correctStreakDays ?? 0) >= 3;
-          return !isMastered && m.correctStreakDays === 2;
-        });
+          const waiting2DaysItems = roadmapMistakes.filter((m) => {
+            const isMastered = m.status === 'MASTERED' || (m.correctStreakDays ?? 0) >= 3;
+            return !isMastered && m.correctStreakDays === 2;
+          });
 
-        const masteredItems = roadmapMistakes.filter(m => {
-          return m.status === 'MASTERED' || (m.correctStreakDays ?? 0) >= 3;
-        });
+          const masteredItems = roadmapMistakes.filter((m) => {
+            return m.status === 'MASTERED' || (m.correctStreakDays ?? 0) >= 3;
+          });
 
-        return (
-          <div className="space-y-6 animate-fadeIn">
-            {/* Roadmap Explanation Guide Card - Ngắn gọn, súc tích */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-2 text-blue-700 font-bold text-xs uppercase tracking-wide">
-                  Lộ trình ôn tập lặp lại
+          return (
+            <div className="space-y-6 animate-fadeIn">
+              {/* Roadmap Explanation Guide Card - Ngắn gọn, súc tích */}
+              <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-2xs">
+                <div className="space-y-0.5">
+                  <div className="text-slate-800 font-bold text-xs uppercase tracking-wide">
+                    Lộ trình ôn tập lặp lại
+                  </div>
+                  <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                    Hoàn thành <strong>3 lần luyện tập đúng ở 3 ngày khác nhau</strong> để khắc phục hoàn toàn
+                    lỗi sai.
+                  </p>
                 </div>
-                <p className="text-xs text-slate-600 font-medium leading-relaxed">
-                  Hoàn thành <strong>3 lần luyện tập đúng ở 3 ngày khác nhau</strong> để khắc phục hoàn toàn lỗi sai.
-                </p>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="px-3 py-1 bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold font-mono">
+                    {roadmapMistakes.length} câu theo dõi
+                  </span>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="px-3 py-1 bg-white text-blue-700 border border-blue-200 rounded-xl text-xs font-bold font-mono shadow-xs">
-                  {roadmapMistakes.length} câu theo dõi
-                </span>
-              </div>
+              {roadmapLoading ? (
+                <div className="p-16 text-center text-sm font-bold text-slate-400 flex items-center justify-center gap-2">
+                  Đang tải lộ trình ôn tập...
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+                  {/* 1. HÔM NAY CẦN ÔN */}
+                  <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs flex flex-col space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                      <div>
+                        <h4 className="text-xs font-display font-black text-slate-800 uppercase">
+                          1. Cần ôn hôm nay
+                        </h4>
+                        <p className="text-[10px] text-slate-400 font-semibold">Chưa ôn lần nào (0% đ)</p>
+                      </div>
+                      <span className="px-2 py-0.5 bg-pink-50 text-pink-700 border border-pink-200 rounded-full text-xs font-bold font-mono">
+                        {dueTodayItems.length}
+                      </span>
+                    </div>
+
+                    <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+                      {dueTodayItems.length === 0 ? (
+                        <p className="text-xs text-slate-400 text-center py-8">Không có câu nào ở mốc này</p>
+                      ) : (
+                        dueTodayItems.map((item) => (
+                          <div
+                            key={item.id}
+                            className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-bold text-slate-600">
+                                {ROUND_INFO[item.roundType]?.name || `Vòng ${item.roundType}`}
+                              </span>
+                              <span className="text-[10px] font-mono font-bold text-pink-700 bg-pink-50 px-1.5 py-0.5 rounded border border-pink-200">
+                                0/3 lần
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {item.imageUrl && (
+                                <div className="w-8 h-8 rounded-lg overflow-hidden border border-slate-200 bg-white shrink-0">
+                                  <img
+                                    src={getAssetUrl(item.imageUrl)}
+                                    alt="thumb"
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-slate-800 truncate">
+                                  {item.contentText || item.keyword}
+                                </p>
+                                {item.translation && (
+                                  <p className="text-[10px] text-slate-500 truncate">
+                                    {item.translation}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 2. NHẮC SAU 1 NGÀY */}
+                  <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs flex flex-col space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                      <div>
+                        <h4 className="text-xs font-display font-black text-slate-800 uppercase">
+                          2. Nhắc sau 1 ngày
+                        </h4>
+                        <p className="text-[10px] text-slate-400 font-semibold">Đã xong lần 1 (+33% đ)</p>
+                      </div>
+                      <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-xs font-bold font-mono">
+                        {waiting1DayItems.length}
+                      </span>
+                    </div>
+
+                    <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+                      {waiting1DayItems.length === 0 ? (
+                        <p className="text-xs text-slate-400 text-center py-8">Chưa có câu nào ở mốc này</p>
+                      ) : (
+                        waiting1DayItems.map((item) => (
+                          <div
+                            key={item.id}
+                            className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-bold text-slate-600">
+                                {ROUND_INFO[item.roundType]?.name || `Vòng ${item.roundType}`}
+                              </span>
+                              <span className="text-[10px] font-mono font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
+                                1/3 lần
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {item.imageUrl && (
+                                <div className="w-8 h-8 rounded-lg overflow-hidden border border-slate-200 bg-white shrink-0">
+                                  <img
+                                    src={getAssetUrl(item.imageUrl)}
+                                    alt="thumb"
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-slate-800 truncate">
+                                  {item.contentText || item.keyword}
+                                </p>
+                                {item.translation && (
+                                  <p className="text-[10px] text-slate-500 truncate">
+                                    {item.translation}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 3. NHẮC SAU 2 NGÀY */}
+                  <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs flex flex-col space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                      <div>
+                        <h4 className="text-xs font-display font-black text-slate-800 uppercase">
+                          3. Nhắc sau 2 ngày
+                        </h4>
+                        <p className="text-[10px] text-slate-400 font-semibold">Đã xong lần 2 (+67% đ)</p>
+                      </div>
+                      <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-full text-xs font-bold font-mono">
+                        {waiting2DaysItems.length}
+                      </span>
+                    </div>
+
+                    <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+                      {waiting2DaysItems.length === 0 ? (
+                        <p className="text-xs text-slate-400 text-center py-8">Chưa có câu nào ở mốc này</p>
+                      ) : (
+                        waiting2DaysItems.map((item) => (
+                          <div
+                            key={item.id}
+                            className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-bold text-slate-600">
+                                {ROUND_INFO[item.roundType]?.name || `Vòng ${item.roundType}`}
+                              </span>
+                              <span className="text-[10px] font-mono font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">
+                                2/3 lần
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {item.imageUrl && (
+                                <div className="w-8 h-8 rounded-lg overflow-hidden border border-slate-200 bg-white shrink-0">
+                                  <img
+                                    src={getAssetUrl(item.imageUrl)}
+                                    alt="thumb"
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-slate-800 truncate">
+                                  {item.contentText || item.keyword}
+                                </p>
+                                {item.translation && (
+                                  <p className="text-[10px] text-slate-500 truncate">
+                                    {item.translation}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 4. ĐÃ THÀNH THẠO (100%) */}
+                  <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs flex flex-col space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                      <div>
+                        <h4 className="text-xs font-display font-black text-slate-800 uppercase">
+                          4. Đã thành thạo
+                        </h4>
+                        <p className="text-[10px] text-slate-400 font-semibold">Phục hồi 100% điểm</p>
+                      </div>
+                      <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-bold font-mono">
+                        {masteredItems.length}
+                      </span>
+                    </div>
+
+                    <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+                      {masteredItems.length === 0 ? (
+                        <p className="text-xs text-slate-400 text-center py-8">Chưa có câu nào đạt thành thạo</p>
+                      ) : (
+                        masteredItems.map((item) => (
+                          <div
+                            key={item.id}
+                            className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-bold text-slate-600">
+                                {ROUND_INFO[item.roundType]?.name || `Vòng ${item.roundType}`}
+                              </span>
+                              <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                                3/3 Đúng
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {item.imageUrl && (
+                                <div className="w-8 h-8 rounded-lg overflow-hidden border border-slate-200 bg-white shrink-0">
+                                  <img
+                                    src={getAssetUrl(item.imageUrl)}
+                                    alt="thumb"
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-slate-800 truncate">
+                                  {item.contentText || item.keyword}
+                                </p>
+                                {item.translation && (
+                                  <p className="text-[10px] text-slate-500 truncate">
+                                    {item.translation}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-
-            {roadmapLoading ? (
-              <div className="p-16 text-center text-sm font-bold text-text-muted flex items-center justify-center gap-2">
-                <ArrowPathIcon className="w-5 h-5 animate-spin text-primary" />
-                ĐANG TẢI LỘ TRÌNH ÔN TẬP...
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
-
-                {/* 1. HÔM NAY CẦN ÔN */}
-                <div className="bg-white border-4 border-amber-300 rounded-3xl p-4 shadow-sm flex flex-col space-y-3">
-                  <div className="flex items-center justify-between border-b-2 border-amber-100 pb-2">
-                    <div>
-                      <h4 className="text-xs font-display font-black text-amber-700 uppercase">
-                        1. Cần ôn hôm nay
-                      </h4>
-                      <p className="text-[10px] text-amber-600 font-semibold">Chưa ôn lần nào (0% đ)</p>
-                    </div>
-                    <span className="px-2.5 py-0.5 bg-amber-100 text-amber-800 rounded-full text-xs font-bold font-mono">
-                      {dueTodayItems.length}
-                    </span>
-                  </div>
-
-                  <div className="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
-                    {dueTodayItems.length === 0 ? (
-                      <p className="text-xs text-slate-400 text-center py-8">Không có câu nào ở mốc này</p>
-                    ) : (
-                      dueTodayItems.map(item => (
-                        <div key={item.id} className="p-3 bg-amber-50/70 rounded-2xl border border-amber-200 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-bold text-amber-700">
-                              {ROUND_INFO[item.roundType]?.name || `Vòng ${item.roundType}`}
-                            </span>
-                            <span className="text-[10px] font-mono font-bold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">
-                              0/3 Lần đúng
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            {item.imageUrl && (
-                              <div className="w-8 h-8 rounded-lg overflow-hidden border border-amber-200 bg-white shrink-0">
-                                <img src={getAssetUrl(item.imageUrl)} alt="thumb" className="w-full h-full object-cover" />
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-bold text-slate-800 truncate">{item.contentText}</p>
-                              {item.translation && (
-                                <p className="text-[10px] text-slate-500 truncate">{item.translation}</p>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="text-[10px] text-amber-700 font-semibold bg-white/80 p-1.5 rounded-lg border border-amber-200 flex items-center gap-1">
-                            <span>Vào tab "Danh sách bài tập" để ôn lượt 1</span>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                {/* 2. NHẮC SAU 1 NGÀY */}
-                <div className="bg-white border-4 border-blue-200 rounded-3xl p-4 shadow-sm flex flex-col space-y-3">
-                  <div className="flex items-center justify-between border-b-2 border-blue-100 pb-2">
-                    <div>
-                      <h4 className="text-xs font-display font-black text-blue-700 uppercase">
-                        2. Nhắc sau 1 ngày
-                      </h4>
-                      <p className="text-[10px] text-blue-600 font-semibold">Đã xong lần 1 (+33% đ)</p>
-                    </div>
-                    <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-bold font-mono">
-                      {waiting1DayItems.length}
-                    </span>
-                  </div>
-
-                  <div className="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
-                    {waiting1DayItems.length === 0 ? (
-                      <p className="text-xs text-slate-400 text-center py-8">Chưa có câu nào ở mốc này</p>
-                    ) : (
-                      waiting1DayItems.map(item => (
-                        <div key={item.id} className="p-3 bg-blue-50/70 rounded-2xl border border-blue-200 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-bold text-blue-600">
-                              {ROUND_INFO[item.roundType]?.name || `Vòng ${item.roundType}`}
-                            </span>
-                            <span className="text-[10px] font-mono font-bold text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded">
-                              1/3 Lần đúng
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            {item.imageUrl && (
-                              <div className="w-8 h-8 rounded-lg overflow-hidden border border-blue-200 bg-white shrink-0">
-                                <img src={getAssetUrl(item.imageUrl)} alt="thumb" className="w-full h-full object-cover" />
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-bold text-slate-800 truncate">{item.contentText}</p>
-                              {item.translation && (
-                                <p className="text-[10px] text-slate-500 truncate">{item.translation}</p>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="text-[10px] text-blue-700 font-semibold bg-white/80 p-1.5 rounded-lg border border-blue-200 flex items-center gap-1">
-                            <span>Đã xong lượt 1! Hẹn gặp lại ngày mai</span>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                {/* 3. NHẮC SAU 2 NGÀY */}
-                <div className="bg-white border-4 border-purple-200 rounded-3xl p-4 shadow-sm flex flex-col space-y-3">
-                  <div className="flex items-center justify-between border-b-2 border-purple-100 pb-2">
-                    <div>
-                      <h4 className="text-xs font-display font-black text-purple-700 uppercase">
-                        3. Nhắc sau 2 ngày
-                      </h4>
-                      <p className="text-[10px] text-purple-600 font-semibold">Đã xong lần 2 (+67% đ)</p>
-                    </div>
-                    <span className="px-2.5 py-0.5 bg-purple-100 text-purple-800 rounded-full text-xs font-bold font-mono">
-                      {waiting2DaysItems.length}
-                    </span>
-                  </div>
-
-                  <div className="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
-                    {waiting2DaysItems.length === 0 ? (
-                      <p className="text-xs text-slate-400 text-center py-8">Chưa có câu nào ở mốc này</p>
-                    ) : (
-                      waiting2DaysItems.map(item => (
-                        <div key={item.id} className="p-3 bg-purple-50/70 rounded-2xl border border-purple-200 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-bold text-purple-600">
-                              {ROUND_INFO[item.roundType]?.name || `Vòng ${item.roundType}`}
-                            </span>
-                            <span className="text-[10px] font-mono font-bold text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded">
-                              2/3 Lần đúng
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            {item.imageUrl && (
-                              <div className="w-8 h-8 rounded-lg overflow-hidden border border-purple-200 bg-white shrink-0">
-                                <img src={getAssetUrl(item.imageUrl)} alt="thumb" className="w-full h-full object-cover" />
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-bold text-slate-800 truncate">{item.contentText}</p>
-                              {item.translation && (
-                                <p className="text-[10px] text-slate-500 truncate">{item.translation}</p>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="text-[10px] text-purple-700 font-semibold bg-white/80 p-1.5 rounded-lg border border-purple-200 flex items-center gap-1">
-                            <span>Đã xong lượt 2! Còn 1 lần ngày mai</span>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                {/* 4. ĐÃ THÀNH THẠO (100%) */}
-                <div className="bg-white border-4 border-emerald-300 rounded-3xl p-4 shadow-sm flex flex-col space-y-3">
-                  <div className="flex items-center justify-between border-b-2 border-emerald-100 pb-2">
-                    <div>
-                      <h4 className="text-xs font-display font-black text-emerald-700 uppercase">
-                        4. Đã thành thạo
-                      </h4>
-                      <p className="text-[10px] text-emerald-600 font-semibold">Phục hồi 100% điểm</p>
-                    </div>
-                    <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold font-mono">
-                      {masteredItems.length}
-                    </span>
-                  </div>
-
-                  <div className="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
-                    {masteredItems.length === 0 ? (
-                      <p className="text-xs text-slate-400 text-center py-8">Chưa có câu nào đạt thành thạo</p>
-                    ) : (
-                      masteredItems.map(item => (
-                        <div key={item.id} className="p-3 bg-emerald-50/70 rounded-2xl border border-emerald-200 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-bold text-emerald-600">
-                              {ROUND_INFO[item.roundType]?.name || `Vòng ${item.roundType}`}
-                            </span>
-                            <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">
-                              3/3 Đúng
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            {item.imageUrl && (
-                              <div className="w-8 h-8 rounded-lg overflow-hidden border border-emerald-200 bg-white shrink-0">
-                                <img src={getAssetUrl(item.imageUrl)} alt="thumb" className="w-full h-full object-cover" />
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-bold text-slate-800 truncate">{item.contentText}</p>
-                              {item.translation && (
-                                <p className="text-[10px] text-slate-500 truncate">{item.translation}</p>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="text-[10px] text-emerald-800 font-bold bg-emerald-100 p-1.5 rounded-lg border border-emerald-200 flex items-center gap-1">
-                            <CheckBadgeIcon className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                            <span>Đã phục hồi 100% điểm kỹ năng!</span>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-              </div>
-            )}
-          </div>
-        );
-      })()}
+          );
+        })()}
 
       {/* AI Explanation Modal */}
       {aiModalItem && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white border-4 border-border-main rounded-3xl p-6 md:p-8 max-w-lg w-full space-y-5 animate-in zoom-in-95 shadow-2xl">
-            <div className="flex items-center justify-between border-b-2 border-border-main pb-3">
-              <div className="flex items-center gap-2 text-primary font-display font-black text-base uppercase">
-                <CpuChipIcon className="w-5 h-5 text-primary" />
-                AI Phân Tích & Hướng Dẫn Lỗi Sai
-              </div>
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white border-2 border-slate-200 rounded-3xl p-6 max-w-lg w-full space-y-4 animate-in zoom-in-95 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <h3 className="text-base font-display font-black text-slate-800 uppercase">
+                AI Phân Tích Lỗi Sai
+              </h3>
               <button
                 onClick={() => setAiModalItem(null)}
-                className="p-1 hover:bg-bg-light rounded-lg text-text-muted cursor-pointer"
+                className="p-1 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-700 cursor-pointer text-xs font-bold"
               >
-                <XMarkIcon className="w-5 h-5" />
+                Đóng
               </button>
             </div>
 
             <div className="space-y-3">
-              <div className="bg-bg-light p-3.5 rounded-2xl border-2 border-border-main text-xs space-y-2">
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-xs space-y-2">
                 <div className="flex items-center gap-3">
                   {aiModalItem.imageUrl && (
-                    <div className="w-16 h-16 rounded-xl border-2 border-border-main overflow-hidden shrink-0 bg-white p-1">
+                    <div className="w-14 h-14 rounded-xl border border-slate-200 overflow-hidden shrink-0 bg-white p-1">
                       <img
                         src={getAssetUrl(aiModalItem.imageUrl)}
                         alt="Question"
                         className="w-full h-full object-contain"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400';
+                          (e.target as HTMLImageElement).src =
+                            'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400';
                         }}
                       />
                     </div>
                   )}
                   <div className="flex-1 space-y-0.5">
-                    <p className="font-bold text-[#2b2b2b]">
-                      Từ vựng / Câu hỏi: <strong className="text-primary">{aiModalItem.contentText}</strong>
+                    <p className="font-bold text-slate-800">
+                      Từ / Câu chuẩn:{' '}
+                      <strong className="text-pink-600">
+                        {aiModalItem.contentText || aiModalItem.keyword}
+                      </strong>
                     </p>
                     {aiModalItem.translation && (
-                      <p className="text-text-muted text-[11px]">
-                        Nghĩa tiếng Việt: <strong>{aiModalItem.translation}</strong>
-                      </p>
+                      <p className="text-slate-500 text-[11px]">Nghĩa: {aiModalItem.translation}</p>
                     )}
-                    <p className="text-[#389e0d] text-[11px]">
-                      Đáp án chuẩn: <strong>{aiModalItem.keyword || aiModalItem.contentText}</strong>
-                    </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 text-[#cf1322] font-semibold pt-2 border-t border-border-main/50">
-                  <span className="shrink-0">Lần trước bé chọn/đọc:</span>
+                <div className="flex items-center gap-2 text-pink-600 font-semibold pt-2 border-t border-slate-200">
+                  <span className="shrink-0 text-slate-500 font-medium">Lần trước bé chọn/đọc:</span>
                   {isImageUrl(aiModalItem.wrongAnswerSubmitted) ? (
-                    <div className="w-10 h-10 rounded-lg border-2 border-red-300 overflow-hidden shrink-0 bg-white p-0.5 inline-flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-lg border border-pink-200 overflow-hidden shrink-0 bg-white p-0.5 inline-flex items-center justify-center">
                       <img
                         src={getAssetUrl(aiModalItem.wrongAnswerSubmitted)}
                         alt="Đã chọn sai"
                         className="w-full h-full object-cover rounded-md"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400';
+                          (e.target as HTMLImageElement).src =
+                            'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400';
                         }}
                       />
                     </div>
                   ) : (
-                    <strong className="line-through">{aiModalItem.wrongAnswerSubmitted || 'Chưa đúng'}</strong>
+                    <strong className="line-through bg-pink-50 px-2 py-0.5 rounded border border-pink-200">
+                      {aiModalItem.wrongAnswerSubmitted || 'Chưa đúng'}
+                    </strong>
                   )}
                 </div>
               </div>
 
-              <div className="bg-[#f0f5ff] border-2 border-[#adc6ff] rounded-2xl p-4 text-xs font-semibold text-[#1d39c4] leading-relaxed min-h-[100px] flex items-center">
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-medium text-slate-700 leading-relaxed min-h-[90px] flex items-center">
                 {aiLoading ? (
-                  <div className="w-full flex flex-col items-center justify-center gap-3 py-4 text-primary">
-                    <div className="flex items-center gap-2 font-display font-black text-xs uppercase tracking-wide">
-                      <ArrowPathIcon className="w-5 h-5 animate-spin" />
-                      <span>Trợ lý AI đang suy nghĩ & phân tích...</span>
-                    </div>
-                    <div className="w-48 h-1.5 bg-blue-100 rounded-full overflow-hidden">
-                      <div className="w-full h-full bg-primary animate-pulse rounded-full" />
-                    </div>
-                    <p className="text-[11px] text-[#597ef7] font-medium">Đang tìm mẹo học và hướng dẫn khắc phục lỗi sai cho bé...</p>
+                  <div className="w-full flex flex-col items-center justify-center gap-2 py-3 text-slate-600">
+                    <p className="text-xs font-bold text-slate-700">
+                      Trợ lý AI đang phân tích bài học cho bé...
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-1.5 w-full">
-                    <p className="font-bold text-primary flex items-center gap-1.5 uppercase text-[11px]">
-                      <SparklesIcon className="w-4 h-4" />
+                    <p className="font-bold text-slate-800 uppercase text-[11px]">
                       Lời khuyên từ Trợ lý AI:
                     </p>
-                    <p className="text-slate-700 leading-relaxed whitespace-pre-line font-medium text-xs">
-                      {aiExplanation || 'Bé hãy chú ý từ vựng và lắng nghe âm thanh mẫu để phát âm chuẩn hơn nhé!'}
+                    <p className="text-slate-700 leading-relaxed whitespace-pre-line text-xs">
+                      {aiExplanation || 'Bé hãy chú ý từ vựng và luyện tập lại thật kỹ nhé!'}
                     </p>
                   </div>
                 )}
               </div>
             </div>
 
-            <Button3D variant="blue" fullWidth size="md" onClick={() => setAiModalItem(null)}>
+            <Button3D variant="pink" fullWidth size="md" onClick={() => setAiModalItem(null)}>
               ĐÃ HIỂU RỒI!
             </Button3D>
           </div>

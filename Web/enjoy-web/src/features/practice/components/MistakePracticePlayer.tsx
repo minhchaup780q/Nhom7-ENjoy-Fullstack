@@ -1,12 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  XMarkIcon, 
-  HeartIcon, 
-  ExclamationTriangleIcon, 
-  CpuChipIcon,
-  SparklesIcon,
-  ArrowPathIcon
-} from '@heroicons/react/24/solid';
 import { Button3D } from '../../../components/ui/Button3D';
 import { BASE_URL } from '../../../services/apiClient';
 import { mistakeApi, type MistakeItem } from '../../learning/services/mistakeApi';
@@ -56,13 +48,13 @@ const getAssetUrl = (path?: string | null) => {
 };
 
 const ROUND_NAMES: Record<number, string> = {
-  1: 'Màn 1: Học từ vựng (Flashcard)',
-  2: 'Màn 2: Nối từ vựng (Vocabulary)',
-  3: 'Màn 3: Luyện nói (Speaking)',
-  4: 'Màn 4: Sắp xếp chữ cái (Writing)',
-  5: 'Màn 5: Nghe và kéo thả (Listening)',
-  6: 'Màn 6: Ngữ pháp trắc nghiệm (Reading)',
-  7: 'Màn 7: Điền từ vào chỗ trống (Reading)'
+  1: 'Vòng 1: Học từ vựng',
+  2: 'Vòng 2: Nối từ vựng',
+  3: 'Vòng 3: Luyện nói',
+  4: 'Vòng 4: Sắp xếp chữ cái',
+  5: 'Vòng 5: Kéo thả toạ độ',
+  6: 'Vòng 6: Ngữ pháp trắc nghiệm',
+  7: 'Vòng 7: Điền từ vào chỗ trống',
 };
 
 export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
@@ -268,15 +260,14 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
     }
 
     return (
-      <div className="session-finished">
-        <div className="session-finished-card">
-          <div className="session-finished-emoji">😢</div>
-          <h2 className="session-finished-title">Hết lượt! Cố lên lần sau nhé!</h2>
-          <p className="text-sm text-text-muted mt-2">
+      <div className="session-finished bg-slate-900/40">
+        <div className="session-finished-card bg-white border-2 border-slate-200 rounded-3xl p-8 max-w-md w-full text-center space-y-4 shadow-2xl">
+          <h2 className="text-xl font-display font-black text-slate-800">Hết lượt! Cố lên lần sau nhé!</h2>
+          <p className="text-xs text-slate-500 font-medium">
             Bé đã hoàn thành {masteredCount}/{mistakes.length} câu trong phiên ôn tập này.
           </p>
-          <div className="mt-4 flex justify-center">
-            <Button3D variant="blue" size="md" onClick={onClose}>
+          <div className="pt-2 flex justify-center">
+            <Button3D variant="pink" size="md" onClick={onClose}>
               Quay lại danh sách ôn tập
             </Button3D>
           </div>
@@ -286,36 +277,34 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
   }
 
   // ──────────────────────────────────────────────
-  // Header giống hệt SessionPlayer
+  // Header giống SessionPlayer
   // ──────────────────────────────────────────────
   const Header = () => (
-    <div className="session-player-header">
+    <div className="session-player-header bg-white border-b border-slate-200">
       <button
         id="practice-player-exit-btn"
-        className="session-exit-btn"
+        className="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 font-bold text-xs cursor-pointer transition-colors"
         onClick={() => setShowExitModal(true)}
         aria-label="Thoát ôn tập"
       >
-        <XMarkIcon className="w-5 h-5" />
+        Đóng
       </button>
 
-      <div className="session-progress-bar">
-        <div className="session-progress-fill" style={{ width: `${progressPercent}%` }} />
+      <div className="session-progress-bar bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+        <div className="session-progress-fill bg-pink-400" style={{ width: `${progressPercent}%` }} />
       </div>
 
-      <div className="session-hearts">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <HeartIcon
-            key={i}
-            className={`w-5 h-5 ${i < hearts ? 'text-red-500' : 'text-gray-300'}`}
-          />
-        ))}
+      <div className="flex items-center gap-1">
+        <span className="text-xs font-bold text-slate-500 mr-1">Lượt:</span>
+        <span className="text-sm font-mono font-bold text-pink-700 bg-pink-50 px-2 py-0.5 rounded-lg border border-pink-200">
+          {hearts}/5
+        </span>
       </div>
     </div>
   );
 
   // ──────────────────────────────────────────────
-  // Chọn Exercise Component theo roundType thực tế 100% giống màn chơi
+  // Chọn Exercise Component theo roundType thực tế
   // ──────────────────────────────────────────────
   const renderExercise = () => {
     switch (currentItem.roundType) {
@@ -405,27 +394,26 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
   };
 
   return (
-    <div className="session-player">
+    <div className="session-player bg-slate-50/50">
       <Header />
 
       {/* Top Banner Lỗi Sai Trước Đó & Trợ Lý AI */}
-      <div className="max-w-3xl mx-auto w-full px-4 pt-2 flex items-center justify-between gap-2 flex-wrap">
+      <div className="max-w-3xl mx-auto w-full px-4 pt-3 flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
-          <span className="px-3 py-1 bg-primary-soft text-primary rounded-full text-xs font-display font-black uppercase">
+          <span className="px-3 py-1 bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-xs font-display font-black">
             {ROUND_NAMES[currentItem.roundType] || `Vòng ${currentItem.roundType}`}
           </span>
-          <span className="text-xs font-bold text-text-muted">
+          <span className="text-xs font-bold text-slate-500">
             Câu {currentIndex + 1} / {mistakes.length}
           </span>
         </div>
 
         <div className="flex items-center gap-2">
           {(currentItem.recognizedAudioTranscript || currentItem.wrongAnswerSubmitted) && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 border border-red-200 rounded-full text-xs text-red-600 font-semibold">
-              <ExclamationTriangleIcon className="w-3.5 h-3.5 shrink-0" />
-              <span>{currentItem.roundType === 3 || currentItem.recognizedAudioTranscript ? 'Lần trước bé đọc: ' : 'Lần trước bé sai: '}</span>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-pink-50 border border-pink-200 rounded-xl text-xs text-pink-700 font-semibold">
+              <span>{currentItem.roundType === 3 || currentItem.recognizedAudioTranscript ? 'Lần trước đọc: ' : 'Lần trước sai: '}</span>
               {isImageUrl(currentItem.wrongAnswerSubmitted) ? (
-                <div className="w-6 h-6 rounded border border-red-300 overflow-hidden inline-flex items-center justify-center bg-white p-0.5">
+                <div className="w-6 h-6 rounded border border-pink-300 overflow-hidden inline-flex items-center justify-center bg-white p-0.5">
                   <img src={getAssetUrl(currentItem.wrongAnswerSubmitted)} alt="Wrong" className="w-full h-full object-cover" />
                 </div>
               ) : (
@@ -439,30 +427,35 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
           <button
             type="button"
             onClick={handleOpenAiAdvice}
-            className="px-3 py-1 bg-[#f0f5ff] hover:bg-[#d6e4ff] text-[#2f54eb] rounded-xl border border-[#adc6ff] font-display font-black text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+            className="px-3.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-display font-black text-xs transition-all cursor-pointer shadow-xs"
           >
-            <CpuChipIcon className="w-3.5 h-3.5 text-[#2f54eb]" />
             HỎI AI
           </button>
         </div>
       </div>
 
-      {/* Khu vực trò chơi giống 100% màn chơi */}
+      {/* Khu vực trò chơi */}
       <div className="session-exercise-area">
         {renderExercise()}
       </div>
 
       {/* Exit Modal */}
       {showExitModal && (
-        <div className="exit-modal-overlay" onClick={() => setShowExitModal(false)}>
-          <div className="exit-modal" onClick={e => e.stopPropagation()}>
-            <h3>Dừng phiên luyện tập?</h3>
-            <p>Tiến độ của các câu chưa hoàn thành sẽ không được tính.</p>
-            <div className="exit-modal-actions">
-              <button className="btn-secondary" onClick={() => setShowExitModal(false)}>
-                Tiếp tục ôn tập
+        <div className="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white border-2 border-slate-200 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center">
+            <h3 className="text-base font-display font-black text-slate-800">Dừng phiên luyện tập?</h3>
+            <p className="text-xs text-slate-500 font-medium">Tiến độ của các câu chưa hoàn thành sẽ không được tính.</p>
+            <div className="flex items-center justify-center gap-2 pt-2">
+              <button
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer border border-slate-200"
+                onClick={() => setShowExitModal(false)}
+              >
+                Tiếp tục ôn
               </button>
-              <button className="btn-danger" onClick={onClose}>
+              <button
+                className="px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs cursor-pointer"
+                onClick={onClose}
+              >
                 Thoát
               </button>
             </div>
@@ -472,26 +465,25 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
 
       {/* AI Advice Modal */}
       {isAiModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white border-4 border-border-main rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b-2 border-border-main pb-3">
-              <div className="flex items-center gap-2 text-primary font-display font-black text-sm uppercase">
-                <CpuChipIcon className="w-5 h-5 text-primary" />
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white border-2 border-slate-200 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <span className="font-display font-black text-slate-800 text-sm uppercase">
                 Hướng Dẫn Lỗi Sai Từ AI
-              </div>
+              </span>
               <button
                 onClick={() => setIsAiModalOpen(false)}
-                className="p-1 hover:bg-bg-light rounded-lg text-text-muted cursor-pointer"
+                className="p-1 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-700 cursor-pointer text-xs font-bold"
               >
-                <XMarkIcon className="w-5 h-5" />
+                Đóng
               </button>
             </div>
 
             <div className="space-y-3">
-              <div className="bg-bg-light p-3.5 rounded-2xl border-2 border-border-main text-xs space-y-2">
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-xs space-y-2">
                 <div className="flex items-center gap-3">
                   {currentItem.imageUrl && (
-                    <div className="w-16 h-16 rounded-xl border-2 border-border-main overflow-hidden shrink-0 bg-white p-1">
+                    <div className="w-14 h-14 rounded-xl border border-slate-200 overflow-hidden shrink-0 bg-white p-1">
                       <img
                         src={getAssetUrl(currentItem.imageUrl)}
                         alt="Question"
@@ -500,48 +492,40 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
                     </div>
                   )}
                   <div className="flex-1 space-y-0.5">
-                    <p className="font-bold text-[#2b2b2b]">
-                      Từ / Câu chuẩn: <strong className="text-primary">{currentItem.contentText || currentItem.keyword}</strong>
+                    <p className="font-bold text-slate-800">
+                      Từ / Câu chuẩn: <strong className="text-pink-600">{currentItem.contentText || currentItem.keyword}</strong>
                     </p>
                     {currentItem.translation && (
-                      <p className="text-text-muted text-[11px]">({currentItem.translation})</p>
+                      <p className="text-slate-500 text-[11px]">({currentItem.translation})</p>
                     )}
                   </div>
                 </div>
 
                 {lastWrongAnswer && (
-                  <div className="flex items-center gap-2 text-[#cf1322] font-semibold pt-2 border-t border-border-main/50">
-                    <span className="shrink-0">Bé đã đọc/chọn:</span>
+                  <div className="flex items-center gap-2 text-pink-600 font-semibold pt-2 border-t border-slate-200">
+                    <span className="shrink-0 text-slate-500 font-medium">Bé đã đọc/chọn:</span>
                     {isImageUrl(lastWrongAnswer) ? (
-                      <div className="w-8 h-8 rounded border border-red-300 overflow-hidden shrink-0 bg-white p-0.5 inline-flex items-center justify-center">
+                      <div className="w-8 h-8 rounded border border-pink-200 overflow-hidden shrink-0 bg-white p-0.5 inline-flex items-center justify-center">
                         <img src={getAssetUrl(lastWrongAnswer)} alt="Wrong" className="w-full h-full object-cover" />
                       </div>
                     ) : (
-                      <strong className="line-through">{lastWrongAnswer}</strong>
+                      <strong className="line-through bg-pink-50 px-2 py-0.5 rounded border border-pink-200">{lastWrongAnswer}</strong>
                     )}
                   </div>
                 )}
               </div>
 
-              <div className="bg-[#f0f5ff] border-2 border-[#adc6ff] rounded-2xl p-4 text-xs font-semibold text-[#1d39c4] leading-relaxed min-h-[100px] flex items-center">
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-medium text-slate-700 leading-relaxed min-h-[90px] flex items-center">
                 {aiLoading ? (
-                  <div className="w-full flex flex-col items-center justify-center gap-3 py-4 text-primary">
-                    <div className="flex items-center gap-2 font-display font-black text-xs uppercase tracking-wide">
-                      <ArrowPathIcon className="w-5 h-5 animate-spin" />
-                      <span>Trợ lý AI đang suy nghĩ & chuẩn bị lời khuyên...</span>
-                    </div>
-                    <div className="w-48 h-1.5 bg-blue-100 rounded-full overflow-hidden">
-                      <div className="w-full h-full bg-primary animate-pulse rounded-full" />
-                    </div>
-                    <p className="text-[11px] text-[#597ef7] font-medium">Bé chờ AI một chút nhé...</p>
+                  <div className="w-full flex flex-col items-center justify-center gap-2 py-3 text-slate-600">
+                    <p className="text-xs font-bold text-slate-700">Trợ lý AI đang chuẩn bị lời khuyên...</p>
                   </div>
                 ) : (
                   <div className="space-y-1.5 w-full">
-                    <p className="font-bold text-primary flex items-center gap-1.5 uppercase text-[11px]">
-                      <SparklesIcon className="w-4 h-4" />
+                    <p className="font-bold text-slate-800 uppercase text-[11px]">
                       Lời khuyên từ Trợ lý AI:
                     </p>
-                    <p className="text-slate-700 leading-relaxed whitespace-pre-line font-medium text-xs">
+                    <p className="text-slate-700 leading-relaxed whitespace-pre-line text-xs">
                       {aiAdvice || 'Bé hãy chú ý từ vựng và luyện tập lại thật kỹ nhé!'}
                     </p>
                   </div>
@@ -549,7 +533,7 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
               </div>
             </div>
 
-            <Button3D variant="blue" fullWidth size="md" onClick={() => setIsAiModalOpen(false)}>
+            <Button3D variant="pink" fullWidth size="md" onClick={() => setIsAiModalOpen(false)}>
               ĐÃ HIỂU RỒI!
             </Button3D>
           </div>

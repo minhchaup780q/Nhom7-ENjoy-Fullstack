@@ -263,7 +263,7 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
               <h2 className="text-lg sm:text-xl font-display font-black text-slate-800">
                 Cá Nhân Hoá Kỹ Năng {skillDef.nameVi}
               </h2>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-blue-600 text-white shadow-xs">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-pink-100 text-pink-700 border border-pink-200 shadow-2xs">
                 {skillScore}%
               </span>
             </div>
@@ -295,7 +295,7 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
             <span>DANH SÁCH TỪ CẦN ÔN</span>
             <span
               className={`px-2 py-0.5 rounded-full text-xs font-mono font-bold ${
-                activeTab === 'mistake_list' ? 'bg-rose-100 text-rose-700' : 'bg-slate-200 text-slate-600'
+                activeTab === 'mistake_list' ? 'bg-pink-100 text-pink-700 border border-pink-200' : 'bg-slate-200 text-slate-600'
               }`}
             >
               {filteredMistakes.length}
@@ -344,7 +344,7 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
         {/* Danh Sách Thẻ Từ */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3 bg-slate-50/40">
           {loading ? (
-            <div className="py-16 flex flex-col items-center justify-center gap-2 text-blue-600">
+            <div className="py-16 flex flex-col items-center justify-center gap-2 text-pink-500">
               <p className="text-xs font-bold text-slate-600">Đang chuẩn bị bài học cho bé...</p>
             </div>
           ) : (
@@ -381,7 +381,7 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
                                 onClick={() => playWord(wordText, `item_${m.id}`, m.audioUrl)}
                                 className={`px-2 py-0.5 rounded-lg text-xs font-bold cursor-pointer border transition-colors ${
                                   playingKey === `item_${m.id}`
-                                    ? 'bg-blue-50 border-blue-300 text-blue-600'
+                                    ? 'bg-pink-50 border-pink-300 text-pink-600'
                                     : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
                                 }`}
                               >
@@ -393,7 +393,7 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
                               <span className="text-slate-500 font-medium">
                                 {skillKey === 'writing' ? 'Bé đã viết:' : 'Lần trước bé chọn:'}
                               </span>
-                              <span className="font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200 line-through">
+                              <span className="font-bold text-pink-600 bg-pink-50 px-2 py-0.5 rounded-md border border-pink-200 line-through">
                                 {wrongText}
                               </span>
                             </div>
@@ -408,12 +408,14 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
                               Học Vòng 1
                             </button>
 
-                            <button
+                            <Button3D
+                              variant="pink"
+                              size="sm"
                               onClick={() => setPlayerMode('practice')}
-                              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs cursor-pointer transition-all shadow-2xs active:scale-95"
+                              className="text-[11px]"
                             >
                               {getSkillActionName(skillKey)}
-                            </button>
+                            </Button3D>
                           </div>
                         </div>
                       );
@@ -429,7 +431,7 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
                 <div className="space-y-3 animate-fadeIn">
                   {isAiLoading ? (
                     <div className="py-12 text-center space-y-2 bg-white rounded-2xl border border-slate-200">
-                      <p className="text-xs font-bold text-blue-600">AI đang tạo câu chuyện ôn tập thích ứng...</p>
+                      <p className="text-xs font-bold text-pink-500">AI đang tạo câu chuyện ôn tập thích ứng...</p>
                     </div>
                   ) : aiChallenge ? (
                     <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4 shadow-2xs">
@@ -440,7 +442,7 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
                         </span>
                         <button
                           onClick={() => loadAiChallenge(true)}
-                          className="text-[11px] font-bold text-blue-600 hover:text-blue-700 cursor-pointer"
+                          className="text-[11px] font-bold text-pink-600 hover:text-pink-700 cursor-pointer"
                         >
                           Đổi câu chuyện
                         </button>
@@ -450,7 +452,7 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
                       <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-xs sm:text-sm text-slate-800 leading-relaxed">
                         {aiChallenge.story.split('**').map((part, i) =>
                           i % 2 === 1 ? (
-                            <span key={i} className="font-bold text-blue-700 px-1.5 py-0.5 mx-0.5 bg-blue-50 rounded-md border border-blue-200 shadow-2xs">
+                            <span key={i} className="font-bold text-pink-700 px-1.5 py-0.5 mx-0.5 bg-pink-50 rounded-md border border-pink-200 shadow-2xs">
                               {part}
                             </span>
                           ) : (
@@ -473,9 +475,9 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
                               if (aiAnswerChecked) {
                                 btnStyle = aiAnswerCorrect
                                   ? 'bg-emerald-500 border-emerald-500 text-white font-bold'
-                                  : 'bg-rose-500 border-rose-500 text-white font-bold';
+                                  : 'bg-pink-500 border-pink-500 text-white font-bold';
                               } else {
-                                btnStyle = 'bg-blue-50 border-blue-500 text-blue-700 font-bold';
+                                btnStyle = 'bg-pink-50 border-pink-400 text-pink-700 font-bold';
                               }
                             }
 
@@ -503,7 +505,7 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
                                   Chính xác! Bé rất thông minh!
                                 </span>
                               ) : (
-                                <span className="text-rose-700 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">
+                                <span className="text-pink-700 bg-pink-50 px-2.5 py-1 rounded-lg border border-pink-200">
                                   Đáp án đúng là: <strong>{aiChallenge.correctAnswer}</strong>
                                 </span>
                               )}
@@ -514,7 +516,7 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
 
                           {!aiAnswerChecked ? (
                             <Button3D
-                              variant="blue"
+                              variant="pink"
                               size="sm"
                               disabled={!selectedAiOption}
                               onClick={handleAiCheck}
@@ -562,7 +564,7 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
                 onClick={() =>
                   setRelearnItem((prev) => (prev ? { ...prev, flipped: !prev.flipped } : null))
                 }
-                className="h-36 rounded-2xl bg-slate-50 border-2 border-slate-200 flex flex-col items-center justify-center p-4 text-center cursor-pointer select-none hover:border-blue-400 transition-all"
+                className="h-36 rounded-2xl bg-slate-50 border-2 border-slate-200 flex flex-col items-center justify-center p-4 text-center cursor-pointer select-none hover:border-pink-300 transition-all"
               >
                 {!relearnItem.flipped ? (
                   <div className="space-y-1">
@@ -573,7 +575,7 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
                   </div>
                 ) : (
                   <div className="space-y-1 animate-in zoom-in-95">
-                    <span className="text-2xl font-display font-black text-blue-600">
+                    <span className="text-2xl font-display font-black text-pink-600">
                       {relearnItem.item.translation}
                     </span>
                     <p className="text-xs text-slate-500 font-medium">
@@ -590,7 +592,7 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
                 >
                   Nghe
                 </button>
-                <Button3D variant="blue" size="sm" onClick={() => setRelearnItem(null)} className="px-5">
+                <Button3D variant="pink" size="sm" onClick={() => setRelearnItem(null)} className="px-5">
                   ĐÃ THUỘC
                 </Button3D>
               </div>
