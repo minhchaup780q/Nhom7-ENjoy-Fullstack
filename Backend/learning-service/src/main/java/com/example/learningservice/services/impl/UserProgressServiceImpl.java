@@ -2,16 +2,19 @@ package com.example.learningservice.services.impl;
 
 import com.example.learningservice.dto.SkillComparisonResponse;
 import com.example.learningservice.dto.UserStatsResponse;
-import com.example.learningservice.entities.Mistake;
-import com.example.learningservice.entities.Session;
-import com.example.learningservice.entities.UserProgress;
+import com.example.learningservice.entities.*;
 import com.example.learningservice.entities.enums.MistakeStatus;
 import com.example.learningservice.entities.enums.SessionStatus;
+import com.example.learningservice.entities.enums.SessionType;
 import com.example.learningservice.repositories.MistakeRepository;
+import com.example.learningservice.repositories.PartVocabularyRepository;
 import com.example.learningservice.repositories.SessionRepository;
 import com.example.learningservice.repositories.UserProgressRepository;
 import com.example.learningservice.services.UserProgressService;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +27,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserProgressServiceImpl implements UserProgressService {
@@ -31,6 +35,8 @@ public class UserProgressServiceImpl implements UserProgressService {
     private final UserProgressRepository userProgressRepository;
     private final SessionRepository sessionRepository;
     private final MistakeRepository mistakeRepository;
+    private final PartVocabularyRepository partVocabularyRepository;
+    private final ObjectMapper objectMapper;
 
     @Override
     public List<UserProgress> getUserProgress(Long userId) {
@@ -216,13 +222,212 @@ public class UserProgressServiceImpl implements UserProgressService {
             List<UserProgress> allFinished,
             List<Mistake> allMistakes) {
 
+        List<UserProgress> finishedByDate = allFinished.stream()
+                .filter(up -> {
+                    LocalDateTime comp = up.getCompletedAt() != null ? up.getCompletedAt()
+                            : (up.getUpdateAt() != null ? up.getUpdateAt() : up.getCreateAt());
+                    return comp != null && !comp.toLocalDate().isAfter(targetDate);
+                })
+                .collect(Collectors.toList());
+
+        if (finishedByDate.isEmpty()) {
+            return SkillComparisonResponse.SkillScoresDto.builder()
+                    .listening(0)
+                    .speaking(0)
+                    .reading(0)
+                    .writing(0)
+                    .vocabGrammar(0)
+                    .build();
+        }
+
+        // Gom nhóm lỗi sai của user trước hoặc trong targetDate theo key: vocabularyId_roundType hoặc wrongText_roundType
+        Map<String, Mistake> mistakeMap = new HashMap<>();
+        for (Mistake m : allMistakes) {
+            LocalDateTime mCreated = m.getCreatedAt() != null ? m.getCreatedAt() : m.getCreateAt();
+            if (mCreated != null && !mCreated.toLocalDate().isAfter(targetDate)) {
+                if (m.getVocabulary() != null && m.getVocabulary().getId() != null) {
+                    String key = m.getVocabulary().getId() + "_" + m.getRoundType();
+                    mistakeMap.put(key, m);
+                } else if (m.getWrongAnswerSubmitted() != null) {
+                    String key = m.getWrongAnswerSubmitted().trim().toLowerCase() + "_" + m.getRoundType();
+                    mistakeMap.put(key, m);
+                }
+            }
+        }
+
+        double listeningScore = 0; int listeningCount = 0;
+        double speakingScore = 0; int speakingCount = 0;
+        double readingScore = 0; int readingCount = 0;
+        double writingScore = 0; int writingCount = 0;
+        double vocabScore = 0; int vocabCount = 0;
+
+        for (UserProgress up : finishedByDate) {
+            Session s = up.getSession();
+            if (s == null || s.getSessionType() == null) continue;
+
+            SessionType type = s.getSessionType();
+
+            // Màn 1: Học từ vựng (FLASHCARD) -> không tính vào score
+            if (type == SessionType.FLASHCARD) {
+                continue;
+            }
+
+            Long partId = (s.getPart() != null) ? s.getPart().getId() : null;
+            List<PartVocabulary> partVocabs = (partId != null)
+                    ? partVocabularyRepository.findByPartIdOrderByOrderIndexAsc(partId)
+                    : Collections.emptyList();
+
+            switch (type) {
+                case MATCH_WORD -> {
+                    // Màn 2: Nối từ vựng -> tính vô điểm vocabulary (roundType = 2)
+                    if (!partVocabs.isEmpty()) {
+                        for (PartVocabulary pv : partVocabs) {
+                            if (pv.getVocabulary() == null) continue;
+                            Long vocabId = pv.getVocabulary().getId();
+                            double itemScore = calculateItemScore(vocabId + "_2", mistakeMap, targetDate);
+                            vocabScore += itemScore;
+                            vocabCount++;
+                        }
+                    } else {
+                        vocabScore += 1.0;
+                        vocabCount++;
+                    }
+                }
+                case SPEAKING -> {
+                    // Màn 3: Speaking -> tính điểm speaking (roundType = 3)
+                    if (!partVocabs.isEmpty()) {
+                        for (PartVocabulary pv : partVocabs) {
+                            if (pv.getVocabulary() == null) continue;
+                            Long vocabId = pv.getVocabulary().getId();
+                            double itemScore = calculateItemScore(vocabId + "_3", mistakeMap, targetDate);
+                            speakingScore += itemScore;
+                            speakingCount++;
+                        }
+                    } else {
+                        speakingScore += 1.0;
+                        speakingCount++;
+                    }
+                }
+                case RE_ORDER -> {
+                    // Màn 4: Sắp xếp chữ cái -> tính vô writing (roundType = 4)
+                    if (!partVocabs.isEmpty()) {
+                        for (PartVocabulary pv : partVocabs) {
+                            if (pv.getVocabulary() == null) continue;
+                            Long vocabId = pv.getVocabulary().getId();
+                            double itemScore = calculateItemScore(vocabId + "_4", mistakeMap, targetDate);
+                            writingScore += itemScore;
+                            writingCount++;
+                        }
+                    } else {
+                        writingScore += 1.0;
+                        writingCount++;
+                    }
+                }
+                case DRAG_DROP -> {
+                    // Màn 5: Nghe và kéo thả chữ vào toạ độ -> tính listening (roundType = 5)
+                    int qCount = getDragDropQuestionCount(s.getPayload(), partVocabs.size());
+                    for (int i = 0; i < qCount; i++) {
+                        Long vocabId = (i < partVocabs.size() && partVocabs.get(i).getVocabulary() != null)
+                                ? partVocabs.get(i).getVocabulary().getId() : null;
+                        String key = (vocabId != null) ? (vocabId + "_5") : ("dragdrop_" + s.getId() + "_" + i);
+                        double itemScore = calculateItemScore(key, mistakeMap, targetDate);
+                        listeningScore += itemScore;
+                        listeningCount++;
+                    }
+                }
+                case GRAMMAR -> {
+                    // 2 màn ngữ pháp: GRAMMAR (roundType = 6) -> tính reading
+                    int qCount = getGrammarQuestionCount(s.getPayload());
+                    for (int i = 0; i < qCount; i++) {
+                        String key = "grammar_" + s.getId() + "_" + i;
+                        double itemScore = calculateItemScore(key, mistakeMap, targetDate);
+                        readingScore += itemScore;
+                        readingCount++;
+                    }
+                }
+                case FILL_IN_BLANK -> {
+                    // 2 màn ngữ pháp: FILL_IN_BLANK (roundType = 7) -> tính reading
+                    int qCount = getFillInBlankQuestionCount(s.getPayload());
+                    for (int i = 0; i < qCount; i++) {
+                        String key = "fill_blank_" + s.getId() + "_" + i;
+                        double itemScore = calculateItemScore(key, mistakeMap, targetDate);
+                        readingScore += itemScore;
+                        readingCount++;
+                    }
+                }
+            }
+        }
+
         return SkillComparisonResponse.SkillScoresDto.builder()
-                .listening(0)
-                .speaking(0)
-                .reading(0)
-                .writing(0)
-                .vocabGrammar(0)
+                .listening(listeningCount > 0 ? Math.min(100, (int) Math.round((listeningScore / listeningCount) * 100.0)) : 0)
+                .speaking(speakingCount > 0 ? Math.min(100, (int) Math.round((speakingScore / speakingCount) * 100.0)) : 0)
+                .reading(readingCount > 0 ? Math.min(100, (int) Math.round((readingScore / readingCount) * 100.0)) : 0)
+                .writing(writingCount > 0 ? Math.min(100, (int) Math.round((writingScore / writingCount) * 100.0)) : 0)
+                .vocabGrammar(vocabCount > 0 ? Math.min(100, (int) Math.round((vocabScore / vocabCount) * 100.0)) : 0)
                 .build();
+    }
+
+    private double calculateItemScore(String key, Map<String, Mistake> mistakeMap, LocalDate targetDate) {
+        if (mistakeMap.containsKey(key)) {
+            Mistake m = mistakeMap.get(key);
+            if (m.getLastPracticedAt() != null && !m.getLastPracticedAt().toLocalDate().isAfter(targetDate)) {
+                return (m.getMasteryScore() != null) ? m.getMasteryScore() : 0.0;
+            } else {
+                return 0.0;
+            }
+        }
+        return 1.0;
+    }
+
+    private int getDragDropQuestionCount(String payload, int fallbackCount) {
+        if (payload != null && !payload.isBlank()) {
+            try {
+                JsonNode root = objectMapper.readTree(payload);
+                JsonNode coords = root.get("coordinates");
+                if (coords != null && coords.isArray() && coords.size() > 0) {
+                    return coords.size();
+                }
+            } catch (Exception e) {
+                log.debug("Error parsing DRAG_DROP payload: {}", e.getMessage());
+            }
+        }
+        return fallbackCount > 0 ? fallbackCount : 5;
+    }
+
+    private int getGrammarQuestionCount(String payload) {
+        if (payload != null && !payload.isBlank()) {
+            try {
+                JsonNode root = objectMapper.readTree(payload);
+                JsonNode blocks = root.get("blocks");
+                if (blocks != null && blocks.isArray()) {
+                    int count = 0;
+                    for (JsonNode block : blocks) {
+                        if (block.has("type") && "QUESTION".equalsIgnoreCase(block.get("type").asText())) {
+                            count++;
+                        }
+                    }
+                    if (count > 0) return count;
+                }
+            } catch (Exception e) {
+                log.debug("Error parsing GRAMMAR payload: {}", e.getMessage());
+            }
+        }
+        return 4;
+    }
+
+    private int getFillInBlankQuestionCount(String payload) {
+        if (payload != null && !payload.isBlank()) {
+            try {
+                JsonNode root = objectMapper.readTree(payload);
+                JsonNode items = root.get("items");
+                if (items != null && items.isArray() && items.size() > 0) {
+                    return items.size();
+                }
+            } catch (Exception e) {
+                log.debug("Error parsing FILL_IN_BLANK payload: {}", e.getMessage());
+            }
+        }
+        return 6;
     }
 
 }

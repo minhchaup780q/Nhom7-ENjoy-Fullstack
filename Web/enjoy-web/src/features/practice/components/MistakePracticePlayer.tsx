@@ -56,11 +56,13 @@ const getAssetUrl = (path?: string | null) => {
 };
 
 const ROUND_NAMES: Record<number, string> = {
-  1: 'Vòng 1: Giới thiệu từ mới',
-  2: 'Vòng 2: Luyện nghe (Listening)',
-  3: 'Vòng 3: Luyện nói & Phát âm (Speaking)',
-  4: 'Vòng 4: Đọc hiểu & Quiz',
-  5: 'Vòng 5: Chính tả & Điền từ'
+  1: 'Màn 1: Học từ vựng (Flashcard)',
+  2: 'Màn 2: Nối từ vựng (Vocabulary)',
+  3: 'Màn 3: Luyện nói (Speaking)',
+  4: 'Màn 4: Sắp xếp chữ cái (Writing)',
+  5: 'Màn 5: Nghe và kéo thả (Listening)',
+  6: 'Màn 6: Ngữ pháp trắc nghiệm (Reading)',
+  7: 'Màn 7: Điền từ vào chỗ trống (Reading)'
 };
 
 const BACKUP_IMAGES = [
