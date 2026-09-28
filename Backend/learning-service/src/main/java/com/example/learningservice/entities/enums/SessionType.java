@@ -7,5 +7,5 @@ public enum SessionType {
     RE_ORDER,
     DRAG_DROP,
     GRAMMAR,
-    CONVERSATION
+    FILL_IN_BLANK
 }

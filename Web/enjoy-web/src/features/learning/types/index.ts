@@ -10,7 +10,7 @@ export enum SessionType {
   RE_ORDER      = 'RE_ORDER',
   DRAG_DROP     = 'DRAG_DROP',
   GRAMMAR       = 'GRAMMAR',
-  CONVERSATION  = 'CONVERSATION',
+  FILL_IN_BLANK = 'FILL_IN_BLANK',
 }
 
 export enum SessionStatus {
@@ -58,6 +58,23 @@ export interface DragDropCoordinate {
   height: number;
 }
 
+/** Một đáp án của câu hỏi QUESTION trong vòng Grammar */
+export interface GrammarOption {
+  id: string;
+  text: string;
+  is_correct: boolean;
+}
+
+/** Một thành phần (block) trong chuỗi bài giảng Grammar */
+export interface GrammarBlock {
+  order: number;
+  type: 'TEXT_SPEECH' | 'IMAGE' | 'EXPLANATION' | 'QUESTION';
+  text?: string;
+  audio_url?: string;
+  image_url?: string;
+  options?: GrammarOption[];
+}
+
 /** payload shape từ DB (JSON column) — mỗi exerciseType dùng một subset */
 export interface SessionPayload {
   word?:        string;  // từ tiếng Anh chính
@@ -69,6 +86,22 @@ export interface SessionPayload {
   image_url?:   string;
   audio_url?:   string;
   coordinates?: DragDropCoordinate[];
+
+  // Dùng cho GRAMMAR & FILL_IN_BLANK
+  title?:  string;
+  blocks?: GrammarBlock[];
+
+  // Dùng cho FILL_IN_BLANK
+  items?: FillInBlankItem[];
+}
+
+export interface FillInBlankItem {
+  order: number;
+  sentence: string;
+  image_url: string;
+  audio_url: string;
+  answer: string;
+  distractors: string[];
 }
 
 export interface Session extends BaseEntity {

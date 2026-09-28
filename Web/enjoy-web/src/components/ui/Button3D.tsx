@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface Button3DProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'pink' | 'green' | 'blue' | 'gray';
+  variant?: 'pink' | 'green' | 'blue' | 'gray' | 'red';
   fullWidth?: boolean;
   size?: 'sm' | 'md' | 'lg';
 }
@@ -24,6 +24,8 @@ export const Button3D: React.FC<Button3DProps> = ({
         return 'btn-3d-blue';
       case 'gray':
         return 'btn-3d-gray';
+      case 'red':
+        return 'btn-3d-red';
       default:
         return 'btn-3d-pink';
     }
