@@ -170,7 +170,9 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
     switch (session.sessionType) {
       case SessionType.FLASHCARD: Icon = DocumentTextIcon; break;
       case SessionType.MATCH_WORD: Icon = PuzzlePieceIcon; break;
-      case SessionType.SPEAKING: Icon = MicrophoneIcon; break;
+      case SessionType.SPEAKING: 
+      case SessionType.SPEAKING_SENTENCE:
+        Icon = MicrophoneIcon; break;
       case SessionType.RE_ORDER:
       case SessionType.RE_ORDER_SENTENCE:
         Icon = Bars3BottomLeftIcon;
@@ -554,6 +556,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                     session.sessionType === SessionType.GRAMMAR ||
                     session.sessionType === SessionType.FILL_IN_BLANK ||
                     session.sessionType === SessionType.RE_ORDER_SENTENCE ||
+                    session.sessionType === SessionType.SPEAKING_SENTENCE ||
                     (session.orderIndex !== undefined && session.orderIndex !== null && session.orderIndex >= 6) ||
                     (session.sessionIdx !== undefined && session.sessionIdx >= 5)
                   );

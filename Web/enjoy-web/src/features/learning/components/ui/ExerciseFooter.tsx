@@ -12,6 +12,8 @@ interface ExerciseFooterProps {
   onNext: () => void;
   disabled?: boolean;
   correctAnswer?: string;
+  onRetry?: () => void;
+  nextLabel?: string;
 }
 
 export const ExerciseFooter: React.FC<ExerciseFooterProps> = ({
@@ -19,7 +21,9 @@ export const ExerciseFooter: React.FC<ExerciseFooterProps> = ({
   onCheck,
   onNext,
   disabled,
-  correctAnswer
+  correctAnswer,
+  onRetry,
+  nextLabel
 }) => {
   const getBackgroundColorStyle = () => {
     switch (status) {
@@ -83,7 +87,21 @@ export const ExerciseFooter: React.FC<ExerciseFooterProps> = ({
           </div>
         </div>
         
-        <div>
+        <div className="flex gap-2 md:gap-4">
+          {status === 'incorrect' && onRetry && (
+            <Button3D
+              variant="green"
+              onClick={onRetry}
+              size="md"
+              className="text-sm md:text-base !border-white flex items-center justify-center gap-2 px-8"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 md:w-6 md:h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+              </svg>
+              <span>THỬ LẠI</span>
+            </Button3D>
+          )}
+
           {(status === 'idle' || status === 'selected') ? (
             <Button3D
               variant={status === 'selected' ? 'green' : 'gray'} 
@@ -103,7 +121,7 @@ export const ExerciseFooter: React.FC<ExerciseFooterProps> = ({
               size="md"
               className="text-sm md:text-base !border-white"
             >
-              TIẾP TỤC
+              {nextLabel ? nextLabel.toUpperCase() : 'TIẾP TỤC'}
             </Button3D>
           )}
         </div>
