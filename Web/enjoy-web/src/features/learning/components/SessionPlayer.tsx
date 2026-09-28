@@ -12,6 +12,7 @@ import { GrammarExercise } from './exercises/GrammarExercise';
 import { FillInBlankExercise } from './exercises/FillInBlankExercise';
 import { ReorderSentenceExercise } from './exercises/ReorderSentenceExercise';
 import { SpeakingSentenceExercise } from './exercises/SpeakingSentenceExercise';
+import { ConversationExercise } from './exercises/ConversationExercise';
 import { CongratulationScreen } from './ui/CongratulationScreen';
 import { XMarkIcon, HeartIcon } from '@heroicons/react/24/solid';
 
@@ -285,6 +286,17 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
           />
         );
 
+      case SessionType.CONVERSATION:
+        if (!session.payload) return <div>Không có dữ liệu bài học Conversation.</div>;
+        return (
+          <ConversationExercise
+            payload={session.payload}
+            onComplete={handleSessionComplete}
+            onMistake={handleMistake}
+            onProgress={(cur, total) => setProgress((cur / total) * 100)}
+          />
+        );
+
       default:
         return (
           <div className="session-placeholder">
@@ -319,7 +331,9 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     <div className="session-player">
       <Header />
 
-      {session.sessionType !== SessionType.FILL_IN_BLANK && session.sessionType !== SessionType.RE_ORDER_SENTENCE && (
+      {session.sessionType !== SessionType.FILL_IN_BLANK && 
+       session.sessionType !== SessionType.RE_ORDER_SENTENCE && 
+       session.sessionType !== SessionType.CONVERSATION && (
         <div className="session-player-title">
           <h2>{session.title}</h2>
         </div>

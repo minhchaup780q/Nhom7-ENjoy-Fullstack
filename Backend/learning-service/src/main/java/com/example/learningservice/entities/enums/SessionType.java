@@ -9,5 +9,6 @@ public enum SessionType {
     GRAMMAR,
     FILL_IN_BLANK,
     RE_ORDER_SENTENCE,
-    SPEAKING_SENTENCE
+    SPEAKING_SENTENCE,
+    CONVERSATION
 }

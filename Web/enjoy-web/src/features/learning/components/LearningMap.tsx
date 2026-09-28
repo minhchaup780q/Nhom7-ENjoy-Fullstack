@@ -18,7 +18,8 @@ import {
   Bars3BottomLeftIcon,
   CursorArrowRaysIcon,
   BookOpenIcon,
-  PencilSquareIcon
+  PencilSquareIcon,
+  ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/solid';
 
 interface LearningMapProps {
@@ -179,6 +180,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
       case SessionType.DRAG_DROP: Icon = CursorArrowRaysIcon; break;
       case SessionType.GRAMMAR: Icon = BookOpenIcon; break;
       case SessionType.FILL_IN_BLANK: Icon = PencilSquareIcon; break;
+      case SessionType.CONVERSATION: Icon = ChatBubbleLeftRightIcon; break;
     }
 
     if (session.status === SessionStatus.LOCK) {

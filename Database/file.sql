@@ -7,6 +7,7 @@
 -- Session 7: FILL_IN_BLANK (payload đầy đủ)
 -- Session 8: RE_ORDER_SENTENCE (payload đầy đủ)
 -- Session 9: SPEAKING_SENTENCE (payload giống hệt session 8)
+-- Session 10: CONVERSATION (payload đầy đủ)
 -- Ảnh của topic Number đã được đưa vào folder /Number/ trên S3
 -- ============================================================
 
@@ -116,8 +117,8 @@ VALUES
 
 -- ------------------------------------------------------------
 -- 6. SESSIONS
---    Part 1: Number 1-10  (9 vòng, vòng 5-9 có payload)
---    Part 2: Number 10-20 (7 vòng, payload = NULL)
+--    Part 1: Number 1-10  (10 vòng, vòng 5-10 có payload)
+--    Part 2: Number 10-20 (9 vòng, payload = NULL)
 -- ------------------------------------------------------------
 INSERT INTO `sessions`
 (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `badge_id`, `description`, `session_type`, `order_index`, `payload`, `title`, `part_id`)
@@ -378,18 +379,57 @@ VALUES
   )
 ), 'Speaking Sentence: Numbers 1-10', 1),
 
+-- Vòng 10: CONVERSATION
+(10, NOW(), 1, 0, NOW(), 1, NULL, 'Conversation numbers 1-10', 'CONVERSATION', 10,
+ JSON_OBJECT(
+  'title', 'Conversation: Numbers 1-10',
+  'items', JSON_ARRAY(
+    JSON_OBJECT(
+      'order', 1,
+      'question',   JSON_OBJECT('type', 'question',   'text', 'Hi',    'audio_url', 'https://dict.youdao.com/dictvoice?audio=Hi&type=2'),
+      'answer',     JSON_OBJECT('type', 'answer',     'text', 'Hello!', 'audio_url', 'https://dict.youdao.com/dictvoice?audio=Hello%21&type=2',            'is_correct', TRUE),
+      'distractor', JSON_OBJECT('type', 'distractor', 'text', 'One apple!', 'audio_url', 'https://dict.youdao.com/dictvoice?audio=One+apple%21&type=2',        'is_correct', FALSE)
+    ),
+    JSON_OBJECT(
+      'order', 2,
+      'question',   JSON_OBJECT('type', 'question',   'text', 'Hi, what''s your name?',               'audio_url', 'https://dict.youdao.com/dictvoice?audio=Hi%2C+what%27s+your+name%3F&type=2'),
+      'answer',     JSON_OBJECT('type', 'answer',     'text', 'My name is Casi',                      'audio_url', 'https://dict.youdao.com/dictvoice?audio=My+name+is+Casi&type=2',      'is_correct', TRUE),
+      'distractor', JSON_OBJECT('type', 'distractor', 'text', 'What is my name?',                     'audio_url', 'https://dict.youdao.com/dictvoice?audio=What+is+my+name%3F&type=2',   'is_correct', FALSE)
+    ),
+    JSON_OBJECT(
+      'order', 3,
+      'question',   JSON_OBJECT('type', 'question',   'text', 'I''m John. What''s is your name?',     'audio_url', 'https://dict.youdao.com/dictvoice?audio=I%27m+John.+What%27s+is+your+name%3F&type=2'),
+      'answer',     JSON_OBJECT('type', 'answer',     'text', 'I''m Summer',                          'audio_url', 'https://dict.youdao.com/dictvoice?audio=I%27m+Summer&type=2',        'is_correct', TRUE),
+      'distractor', JSON_OBJECT('type', 'distractor', 'text', 'Yes, I am',                            'audio_url', 'https://dict.youdao.com/dictvoice?audio=Yes%2C+I+am&type=2',          'is_correct', FALSE)
+    ),
+    JSON_OBJECT(
+      'order', 4,
+      'question',   JSON_OBJECT('type', 'question',   'text', 'How old are you, Mymy?',               'audio_url', 'https://dict.youdao.com/dictvoice?audio=How+old+are+you%2C+Mymy%3F&type=2'),
+      'answer',     JSON_OBJECT('type', 'answer',     'text', 'I''m nine years old',                  'audio_url', 'https://dict.youdao.com/dictvoice?audio=I%27m+nine+years+old&type=2',  'is_correct', TRUE),
+      'distractor', JSON_OBJECT('type', 'distractor', 'text', 'Thank you.',                           'audio_url', 'https://dict.youdao.com/dictvoice?audio=Thank+you.&type=2',           'is_correct', FALSE)
+    ),
+    JSON_OBJECT(
+      'order', 5,
+      'question',   JSON_OBJECT('type', 'question',   'text', 'I''m ten years old. How old are you?', 'audio_url', 'https://dict.youdao.com/dictvoice?audio=I%27m+ten+years+old.+How+old+are+you%3F&type=2'),
+      'answer',     JSON_OBJECT('type', 'answer',     'text', 'I''m ten!',                            'audio_url', 'https://dict.youdao.com/dictvoice?audio=I%27m+ten%21&type=2',         'is_correct', TRUE),
+      'distractor', JSON_OBJECT('type', 'distractor', 'text', 'No, I''m fine',                        'audio_url', 'https://dict.youdao.com/dictvoice?audio=No%2C+I%27m+fine&type=2',      'is_correct', FALSE)
+    )
+  )
+), 'Conversation: Numbers 1-10', 1),
+
 -- ============================================================
 -- PART 2: Number 10-20
 -- ============================================================
-(10, NOW(), 1, 0, NOW(), 1, NULL, 'Flashcard numbers 10-20', 'FLASHCARD', 1, NULL, 'Flashcard: Numbers 10-20', 2),
-(11, NOW(), 1, 0, NOW(), 1, NULL, 'Match word numbers 10-20', 'MATCH_WORD', 2, NULL, 'Match Word: Numbers 10-20', 2),
-(12, NOW(), 1, 0, NOW(), 1, NULL, 'Speaking numbers 10-20', 'SPEAKING', 3, NULL, 'Speaking: Numbers 10-20', 2),
-(13, NOW(), 1, 0, NOW(), 1, NULL, 'Re-order numbers 10-20', 'RE_ORDER', 4, NULL, 'Re-order: Numbers 10-20', 2),
-(14, NOW(), 1, 0, NOW(), 1, NULL, 'Drag drop numbers 10-20', 'DRAG_DROP', 5, NULL, 'Drag Drop: Numbers 10-20', 2),
-(15, NOW(), 1, 0, NOW(), 1, NULL, 'Grammar numbers 10-20', 'GRAMMAR', 6, NULL, 'Grammar: Numbers 10-20', 2),
-(16, NOW(), 1, 0, NOW(), 1, NULL, 'Fill in blank numbers 10-20', 'FILL_IN_BLANK', 7, NULL, 'Fill in Blank: Numbers 10-20', 2),
-(17, NOW(), 1, 0, NOW(), 1, NULL, 'Re-order sentence numbers 10-20', 'RE_ORDER_SENTENCE', 8, NULL, 'Re-order Sentence: Numbers 10-20', 2),
-(18, NOW(), 1, 0, NOW(), 1, NULL, 'Speaking sentence numbers 10-20', 'SPEAKING_SENTENCE', 9, NULL, 'Speaking Sentence: Numbers 10-20', 2);
+(11, NOW(), 1, 0, NOW(), 1, NULL, 'Flashcard numbers 10-20', 'FLASHCARD', 1, NULL, 'Flashcard: Numbers 10-20', 2),
+(12, NOW(), 1, 0, NOW(), 1, NULL, 'Match word numbers 10-20', 'MATCH_WORD', 2, NULL, 'Match Word: Numbers 10-20', 2),
+(13, NOW(), 1, 0, NOW(), 1, NULL, 'Speaking numbers 10-20', 'SPEAKING', 3, NULL, 'Speaking: Numbers 10-20', 2),
+(14, NOW(), 1, 0, NOW(), 1, NULL, 'Re-order numbers 10-20', 'RE_ORDER', 4, NULL, 'Re-order: Numbers 10-20', 2),
+(15, NOW(), 1, 0, NOW(), 1, NULL, 'Drag drop numbers 10-20', 'DRAG_DROP', 5, NULL, 'Drag Drop: Numbers 10-20', 2),
+(16, NOW(), 1, 0, NOW(), 1, NULL, 'Grammar numbers 10-20', 'GRAMMAR', 6, NULL, 'Grammar: Numbers 10-20', 2),
+(17, NOW(), 1, 0, NOW(), 1, NULL, 'Fill in blank numbers 10-20', 'FILL_IN_BLANK', 7, NULL, 'Fill in Blank: Numbers 10-20', 2),
+(18, NOW(), 1, 0, NOW(), 1, NULL, 'Re-order sentence numbers 10-20', 'RE_ORDER_SENTENCE', 8, NULL, 'Re-order Sentence: Numbers 10-20', 2),
+(19, NOW(), 1, 0, NOW(), 1, NULL, 'Speaking sentence numbers 10-20', 'SPEAKING_SENTENCE', 9, NULL, 'Speaking Sentence: Numbers 10-20', 2),
+(20, NOW(), 1, 0, NOW(), 1, NULL, 'Conversation numbers 10-20', 'CONVERSATION', 10, NULL, 'Conversation: Numbers 10-20', 2);
 
 -- ============================================================
 -- 7. RESET AUTO_INCREMENT (tuỳ chọn, để id sạch)
@@ -399,4 +439,4 @@ ALTER TABLE `topics`            AUTO_INCREMENT = 2;
 ALTER TABLE `parts`             AUTO_INCREMENT = 3;
 ALTER TABLE `vocabularies`      AUTO_INCREMENT = 22;
 ALTER TABLE `part_vocabularies` AUTO_INCREMENT = 22;
-ALTER TABLE `sessions`          AUTO_INCREMENT = 19;
+ALTER TABLE `sessions`          AUTO_INCREMENT = 21;

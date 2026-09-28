@@ -13,6 +13,7 @@ export enum SessionType {
   FILL_IN_BLANK = 'FILL_IN_BLANK',
   RE_ORDER_SENTENCE = 'RE_ORDER_SENTENCE',
   SPEAKING_SENTENCE = 'SPEAKING_SENTENCE',
+  CONVERSATION = 'CONVERSATION',
 }
 
 export enum SessionStatus {
