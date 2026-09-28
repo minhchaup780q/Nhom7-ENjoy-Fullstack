@@ -171,7 +171,10 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
       case SessionType.FLASHCARD: Icon = DocumentTextIcon; break;
       case SessionType.MATCH_WORD: Icon = PuzzlePieceIcon; break;
       case SessionType.SPEAKING: Icon = MicrophoneIcon; break;
-      case SessionType.RE_ORDER: Icon = Bars3BottomLeftIcon; break;
+      case SessionType.RE_ORDER:
+      case SessionType.RE_ORDER_SENTENCE:
+        Icon = Bars3BottomLeftIcon;
+        break;
       case SessionType.DRAG_DROP: Icon = CursorArrowRaysIcon; break;
       case SessionType.GRAMMAR: Icon = BookOpenIcon; break;
       case SessionType.FILL_IN_BLANK: Icon = PencilSquareIcon; break;
@@ -550,6 +553,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                   return (
                     session.sessionType === SessionType.GRAMMAR ||
                     session.sessionType === SessionType.FILL_IN_BLANK ||
+                    session.sessionType === SessionType.RE_ORDER_SENTENCE ||
                     (session.orderIndex !== undefined && session.orderIndex !== null && session.orderIndex >= 6) ||
                     (session.sessionIdx !== undefined && session.sessionIdx >= 5)
                   );
@@ -604,16 +608,12 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                         {/* Tooltip Dialog for starting session */}
                         {isSelected && (
                           <div className="absolute bottom-full mb-4 bg-white border-2 border-[#e5e5e5] rounded-[2rem] p-5 shadow-2xl z-20 w-72 text-center animate-fade-in-up">
-                            <span className={`text-[10px] font-extrabold tracking-widest uppercase block mb-1 ${palette.textClass}`}>
-                              Vòng {session.sessionIdx + 1}: {session.sessionType === SessionType.FILL_IN_BLANK ? 'Fill in Blank' : session.sessionType}
+                            <span className={`text-[10px] font-extrabold tracking-widest uppercase block mb-1 text-center ${palette.textClass}`}>
+                              Vòng {session.sessionIdx + 1}
                             </span>
-                            <h4 className="text-sm font-display font-extrabold text-text-main m-0 leading-tight">
+                            <h4 className="text-sm font-display font-extrabold text-text-main m-0 leading-tight mb-4 text-center">
                               {session.title}
                             </h4>
-
-                            <p className="text-[11px] font-semibold text-text-main/60 leading-relaxed mb-4">
-                              {session.description}
-                            </p>
                             <div className="flex gap-2">
                               <Button3D
                                 variant={palette.btnVariant}
