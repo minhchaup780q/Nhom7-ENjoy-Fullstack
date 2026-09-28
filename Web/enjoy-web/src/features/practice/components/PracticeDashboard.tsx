@@ -12,6 +12,8 @@ import {
   ChevronRightIcon,
   CalendarDaysIcon,
   ListBulletIcon,
+  CheckBadgeIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/solid';
 import { Button3D } from '../../../components/ui/Button3D';
 import { Mascot } from '../../../components/ui/Mascot';

@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Vocabulary } from '../../types';
+import type { MistakeCreatePayload } from '../../services/mistakeApi';
 
 interface MatchWordExerciseProps {
   partId: number;
   vocabularies: Vocabulary[];   // được fetch sẵn từ SessionPlayer
   onComplete: () => void;
+  onMistake?: (data: MistakeCreatePayload) => void;
   onProgress?: (current: number, total: number) => void;
 }
 
@@ -17,6 +19,7 @@ interface MatchState {
 export const MatchWordExercise: React.FC<MatchWordExerciseProps> = ({
   vocabularies,
   onComplete,
+  onMistake,
   onProgress
 }) => {
   // Xáo trộn ảnh và từ riêng lẻ để trẻ khó đoán
@@ -51,6 +54,14 @@ export const MatchWordExercise: React.FC<MatchWordExerciseProps> = ({
       } else {
         // Sai: flash đỏ rồi bỏ chọn
         setWrongFlash(selectedWordId);
+        const wrongWord = vocabularies.find(v => v.id === selectedWordId);
+        if (onMistake) {
+          onMistake({
+            questionId: selectedImageId,
+            roundType: 2,
+            wrongAnswerSubmitted: wrongWord?.word || 'Ghép sai',
+          });
+        }
         setTimeout(() => {
           setWrongFlash(null);
           setState(prev => ({ ...prev, selectedImageId: null, selectedWordId: null }));
@@ -58,7 +69,7 @@ export const MatchWordExercise: React.FC<MatchWordExerciseProps> = ({
       }
     }, 200);
     return () => clearTimeout(timer);
-  }, [state.selectedImageId, state.selectedWordId, vocabularies.length, onProgress]);
+  }, [state.selectedImageId, state.selectedWordId, vocabularies, onMistake, onProgress]);
 
   // Khi tất cả đều khớp → hoàn thành
   useEffect(() => {
