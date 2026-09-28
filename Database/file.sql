@@ -6,6 +6,7 @@
 -- Session 6: GRAMMAR (payload đầy đủ)
 -- Session 7: FILL_IN_BLANK (payload đầy đủ)
 -- Session 8: RE_ORDER_SENTENCE (payload đầy đủ)
+-- Session 9: SPEAKING_SENTENCE (payload giống hệt session 8)
 -- Ảnh của topic Number đã được đưa vào folder /Number/ trên S3
 -- ============================================================
 
@@ -115,7 +116,7 @@ VALUES
 
 -- ------------------------------------------------------------
 -- 6. SESSIONS
---    Part 1: Number 1-10  (8 vòng, vòng 5-8 có payload)
+--    Part 1: Number 1-10  (9 vòng, vòng 5-9 có payload)
 --    Part 2: Number 10-20 (7 vòng, payload = NULL)
 -- ------------------------------------------------------------
 INSERT INTO `sessions`
@@ -196,9 +197,9 @@ VALUES
     ),
     JSON_OBJECT(
       'order', 3,
-      'sentence', 'I''m [one] years old',
+      'sentence', 'I''m [one] year old',
       'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Number/grammar_fill_in_blank_one.webp',
-      'audio_url', 'https://dict.youdao.com/dictvoice?audio=I%27m+one+years+old&type=2',
+      'audio_url', 'https://dict.youdao.com/dictvoice?audio=I%27m+one+year+old&type=2',
       'answer', 'one',
       'distractors', JSON_ARRAY('two', 'five')
     ),
@@ -248,9 +249,9 @@ VALUES
     ),
     JSON_OBJECT(
       'order', 3,
-      'sentence', 'I''m one years old',
+      'sentence', 'I''m one year old',
       'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Number/grammar_fill_in_blank_one.webp',
-      'audio_url', 'https://dict.youdao.com/dictvoice?audio=I%27m+one+years+old&type=2'
+      'audio_url', 'https://dict.youdao.com/dictvoice?audio=I%27m+one+year+old&type=2'
     ),
     JSON_OBJECT(
       'order', 4,
@@ -303,16 +304,92 @@ VALUES
   )
 ), 'Re-order Sentence: Numbers 1-10', 1),
 
+-- Vòng 9: SPEAKING_SENTENCE (data giống hệt vòng 8)
+(9, NOW(), 1, 0, NOW(), 1, NULL, 'Speaking sentence numbers 1-10', 'SPEAKING_SENTENCE', 9,
+ JSON_OBJECT(
+  'title', 'Speaking Sentence: Numbers 1-10',
+  'items', JSON_ARRAY(
+    JSON_OBJECT(
+      'order', 1,
+      'sentence', 'I''m nine years old',
+      'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Number/grammar_fill_in_blank_nine.webp',
+      'audio_url', 'https://dict.youdao.com/dictvoice?audio=I%27m+nine+years+old&type=2'
+    ),
+    JSON_OBJECT(
+      'order', 2,
+      'sentence', 'I''m eight years old',
+      'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Number/grammar_fill_in_blank_eight.webp',
+      'audio_url', 'https://dict.youdao.com/dictvoice?audio=I%27m+eight+years+old&type=2'
+    ),
+    JSON_OBJECT(
+      'order', 3,
+      'sentence', 'I''m one year old',
+      'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Number/grammar_fill_in_blank_one.webp',
+      'audio_url', 'https://dict.youdao.com/dictvoice?audio=I%27m+one+year+old&type=2'
+    ),
+    JSON_OBJECT(
+      'order', 4,
+      'sentence', 'I''m two years old',
+      'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Number/grammar_fill_in_blank_two.webp',
+      'audio_url', 'https://dict.youdao.com/dictvoice?audio=I%27m+two+years+old&type=2'
+    ),
+    JSON_OBJECT(
+      'order', 5,
+      'sentence', 'I''m five years old',
+      'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Number/grammar_fill_in_blank_five.webp',
+      'audio_url', 'https://dict.youdao.com/dictvoice?audio=I%27m+five+years+old&type=2'
+    ),
+    JSON_OBJECT(
+      'order', 6,
+      'sentence', 'I''m seven years old',
+      'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Number/grammar_fill_in_blank_seven.webp',
+      'audio_url', 'https://dict.youdao.com/dictvoice?audio=I%27m+seven+years+old&type=2'
+    ),
+    JSON_OBJECT(
+      'order', 7,
+      'sentence', 'What is your name?',
+      'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Number/re_order_sentence_what_is_your_name.webp',
+      'audio_url', 'https://dict.youdao.com/dictvoice?audio=What+is+your+name%3F&type=2'
+    ),
+    JSON_OBJECT(
+      'order', 8,
+      'sentence', 'Hello, I''m John!',
+      'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Number/re_order_sentence_hello_im_john.webp',
+      'audio_url', 'https://dict.youdao.com/dictvoice?audio=Hello%2C+I%27m+John%21&type=2'
+    ),
+    JSON_OBJECT(
+      'order', 9,
+      'sentence', 'Hi, I''m John',
+      'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Number/re_order_sentence_hi_im_john.webp',
+      'audio_url', 'https://dict.youdao.com/dictvoice?audio=Hi%2C+I%27m+John&type=2'
+    ),
+    JSON_OBJECT(
+      'order', 10,
+      'sentence', 'My name is John',
+      'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Number/re_order_sentence_my_name_is_john.webp',
+      'audio_url', 'https://dict.youdao.com/dictvoice?audio=My+name+is+John&type=2'
+    ),
+    JSON_OBJECT(
+      'order', 11,
+      'sentence', 'How old are you?',
+      'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Number/re_order_sentence_how_old_are_you.webp',
+      'audio_url', 'https://dict.youdao.com/dictvoice?audio=How+old+are+you%3F&type=2'
+    )
+  )
+), 'Speaking Sentence: Numbers 1-10', 1),
+
 -- ============================================================
 -- PART 2: Number 10-20
 -- ============================================================
-(9,  NOW(), 1, 0, NOW(), 1, NULL, 'Flashcard numbers 10-20', 'FLASHCARD', 1, NULL, 'Flashcard: Numbers 10-20', 2),
-(10, NOW(), 1, 0, NOW(), 1, NULL, 'Match word numbers 10-20', 'MATCH_WORD', 2, NULL, 'Match Word: Numbers 10-20', 2),
-(11, NOW(), 1, 0, NOW(), 1, NULL, 'Speaking numbers 10-20', 'SPEAKING', 3, NULL, 'Speaking: Numbers 10-20', 2),
-(12, NOW(), 1, 0, NOW(), 1, NULL, 'Re-order numbers 10-20', 'RE_ORDER', 4, NULL, 'Re-order: Numbers 10-20', 2),
-(13, NOW(), 1, 0, NOW(), 1, NULL, 'Drag drop numbers 10-20', 'DRAG_DROP', 5, NULL, 'Drag Drop: Numbers 10-20', 2),
-(14, NOW(), 1, 0, NOW(), 1, NULL, 'Grammar numbers 10-20', 'GRAMMAR', 6, NULL, 'Grammar: Numbers 10-20', 2),
-(15, NOW(), 1, 0, NOW(), 1, NULL, 'Fill in blank numbers 10-20', 'FILL_IN_BLANK', 7, NULL, 'Fill in Blank: Numbers 10-20', 2);
+(10, NOW(), 1, 0, NOW(), 1, NULL, 'Flashcard numbers 10-20', 'FLASHCARD', 1, NULL, 'Flashcard: Numbers 10-20', 2),
+(11, NOW(), 1, 0, NOW(), 1, NULL, 'Match word numbers 10-20', 'MATCH_WORD', 2, NULL, 'Match Word: Numbers 10-20', 2),
+(12, NOW(), 1, 0, NOW(), 1, NULL, 'Speaking numbers 10-20', 'SPEAKING', 3, NULL, 'Speaking: Numbers 10-20', 2),
+(13, NOW(), 1, 0, NOW(), 1, NULL, 'Re-order numbers 10-20', 'RE_ORDER', 4, NULL, 'Re-order: Numbers 10-20', 2),
+(14, NOW(), 1, 0, NOW(), 1, NULL, 'Drag drop numbers 10-20', 'DRAG_DROP', 5, NULL, 'Drag Drop: Numbers 10-20', 2),
+(15, NOW(), 1, 0, NOW(), 1, NULL, 'Grammar numbers 10-20', 'GRAMMAR', 6, NULL, 'Grammar: Numbers 10-20', 2),
+(16, NOW(), 1, 0, NOW(), 1, NULL, 'Fill in blank numbers 10-20', 'FILL_IN_BLANK', 7, NULL, 'Fill in Blank: Numbers 10-20', 2),
+(17, NOW(), 1, 0, NOW(), 1, NULL, 'Re-order sentence numbers 10-20', 'RE_ORDER_SENTENCE', 8, NULL, 'Re-order Sentence: Numbers 10-20', 2),
+(18, NOW(), 1, 0, NOW(), 1, NULL, 'Speaking sentence numbers 10-20', 'SPEAKING_SENTENCE', 9, NULL, 'Speaking Sentence: Numbers 10-20', 2);
 
 -- ============================================================
 -- 7. RESET AUTO_INCREMENT (tuỳ chọn, để id sạch)
@@ -322,4 +399,4 @@ ALTER TABLE `topics`            AUTO_INCREMENT = 2;
 ALTER TABLE `parts`             AUTO_INCREMENT = 3;
 ALTER TABLE `vocabularies`      AUTO_INCREMENT = 22;
 ALTER TABLE `part_vocabularies` AUTO_INCREMENT = 22;
-ALTER TABLE `sessions`          AUTO_INCREMENT = 16;
+ALTER TABLE `sessions`          AUTO_INCREMENT = 19;
