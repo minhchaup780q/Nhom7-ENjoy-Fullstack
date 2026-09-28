@@ -632,20 +632,20 @@ export const PracticeDashboard: React.FC = () => {
 
         return (
           <div className="space-y-6 animate-fadeIn">
-            {/* Roadmap Explanation Guide Card */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-3xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-blue-600 font-display font-black text-sm uppercase">
-                  Theo Dõi Lộ Trình Lặp Lại
+            {/* Roadmap Explanation Guide Card - Ngắn gọn, súc tích */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2 text-blue-700 font-bold text-xs uppercase tracking-wide">
+                  Lộ trình ôn tập lặp lại
                 </div>
-                <p className="text-xs font-semibold text-slate-600 max-w-3xl leading-relaxed">
-                  Tab này dùng để <strong>theo dõi tiến độ nhắc nhở</strong> qua các ngày. Mỗi câu hỏi làm sai cần hoàn thành <strong>3 lần luyện tập đúng ở 3 ngày khác nhau</strong> (mỗi lần cách nhau 1 ngày).
+                <p className="text-xs text-slate-600 font-medium leading-relaxed">
+                  Hoàn thành <strong>3 lần luyện tập đúng ở 3 ngày khác nhau</strong> để khắc phục hoàn toàn lỗi sai.
                 </p>
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                <span className="px-3 py-1.5 bg-white text-blue-600 border border-blue-200 rounded-xl text-xs font-bold font-mono shadow-xs">
-                  Tổng theo dõi: {roadmapMistakes.length} câu
+                <span className="px-3 py-1 bg-white text-blue-700 border border-blue-200 rounded-xl text-xs font-bold font-mono shadow-xs">
+                  {roadmapMistakes.length} câu theo dõi
                 </span>
               </div>
             </div>
