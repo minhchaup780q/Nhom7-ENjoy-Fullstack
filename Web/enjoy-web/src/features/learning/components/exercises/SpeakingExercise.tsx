@@ -46,13 +46,21 @@ export const SpeakingExercise: React.FC<SpeakingExerciseProps> = ({ vocabularies
 
   const playAudio = () => {
     if (!currentVocab) return;
+    
+    const fallbackToSpeech = () => {
+      if (currentVocab.word && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(currentVocab.word);
+        u.lang = 'en-US'; u.rate = 0.85;
+        window.speechSynthesis.speak(u);
+      }
+    };
+
     if (currentVocab.audioUrl) {
-      new Audio(currentVocab.audioUrl).play().catch(() => {});
-    } else if (currentVocab.word && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(currentVocab.word);
-      u.lang = 'en-US'; u.rate = 0.85;
-      window.speechSynthesis.speak(u);
+      const safeUrl = currentVocab.audioUrl.replace(/ /g, '%20');
+      new Audio(safeUrl).play().catch(() => fallbackToSpeech());
+    } else {
+      fallbackToSpeech();
     }
   };
 

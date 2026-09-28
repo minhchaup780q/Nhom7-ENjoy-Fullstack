@@ -11,6 +11,9 @@ export enum SessionType {
   DRAG_DROP     = 'DRAG_DROP',
   GRAMMAR       = 'GRAMMAR',
   FILL_IN_BLANK = 'FILL_IN_BLANK',
+  RE_ORDER_SENTENCE = 'RE_ORDER_SENTENCE',
+  SPEAKING_SENTENCE = 'SPEAKING_SENTENCE',
+  CONVERSATION = 'CONVERSATION',
 }
 
 export enum SessionStatus {
@@ -91,8 +94,8 @@ export interface SessionPayload {
   title?:  string;
   blocks?: GrammarBlock[];
 
-  // Dùng cho FILL_IN_BLANK
-  items?: FillInBlankItem[];
+  // Dùng cho FILL_IN_BLANK & RE_ORDER_SENTENCE
+  items?: (FillInBlankItem | ReorderSentenceItem)[];
 }
 
 export interface FillInBlankItem {
@@ -102,6 +105,13 @@ export interface FillInBlankItem {
   audio_url: string;
   answer: string;
   distractors: string[];
+}
+
+export interface ReorderSentenceItem {
+  order: number;
+  sentence: string;
+  image_url?: string;
+  audio_url?: string;
 }
 
 export interface Session extends BaseEntity {

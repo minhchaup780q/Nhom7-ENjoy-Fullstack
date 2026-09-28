@@ -39,14 +39,22 @@ export const FlashcardExercise: React.FC<FlashcardExerciseProps> = ({ vocabulari
 
   const playAudio = () => {
     if (!currentVocab) return;
+
+    const fallbackToSpeech = () => {
+      if (currentVocab.word && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(currentVocab.word);
+        utterance.lang = 'en-US';
+        utterance.rate = 0.85;
+        window.speechSynthesis.speak(utterance);
+      }
+    };
+
     if (currentVocab.audioUrl) {
-      new Audio(currentVocab.audioUrl).play().catch(() => {});
-    } else if (currentVocab.word && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(currentVocab.word);
-      utterance.lang = 'en-US';
-      utterance.rate = 0.85;
-      window.speechSynthesis.speak(utterance);
+      const safeUrl = currentVocab.audioUrl.replace(/ /g, '%20');
+      new Audio(safeUrl).play().catch(() => fallbackToSpeech());
+    } else {
+      fallbackToSpeech();
     }
   };
 

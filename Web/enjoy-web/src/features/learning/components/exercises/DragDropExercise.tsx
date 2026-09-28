@@ -50,13 +50,30 @@ export const DragDropExercise: React.FC<DragDropExerciseProps> = ({
   const [checked, setChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
 
+  const fallbackToSpeechSynthesis = (text: string) => {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.9;
+    window.speechSynthesis.speak(utterance);
+  };
+
   // Auto play audio when component mounts
   useEffect(() => {
     if (audioUrl) {
-      const audio = new Audio(audioUrl);
-      audio.play().catch(() => {});
+      const safeUrl = audioUrl.replace(/ /g, '%20');
+      const audio = new Audio(safeUrl);
+      audio.play().catch(e => {
+        console.warn('Primary audio failed, falling back to Web Speech API...', e);
+        const fallbackText = raw?.sentence || coords.map(c => c.word).join(' ');
+        if (fallbackText) fallbackToSpeechSynthesis(fallbackText);
+      });
+    } else {
+      const fallbackText = raw?.sentence || coords.map(c => c.word).join(' ');
+      if (fallbackText) fallbackToSpeechSynthesis(fallbackText);
     }
-  }, [audioUrl]);
+  }, [audioUrl, raw?.sentence, coords]);
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, word: string, sourceIndex?: number) => {
     e.dataTransfer.setData('text/plain', word);
