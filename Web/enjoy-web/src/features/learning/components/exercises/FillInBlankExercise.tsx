@@ -85,16 +85,11 @@ export const FillInBlankExercise: React.FC<Props> = ({
   };
 
   const handleNext = () => {
-    if (footerStatus === 'incorrect') {
-      setSelectedOption(null);
-      setFooterStatus('idle');
-    } else if (footerStatus === 'correct') {
-      if (currentIndex < items.length - 1) {
-        setCurrentIndex(prev => prev + 1);
-      } else {
-        if (onProgress) onProgress(items.length, items.length);
-        onComplete();
-      }
+    if (currentIndex < items.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+    } else {
+      if (onProgress) onProgress(items.length, items.length);
+      onComplete();
     }
   };
 
