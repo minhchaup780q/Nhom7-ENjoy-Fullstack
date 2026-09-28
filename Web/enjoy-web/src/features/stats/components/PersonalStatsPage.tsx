@@ -22,6 +22,8 @@ import {
   UserIcon
 } from '@heroicons/react/24/outline';
 
+import { PersonalizedSkillModal } from './PersonalizedSkillModal';
+
 const DEFAULT_WEEKLY_DAYS = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN'];
 
 export interface SkillScores {
@@ -100,6 +102,7 @@ interface SpiderChart5DProps {
   size?: number;
   highlightedSkill?: string | null;
   onHoverSkill?: (skillKey: string | null) => void;
+  onClickSkill?: (skillKey: string) => void;
 }
 
 const SpiderChart5D: React.FC<SpiderChart5DProps> = ({
@@ -111,6 +114,7 @@ const SpiderChart5D: React.FC<SpiderChart5DProps> = ({
   size = 350,
   highlightedSkill,
   onHoverSkill,
+  onClickSkill,
 }) => {
   const center = size / 2;
   const radius = (size / 2) - 56;
@@ -262,9 +266,10 @@ const SpiderChart5D: React.FC<SpiderChart5DProps> = ({
                 fill="#ff5e97"
                 stroke="#ffffff"
                 strokeWidth="2.5"
-                className="transition-all duration-200 cursor-pointer"
+                className="transition-all duration-200 cursor-pointer hover:scale-125"
                 onMouseEnter={() => onHoverSkill?.(def.key)}
                 onMouseLeave={() => onHoverSkill?.(null)}
+                onClick={() => onClickSkill?.(def.key)}
               />
             );
           })}
@@ -305,9 +310,10 @@ const SpiderChart5D: React.FC<SpiderChart5DProps> = ({
           return (
             <g
               key={`label-${def.key}`}
-              className="cursor-pointer transition-all duration-150"
+              className="cursor-pointer transition-all duration-150 hover:opacity-80"
               onMouseEnter={() => onHoverSkill?.(def.key)}
               onMouseLeave={() => onHoverSkill?.(null)}
+              onClick={() => onClickSkill?.(def.key)}
             >
               <text
                 x={ptOuter.x + xOffset}
@@ -407,6 +413,7 @@ export const PersonalStatsPage: React.FC = () => {
   });
 
   const [skillsLoading, setSkillsLoading] = useState<boolean>(false);
+  const [selectedSkillForRemediation, setSelectedSkillForRemediation] = useState<string | null>(null);
 
   useEffect(() => {
     initPageData();
@@ -874,6 +881,7 @@ export const PersonalStatsPage: React.FC = () => {
                 size={360}
                 highlightedSkill={hoveredSkill}
                 onHoverSkill={setHoveredSkill}
+                onClickSkill={(key) => setSelectedSkillForRemediation(key)}
               />
             </div>
 
@@ -883,7 +891,9 @@ export const PersonalStatsPage: React.FC = () => {
                 <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">
                   Chi tiết điểm số 5 kỹ năng hiện tại
                 </span>
-                <span className="text-[11px] text-slate-400 font-medium">Rà chuột để làm nổi bật trên biểu đồ</span>
+                <span className="text-[11px] text-purple-600 font-bold bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200">
+                  Bấm vào kỹ năng để mở lộ trình khắc phục
+                </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -897,10 +907,11 @@ export const PersonalStatsPage: React.FC = () => {
                       key={def.key}
                       onMouseEnter={() => setHoveredSkill(def.key)}
                       onMouseLeave={() => setHoveredSkill(null)}
+                      onClick={() => setSelectedSkillForRemediation(def.key)}
                       className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer ${
                         isHovered
-                          ? 'bg-white shadow-sm ring-2 ring-pink-200 scale-[1.01]'
-                          : 'bg-slate-50/80 hover:bg-white hover:border-slate-300'
+                          ? 'bg-white shadow-md ring-2 ring-purple-300 scale-[1.02]'
+                          : 'bg-slate-50/80 hover:bg-white hover:border-purple-300 hover:shadow-xs'
                       }`}
                       style={{ borderColor: isHovered ? def.color : undefined }}
                     >
@@ -932,6 +943,10 @@ export const PersonalStatsPage: React.FC = () => {
                           className="h-full rounded-full transition-all duration-500"
                           style={{ width: `${score}%`, backgroundColor: def.color }}
                         />
+                      </div>
+
+                      <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-purple-600">
+                        <span>Xem thêm →</span>
                       </div>
                     </div>
                   );
@@ -1239,6 +1254,18 @@ export const PersonalStatsPage: React.FC = () => {
         isParent={isParent}
         userEmail={user?.email}
       />
+
+      {/* Modal Cá nhân hóa & Can thiệp AI cho từng kỹ năng */}
+      {selectedSkillForRemediation && (
+        <PersonalizedSkillModal
+          skillKey={selectedSkillForRemediation}
+          skillScore={skillsCurrent[selectedSkillForRemediation as keyof SkillScores] ?? 0}
+          skillDef={
+            SKILL_DEFINITIONS.find(d => d.key === selectedSkillForRemediation) || SKILL_DEFINITIONS[3]
+          }
+          onClose={() => setSelectedSkillForRemediation(null)}
+        />
+      )}
 
     </div>
   );

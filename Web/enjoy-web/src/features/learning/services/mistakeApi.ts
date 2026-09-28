@@ -123,5 +123,55 @@ export const mistakeApi = {
   deleteMistake: (id: number) => {
     return apiClient.delete<void>(`/api/mistakes/${id}`);
   },
+
+  // Lấy thử thách ngữ cảnh AI đã lưu từ Database
+  getAiChallenge: async (skillKey: string, topicId: string) => {
+    try {
+      const res = await apiClient.get<{
+        id?: number;
+        skillKey: string;
+        topicId: string;
+        topicName?: string;
+        title: string;
+        story: string;
+        storyVi?: string;
+        question: string;
+        options: string[];
+        correctAnswer: string;
+        hint?: string;
+      }>('/api/mistakes/ai-challenge', {
+        params: { skillKey, topicId },
+      });
+      return res || null;
+    } catch {
+      return null;
+    }
+  },
+
+  // Lưu thử thách ngữ cảnh AI mới vào Database
+  saveAiChallenge: async (payload: {
+    skillKey: string;
+    topicId: string;
+    topicName?: string;
+    title: string;
+    story: string;
+    storyVi?: string;
+    question: string;
+    options: string[];
+    correctAnswer: string;
+    hint?: string;
+  }) => {
+    try {
+      const res = await apiClient.post<{
+        id?: number;
+        skillKey: string;
+        topicId: string;
+      }>('/api/mistakes/ai-challenge', payload);
+      return res;
+    } catch (err) {
+      console.warn('Lỗi khi lưu AI Challenge vào DB:', err);
+      return null;
+    }
+  },
 };
 

@@ -133,4 +133,91 @@ Hãy so sánh lỗi sai của bé với đáp án chuẩn và hướng dẫn bé
     const context = `Bạn là Trợ lý AI ENjoy hỗ trợ học sinh tiểu học học tiếng Anh. Trả lời thân thiện, dễ hiểu, không dùng từ ngữ học thuật phức tạp, so sánh trực diện giữa đáp án chính xác "${targetText}" và câu trả lời của bé "${wrong}" để giúp bé chọn lại cho đúng.`;
     return chatbotApi.ask(prompt, context);
   },
+
+  // Sinh câu chuyện và thử thách ngữ cảnh thích ứng theo đúng chủ đề và câu làm sai
+  generateAdaptiveChallenge: async (
+    skillName: string,
+    mistakes: { word: string; translation?: string; wrongAttempt?: string }[],
+    topicName: string = 'Tổng hợp'
+  ): Promise<AdaptiveChallenge> => {
+    const mistakeDetailStr = mistakes.map((m, idx) => 
+      `${idx + 1}. Từ đúng: "${m.word}" (${m.translation || ''}) ${m.wrongAttempt && m.wrongAttempt !== 'Chưa học' ? `- Bé từng làm sai thành: "${m.wrongAttempt}"` : ''}`
+    ).join('\n');
+
+    const targetWordsStr = mistakes.map((m) => m.word).filter(Boolean).join(', ');
+
+    const prompt = `Bạn là Trợ lý AI giáo dục tiếng Anh cho học sinh tiểu học ENjoy.
+Bé đang luyện tập khắc phục kỹ năng "${skillName}" theo CHỦ ĐỀ: "${topicName}".
+Dưới đây là danh sách các từ bé ĐÃ LÀM SAI cần khắc phục trong chủ đề này:
+${mistakeDetailStr}
+
+Hãy sáng tạo một bài học mini thích ứng ngắn gọn, vui tươi gắn liền với CHỦ ĐỀ "${topicName}":
+1. "story": Một đoạn văn ngắn 1-2 câu BẰNG TIẾNG VIỆT xoay quanh chủ đề "${topicName}". Trong đoạn tiếng Việt này, CHỈ RIÊNG các từ tiếng Anh bé làm sai [${targetWordsStr}] được viết bằng TIẾNG ANH IN ĐẬM VÀ BỌC TRONG DẤU ** (Ví dụ trong chủ đề School: "Hôm nay bạn nhỏ mở chiếc **backpack** để lấy cây **pencil** viết bài.").
+2. "storyVi": Để rỗng "" vì đoạn story đã là tiếng Việt.
+3. "question": Câu hỏi trắc nghiệm tiếng Việt ngắn gọn kiểm tra từ tiếng Anh bé hay nhầm lẫn dựa vào câu chuyện trên.
+4. "options": 4 phương án tiếng Anh (gồm từ đúng và các từ gây nhiễu / từ bé từng gõ sai).
+5. "correctAnswer": Từ tiếng Anh chính xác (trùng khớp 1 phương án trong options).
+6. "hint": Mẹo nhớ ngắn gọn bằng tiếng Việt giúp bé không lặp lại lỗi sai nữa.
+
+Trả về DUY NHẤT 1 chuỗi JSON hợp lệ (không kèm markdown \`\`\`json):
+{
+  "title": "Tên câu chuyện ngắn tiếng Việt theo chủ đề ${topicName}",
+  "story": "Đoạn văn tiếng Việt 1-2 câu chêm từ **EnglishWord**",
+  "storyVi": "",
+  "question": "Câu hỏi ngắn bằng tiếng Việt",
+  "options": ["word1", "word2", "word3", "word4"],
+  "correctAnswer": "word1",
+  "hint": "Mẹo nhớ ngắn gọn bằng tiếng Việt"
+}`;
+
+    const context = `Bạn là AI giáo dục ENjoy. Tạo nội dung rèn luyện tiếng Anh thích ứng theo chủ đề "${topicName}". Chỉ trả về JSON nguyên bản.`;
+
+    try {
+      const rawResponse = await chatbotApi.ask(prompt, context);
+
+      let cleaned = rawResponse.trim();
+      if (cleaned.startsWith('```json')) {
+        cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (cleaned.startsWith('```')) {
+        cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+
+      const jsonStart = cleaned.indexOf('{');
+      const jsonEnd = cleaned.lastIndexOf('}');
+      if (jsonStart !== -1 && jsonEnd !== -1) {
+        cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
+      }
+
+      const parsed: AdaptiveChallenge = JSON.parse(cleaned);
+      if (parsed.question && parsed.options && parsed.correctAnswer) {
+        return parsed;
+      }
+      throw new Error('Dữ liệu JSON không đủ trường');
+    } catch (err) {
+      console.warn('[ChatbotAPI] Không thể parse JSON từ AI, dùng fallback theo chủ đề:', err);
+      const primaryWord = mistakes[0]?.word || 'book';
+      const primaryTrans = mistakes[0]?.translation || 'quyển sách';
+      return {
+        title: `Chủ đề ${topicName}: Cùng nhớ từ "${primaryWord}"`,
+        story: `Trong giờ học chủ đề ${topicName}, bạn nhỏ cẩn thận mang theo một **${primaryWord}** xinh xắn để cùng học tập.`,
+        storyVi: '',
+        question: `Từ tiếng Anh nào trong câu chuyện chỉ "${primaryTrans}"?`,
+        options: [primaryWord, 'apple', 'desk', 'pen'],
+        correctAnswer: primaryWord,
+        hint: `Hãy nhớ lại từ vựng "${primaryTrans}" trong chủ đề ${topicName} nhé bé!`
+      };
+    }
+  },
 };
+
+export interface AdaptiveChallenge {
+  title: string;
+  story: string;
+  storyVi: string;
+  question: string;
+  options: string[];
+  correctAnswer: string;
+  hint: string;
+}
+
+

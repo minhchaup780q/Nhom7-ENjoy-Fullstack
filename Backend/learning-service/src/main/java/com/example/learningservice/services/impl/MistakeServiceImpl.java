@@ -5,9 +5,11 @@ import com.example.learningservice.dto.MistakeResponse;
 import com.example.learningservice.dto.MistakeStatsResponse;
 import com.example.learningservice.dto.PageResponse;
 import com.example.learningservice.entities.Mistake;
+import com.example.learningservice.entities.PartVocabulary;
 import com.example.learningservice.entities.Vocabulary;
 import com.example.learningservice.entities.enums.MistakeStatus;
 import com.example.learningservice.repositories.MistakeRepository;
+import com.example.learningservice.repositories.PartVocabularyRepository;
 import com.example.learningservice.repositories.VocabularyRepository;
 import com.example.learningservice.services.MistakeService;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -33,6 +37,66 @@ public class MistakeServiceImpl implements MistakeService {
 
     private final MistakeRepository mistakeRepository;
     private final VocabularyRepository vocabularyRepository;
+    private final PartVocabularyRepository partVocabularyRepository;
+    private final com.example.learningservice.repositories.PersonalizedAiChallengeRepository personalizedAiChallengeRepository;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+
+    private MistakeResponse enrichMistakeResponse(MistakeResponse response) {
+        if (response == null || response.getQuestionId() == null) return response;
+        try {
+            List<PartVocabulary> pvList = partVocabularyRepository.findByVocabularyIdWithTopic(response.getQuestionId());
+            if (pvList != null && !pvList.isEmpty()) {
+                PartVocabulary pv = pvList.get(0);
+                if (pv.getPart() != null && pv.getPart().getTopic() != null) {
+                    response.setKeyword(pv.getPart().getTopic().getTitle());
+                } else if (pv.getPart() != null) {
+                    response.setKeyword(pv.getPart().getTitle());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Error fetching topic for mistake vocabulary {}: {}", response.getQuestionId(), e.getMessage());
+        }
+        return response;
+    }
+
+    private List<MistakeResponse> enrichMistakeResponses(List<MistakeResponse> responses) {
+        if (responses == null || responses.isEmpty()) return responses;
+        List<Long> vocabIds = responses.stream()
+                .map(MistakeResponse::getQuestionId)
+                .filter(id -> id != null)
+                .distinct()
+                .collect(Collectors.toList());
+        if (vocabIds.isEmpty()) return responses;
+
+        Map<Long, String> topicMap = new HashMap<>();
+        try {
+            List<PartVocabulary> pvList = partVocabularyRepository.findByVocabularyIdsWithTopic(vocabIds);
+            if (pvList != null) {
+                for (PartVocabulary pv : pvList) {
+                    if (pv.getVocabulary() != null) {
+                        String title = null;
+                        if (pv.getPart() != null && pv.getPart().getTopic() != null) {
+                            title = pv.getPart().getTopic().getTitle();
+                        } else if (pv.getPart() != null) {
+                            title = pv.getPart().getTitle();
+                        }
+                        if (title != null) {
+                            topicMap.putIfAbsent(pv.getVocabulary().getId(), title);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Error fetching topic batch for mistakes: {}", e.getMessage());
+        }
+
+        for (MistakeResponse r : responses) {
+            if (r.getQuestionId() != null && topicMap.containsKey(r.getQuestionId())) {
+                r.setKeyword(topicMap.get(r.getQuestionId()));
+            }
+        }
+        return responses;
+    }
 
     @Override
     @Transactional
@@ -63,10 +127,10 @@ public class MistakeServiceImpl implements MistakeService {
                 existing.setCreatedAt(LocalDateTime.now());
                 existing.setAiExplanationCache(null);
                 Mistake saved = mistakeRepository.save(existing);
-                return MistakeResponse.fromEntity(saved);
+                return enrichMistakeResponse(MistakeResponse.fromEntity(saved));
             } else {
                 // Đang trong quá trình ôn tập (NEEDS_REVIEW hoặc REVIEWED) -> không cho ghi đè, bỏ qua
-                return MistakeResponse.fromEntity(existing);
+                return enrichMistakeResponse(MistakeResponse.fromEntity(existing));
             }
         }
 
@@ -81,7 +145,7 @@ public class MistakeServiceImpl implements MistakeService {
                 .build();
 
         Mistake saved = mistakeRepository.save(mistake);
-        return MistakeResponse.fromEntity(saved);
+        return enrichMistakeResponse(MistakeResponse.fromEntity(saved));
     }
 
     @Override
@@ -106,9 +170,10 @@ public class MistakeServiceImpl implements MistakeService {
         } else {
             mistakes = mistakeRepository.findByUserId(userId);
         }
-        return mistakes.stream()
+        List<MistakeResponse> list = mistakes.stream()
                 .map(MistakeResponse::fromEntity)
                 .collect(Collectors.toList());
+        return enrichMistakeResponses(list);
     }
 
     @Override
@@ -136,6 +201,7 @@ public class MistakeServiceImpl implements MistakeService {
         }
 
         Page<MistakeResponse> responsePage = mistakePage.map(MistakeResponse::fromEntity);
+        enrichMistakeResponses(responsePage.getContent());
         return PageResponse.fromPage(responsePage);
     }
 
@@ -150,9 +216,10 @@ public class MistakeServiceImpl implements MistakeService {
         } else {
             mistakePage = mistakeRepository.findDueMistakesByUserId(userId, todayStart, pageable);
         }
-        return mistakePage.getContent().stream()
+        List<MistakeResponse> list = mistakePage.getContent().stream()
                 .map(MistakeResponse::fromEntity)
                 .collect(Collectors.toList());
+        return enrichMistakeResponses(list);
     }
 
     @Override
@@ -167,7 +234,7 @@ public class MistakeServiceImpl implements MistakeService {
 
         mistake.setStatus(status);
         Mistake saved = mistakeRepository.save(mistake);
-        return MistakeResponse.fromEntity(saved);
+        return enrichMistakeResponse(MistakeResponse.fromEntity(saved));
     }
 
     @Override
@@ -178,7 +245,7 @@ public class MistakeServiceImpl implements MistakeService {
 
         mistake.setAiExplanationCache(explanation);
         Mistake saved = mistakeRepository.save(mistake);
-        return MistakeResponse.fromEntity(saved);
+        return enrichMistakeResponse(MistakeResponse.fromEntity(saved));
     }
 
     @Override
@@ -226,16 +293,17 @@ public class MistakeServiceImpl implements MistakeService {
         }
 
         Mistake saved = mistakeRepository.save(mistake);
-        return MistakeResponse.fromEntity(saved);
+        return enrichMistakeResponse(MistakeResponse.fromEntity(saved));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<MistakeResponse> getRoadmapMistakes(Long userId) {
         List<Mistake> mistakes = mistakeRepository.findByUserId(userId);
-        return mistakes.stream()
+        List<MistakeResponse> list = mistakes.stream()
                 .map(MistakeResponse::fromEntity)
                 .collect(Collectors.toList());
+        return enrichMistakeResponses(list);
     }
 
     @Override
@@ -287,4 +355,84 @@ public class MistakeServiceImpl implements MistakeService {
     public void deleteMistake(Long mistakeId) {
         mistakeRepository.deleteById(mistakeId);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.example.learningservice.dto.PersonalizedAiChallengeDTO getAiChallenge(Long userId, String skillKey, String topicId) {
+        if (userId == null) userId = 1L;
+        if (topicId == null) topicId = "all";
+        Optional<com.example.learningservice.entities.PersonalizedAiChallenge> opt = 
+            personalizedAiChallengeRepository.findByUserIdAndSkillKeyAndTopicId(userId, skillKey, topicId);
+        
+        if (opt.isEmpty()) return null;
+
+        com.example.learningservice.entities.PersonalizedAiChallenge entity = opt.get();
+        List<String> options = new ArrayList<>();
+        if (entity.getOptionsJson() != null && !entity.getOptionsJson().isBlank()) {
+            try {
+                options = objectMapper.readValue(entity.getOptionsJson(), new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {});
+            } catch (Exception e) {
+                log.warn("Could not parse options json: {}", entity.getOptionsJson());
+            }
+        }
+
+        return com.example.learningservice.dto.PersonalizedAiChallengeDTO.builder()
+                .id(entity.getId())
+                .userId(entity.getUserId())
+                .skillKey(entity.getSkillKey())
+                .topicId(entity.getTopicId())
+                .topicName(entity.getTopicName())
+                .title(entity.getTitle())
+                .story(entity.getStory())
+                .storyVi(entity.getStoryVi())
+                .question(entity.getQuestion())
+                .options(options)
+                .correctAnswer(entity.getCorrectAnswer())
+                .hint(entity.getHint())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public com.example.learningservice.dto.PersonalizedAiChallengeDTO saveOrUpdateAiChallenge(Long userId, com.example.learningservice.dto.PersonalizedAiChallengeDTO dto) {
+        final Long effectiveUserId = (userId != null) ? userId : 1L;
+        final String effectiveTopicId = (dto.getTopicId() != null) ? dto.getTopicId() : "all";
+        final String effectiveSkillKey = (dto.getSkillKey() != null) ? dto.getSkillKey() : "writing";
+
+        Optional<com.example.learningservice.entities.PersonalizedAiChallenge> opt = 
+            personalizedAiChallengeRepository.findByUserIdAndSkillKeyAndTopicId(effectiveUserId, effectiveSkillKey, effectiveTopicId);
+
+        com.example.learningservice.entities.PersonalizedAiChallenge entity = opt.orElseGet(() -> 
+            com.example.learningservice.entities.PersonalizedAiChallenge.builder()
+                .userId(effectiveUserId)
+                .skillKey(effectiveSkillKey)
+                .topicId(effectiveTopicId)
+                .build()
+        );
+
+        String optionsJson = "[]";
+        if (dto.getOptions() != null) {
+            try {
+                optionsJson = objectMapper.writeValueAsString(dto.getOptions());
+            } catch (Exception e) {
+                log.warn("Error serializing options: {}", e.getMessage());
+            }
+        }
+
+        entity.setTopicName(dto.getTopicName());
+        entity.setTitle(dto.getTitle());
+        entity.setStory(dto.getStory());
+        entity.setStoryVi(dto.getStoryVi());
+        entity.setQuestion(dto.getQuestion());
+        entity.setOptionsJson(optionsJson);
+        entity.setCorrectAnswer(dto.getCorrectAnswer());
+        entity.setHint(dto.getHint());
+
+        com.example.learningservice.entities.PersonalizedAiChallenge saved = personalizedAiChallengeRepository.save(entity);
+
+        dto.setId(saved.getId());
+        dto.setUserId(saved.getUserId());
+        return dto;
+    }
 }
+

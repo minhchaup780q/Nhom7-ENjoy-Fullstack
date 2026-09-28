@@ -113,4 +113,27 @@ public class MistakeController {
         mistakeService.deleteMistake(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/ai-challenge")
+    public ResponseEntity<com.example.learningservice.dto.PersonalizedAiChallengeDTO> getAiChallenge(
+            @RequestHeader(value = "X-User-Id", required = false) Long headerUserId,
+            @RequestParam(value = "userId", required = false) Long queryUserId,
+            @RequestParam(value = "skillKey", defaultValue = "writing") String skillKey,
+            @RequestParam(value = "topicId", defaultValue = "all") String topicId) {
+        Long userId = (headerUserId != null) ? headerUserId : queryUserId;
+        if (userId == null) userId = 1L;
+        com.example.learningservice.dto.PersonalizedAiChallengeDTO result = mistakeService.getAiChallenge(userId, skillKey, topicId);
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/ai-challenge")
+    public ResponseEntity<com.example.learningservice.dto.PersonalizedAiChallengeDTO> saveAiChallenge(
+            @RequestHeader(value = "X-User-Id", required = false) Long headerUserId,
+            @RequestParam(value = "userId", required = false) Long queryUserId,
+            @RequestBody com.example.learningservice.dto.PersonalizedAiChallengeDTO request) {
+        Long userId = (headerUserId != null) ? headerUserId : queryUserId;
+        if (userId == null) userId = 1L;
+        com.example.learningservice.dto.PersonalizedAiChallengeDTO saved = mistakeService.saveOrUpdateAiChallenge(userId, request);
+        return ResponseEntity.ok(saved);
+    }
 }
