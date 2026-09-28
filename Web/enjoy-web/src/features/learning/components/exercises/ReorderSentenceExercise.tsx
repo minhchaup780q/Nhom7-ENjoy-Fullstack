@@ -33,8 +33,27 @@ export const ReorderSentenceExercise: React.FC<ReorderSentenceExerciseProps> = (
   const currentItem = items[currentIndex];
 
   const playAudio = (url: string) => {
-    const audio = new Audio(url);
-    audio.play().catch(e => console.error('Audio play failed:', e));
+    if (!url && currentItem?.sentence) {
+      fallbackToSpeechSynthesis(currentItem.sentence);
+      return;
+    }
+    const safeUrl = url.replace(/ /g, '%20');
+    const audio = new Audio(safeUrl);
+    audio.play().catch(e => {
+      console.warn('Primary audio failed, falling back to Web Speech API...', e);
+      if (currentItem && currentItem.sentence) {
+        fallbackToSpeechSynthesis(currentItem.sentence);
+      }
+    });
+  };
+
+  const fallbackToSpeechSynthesis = (text: string) => {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.9;
+    window.speechSynthesis.speak(utterance);
   };
 
   useEffect(() => {
