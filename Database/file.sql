@@ -1,10 +1,13 @@
 -- ============================================================
 -- SAMPLE DATA FOR enjoy_learning_db
 -- Ảnh & audio linh hoạt theo từng word
--- Tất cả sessions: payload = NULL
+-- Chỉ giữ topic Number (chuẩn mẫu), đã xóa topic Body
+-- Session 7: FILL_IN_BLANK với payload đầy đủ
 -- ============================================================
 
 USE `enjoy_learning_db`;
+
+-- ------------------------------------------------------------
 
 -- ------------------------------------------------------------
 -- 1. LEVEL
@@ -14,29 +17,24 @@ VALUES
 (1, NOW(), 1, 0, NOW(), 1, 'PRE_A1', 'Pre A1 - Beginner', 1);
 
 -- ------------------------------------------------------------
--- 2. TOPICS
+-- 2. TOPICS (chỉ còn Number)
 -- ------------------------------------------------------------
 INSERT INTO `topics` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `description`, `order_index`, `thumbnail_url`, `title`, `level_id`)
 VALUES
 (1, NOW(), 1, 0, NOW(), 1, 'Numbers from 1 to 20', 1,
  'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=600&auto=format&fit=crop&q=80',
- 'Number', 1),
-(2, NOW(), 1, 0, NOW(), 1, 'Body parts vocabulary', 2,
- 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&auto=format&fit=crop&q=80',
- 'Body', 1);
+ 'Number', 1);
 
 -- ------------------------------------------------------------
--- 3. PARTS
+-- 3. PARTS (chỉ còn 2 part thuộc Number)
 -- ------------------------------------------------------------
 INSERT INTO `parts` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `order_index`, `title`, `topic_id`)
 VALUES
 (1, NOW(), 1, 0, NOW(), 1, 1, 'Number 1-10', 1),
-(2, NOW(), 1, 0, NOW(), 1, 2, 'Number 10-20', 1),
-(3, NOW(), 1, 0, NOW(), 1, 1, 'Body Parts 1', 2),
-(4, NOW(), 1, 0, NOW(), 1, 2, 'Body Parts 2', 2);
+(2, NOW(), 1, 0, NOW(), 1, 2, 'Number 10-20', 1);
 
 -- ------------------------------------------------------------
--- 4. VOCABULARIES
+-- 4. VOCABULARIES (chỉ còn vocab của Number 1-20)
 -- ------------------------------------------------------------
 INSERT INTO `vocabularies` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `image_url`, `translation`, `word`)
 VALUES
@@ -84,42 +82,10 @@ VALUES
 (20, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=nineteen&type=2',
  'https://dummyimage.com/600x400/673AB7/ffffff.png&text=19+-+Nineteen', 'mười chín', 'nineteen'),
 (21, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=twenty&type=2',
- 'https://dummyimage.com/600x400/2196F3/ffffff.png&text=20+-+Twenty', 'hai mươi', 'twenty'),
-
--- Body parts
-(22, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=head&type=2',
- 'https://dummyimage.com/600x400/03A9F4/ffffff.png&text=Head', 'đầu', 'head'),
-(23, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=eye&type=2',
- 'https://dummyimage.com/600x400/00BCD4/ffffff.png&text=Eye', 'mắt', 'eye'),
-(24, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=ear&type=2',
- 'https://dummyimage.com/600x400/009688/ffffff.png&text=Ear', 'tai', 'ear'),
-(25, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=nose&type=2',
- 'https://dummyimage.com/600x400/4CAF50/ffffff.png&text=Nose', 'mũi', 'nose'),
-(26, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=mouth&type=2',
- 'https://dummyimage.com/600x400/8BC34A/ffffff.png&text=Mouth', 'miệng', 'mouth'),
-(27, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=hand&type=2',
- 'https://dummyimage.com/600x400/CDDC39/000000.png&text=Hand', 'bàn tay', 'hand'),
-(28, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=arm&type=2',
- 'https://dummyimage.com/600x400/FFEB3B/000000.png&text=Arm', 'cánh tay', 'arm'),
-(29, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=leg&type=2',
- 'https://dummyimage.com/600x400/FFC107/000000.png&text=Leg', 'chân', 'leg'),
-(30, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=foot&type=2',
- 'https://dummyimage.com/600x400/FF9800/ffffff.png&text=Foot', 'bàn chân', 'foot'),
-(31, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=hair&type=2',
- 'https://dummyimage.com/600x400/FF5722/ffffff.png&text=Hair', 'tóc', 'hair'),
-(32, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=tooth&type=2',
- 'https://dummyimage.com/600x400/795548/ffffff.png&text=Tooth', 'răng', 'tooth'),
-(33, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=tongue&type=2',
- 'https://dummyimage.com/600x400/E91E63/ffffff.png&text=Tongue', 'lưỡi', 'tongue'),
-(34, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=neck&type=2',
- 'https://dummyimage.com/600x400/9C27B0/ffffff.png&text=Neck', 'cổ', 'neck'),
-(35, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=shoulder&type=2',
- 'https://dummyimage.com/600x400/673AB7/ffffff.png&text=Shoulder', 'vai', 'shoulder'),
-(36, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=knee&type=2',
- 'https://dummyimage.com/600x400/3F51B5/ffffff.png&text=Knee', 'đầu gối', 'knee');
+ 'https://dummyimage.com/600x400/2196F3/ffffff.png&text=20+-+Twenty', 'hai mươi', 'twenty');
 
 -- ------------------------------------------------------------
--- 5. PART_VOCABULARIES
+-- 5. PART_VOCABULARIES (chỉ còn 2 part)
 -- ------------------------------------------------------------
 INSERT INTO `part_vocabularies` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `order_index`, `part_id`, `vocabulary_id`)
 VALUES
@@ -143,26 +109,12 @@ VALUES
 (18, NOW(), 1, 0, NOW(), 1, 8,  2, 18),
 (19, NOW(), 1, 0, NOW(), 1, 9,  2, 19),
 (20, NOW(), 1, 0, NOW(), 1, 10, 2, 20),
-(21, NOW(), 1, 0, NOW(), 1, 11, 2, 21),
-(22, NOW(), 1, 0, NOW(), 1, 1, 3, 22),
-(23, NOW(), 1, 0, NOW(), 1, 2, 3, 23),
-(24, NOW(), 1, 0, NOW(), 1, 3, 3, 24),
-(25, NOW(), 1, 0, NOW(), 1, 4, 3, 25),
-(26, NOW(), 1, 0, NOW(), 1, 5, 3, 26),
-(27, NOW(), 1, 0, NOW(), 1, 6, 3, 27),
-(28, NOW(), 1, 0, NOW(), 1, 7, 3, 28),
-(29, NOW(), 1, 0, NOW(), 1, 1, 4, 29),
-(30, NOW(), 1, 0, NOW(), 1, 2, 4, 30),
-(31, NOW(), 1, 0, NOW(), 1, 3, 4, 31),
-(32, NOW(), 1, 0, NOW(), 1, 4, 4, 32),
-(33, NOW(), 1, 0, NOW(), 1, 5, 4, 33),
-(34, NOW(), 1, 0, NOW(), 1, 6, 4, 34),
-(35, NOW(), 1, 0, NOW(), 1, 7, 4, 35),
-(36, NOW(), 1, 0, NOW(), 1, 8, 4, 36);
+(21, NOW(), 1, 0, NOW(), 1, 11, 2, 21);
 
 -- ------------------------------------------------------------
 -- 6. SESSIONS
---    Tất cả payload = NULL
+--    Part 1: Number 1-10  (7 vòng, vòng 7 = FILL_IN_BLANK có payload)
+--    Part 2: Number 10-20 (7 vòng, payload = NULL)
 -- ------------------------------------------------------------
 INSERT INTO `sessions`
 (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `badge_id`, `description`, `session_type`, `order_index`, `payload`, `title`, `part_id`)
@@ -175,7 +127,7 @@ VALUES
 (2, NOW(), 1, 0, NOW(), 1, NULL, 'Match word numbers 1-10', 'MATCH_WORD', 2, NULL, 'Match Word: Numbers 1-10', 1),
 (3, NOW(), 1, 0, NOW(), 1, NULL, 'Speaking numbers 1-10', 'SPEAKING', 3, NULL, 'Speaking: Numbers 1-10', 1),
 (4, NOW(), 1, 0, NOW(), 1, NULL, 'Re-order numbers 1-10', 'RE_ORDER', 4, NULL, 'Re-order: Numbers 1-10', 1),
-(5, NOW(), 1, 0, NOW(), 1, NULL, 'Drag drop numbers 1-10', 'DRAG_DROP', 5, 
+(5, NOW(), 1, 0, NOW(), 1, NULL, 'Drag drop numbers 1-10', 'DRAG_DROP', 5,
  JSON_OBJECT(
   'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/number.jpg',
   'audio_url', 'https://dict.youdao.com/dictvoice?audio=one&type=2',
@@ -213,8 +165,61 @@ VALUES
     JSON_OBJECT('order', 15, 'type', 'QUESTION', 'text', 'My [] is Kin.',   'audio_url', 'https://dict.youdao.com/dictvoice?audio=My+name+is+Kin.&type=2',       'options', JSON_ARRAY(JSON_OBJECT('id','opt_1','text','name',   'is_correct',TRUE), JSON_OBJECT('id','opt_2','text','am',      'is_correct',FALSE))),
     JSON_OBJECT('order', 16, 'type', 'QUESTION', 'text', '[] old are you?', 'audio_url', 'https://dict.youdao.com/dictvoice?audio=How+old+are+you?&type=2',      'options', JSON_ARRAY(JSON_OBJECT('id','opt_1','text','How',    'is_correct',TRUE), JSON_OBJECT('id','opt_2','text','What',    'is_correct',FALSE)))
   )
- ), 'Grammar: Numbers 1-10', 1),
-(7, NOW(), 1, 0, NOW(), 1, NULL, 'Practice numbers 1-10', 'PRACTICE', 7, NULL, 'Practice: Numbers 1-10', 1),
+), 'Grammar: Numbers 1-10', 1),
+(7, NOW(), 1, 0, NOW(), 1, NULL, 'Fill in blank numbers 1-10', 'FILL_IN_BLANK', 7,
+ JSON_OBJECT(
+  'title', 'Fill in Blank: Numbers 1-10',
+  'items', JSON_ARRAY(
+    JSON_OBJECT(
+      'order', 1,
+      'sentence', 'I''m [nine] years old',
+      'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/grammar_fill_in_blank_nine.webp',
+      'audio_url', 'https://dict.youdao.com/dictvoice?audio=I%27m+nine+years+old&type=2',
+      'answer', 'nine',
+      'distractors', JSON_ARRAY('six', 'ten')
+    ),
+    JSON_OBJECT(
+      'order', 2,
+      'sentence', 'I''m [eight] years old',
+      'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/grammar_fill_in_blank_eight.webp',
+      'audio_url', 'https://dict.youdao.com/dictvoice?audio=I%27m+eight+years+old&type=2',
+      'answer', 'eight',
+      'distractors', JSON_ARRAY('six', 'ten')
+    ),
+    JSON_OBJECT(
+      'order', 3,
+      'sentence', 'I''m [one] years old',
+      'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/grammar_fill_in_blank_one.webp',
+      'audio_url', 'https://dict.youdao.com/dictvoice?audio=I%27m+one+years+old&type=2',
+      'answer', 'one',
+      'distractors', JSON_ARRAY('two', 'five')
+    ),
+    JSON_OBJECT(
+      'order', 4,
+      'sentence', 'I''m [two] years old',
+      'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/grammar_fill_in_blank_two.webp',
+      'audio_url', 'https://dict.youdao.com/dictvoice?audio=I%27m+two+years+old&type=2',
+      'answer', 'two',
+      'distractors', JSON_ARRAY('three', 'four')
+    ),
+    JSON_OBJECT(
+      'order', 5,
+      'sentence', 'I''m [five] years old',
+      'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/grammar_fill_in_blank_five.webp',
+      'audio_url', 'https://dict.youdao.com/dictvoice?audio=I%27m+five+years+old&type=2',
+      'answer', 'five',
+      'distractors', JSON_ARRAY('three', 'four')
+    ),
+    JSON_OBJECT(
+      'order', 6,
+      'sentence', 'I''m [seven] years old',
+      'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/grammar_fill_in_blank_seven.webp',
+      'audio_url', 'https://dict.youdao.com/dictvoice?audio=I%27m+seven+years+old&type=2',
+      'answer', 'seven',
+      'distractors', JSON_ARRAY('four', 'nine')
+    )
+  )
+), 'Fill in Blank: Numbers 1-10', 1),
 
 -- ============================================================
 -- PART 2: Number 10-20
@@ -223,29 +228,16 @@ VALUES
 (9,  NOW(), 1, 0, NOW(), 1, NULL, 'Match word numbers 10-20', 'MATCH_WORD', 2, NULL, 'Match Word: Numbers 10-20', 2),
 (10, NOW(), 1, 0, NOW(), 1, NULL, 'Speaking numbers 10-20', 'SPEAKING', 3, NULL, 'Speaking: Numbers 10-20', 2),
 (11, NOW(), 1, 0, NOW(), 1, NULL, 'Re-order numbers 10-20', 'RE_ORDER', 4, NULL, 'Re-order: Numbers 10-20', 2),
-(12, NOW(), 1, 0, NOW(), 1, NULL, 'Drag drop numbers 10-20',    'DRAG_DROP',    5, NULL, 'Drag Drop: Numbers 10-20',    2),
-(13, NOW(), 1, 0, NOW(), 1, NULL, 'Grammar numbers 10-20',      'GRAMMAR',      6, NULL, 'Grammar: Numbers 10-20',      2),
-(14, NOW(), 1, 0, NOW(), 1, NULL, 'Practice numbers 10-20',     'PRACTICE',     7, NULL, 'Practice: Numbers 10-20',     2),
+(12, NOW(), 1, 0, NOW(), 1, NULL, 'Drag drop numbers 10-20', 'DRAG_DROP', 5, NULL, 'Drag Drop: Numbers 10-20', 2),
+(13, NOW(), 1, 0, NOW(), 1, NULL, 'Grammar numbers 10-20', 'GRAMMAR', 6, NULL, 'Grammar: Numbers 10-20', 2),
+(14, NOW(), 1, 0, NOW(), 1, NULL, 'Fill in blank numbers 10-20', 'FILL_IN_BLANK', 7, NULL, 'Fill in Blank: Numbers 10-20', 2);
 
 -- ============================================================
--- PART 3: Body Parts 1
+-- 7. RESET AUTO_INCREMENT (tuỳ chọn, để id sạch)
 -- ============================================================
-(15, NOW(), 1, 0, NOW(), 1, NULL, 'Flashcard body parts 1', 'FLASHCARD', 1, NULL, 'Flashcard: Body Parts 1', 3),
-(16, NOW(), 1, 0, NOW(), 1, NULL, 'Match word body parts 1', 'MATCH_WORD', 2, NULL, 'Match Word: Body Parts 1', 3),
-(17, NOW(), 1, 0, NOW(), 1, NULL, 'Speaking body parts 1', 'SPEAKING', 3, NULL, 'Speaking: Body Parts 1', 3),
-(18, NOW(), 1, 0, NOW(), 1, NULL, 'Re-order body parts 1', 'RE_ORDER', 4, NULL, 'Re-order: Body Parts 1', 3),
-(19, NOW(), 1, 0, NOW(), 1, NULL, 'Drag drop body parts 1',    'DRAG_DROP',    5, NULL, 'Drag Drop: Body Parts 1',    3),
-(20, NOW(), 1, 0, NOW(), 1, NULL, 'Grammar body parts 1',      'GRAMMAR',      6, NULL, 'Grammar: Body Parts 1',      3),
-(21, NOW(), 1, 0, NOW(), 1, NULL, 'Practice body parts 1',     'PRACTICE',     7, NULL, 'Practice: Body Parts 1',     3),
-
--- ============================================================
--- PART 4: Body Parts 2
--- ============================================================
-(22, NOW(), 1, 0, NOW(), 1, NULL, 'Flashcard body parts 2', 'FLASHCARD', 1, NULL, 'Flashcard: Body Parts 2', 4),
-(23, NOW(), 1, 0, NOW(), 1, NULL, 'Match word body parts 2', 'MATCH_WORD', 2, NULL, 'Match Word: Body Parts 2', 4),
-(24, NOW(), 1, 0, NOW(), 1, NULL, 'Speaking body parts 2', 'SPEAKING', 3, NULL, 'Speaking: Body Parts 2', 4),
-(25, NOW(), 1, 0, NOW(), 1, NULL, 'Re-order body parts 2', 'RE_ORDER', 4, NULL, 'Re-order: Body Parts 2', 4),
-(26, NOW(), 1, 0, NOW(), 1, NULL, 'Drag drop body parts 2',    'DRAG_DROP',    5, NULL, 'Drag Drop: Body Parts 2',    4),
-(27, NOW(), 1, 0, NOW(), 1, NULL, 'Grammar body parts 2',      'GRAMMAR',      6, NULL, 'Grammar: Body Parts 2',      4),
-(28, NOW(), 1, 0, NOW(), 1, NULL, 'Practice body parts 2',     'PRACTICE',     7, NULL, 'Practice: Body Parts 2',     4);
-
+ALTER TABLE `levels`           AUTO_INCREMENT = 2;
+ALTER TABLE `topics`           AUTO_INCREMENT = 2;
+ALTER TABLE `parts`            AUTO_INCREMENT = 3;
+ALTER TABLE `vocabularies`     AUTO_INCREMENT = 22;
+ALTER TABLE `part_vocabularies` AUTO_INCREMENT = 22;
+ALTER TABLE `sessions`         AUTO_INCREMENT = 15;

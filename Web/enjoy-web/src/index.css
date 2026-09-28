@@ -131,6 +131,17 @@ body {
   box-shadow: 0 0 0 #e5e5e5;
 }
 
+/* Red 3D Button */
+.btn-3d-red {
+  background-color: #ff4b4b;
+  color: #ffffff;
+  border-color: #ff4b4b;
+  box-shadow: 0 4px 0 #d93d3d;
+}
+.btn-3d-red:active {
+  box-shadow: 0 0 0 #d93d3d;
+}
+
 /* 3D Card */
 .card-3d {
   background-color: #ffffff;

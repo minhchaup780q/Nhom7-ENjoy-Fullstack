@@ -19,7 +19,7 @@ import {
   Bars3BottomLeftIcon,
   CursorArrowRaysIcon,
   BookOpenIcon,
-  ChatBubbleLeftRightIcon
+  PencilSquareIcon
 } from '@heroicons/react/24/solid';
 
 interface LearningMapProps {
@@ -174,7 +174,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
       case SessionType.RE_ORDER: Icon = Bars3BottomLeftIcon; break;
       case SessionType.DRAG_DROP: Icon = CursorArrowRaysIcon; break;
       case SessionType.GRAMMAR: Icon = BookOpenIcon; break;
-      case SessionType.PRACTICE: Icon = ChatBubbleLeftRightIcon; break;
+      case SessionType.FILL_IN_BLANK: Icon = PencilSquareIcon; break;
     }
 
     if (session.status === SessionStatus.LOCK) {
@@ -549,7 +549,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                 const isGrammarSession = (session: Session) => {
                   return (
                     session.sessionType === SessionType.GRAMMAR ||
-                    session.sessionType === SessionType.PRACTICE ||
+                    session.sessionType === SessionType.FILL_IN_BLANK ||
                     (session.orderIndex !== undefined && session.orderIndex !== null && session.orderIndex >= 6) ||
                     (session.sessionIdx !== undefined && session.sessionIdx >= 5)
                   );
@@ -605,7 +605,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                         {isSelected && (
                           <div className="absolute bottom-full mb-4 bg-white border-2 border-[#e5e5e5] rounded-[2rem] p-5 shadow-2xl z-20 w-72 text-center animate-fade-in-up">
                             <span className={`text-[10px] font-extrabold tracking-widest uppercase block mb-1 ${palette.textClass}`}>
-                              Vòng {session.sessionIdx + 1}: {session.sessionType === SessionType.PRACTICE ? 'Practice' : session.sessionType}
+                              Vòng {session.sessionIdx + 1}: {session.sessionType === SessionType.FILL_IN_BLANK ? 'Fill in Blank' : session.sessionType}
                             </span>
                             <h4 className="text-sm font-display font-extrabold text-text-main m-0 leading-tight">
                               {session.title}

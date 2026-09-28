@@ -8,6 +8,8 @@ import { SpeakingExercise } from './exercises/SpeakingExercise';
 import { ReorderExercise } from './exercises/ReorderExercise';
 import { DragDropExercise } from './exercises/DragDropExercise';
 import { GrammarExercise } from './exercises/GrammarExercise';
+import { FillInBlankExercise } from './exercises/FillInBlankExercise';
+import { CongratulationScreen } from './ui/CongratulationScreen';
 import { XMarkIcon, HeartIcon } from '@heroicons/react/24/solid';
 
 interface SessionPlayerProps {
@@ -87,16 +89,19 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   // ──────────────────────────────────────────────
   if (sessionFinished) {
     const failed = hearts === 0;
+    
+    if (!failed) {
+      return <CongratulationScreen onNext={handleClose} />;
+    }
+
+    // Nếu thất bại (hết tim) thì hiển thị màn hình báo lỗi
     return (
       <div className="session-finished">
         <div className="session-finished-card">
-          <div className="session-finished-emoji">{failed ? '😢' : '🎉'}</div>
+          <div className="session-finished-emoji">😢</div>
           <h2 className="session-finished-title">
-            {failed ? 'Hết lượt! Cố lên lần sau nhé!' : 'Hoàn thành bài học!'}
+            Hết lượt! Cố lên lần sau nhé!
           </h2>
-          {!failed && (
-            <p className="session-finished-subtitle">Bạn đã hoàn thành «{session.title}» thành công!</p>
-          )}
           <button id="session-finished-close-btn" className="btn-primary" onClick={handleClose}>
             Quay lại
           </button>
@@ -222,14 +227,15 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
           />
         );
 
-      case SessionType.PRACTICE:
+      case SessionType.FILL_IN_BLANK:
+        if (!payload || !payload.items || payload.items.length === 0) return <div className="session-placeholder"><p>Dữ liệu bài tập trống.</p></div>;
         return (
-          <div className="session-placeholder">
-            <p>🚧 Vòng <strong>{session.sessionType}</strong> đang được xây dựng...</p>
-            <button className="btn-next-exercise" onClick={handleSessionComplete}>
-              Bỏ qua →
-            </button>
-          </div>
+          <FillInBlankExercise
+            payload={payload}
+            onComplete={handleSessionComplete}
+            onMistake={handleMistake}
+            onProgress={handleProgress}
+          />
         );
 
       default:
@@ -266,9 +272,11 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     <div className="session-player">
       <Header />
 
-      <div className="session-player-title">
-        <h2>{session.title}</h2>
-      </div>
+      {session.sessionType !== SessionType.FILL_IN_BLANK && (
+        <div className="session-player-title">
+          <h2>{session.title}</h2>
+        </div>
+      )}
 
       <div className="session-exercise-area">
         {renderExercise()}
