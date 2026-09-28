@@ -10,7 +10,6 @@ import {
   ArrowsRightLeftIcon,
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
-  SparklesIcon,
   SpeakerWaveIcon,
   MicrophoneIcon,
   BookOpenIcon,
@@ -18,7 +17,6 @@ import {
   LanguageIcon,
   AcademicCapIcon,
   UserGroupIcon,
-  HeartIcon,
   PlusIcon,
   CheckBadgeIcon,
   UserIcon
@@ -84,8 +82,8 @@ export const SKILL_DEFINITIONS: SkillDefinition[] = [
   { 
     key: 'vocabGrammar', 
     index: 5, 
-    nameVi: 'Từ vựng & Ngữ pháp', 
-    nameEn: 'Vocab & Grammar', 
+    nameVi: 'Từ vựng', 
+    nameEn: 'Vocabulary', 
     color: '#f59e0b', 
     bgLight: 'bg-amber-50 text-amber-600 border-amber-200',
     icon: LanguageIcon,
@@ -825,7 +823,7 @@ export const PersonalStatsPage: React.FC = () => {
             </h2>
             <p className="text-xs text-slate-500">
               {activeSkillTab === 'current'
-                ? 'Biểu đồ năng lực hiện tại: Nghe, Nói, Đọc, Viết, Từ vựng & Ngữ pháp'
+                ? 'Biểu đồ năng lực hiện tại: Nghe, Nói, Đọc, Viết, Từ vựng'
                 : 'Đối sánh năng lực giữa 2 mốc ngày để theo dõi sự tiến bộ'}
             </p>
           </div>

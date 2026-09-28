@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import type { SessionPayload, FillInBlankItem } from '../../types';
+import type { SessionPayload, FillInBlankItem, Vocabulary } from '../../types';
+import type { MistakeCreatePayload } from '../../services/mistakeApi';
 import { Button3D } from '../../../../components/ui/Button3D';
 import { SpeakerWaveIcon } from '@heroicons/react/24/solid';
 import { ExerciseFooter } from '../ui/ExerciseFooter';
@@ -7,8 +8,9 @@ import type { FooterStatus } from '../ui/ExerciseFooter';
 
 interface Props {
   payload: SessionPayload;
+  vocabularies?: Vocabulary[];
   onComplete: () => void;
-  onMistake: () => void;
+  onMistake?: (data: MistakeCreatePayload) => void;
   onProgress?: (current: number, total: number) => void;
 }
 
@@ -38,6 +40,7 @@ function playAudio(url: string, fallbackText?: string): void {
 
 export const FillInBlankExercise: React.FC<Props> = ({
   payload,
+  vocabularies,
   onComplete,
   onMistake,
   onProgress
@@ -99,7 +102,19 @@ export const FillInBlankExercise: React.FC<Props> = ({
       // Có thể thêm âm thanh ting ở đây
     } else {
       setFooterStatus('incorrect');
-      onMistake();
+      if (onMistake) {
+        const matchedVocab = vocabularies?.find(v => v.word.toLowerCase() === currentItem.answer.toLowerCase())
+          || vocabularies?.[currentIndex]
+          || vocabularies?.[0];
+
+        if (matchedVocab) {
+          onMistake({
+            questionId: matchedVocab.id,
+            roundType: 7,
+            wrongAnswerSubmitted: selectedOption,
+          });
+        }
+      }
     }
   };
 

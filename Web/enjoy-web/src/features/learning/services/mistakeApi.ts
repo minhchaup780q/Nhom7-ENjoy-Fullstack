@@ -68,23 +68,29 @@ export const mistakeApi = {
     page?: number;
     size?: number;
   }) => {
+    const queryParams: Record<string, string | number> = {
+      status: params?.status || 'NEEDS_REVIEW',
+      page: params?.page ?? 0,
+      size: params?.size ?? 6,
+    };
+    if (params?.roundType !== undefined) {
+      queryParams.roundType = params.roundType;
+    }
     return apiClient.get<PageResponse<MistakeItem>>('/api/mistakes', {
-      params: {
-        status: params?.status || 'NEEDS_REVIEW',
-        roundType: params?.roundType,
-        page: params?.page ?? 0,
-        size: params?.size ?? 6,
-      },
+      params: queryParams,
     });
   },
 
   // Lấy danh sách câu hỏi cần ôn tập cho Player
   getPracticeQueue: (roundType?: number, limit = 20) => {
+    const queryParams: Record<string, string | number> = {
+      limit,
+    };
+    if (roundType !== undefined) {
+      queryParams.roundType = roundType;
+    }
     return apiClient.get<MistakeItem[]>('/api/mistakes/practice-queue', {
-      params: {
-        roundType,
-        limit,
-      },
+      params: queryParams,
     });
   },
 

@@ -6,17 +6,14 @@ import {
   SpeakerWaveIcon,
   PlayIcon,
   SparklesIcon,
-  TrophyIcon,
-  ClockIcon,
   FunnelIcon,
-  BookOpenIcon,
   CpuChipIcon,
-  XMarkIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   CalendarDaysIcon,
   ListBulletIcon,
-  CheckBadgeIcon
+  CheckBadgeIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/solid';
 import { Button3D } from '../../../components/ui/Button3D';
 import { Mascot } from '../../../components/ui/Mascot';
@@ -54,11 +51,13 @@ const getAssetUrl = (url?: string | null) => {
 };
 
 const ROUND_INFO: Record<number, { name: string; color: string; badgeBg: string }> = {
-  1: { name: 'Vòng 1 • Từ vựng', color: 'text-indigo-600', badgeBg: 'bg-indigo-50 border-indigo-200/60' },
-  2: { name: 'Vòng 2 • Luyện nghe', color: 'text-purple-600', badgeBg: 'bg-purple-50 border-purple-200/60' },
-  3: { name: 'Vòng 3 • Luyện nói', color: 'text-rose-600', badgeBg: 'bg-rose-50 border-rose-200/60' },
-  4: { name: 'Vòng 4 • Đọc hiểu', color: 'text-emerald-600', badgeBg: 'bg-emerald-50 border-emerald-200/60' },
-  5: { name: 'Vòng 5 • Điền từ & Viết', color: 'text-sky-600', badgeBg: 'bg-sky-50 border-sky-200/60' }
+  1: { name: 'Màn 1 • Học từ vựng', color: 'text-slate-600', badgeBg: 'bg-slate-50 border-slate-200/60' },
+  2: { name: 'Màn 2 • Nối từ vựng (Từ vựng)', color: 'text-amber-600', badgeBg: 'bg-amber-50 border-amber-200/60' },
+  3: { name: 'Màn 3 • Luyện nói (Speaking)', color: 'text-rose-600', badgeBg: 'bg-rose-50 border-rose-200/60' },
+  4: { name: 'Màn 4 • Sắp xếp chữ (Viết)', color: 'text-purple-600', badgeBg: 'bg-purple-50 border-purple-200/60' },
+  5: { name: 'Màn 5 • Kéo thả toạ độ (Nghe)', color: 'text-blue-600', badgeBg: 'bg-blue-50 border-blue-200/60' },
+  6: { name: 'Màn 6 • Ngữ pháp (Đọc)', color: 'text-emerald-600', badgeBg: 'bg-emerald-50 border-emerald-200/60' },
+  7: { name: 'Màn 7 • Điền từ (Đọc)', color: 'text-teal-600', badgeBg: 'bg-teal-50 border-teal-200/60' },
 };
 
 const PAGE_SIZE = 6;
@@ -377,11 +376,12 @@ export const PracticeDashboard: React.FC = () => {
                   className="bg-transparent text-xs font-bold text-slate-600 outline-none cursor-pointer"
                 >
                   <option value="ALL">Tất cả kỹ năng</option>
-                  <option value="1">Vòng 1: Từ vựng</option>
-                  <option value="2">Vòng 2: Nghe</option>
-                  <option value="3">Vòng 3: Nói</option>
-                  <option value="4">Vòng 4: Đọc hiểu</option>
-                  <option value="5">Vòng 5: Viết</option>
+                  <option value="2">Màn 2: Nối từ vựng (Từ vựng)</option>
+                  <option value="3">Màn 3: Luyện nói (Speaking)</option>
+                  <option value="4">Màn 4: Sắp xếp chữ cái (Viết)</option>
+                  <option value="5">Màn 5: Kéo thả toạ độ (Nghe)</option>
+                  <option value="6">Màn 6: Ngữ pháp trắc nghiệm (Đọc)</option>
+                  <option value="7">Màn 7: Điền từ vào chỗ trống (Đọc)</option>
                 </select>
               </div>
 

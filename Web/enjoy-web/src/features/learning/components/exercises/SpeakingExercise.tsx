@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { Vocabulary } from '../../types';
+import type { MistakeCreatePayload } from '../../services/mistakeApi';
 import { learningApi } from '../../services/learningApi';
 
 interface SpeakingExerciseProps {
   vocabularies: Vocabulary[];
   onComplete: (allPassed: boolean) => void;
-  onMistake: () => void;
+  onMistake?: (data: MistakeCreatePayload) => void;
   onProgress?: (current: number, total: number) => void;
 }
 
@@ -93,7 +94,13 @@ export const SpeakingExercise: React.FC<SpeakingExerciseProps> = ({ vocabularies
       setResult(res);
       setRecordState('done');
       if (!res.isAllCorrect) {
-        onMistake();
+        if (onMistake && currentVocab) {
+          onMistake({
+            questionId: currentVocab.id,
+            roundType: 3,
+            wrongAnswerSubmitted: res.recognizedText || 'Phát âm chưa chuẩn',
+          });
+        }
       }
     } catch {
       setErrorMsg('Kiểm tra phát âm thất bại. Vui lòng thử lại.');

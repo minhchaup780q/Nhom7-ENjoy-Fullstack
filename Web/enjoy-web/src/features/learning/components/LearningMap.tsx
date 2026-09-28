@@ -11,7 +11,6 @@ import {
   SparklesIcon, 
   StarIcon, 
   LockClosedIcon, 
-  CheckCircleIcon, 
   ArrowLeftIcon,
   DocumentTextIcon,
   PuzzlePieceIcon,
@@ -552,13 +551,14 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                 const partSessions = allSessionsInTopic.filter(s => s.partId === part.id);
                 
                 const isGrammarSession = (session: Session) => {
+                  const sAny = session as any;
                   return (
                     session.sessionType === SessionType.GRAMMAR ||
                     session.sessionType === SessionType.FILL_IN_BLANK ||
                     session.sessionType === SessionType.RE_ORDER_SENTENCE ||
                     session.sessionType === SessionType.SPEAKING_SENTENCE ||
                     (session.orderIndex !== undefined && session.orderIndex !== null && session.orderIndex >= 6) ||
-                    (session.sessionIdx !== undefined && session.sessionIdx >= 5)
+                    (sAny.sessionIdx !== undefined && sAny.sessionIdx >= 5)
                   );
                 };
 
@@ -569,7 +569,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                   const isSelected = selectedNodeId === session.id;
                   const isUnlocked = session.status === SessionStatus.UNLOCK;
                   const curveStyle = getCurveMargin(localIdx, isGrammar);
-                  const palette = getSessionPalette(session.partIdx || 0);
+                  const palette = getSessionPalette((session as any).partIdx || 0);
 
                   // Alternating Mascot placement next to the road
                   const hasMascotLeft = !isGrammar && localIdx === 2; // Mascot on the left of node 3

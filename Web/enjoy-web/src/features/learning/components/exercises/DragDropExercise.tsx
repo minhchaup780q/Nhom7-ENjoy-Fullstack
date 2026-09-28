@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import type { SessionPayload } from '../../types';
+import type { SessionPayload, Vocabulary } from '../../types';
+import type { MistakeCreatePayload } from '../../services/mistakeApi';
 
 interface DragDropExerciseProps {
   payload: SessionPayload;
+  vocabularies?: Vocabulary[];
   onComplete: () => void;
-  onMistake: () => void;
+  onMistake?: (data: MistakeCreatePayload) => void;
   onProgress?: (current: number, total: number) => void;
 }
 
 export const DragDropExercise: React.FC<DragDropExerciseProps> = ({
   payload,
+  vocabularies,
   onComplete,
   onMistake,
   onProgress
@@ -142,9 +145,24 @@ export const DragDropExercise: React.FC<DragDropExerciseProps> = ({
     const mistakes: number[] = [];
 
     coords.forEach((c, index) => {
-      if (placedWords[index]?.toLowerCase() !== c.word.toLowerCase()) {
+      const placed = placedWords[index];
+      if (placed?.toLowerCase() !== c.word.toLowerCase()) {
         hasMistake = true;
         mistakes.push(index);
+
+        if (onMistake) {
+          const matchedVocab = vocabularies?.find(v => v.word.toLowerCase() === c.word.toLowerCase())
+            || vocabularies?.[index]
+            || vocabularies?.[0];
+
+          if (matchedVocab) {
+            onMistake({
+              questionId: matchedVocab.id,
+              roundType: 5,
+              wrongAnswerSubmitted: placed || '(trống)',
+            });
+          }
+        }
       }
     });
 
@@ -153,7 +171,6 @@ export const DragDropExercise: React.FC<DragDropExerciseProps> = ({
     if (hasMistake) {
       setWrongBoxes(mistakes);
       setIsCorrect(false);
-      onMistake();
     } else {
       setWrongBoxes([]);
       setIsCorrect(true);
@@ -216,13 +233,6 @@ export const DragDropExercise: React.FC<DragDropExerciseProps> = ({
           <div className="dragdrop-words-list">
             {draggableWords.map((word, idx) => {
               // Only show the word in the list if it is not placed yet
-              // Wait, if the same word appears twice in the draggableWords, we need to count them.
-              // To be simple, we can just hide it if it's placed.
-              const countInList = draggableWords.filter(w => w === word).length;
-              const countPlaced = placedWordsArray.filter(w => w === word).length;
-              
-              // If we render the list by map, we should hide the item if its instances are all placed.
-              // Actually, since all words are unique in the part (usually), we can just check if it's placed.
               const isPlaced = placedWordsArray.includes(word);
 
               if (isPlaced) {
