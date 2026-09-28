@@ -510,7 +510,7 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
               {/* Mascot Assistant Feedback */}
               <div className="bg-white border-4 border-border-main rounded-3xl p-4 flex items-center gap-4">
                 <Mascot 
-                  expression={isSuccessTransition ? "happy" : timeLeft <= 20 ? "surprised" : "thinking"} 
+                  expression={isSuccessTransition ? "happy" : timeLeft <= 20 ? "thinking" : "normal"} 
                   speechBubbleText={
                     isSuccessTransition 
                       ? `Tuyệt vời! Bé đã tìm đúng ${currentTarget.nameVi} (${currentTarget.nameEn}) rồi!` 
@@ -773,7 +773,7 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
           {/* Mascot Remark */}
           <div className="max-w-xl mx-auto flex items-center justify-center">
             <Mascot 
-              expression={foundCount >= 4 ? "happy" : foundCount >= 2 ? "surprised" : "thinking"} 
+              expression={foundCount >= 4 ? "happy" : foundCount >= 2 ? "normal" : "thinking"} 
               speechBubbleText={
                 foundCount === 5 
                   ? "Xuất sắc tuyệt đối! Bé chính là siêu thám tử nhí của ENjoy!" 

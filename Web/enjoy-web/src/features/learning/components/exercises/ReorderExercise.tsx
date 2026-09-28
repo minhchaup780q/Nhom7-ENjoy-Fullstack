@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { Vocabulary } from '../../types';
+import type { MistakeCreatePayload } from '../../services/mistakeApi';
 
 interface ReorderExerciseProps {
   vocabularies: Vocabulary[];
   onComplete: (allPassed: boolean) => void;
-  onMistake: () => void;
+  onMistake?: (data: MistakeCreatePayload) => void;
   onProgress?: (current: number, total: number) => void;
 }
 
@@ -81,7 +82,13 @@ export const ReorderExercise: React.FC<ReorderExerciseProps> = ({ vocabularies, 
     setIsCorrect(isRight);
     setChecked(true);
     if (!isRight) {
-      onMistake();
+      if (onMistake && currentVocab) {
+        onMistake({
+          questionId: currentVocab.id,
+          roundType: 4,
+          wrongAnswerSubmitted: typed || 'Chưa hoàn thành',
+        });
+      }
     }
   };
 

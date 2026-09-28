@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import type { GrammarBlock, GrammarOption, SessionPayload } from '../../types';
+import type { GrammarBlock, GrammarOption, SessionPayload, Vocabulary } from '../../types';
+import type { MistakeCreatePayload } from '../../services/mistakeApi';
 
 interface GrammarExerciseProps {
   payload: SessionPayload;
+  vocabularies?: Vocabulary[];
   onComplete: () => void;
-  onMistake: () => void;
+  onMistake?: (data: MistakeCreatePayload) => void;
   onProgress?: (current: number, total: number) => void;
 }
 
@@ -26,6 +28,7 @@ interface QuestionState {
 
 export const GrammarExercise: React.FC<GrammarExerciseProps> = ({
   payload,
+  vocabularies,
   onComplete,
   onMistake,
   onProgress,
@@ -104,7 +107,16 @@ export const GrammarExercise: React.FC<GrammarExerciseProps> = ({
       }));
     } else {
       // Chọn sai: đánh dấu sai option này, cho phép thử lại
-      onMistake();
+      if (onMistake) {
+        const vocabId = vocabularies?.[blockIndex]?.id || vocabularies?.[0]?.id;
+        if (vocabId) {
+          onMistake({
+            questionId: vocabId,
+            roundType: 6,
+            wrongAnswerSubmitted: option.text,
+          });
+        }
+      }
       setQuestionStates(prev => ({
         ...prev,
         [blockIndex]: { selectedId: option.id, isCorrect: false },

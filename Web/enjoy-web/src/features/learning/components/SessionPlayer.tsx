@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLearningStore } from '../store/useLearningStore';
 import { SessionType } from '../types';
 import type { Session, Vocabulary } from '../types';
+import { mistakeApi, type MistakeCreatePayload } from '../services/mistakeApi';
 import { FlashcardExercise } from './exercises/FlashcardExercise';
 import { MatchWordExercise } from './exercises/MatchWordExercise';
 import { SpeakingExercise } from './exercises/SpeakingExercise';
@@ -32,6 +33,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   const [progress, setProgress] = useState(0); // 0-100%
   const [partVocabs, setPartVocabs] = useState<Vocabulary[]>([]);
   const [loadingVocabs, setLoadingVocabs] = useState(false);
+  const [recordedMistakes, setRecordedMistakes] = useState<MistakeCreatePayload[]>([]);
 
   const sessionStartTime = useRef(Date.now());
 
@@ -39,18 +41,11 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   useEffect(() => {
     selectSession(session);
     sessionStartTime.current = Date.now();
+    setRecordedMistakes([]);
   }, [session.id]);
 
-  // Fetch từ vựng của Part nếu cần
-  const needsVocabs = [
-    SessionType.FLASHCARD,
-    SessionType.MATCH_WORD,
-    SessionType.SPEAKING,
-    SessionType.RE_ORDER,
-  ].includes(session.sessionType);
-
+  // Fetch từ vựng của Part cho tất cả các vòng cần thông tin từ vựng / ghi nhận lỗi sai
   useEffect(() => {
-    if (!needsVocabs) return;
     const partId = session.part?.id ?? (activePart?.id ?? 0);
     if (!partId) return;
     setLoadingVocabs(true);
@@ -58,19 +53,43 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       setPartVocabs(vocabs);
       setLoadingVocabs(false);
     });
-  }, [session.id, needsVocabs]);
+  }, [session.id, session.part?.id, activePart?.id]);
 
-  const handleMistake = () => {
+  const handleMistake = (mistakeData?: MistakeCreatePayload) => {
     setHearts(h => {
       const next = Math.max(0, h - 1);
       if (next === 0) handleSessionFailed();
       return next;
     });
+
+    if (mistakeData && mistakeData.questionId) {
+      setRecordedMistakes(prev => {
+        const existingIdx = prev.findIndex(
+          m => m.questionId === mistakeData.questionId && m.roundType === mistakeData.roundType
+        );
+        if (existingIdx >= 0) {
+          const updated = [...prev];
+          updated[existingIdx] = mistakeData;
+          return updated;
+        }
+        return [...prev, mistakeData];
+      });
+    }
   };
 
   const handleSessionComplete = async () => {
     const durationSeconds = Math.round((Date.now() - sessionStartTime.current) / 1000);
     setSessionFinished(true);
+
+    // Gửi toàn bộ danh sách câu làm sai trong màn chơi vào hệ thống ôn tập
+    if (recordedMistakes.length > 0) {
+      try {
+        await mistakeApi.logBatchMistakes(recordedMistakes);
+      } catch (err) {
+        console.error('Failed to log batch mistakes upon session completion:', err);
+      }
+    }
+
     await completeSession(session.id, durationSeconds);
   };
 
@@ -179,6 +198,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
             partId={session.part?.id ?? activePart?.id ?? 0}
             vocabularies={partVocabs}
             onComplete={handleSessionComplete}
+            onMistake={handleMistake}
             onProgress={handleProgress}
           />
         );
@@ -210,6 +230,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
         return (
           <DragDropExercise
             payload={payload}
+            vocabularies={partVocabs}
             onComplete={handleSessionComplete}
             onMistake={handleMistake}
             onProgress={handleProgress}
@@ -221,6 +242,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
         return (
           <GrammarExercise
             payload={payload}
+            vocabularies={partVocabs}
             onComplete={handleSessionComplete}
             onMistake={handleMistake}
             onProgress={handleProgress}
@@ -232,6 +254,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
         return (
           <FillInBlankExercise
             payload={payload}
+            vocabularies={partVocabs}
             onComplete={handleSessionComplete}
             onMistake={handleMistake}
             onProgress={handleProgress}
