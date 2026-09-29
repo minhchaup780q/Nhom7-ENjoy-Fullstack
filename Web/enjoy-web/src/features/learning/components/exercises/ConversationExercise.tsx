@@ -118,6 +118,11 @@ export const ConversationExercise: React.FC<ConversationExerciseProps> = ({
     }
   };
 
+  const handleRetry = () => {
+    setSelectedOption(null);
+    setFooterStatus('idle');
+  };
+
   const handleNext = () => {
     if (currentIndex < items.length - 1) {
       setCurrentIndex(prev => prev + 1);
@@ -219,7 +224,10 @@ export const ConversationExercise: React.FC<ConversationExerciseProps> = ({
           status={footerStatus}
           onCheck={handleCheck}
           onNext={handleNext}
+          onRetry={footerStatus === 'incorrect' ? handleRetry : undefined}
+          hideNextButton={footerStatus === 'incorrect'}
           correctAnswer={currentItem.answer.text}
+          nextLabel={currentIndex === items.length - 1 ? 'Hoàn thành' : 'Tiếp tục'}
         />
       </div>
     </div>

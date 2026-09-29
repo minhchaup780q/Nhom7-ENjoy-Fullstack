@@ -142,7 +142,7 @@ export const FlashcardExercise: React.FC<FlashcardExerciseProps> = ({ vocabulari
           status="learning"
           onCheck={() => {}}
           onNext={handleNext}
-          nextLabel={currentIndex < vocabularies.length - 1 ? 'Từ tiếp theo' : 'Hoàn thành vòng 1'}
+          nextLabel={currentIndex < vocabularies.length - 1 ? 'Từ tiếp theo' : 'Hoàn thành'}
         />
       </div>
     </div>

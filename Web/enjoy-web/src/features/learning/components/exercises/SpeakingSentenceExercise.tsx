@@ -239,18 +239,23 @@ export const SpeakingSentenceExercise: React.FC<SpeakingSentenceExerciseProps> =
                 Nhận xét
               </span>
               <div className="text-lg md:text-xl font-display font-bold text-text-main">
-                Bé nói sai thành:{' '}
-                {result.recognizedText?.split(' ').map((word, idx) => {
-                  // Xóa dấu câu để so sánh
-                  const cleanWord = word.replace(/[^\w\s]/g, '').toLowerCase();
-                  const targetWords = currentItem.sentence.toLowerCase().replace(/[^\w\s]/g, '').split(' ');
-                  const isWrong = !targetWords.includes(cleanWord);
-                  return (
-                    <span key={idx} className={isWrong ? 'text-red-500' : 'text-text-main'}>
-                      {word}{' '}
-                    </span>
-                  );
-                })}
+                {result.recognizedText ? (
+                  <>
+                    Bé nói sai thành:{' '}
+                    {result.recognizedText.split(' ').map((word, idx) => {
+                      const cleanWord = word.replace(/[^\w\s]/g, '').toLowerCase();
+                      const targetWords = currentItem.sentence.toLowerCase().replace(/[^\w\s]/g, '').split(' ');
+                      const isWrong = !targetWords.includes(cleanWord);
+                      return (
+                        <span key={idx} className={isWrong ? 'text-red-500' : 'text-text-main'}>
+                          {word}{' '}
+                        </span>
+                      );
+                    })}
+                  </>
+                ) : (
+                  <span className="text-red-500">Bé hãy nói từ nghe được nhé!</span>
+                )}
               </div>
             </div>
           )}
@@ -264,7 +269,8 @@ export const SpeakingSentenceExercise: React.FC<SpeakingSentenceExerciseProps> =
           onCheck={handleCheck}
           onNext={handleNext}
           onRetry={footerStatus === 'incorrect' ? handleRetry : undefined}
-          nextLabel={footerStatus === 'incorrect' ? 'BỎ QUA' : undefined}
+          hideNextButton={footerStatus === 'incorrect'}
+          nextLabel={currentIndex === items.length - 1 ? 'Hoàn thành' : 'Tiếp tục'}
         />
       </div>
     </div>

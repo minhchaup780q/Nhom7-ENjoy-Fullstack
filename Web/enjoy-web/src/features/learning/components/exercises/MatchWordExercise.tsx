@@ -295,7 +295,7 @@ export const MatchWordExercise: React.FC<MatchWordExerciseProps> = ({
           onCheck={() => {}}
           onNext={onComplete}
           disabled={matchedIds.size < vocabularies.length}
-          nextLabel="Tiếp tục"
+          nextLabel="Hoàn thành"
           customMessage="Hãy ghép các từ với hình ảnh đúng nhé!"
         />
       </div>

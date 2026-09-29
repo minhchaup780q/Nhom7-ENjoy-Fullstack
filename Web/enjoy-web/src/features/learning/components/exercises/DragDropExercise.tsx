@@ -74,9 +74,13 @@ export const DragDropExercise: React.FC<DragDropExerciseProps> = ({
   };
 
   useEffect(() => {
-    playAudio();
+    const timeoutId = setTimeout(() => {
+      playAudio();
+    }, 300);
+    
+    return () => clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [audioUrl, raw?.sentence, coords]);
+  }, [audioUrl, raw?.sentence]);
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, word: string, sourceIndex?: number) => {
     if (footerStatus === 'correct' || footerStatus === 'incorrect') return;
@@ -302,7 +306,8 @@ export const DragDropExercise: React.FC<DragDropExerciseProps> = ({
           onNext={handleNext}
           onRetry={footerStatus === 'incorrect' ? handleRetry : undefined}
           disabled={Object.keys(placedWords).length !== coords.length}
-          nextLabel={footerStatus === 'incorrect' ? 'BỎ QUA' : undefined}
+          hideNextButton={footerStatus === 'incorrect'}
+          nextLabel="Hoàn thành"
         />
       </div>
     </div>

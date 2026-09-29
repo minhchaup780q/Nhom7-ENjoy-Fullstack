@@ -212,10 +212,11 @@ export const SpeakingExercise: React.FC<SpeakingExerciseProps> = ({ vocabularies
                 Nhận xét
               </span>
               <div className="text-lg md:text-xl font-display font-bold text-text-main">
-                Bé nói sai thành:{' '}
-                <span className="text-red-500">
-                  {result.recognizedText}
-                </span>
+                {result.recognizedText ? (
+                  <>Bé nói sai thành: <span className="text-red-500">{result.recognizedText}</span></>
+                ) : (
+                  <span className="text-red-500">Bé hãy nói từ nghe được nhé!</span>
+                )}
               </div>
             </div>
           )}
@@ -229,7 +230,8 @@ export const SpeakingExercise: React.FC<SpeakingExerciseProps> = ({ vocabularies
           onCheck={() => {}}
           onNext={handleNext}
           onRetry={footerStatus === 'incorrect' ? retry : undefined}
-          nextLabel={footerStatus === 'incorrect' ? 'BỎ QUA' : undefined}
+          hideNextButton={footerStatus === 'incorrect'}
+          nextLabel={currentIndex === vocabularies.length - 1 ? 'Hoàn thành' : 'Tiếp tục'}
         />
       </div>
     </div>

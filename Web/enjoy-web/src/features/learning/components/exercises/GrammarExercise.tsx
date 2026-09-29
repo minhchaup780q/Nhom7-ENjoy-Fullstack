@@ -239,14 +239,13 @@ export const GrammarExercise: React.FC<GrammarExerciseProps> = ({
       <div className="grammar-blocks-container">
         {visibleBlocks.map((block, index) => renderBlock(block, index))}
 
-        {/* Nút Tiếp tục nằm ngay dưới block cuối cùng */}
         <div className="grammar-next-area" ref={bottomRef}>
           <button
             className={`grammar-next-btn ${canProceed ? '' : 'disabled'}`}
             onClick={handleNext}
             disabled={!canProceed}
           >
-            {isLastBlock ? 'Hoàn thành ✓' : 'Tiếp tục →'}
+            {isLastBlock ? 'Hoàn thành' : 'Tiếp tục'}
           </button>
         </div>
       </div>

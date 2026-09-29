@@ -200,7 +200,8 @@ export const ReorderExercise: React.FC<ReorderExerciseProps> = ({ vocabularies, 
           onRetry={footerStatus === 'incorrect' ? handleRetry : undefined}
           disabled={answer.length !== word.length || answer.some(a => !a)}
           correctAnswer={word.toLowerCase()}
-          nextLabel={footerStatus === 'incorrect' ? 'BỎ QUA' : undefined}
+          hideNextButton={footerStatus === 'incorrect'}
+          nextLabel={currentIndex === vocabularies.length - 1 ? 'Hoàn thành' : 'Tiếp tục'}
         />
       </div>
     </div>

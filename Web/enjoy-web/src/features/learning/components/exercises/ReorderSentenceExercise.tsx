@@ -130,6 +130,12 @@ export const ReorderSentenceExercise: React.FC<ReorderSentenceExerciseProps> = (
     }
   };
 
+  const handleRetry = () => {
+    setSourceWords(prev => [...prev, ...targetWords].sort((a, b) => a.id.localeCompare(b.id)));
+    setTargetWords([]);
+    setFooterStatus('idle');
+  };
+
   const handleNext = () => {
     if (currentIndex < items.length - 1) {
       setCurrentIndex(prev => prev + 1);
@@ -218,8 +224,11 @@ export const ReorderSentenceExercise: React.FC<ReorderSentenceExerciseProps> = (
           status={footerStatus}
           onCheck={handleCheck}
           onNext={handleNext}
+          onRetry={footerStatus === 'incorrect' ? handleRetry : undefined}
+          hideNextButton={footerStatus === 'incorrect'}
           disabled={targetWords.length !== totalWords}
           correctAnswer={currentItem.sentence}
+          nextLabel={currentIndex === items.length - 1 ? 'Hoàn thành' : 'Tiếp tục'}
         />
       </div>
     </div>

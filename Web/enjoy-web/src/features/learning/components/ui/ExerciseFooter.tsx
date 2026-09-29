@@ -15,6 +15,7 @@ interface ExerciseFooterProps {
   onRetry?: () => void;
   nextLabel?: string;
   customMessage?: string;
+  hideNextButton?: boolean;
 }
 
 export const ExerciseFooter: React.FC<ExerciseFooterProps> = ({
@@ -25,7 +26,8 @@ export const ExerciseFooter: React.FC<ExerciseFooterProps> = ({
   correctAnswer,
   onRetry,
   nextLabel,
-  customMessage
+  customMessage,
+  hideNextButton
 }) => {
   const getBackgroundColorStyle = () => {
     switch (status) {
@@ -111,36 +113,38 @@ export const ExerciseFooter: React.FC<ExerciseFooterProps> = ({
             </Button3D>
           )}
 
-          {(status === 'idle' || status === 'selected') ? (
-            <Button3D
-              variant={status === 'selected' ? 'green' : 'gray'} 
-              onClick={onCheck}
-              disabled={disabled || status === 'idle'}
-              size="md"
-            >
-              <div className="flex items-center gap-2">
-                {!nextLabel && <RocketLaunchIcon className="w-5 h-5 md:w-6 md:h-6" />}
-                <span className="text-sm md:text-base">{nextLabel ? nextLabel.toUpperCase() : 'KIỂM TRA ĐÁP ÁN'}</span>
-              </div>
-            </Button3D>
-          ) : status === 'learning' ? (
-            <Button3D
-              variant="green"
-              onClick={onNext}
-              size="md"
-              className="text-sm md:text-base !border-white"
-            >
-              {nextLabel ? nextLabel.toUpperCase() : 'TIẾP TỤC'}
-            </Button3D>
-          ) : (
-            <Button3D
-              variant={status === 'correct' ? 'green' : 'red'}
-              onClick={onNext}
-              size="md"
-              className="text-sm md:text-base !border-white"
-            >
-              {nextLabel ? nextLabel.toUpperCase() : 'TIẾP TỤC'}
-            </Button3D>
+          {!hideNextButton && (
+            (status === 'idle' || status === 'selected') ? (
+              <Button3D
+                variant={status === 'selected' ? 'green' : 'gray'} 
+                onClick={onCheck}
+                disabled={disabled || status === 'idle'}
+                size="md"
+              >
+                <div className="flex items-center gap-2">
+                  <RocketLaunchIcon className="w-5 h-5 md:w-6 md:h-6" />
+                  <span className="text-sm md:text-base">KIỂM TRA ĐÁP ÁN</span>
+                </div>
+              </Button3D>
+            ) : status === 'learning' ? (
+              <Button3D
+                variant="green"
+                onClick={onNext}
+                size="md"
+                className="text-sm md:text-base !border-white"
+              >
+                {nextLabel ? nextLabel.toUpperCase() : 'TIẾP TỤC'}
+              </Button3D>
+            ) : (
+              <Button3D
+                variant={status === 'correct' ? 'green' : 'red'}
+                onClick={onNext}
+                size="md"
+                className="text-sm md:text-base !border-white"
+              >
+                {nextLabel ? nextLabel.toUpperCase() : 'TIẾP TỤC'}
+              </Button3D>
+            )
           )}
         </div>
       </div>
