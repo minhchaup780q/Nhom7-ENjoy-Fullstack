@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { 
   BookOpenIcon, 
   SparklesIcon, 
+  SpeakerWaveIcon,
   PuzzlePieceIcon, 
   ChartBarIcon,
   TrophyIcon, 
@@ -23,6 +24,7 @@ export const SidebarLeft: React.FC = () => {
   const menuItems: MenuItem[] = [
     { id: 'learn', label: 'HỌC', icon: <BookOpenIcon className="w-6 h-6 stroke-[2.5]" />, path: '/learn' },
     { id: 'explore', label: 'KHÁM PHÁ', icon: <SparklesIcon className="w-6 h-6 stroke-[2.5]" />, path: '/explore' },
+    { id: 'pronunciation', label: 'PHÁT ÂM', icon: <SpeakerWaveIcon className="w-6 h-6 stroke-[2.5]" />, path: '/pronunciation' },
     { id: 'practice', label: 'LUYỆN TẬP', icon: <PuzzlePieceIcon className="w-6 h-6 stroke-[2.5]" />, path: '/practice' },
     { id: 'stats', label: 'THỐNG KÊ', icon: <ChartBarIcon className="w-6 h-6 stroke-[2.5]" />, path: '/stats' },
     { id: 'leaderboard', label: 'BẢNG XẾP HẠNG', icon: <TrophyIcon className="w-6 h-6 stroke-[2.5]" />, path: '/leaderboard' },

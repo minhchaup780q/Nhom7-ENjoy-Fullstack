@@ -32,7 +32,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
 
   const [sessionFinished, setSessionFinished] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
-  const [progress, setProgress] = useState(0); // 0-100%
+  const [progress, setProgress] = useState(0);
   const [partVocabs, setPartVocabs] = useState<Vocabulary[]>([]);
   const [loadingVocabs, setLoadingVocabs] = useState(false);
   const [recordedMistakes, setRecordedMistakes] = useState<MistakeCreatePayload[]>([]);
@@ -77,7 +77,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     const durationSeconds = Math.round((Date.now() - sessionStartTime.current) / 1000);
     setSessionFinished(true);
 
-    // Gửi toàn bộ danh sách câu làm sai trong màn chơi vào hệ thống ôn tập
+    // Gửi toàn bộ danh sách câu làm sai khi hoàn thành bài học (không trùng lặp)
     if (recordedMistakes.length > 0) {
       try {
         await mistakeApi.logBatchMistakes(recordedMistakes);
@@ -229,6 +229,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
         return (
           <ReorderSentenceExercise
             payload={payload}
+            vocabularies={partVocabs}
             onComplete={handleSessionComplete}
             onMistake={handleMistake}
             onProgress={handleProgress}
@@ -240,6 +241,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
         return (
           <SpeakingSentenceExercise
             payload={payload}
+            vocabularies={partVocabs}
             onComplete={handleSessionComplete}
             onMistake={handleMistake}
             onProgress={handleProgress}
@@ -251,6 +253,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
         return (
           <ConversationExercise
             payload={session.payload}
+            vocabularies={partVocabs}
             onComplete={handleSessionComplete}
             onMistake={handleMistake}
             onProgress={(cur, total) => setProgress((cur / total) * 100)}

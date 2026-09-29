@@ -31,6 +31,7 @@ export interface SkillScores {
   reading: number;
   writing: number;
   vocabGrammar: number;
+  grammar: number;
 }
 
 export interface SkillComparisonStats {

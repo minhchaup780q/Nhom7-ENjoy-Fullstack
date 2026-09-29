@@ -28,9 +28,12 @@ export const LoginPage: React.FC = () => {
     try {
       const response = await authApi.login({ email: email.trim(), password });
       
-      const user = response.user || {
-        email: response.email || email.trim(),
-        role: response.role,
+      const rawUser = response.user || (response as any);
+      const user = {
+        id: rawUser.id || (rawUser as any).userId,
+        email: rawUser.email || (response as any).email || email.trim(),
+        role: rawUser.role || (response as any).role,
+        username: rawUser.username || (response as any).username,
         hasPassword: response.hasPassword ?? true,
       };
 

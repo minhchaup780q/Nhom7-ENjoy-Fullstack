@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import type { Vocabulary } from '../../types';
+import type { MistakeCreatePayload } from '../../services/mistakeApi';
 import { ExerciseFooter, type FooterStatus } from '../ui/ExerciseFooter';
 import { SpeakerWaveIcon } from '@heroicons/react/24/solid';
 import pigImg from '../../../../assets/pig_conversation.png';
@@ -20,8 +22,9 @@ interface ConversationItem {
 
 interface ConversationExerciseProps {
   payload: any;
+  vocabularies?: Vocabulary[];
   onComplete: () => void;
-  onMistake: () => void;
+  onMistake?: (data: MistakeCreatePayload) => void;
   onProgress?: (current: number, total: number) => void;
 }
 
@@ -37,6 +40,7 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 
 export const ConversationExercise: React.FC<ConversationExerciseProps> = ({
   payload,
+  vocabularies,
   onComplete,
   onMistake,
   onProgress
@@ -114,7 +118,19 @@ export const ConversationExercise: React.FC<ConversationExerciseProps> = ({
       // Thêm một chút delay rồi phát âm thanh báo đúng hoặc phát lại câu vừa chọn
     } else {
       setFooterStatus('incorrect');
-      onMistake();
+      if (onMistake) {
+        const vocabId = vocabularies?.[currentIndex]?.id || vocabularies?.[0]?.id || 1;
+        onMistake({
+          questionId: vocabId,
+          roundType: 10,
+          wrongAnswerSubmitted: selectedOption.text || 'Sai câu trả lời hội thoại',
+          phonemeErrorType: JSON.stringify({
+            question: currentItem.question,
+            answer: currentItem.answer,
+            distractor: currentItem.distractor,
+          }),
+        });
+      }
     }
   };
 
