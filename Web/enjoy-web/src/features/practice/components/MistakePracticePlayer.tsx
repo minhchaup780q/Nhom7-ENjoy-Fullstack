@@ -95,7 +95,7 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
       setAiAdvice(explanation);
       mistakeApi.updateAiExplanation(currentItem.id, explanation).catch(() => {});
     } catch {
-      setAiAdvice('Trợ lý AI đang bận một chút. Bé hãy xem lại từ vựng và đáp án đúng nhé!');
+      setAiAdvice('ENjoy AI đang bận một chút. Bé hãy xem lại từ vựng và đáp án đúng nhé!');
     } finally {
       setAiLoading(false);
     }
@@ -435,7 +435,7 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
           <div className="bg-white border-2 border-slate-200 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <span className="font-display font-black text-slate-800 text-sm uppercase">
-                Hướng Dẫn Lỗi Sai Từ AI
+                Hướng Dẫn Lỗi Sai Từ ENjoy AI
               </span>
               <button
                 onClick={() => setIsAiModalOpen(false)}
@@ -484,12 +484,12 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-medium text-slate-700 leading-relaxed min-h-[90px] flex items-center">
                 {aiLoading ? (
                   <div className="w-full flex flex-col items-center justify-center gap-2 py-3 text-slate-600">
-                    <p className="text-xs font-bold text-slate-700">Trợ lý AI đang chuẩn bị lời khuyên...</p>
+                    <p className="text-xs font-bold text-slate-700">ENjoy AI đang chuẩn bị lời khuyên...</p>
                   </div>
                 ) : (
                   <div className="space-y-1.5 w-full">
                     <p className="font-bold text-slate-800 uppercase text-[11px]">
-                      Lời khuyên từ Trợ lý AI:
+                      Lời khuyên từ ENjoy AI:
                     </p>
                     <p className="text-slate-700 leading-relaxed whitespace-pre-line text-xs">
                       {aiAdvice || 'Bé hãy chú ý từ vựng và luyện tập lại thật kỹ nhé!'}

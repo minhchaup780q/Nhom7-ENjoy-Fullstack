@@ -45,7 +45,7 @@ export const FillInBlankExercise: React.FC<Props> = ({
   onMistake,
   onProgress
 }) => {
-  const items: FillInBlankItem[] = payload.items || [];
+  const items: FillInBlankItem[] = (payload.items || []) as FillInBlankItem[];
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [footerStatus, setFooterStatus] = useState<FooterStatus>('idle');

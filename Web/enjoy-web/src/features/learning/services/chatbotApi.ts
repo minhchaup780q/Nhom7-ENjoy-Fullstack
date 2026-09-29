@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { apiClient, BASE_URL } from '../../../services/apiClient';
-import type { MistakeItem } from './mistakeApi';
+import { mistakeApi, type MistakeItem } from './mistakeApi';
 
 export interface ChatbotResponse {
   reply: string;
@@ -134,43 +134,91 @@ Hãy so sánh lỗi sai của bé với đáp án chuẩn và hướng dẫn bé
     return chatbotApi.ask(prompt, context);
   },
 
-  // Sinh câu chuyện và thử thách ngữ cảnh thích ứng theo đúng chủ đề và câu làm sai
+  // Sinh câu chuyện và thử thách ngữ cảnh thích ứng theo đúng chủ đề và câu làm sai (Full Tiếng Việt 100% - Bao gồm toàn bộ từ của topic)
   generateAdaptiveChallenge: async (
-    skillName: string,
+    _skillName: string,
     mistakes: { word: string; translation?: string; wrongAttempt?: string }[],
     topicName: string = 'Tổng hợp'
   ): Promise<AdaptiveChallenge> => {
-    const mistakeDetailStr = mistakes.map((m, idx) => 
-      `${idx + 1}. Từ đúng: "${m.word}" (${m.translation || ''}) ${m.wrongAttempt && m.wrongAttempt !== 'Chưa học' ? `- Bé từng làm sai thành: "${m.wrongAttempt}"` : ''}`
+    // 1. Lấy TOÀN BỘ danh sách từ vựng của topic này
+    const candidateList = mistakes.filter(m => m.word && m.word.trim().length > 0);
+    const validList = candidateList.length > 0 
+      ? candidateList 
+      : [{ word: 'book', translation: 'quyển sách' }];
+
+    // Danh sách toàn bộ từ tiếng Việt và tiếng Anh cần xuất hiện trong bài
+    const allWordsInfo = validList.map(m => ({
+      word: m.word.toLowerCase().trim(),
+      trans: (m.translation || m.word).trim(),
+    }));
+
+    const allTransList = Array.from(new Set(allWordsInfo.map(w => w.trans)));
+    const allEnglishWords = Array.from(new Set(allWordsInfo.map(w => w.word)));
+    const boldKeywordsStr = allTransList.map(t => `**${t}**`).join(' và ');
+
+    // Chọn 1 từ trong số các từ trên để làm câu hỏi kiểm tra
+    const selectedTarget = allWordsInfo[Math.floor(Math.random() * allWordsInfo.length)];
+    const targetWord = selectedTarget.word;
+    const targetTrans = selectedTarget.trans;
+
+    // 2. Từ điển từ vựng cùng nhóm chủ đề để tạo phương án nhiễu logic
+    const THEME_WORDS: Record<string, string[]> = {
+      number: ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'],
+      color: ['red', 'blue', 'green', 'yellow', 'pink', 'purple', 'orange', 'black', 'white', 'brown'],
+      animal: ['cat', 'dog', 'bird', 'fish', 'duck', 'pig', 'tiger', 'lion', 'rabbit', 'bear', 'elephant'],
+      school: ['book', 'pen', 'pencil', 'ruler', 'eraser', 'bag', 'desk', 'chair', 'board', 'school'],
+      food: ['apple', 'banana', 'bread', 'milk', 'water', 'rice', 'cake', 'candy', 'orange', 'egg'],
+    };
+
+    const topicKey = Object.keys(THEME_WORDS).find(k => 
+      topicName.toLowerCase().includes(k) || targetWord.includes(k)
+    ) || 'number';
+
+    const fallbackVocabs = THEME_WORDS[topicKey] || THEME_WORDS.number;
+
+    // Lấy các từ khác trong danh sách câu sai làm distractor ưu tiên
+    const otherTopicWords = allEnglishWords.filter(w => w !== targetWord);
+    const combinedDistractors = Array.from(
+      new Set([...otherTopicWords, ...fallbackVocabs.filter(w => w !== targetWord)])
+    ).slice(0, 3);
+
+    const fullOptions = [targetWord, ...combinedDistractors].sort(() => Math.random() - 0.5);
+
+    // 3. Prompt: Yêu cầu AI viết câu chuyện hấp dẫn và đặt câu hỏi đọc hiểu tình huống
+    const wordsListDetails = allWordsInfo.map((w, idx) => 
+      `${idx + 1}. Từ tiếng Việt: "${w.trans}" ➜ Tiếng Anh: "${w.word}"`
     ).join('\n');
 
-    const targetWordsStr = mistakes.map((m) => m.word).filter(Boolean).join(', ');
+    const prompt = `Bạn là Chuyên gia Giáo dục Tiếng Anh Tiểu học ENjoy.
+Hãy sáng tạo 1 bài tập đọc hiểu tình huống cực kỳ sinh động, vui tươi, tự nhiên dành cho học sinh tiểu học theo chủ đề "${topicName}".
 
-    const prompt = `Bạn là Trợ lý AI giáo dục tiếng Anh cho học sinh tiểu học ENjoy.
-Bé đang luyện tập khắc phục kỹ năng "${skillName}" theo CHỦ ĐỀ: "${topicName}".
-Dưới đây là danh sách các từ bé ĐÃ LÀM SAI cần khắc phục trong chủ đề này:
-${mistakeDetailStr}
+DANH SÁCH TỪ VỰNG CẦN LỒNG GHÉP VÀO CÂU CHUYỆN:
+${wordsListDetails}
 
-Hãy sáng tạo một bài học mini thích ứng ngắn gọn, vui tươi gắn liền với CHỦ ĐỀ "${topicName}":
-1. "story": Một đoạn văn ngắn 1-2 câu BẰNG TIẾNG VIỆT xoay quanh chủ đề "${topicName}". Trong đoạn tiếng Việt này, CHỈ RIÊNG các từ tiếng Anh bé làm sai [${targetWordsStr}] được viết bằng TIẾNG ANH IN ĐẬM VÀ BỌC TRONG DẤU ** (Ví dụ trong chủ đề School: "Hôm nay bạn nhỏ mở chiếc **backpack** để lấy cây **pencil** viết bài.").
-2. "storyVi": Để rỗng "" vì đoạn story đã là tiếng Việt.
-3. "question": Câu hỏi trắc nghiệm tiếng Việt ngắn gọn kiểm tra từ tiếng Anh bé hay nhầm lẫn dựa vào câu chuyện trên.
-4. "options": 4 phương án tiếng Anh (gồm từ đúng và các từ gây nhiễu / từ bé từng gõ sai).
-5. "correctAnswer": Từ tiếng Anh chính xác (trùng khớp 1 phương án trong options).
-6. "hint": Mẹo nhớ ngắn gọn bằng tiếng Việt giúp bé không lặp lại lỗi sai nữa.
+QUY TẮC BẮT BUỘC:
+1. "story": Viết 1 đoạn văn ngắn 1-2 câu tiếng Việt giàu hình ảnh, tự nhiên và dễ thương.
+   - BẮT BUỘC phải lồng ghép TOÀN BỘ các từ khóa tiếng Việt trong [${boldKeywordsStr}] vào câu chuyện và IN ĐẬM trong hai dấu sao (Ví dụ: "Trên cành cây nhỏ có **ba** chú chim non đang vui vẻ nhìn ngắm **chín** bông hoa rực rỡ.").
+   - TUYỆT ĐỐI KHÔNG dùng từ tiếng Anh trong câu chuyện.
+2. "question": Đặt 1 câu hỏi đọc hiểu tiếng Việt HỎI VỀ TÌNH TIẾT TRONG CÂU CHUYỆN mà câu trả lời chính là từ "${targetTrans}".
+   - TUYỆT ĐỐI KHÔNG hỏi khô khan kiểu "Từ X trong tiếng Anh là gì".
+   - BẮT BUỘC hỏi về tình huống câu chuyện (Ví dụ: "Có mấy chú chim non đang ngắm hoa trên cành cây?", "Bạn nhỏ nhìn thấy bao nhiêu bông hoa?", "Chiếc áo của bạn nhỏ có màu gì?", "Bạn nhỏ mang đồ vật gì trong ba lô?").
+   - Bé sẽ đọc câu chuyện ➔ tìm ra câu trả lời là "${targetTrans}" ➔ sau đó chọn từ tiếng Anh tương ứng "${targetWord}" trong 4 phương án.
+3. "options": 4 phương án tiếng Anh gồm từ đúng "${targetWord}" và 3 từ gây nhiễu cùng chủ đề "${topicName}".
+4. "correctAnswer": "${targetWord}"
+5. "hint": Gợi ý mẹo nhớ ngắn gọn bằng tiếng Việt (Ví dụ: "Bé hãy đếm lại số chú chim trong câu chuyện nhé!").
 
 Trả về DUY NHẤT 1 chuỗi JSON hợp lệ (không kèm markdown \`\`\`json):
 {
   "title": "Tên câu chuyện ngắn tiếng Việt theo chủ đề ${topicName}",
-  "story": "Đoạn văn tiếng Việt 1-2 câu chêm từ **EnglishWord**",
+  "story": "Đoạn văn ngắn tiếng Việt tự nhiên chứa toàn bộ ${boldKeywordsStr}",
   "storyVi": "",
-  "question": "Câu hỏi ngắn bằng tiếng Việt",
-  "options": ["word1", "word2", "word3", "word4"],
-  "correctAnswer": "word1",
-  "hint": "Mẹo nhớ ngắn gọn bằng tiếng Việt"
+  "question": "Câu hỏi tình huống tiếng Việt về tình tiết của ${targetTrans}",
+  "options": ${JSON.stringify(fullOptions)},
+  "correctAnswer": "${targetWord}",
+  "hint": "Gợi ý mẹo nhớ ngắn gọn"
 }`;
 
-    const context = `Bạn là AI giáo dục ENjoy. Tạo nội dung rèn luyện tiếng Anh thích ứng theo chủ đề "${topicName}". Chỉ trả về JSON nguyên bản.`;
+    const context = `Bạn là AI giáo dục ENjoy. Tạo bài tập đọc hiểu tình huống tiếng Việt cho học sinh tiểu học. Trả về JSON nguyên bản.`;
 
     try {
       const rawResponse = await chatbotApi.ask(prompt, context);
@@ -189,22 +237,49 @@ Trả về DUY NHẤT 1 chuỗi JSON hợp lệ (không kèm markdown \`\`\`json
       }
 
       const parsed: AdaptiveChallenge = JSON.parse(cleaned);
-      if (parsed.question && parsed.options && parsed.correctAnswer) {
+      if (parsed.story && parsed.question && parsed.options && parsed.correctAnswer) {
+        parsed.correctAnswer = targetWord;
+        if (!parsed.options.includes(targetWord)) {
+          parsed.options = fullOptions;
+        }
         return parsed;
       }
       throw new Error('Dữ liệu JSON không đủ trường');
     } catch (err) {
-      console.warn('[ChatbotAPI] Không thể parse JSON từ AI, dùng fallback theo chủ đề:', err);
-      const primaryWord = mistakes[0]?.word || 'book';
-      const primaryTrans = mistakes[0]?.translation || 'quyển sách';
+      console.warn('[ChatbotAPI] Dùng fallback tình huống đọc hiểu theo chủ đề:', err);
+
+      let naturalStory = `Trong bài học chủ đề ${topicName}, bạn nhỏ rất vui khi khám phá về ${boldKeywordsStr}.`;
+      let naturalQuestion = `Bạn nhỏ đã khám phá về điều gì trong câu chuyện?`;
+
+      if (topicKey === 'number' || allTransList.some(t => ['ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín', 'mười', 'một', 'hai'].includes(t.toLowerCase()))) {
+        if (allTransList.length >= 2) {
+          naturalStory = `Trên cành cây nhỏ có **${allTransList[0]}** chú chim non đang vui vẻ nhìn ngắm **${allTransList[1]}** bông hoa rực rỡ.`;
+          naturalQuestion = targetTrans === allTransList[0]
+            ? `Có bao nhiêu chú chim non đang ngắm hoa trên cành cây?`
+            : `Có bao nhiêu bông hoa rực rỡ đang khoe sắc trong vườn?`;
+        } else {
+          naturalStory = `Trên cành cây nhỏ có **${targetTrans}** chú chim non đang ríu rít ca hát đón chào ngày mới.`;
+          naturalQuestion = `Có bao nhiêu chú chim non đang ca hát trên cành cây?`;
+        }
+      } else if (topicKey === 'color') {
+        naturalStory = `Bạn nhỏ vẽ một bức tranh tuyệt đẹp với chiếc áo màu **${targetTrans}** rực rỡ.`;
+        naturalQuestion = `Chiếc áo trong bức tranh của bạn nhỏ có màu gì?`;
+      } else if (topicKey === 'animal') {
+        naturalStory = `Ngoài sân vườn, bạn nhỏ đang vui vẻ chơi đùa cùng chú **${targetTrans}** đáng yêu.`;
+        naturalQuestion = `Bạn nhỏ đang chơi đùa cùng con vật nào ngoài sân vườn?`;
+      } else if (topicKey === 'school') {
+        naturalStory = `Mỗi ngày đến trường, bạn nhỏ luôn cẩn thận mang theo chiếc **${targetTrans}** trong cặp sách.`;
+        naturalQuestion = `Đồ dùng học tập nào được bạn nhỏ mang theo trong cặp sách?`;
+      }
+
       return {
-        title: `Chủ đề ${topicName}: Cùng nhớ từ "${primaryWord}"`,
-        story: `Trong giờ học chủ đề ${topicName}, bạn nhỏ cẩn thận mang theo một **${primaryWord}** xinh xắn để cùng học tập.`,
+        title: `Chủ đề ${topicName}: Đọc hiểu cùng AI`,
+        story: naturalStory,
         storyVi: '',
-        question: `Từ tiếng Anh nào trong câu chuyện chỉ "${primaryTrans}"?`,
-        options: [primaryWord, 'apple', 'desk', 'pen'],
-        correctAnswer: primaryWord,
-        hint: `Hãy nhớ lại từ vựng "${primaryTrans}" trong chủ đề ${topicName} nhé bé!`
+        question: naturalQuestion,
+        options: fullOptions,
+        correctAnswer: targetWord,
+        hint: `Bé hãy quan sát kỹ tình huống trong câu chuyện để chọn đáp án đúng nhé!`
       };
     }
   },
@@ -321,14 +396,42 @@ Trả về DUY NHẤT 1 chuỗi JSON hợp lệ (không kèm markdown \`\`\`json
 
       const meta = resolvePhoneticMeta(target, displayRecognized);
 
+      // Đọc dữ liệu AI đã lưu từ CSDL (nếu có)
+      let customIpa = `/${target}/`;
+      let customFocusPhoneme = meta.focusPhoneme;
+      let customPhonemeNameVi = meta.phonemeNameVi;
+      let customMouthGuide = meta.mouthTip;
+      let customAiAnalysis = isCompletelyWrong
+        ? `Bé chưa nhớ rõ từ vựng "${target}" (${m.translation || ''}). Cần ôn lại Vòng 1 và Vòng 2 để ghi nhớ nhé!`
+        : `Bé đọc gần đúng từ "${target}" (${displayRecognized}). Hãy bấm nghe âm mẫu để sửa lại âm này nhé!`;
+      let rawCacheData: string | null = m.aiExplanationCache || null;
+
+      if (m.aiExplanationCache) {
+        try {
+          const cached = JSON.parse(m.aiExplanationCache);
+          if (cached.targetIPA) customIpa = cached.targetIPA;
+          else if (cached.ipa) customIpa = cached.ipa;
+
+          if (cached.focusPhoneme) customFocusPhoneme = cached.focusPhoneme;
+          if (cached.phonemeNameVi) customPhonemeNameVi = cached.phonemeNameVi;
+          if (cached.mouthShapeGuide) customMouthGuide = cached.mouthShapeGuide;
+          if (cached.aiAnalysisVi) customAiAnalysis = cached.aiAnalysisVi;
+          else if (cached.aiAdvice) customAiAnalysis = cached.aiAdvice;
+        } catch {
+          if (m.aiExplanationCache.length > 5) {
+            customAiAnalysis = m.aiExplanationCache;
+          }
+        }
+      }
+
       return {
         id: m.id,
         questionId: m.questionId,
         word: target,
-        ipa: `/${target}/`,
-        focusPhoneme: meta.focusPhoneme,
+        ipa: customIpa,
+        focusPhoneme: customFocusPhoneme,
         phonemeType: meta.phonemeType,
-        phonemeNameVi: meta.phonemeNameVi,
+        phonemeNameVi: customPhonemeNameVi,
         videoUrl: undefined,
         translation: m.translation || 'Từ vựng',
         imageUrl: m.imageUrl,
@@ -337,69 +440,107 @@ Trả về DUY NHẤT 1 chuỗi JSON hợp lệ (không kèm markdown \`\`\`json
         recognizedText: displayRecognized,
         classification: isCompletelyWrong ? 'COMPLETELY_WRONG' : 'NEAR_CORRECT_PHONEME',
         wrongPhonemeLabel: isCompletelyWrong ? 'Chưa nhớ từ vựng' : meta.wrongLabel,
-        mouthShapeGuide: meta.mouthTip,
-        aiAnalysisVi: isCompletelyWrong
-          ? `Bé chưa nhớ rõ từ vựng "${target}" (${m.translation || ''}). Cần ôn lại Vòng 1 và Vòng 2 để ghi nhớ nhé!`
-          : `Bé đọc gần đúng từ "${target}" (${displayRecognized}). Hãy bấm nghe âm mẫu để sửa lại âm này nhé!`,
+        mouthShapeGuide: customMouthGuide,
+        aiAnalysisVi: customAiAnalysis,
+        rawCache: rawCacheData,
       };
     });
 
-    // 2. Gọi Chatbot AI (Ollama LLM) làm giàu dữ liệu và sinh câu nhận xét sư phạm
-    let aiSummaryText = `AI ENjoy đã phân loại đầy đủ ${completeAnalyzedList.filter(x => x.classification === 'COMPLETELY_WRONG').length} từ sai hoàn toàn và ${completeAnalyzedList.filter(x => x.classification === 'NEAR_CORRECT_PHONEME').length} từ cần chỉnh âm.`;
+    // 2. Nếu có từ/câu mới chưa có trong CSDL, chạy tiến trình AI LLM phân tích ngữ âm toàn diện ngầm (background) và lưu vào CSDL
+    const unanalyzedItems = completeAnalyzedList.filter((item) => {
+      const orig = mistakes.find((m) => m.id === item.id);
+      return !orig?.aiExplanationCache;
+    });
 
-    try {
-      const mistakeDetailsStr = completeAnalyzedList.map((item, i) => 
-        `${i + 1}. ID: ${item.id} | Từ: "${item.word}" (${item.translation}) | Bé đọc: "${item.recognizedText}"`
-      ).join('\n');
+    const aiSummaryText = `AI ENjoy đã phân loại ${completeAnalyzedList.filter(x => x.classification === 'COMPLETELY_WRONG').length} từ cần học lại và ${completeAnalyzedList.filter(x => x.classification === 'NEAR_CORRECT_PHONEME').length} từ cần chỉnh âm.`;
 
-      const prompt = `Bạn là Trợ lý AI giáo dục ENjoy. Hãy đọc danh sách các từ bé phát âm chưa chuẩn:\n${mistakeDetailsStr}\n\nHãy trả về DUY NHẤT 1 chuỗi JSON hợp lệ:
+    if (unanalyzedItems.length > 0) {
+      // Chạy ngầm phân tích toàn diện, không làm đơ/chặn UI của người dùng
+      (async () => {
+        try {
+          const mistakeDetailsStr = unanalyzedItems.map((item, i) => 
+            `${i + 1}. ID: ${item.id} | Từ/Câu chuẩn: "${item.word}" (${item.translation}) | Bé đọc thực tế: "${item.recognizedText}"`
+          ).join('\n');
+
+          const prompt = `Bạn là Chuyên gia Ngôn ngữ & Luyện phát âm tiếng Anh cho học sinh (ENjoy AI Pronunciation Coach).
+Hãy phân tích phiên âm quốc tế IPA chuẩn, tự động bóc tách từng âm vị (phonemes) và so sánh chi tiết giữa từ/câu mục tiêu và từ/câu bé phát âm thực tế:
+${mistakeDetailsStr}
+
+Yêu cầu cực kỳ quan trọng:
+1. Phiên âm IPA chuẩn quốc tế cho cả từ chuẩn (targetIPA) và từ bé đọc (userIPA) (ví dụ "ten" là /tɛn/, "four" là /fɔːr/, "six" là /sɪks/, "sit" là /sɪt/, "three" là /θriː/,...).
+2. Tách từng âm vị (phonemes) và đối chiếu thẳng hàng theo trạng thái "match" (khớp), "different" (lệch), "missing" (bị nuốt/thiếu âm).
+3. Chỉ rõ các điểm khác biệt (differences) và hướng dẫn khẩu hình răng-môi-lưỡi (fixTips) ngắn gọn, dễ hiểu.
+4. Lời khuyên AI (aiAdvice) tập trung trực diện vào lỗi phát âm của từ/câu đó.
+
+Hãy trả về DUY NHẤT 1 chuỗi JSON hợp lệ theo format:
 {
-  "summary": "1 câu nhận xét sư phạm tổng quan bằng tiếng Việt ngắn gọn, thân thiện",
+  "summary": "1 câu nhận xét sư phạm tổng quan bằng tiếng Việt ngắn gọn, khích lệ",
   "items": [
     {
-      "id": ${completeAnalyzedList[0]?.id},
-      "ipa": "/.../",
-      "focusPhoneme": "âm vị",
-      "phonemeNameVi": "tên âm tiếng Việt",
-      "mouthShapeGuide": "hướng dẫn khẩu hình răng môi lưỡi ngắn gọn",
-      "aiAnalysisVi": "lời khuyên riêng cho từ này"
+      "id": ${unanalyzedItems[0]?.id},
+      "targetWord": "${unanalyzedItems[0]?.word}",
+      "targetIPA": "/.../",
+      "targetMeaning": "${unanalyzedItems[0]?.translation}",
+      "userWord": "${unanalyzedItems[0]?.recognizedText}",
+      "userIPA": "/.../",
+      "focusPhoneme": "k",
+      "phonemeNameVi": "Âm bật /k/",
+      "mouthShapeGuide": "Đặt phần sau của lưỡi nâng cao chạm vòm miệng mềm, nén hơi rồi bật âm ngắn.",
+      "aiAdvice": "Bé đang phát âm '...' gần giống '...'. Hãy chú ý...",
+      "phonemes": [
+        { "target": "/s/", "user": "/s/", "status": "match" },
+        { "target": "/ɪ/", "user": "/ɪ/", "status": "match" },
+        { "target": "/k/", "user": "/t/", "status": "different" },
+        { "target": "/s/", "user": null, "status": "missing" }
+      ],
+      "differences": [
+        { "from": "/k/", "to": "/t/", "description": "Âm giữa khác nhau.", "type": "different" }
+      ],
+      "fixTips": [
+        { "phoneme": "/k/", "nameVi": "Âm bật /k/", "tip": "Đặt phần sau lưỡi chạm vòm miệng mềm và bật hơi ngắn.", "soundText": "kuh" }
+      ]
     }
   ]
 }`;
 
-      const context = `Bạn là AI giáo dục ENjoy. Chỉ trả về JSON nguyên bản.`;
-      const rawAiResponse = await chatbotApi.ask(prompt, context);
+          const context = `Bạn là Chuyên gia ngữ âm học ENjoy. Luôn trả về DUY NHẤT 1 chuỗi JSON hợp lệ không bọc thêm lời dẫn.`;
+          const rawAiResponse = await chatbotApi.ask(prompt, context);
 
-      let cleaned = rawAiResponse.trim();
-      if (cleaned.startsWith('```json')) cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-      else if (cleaned.startsWith('```')) cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
+          let cleaned = rawAiResponse.trim();
+          if (cleaned.startsWith('```json')) cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+          else if (cleaned.startsWith('```')) cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
 
-      const jsonStart = cleaned.indexOf('{');
-      const jsonEnd = cleaned.lastIndexOf('}');
-      if (jsonStart !== -1 && jsonEnd !== -1) {
-        cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
-        const parsed = JSON.parse(cleaned);
+          const jsonStart = cleaned.indexOf('{');
+          const jsonEnd = cleaned.lastIndexOf('}');
+          if (jsonStart !== -1 && jsonEnd !== -1) {
+            cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
+            const parsed = JSON.parse(cleaned);
 
-        if (parsed.summary && !parsed.summary.includes('gián đoạn')) {
-          aiSummaryText = parsed.summary;
-        }
+            if (Array.isArray(parsed.items)) {
+              parsed.items.forEach((aiItem: any) => {
+                const found = completeAnalyzedList.find(x => String(x.id) === String(aiItem.id));
+                if (found) {
+                  if (aiItem.targetIPA) found.ipa = aiItem.targetIPA;
+                  else if (aiItem.ipa) found.ipa = aiItem.ipa;
 
-        // Cập nhật làm giàu dữ liệu từ AI nếu có mà KHÔNG LÀM MẤT bất kỳ từ nào
-        if (Array.isArray(parsed.items)) {
-          parsed.items.forEach((aiItem: any) => {
-            const found = completeAnalyzedList.find(x => String(x.id) === String(aiItem.id));
-            if (found) {
-              if (aiItem.ipa && aiItem.ipa.startsWith('/')) found.ipa = aiItem.ipa;
-              if (aiItem.focusPhoneme) found.focusPhoneme = aiItem.focusPhoneme;
-              if (aiItem.phonemeNameVi) found.phonemeNameVi = aiItem.phonemeNameVi;
-              if (aiItem.mouthShapeGuide) found.mouthShapeGuide = aiItem.mouthShapeGuide;
-              if (aiItem.aiAnalysisVi) found.aiAnalysisVi = aiItem.aiAnalysisVi;
+                  if (aiItem.focusPhoneme) found.focusPhoneme = aiItem.focusPhoneme;
+                  if (aiItem.phonemeNameVi) found.phonemeNameVi = aiItem.phonemeNameVi;
+                  if (aiItem.mouthShapeGuide) found.mouthShapeGuide = aiItem.mouthShapeGuide;
+                  if (aiItem.aiAdvice) found.aiAnalysisVi = aiItem.aiAdvice;
+                  else if (aiItem.aiAnalysisVi) found.aiAnalysisVi = aiItem.aiAnalysisVi;
+
+                  const payload = JSON.stringify(aiItem);
+                  found.rawCache = payload;
+
+                  mistakeApi.updateAiExplanation(Number(found.id), payload).catch(() => {});
+                }
+              });
             }
-          });
+          }
+        } catch (err) {
+          console.warn('[ChatbotAPI] Dynamic background AI enrichment:', err);
         }
-      }
-    } catch (err) {
-      console.warn('[ChatbotAPI] Dynamic AI enrichment fallback:', err);
+      })();
     }
 
     const completelyWrongList = completeAnalyzedList.filter(x => x.classification === 'COMPLETELY_WRONG');
@@ -761,6 +902,7 @@ export interface AnalyzedSpeakingItem {
   wrongPhonemeLabel?: string;
   mouthShapeGuide?: string;
   aiAnalysisVi: string;
+  rawCache?: string | null;
 }
 
 export interface SpeakingDiagnosisResult {

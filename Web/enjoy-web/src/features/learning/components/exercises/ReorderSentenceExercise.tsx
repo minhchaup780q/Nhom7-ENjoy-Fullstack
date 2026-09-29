@@ -32,11 +32,12 @@ export const ReorderSentenceExercise: React.FC<ReorderSentenceExerciseProps> = (
   const [footerStatus, setFooterStatus] = useState<FooterStatus>('idle');
   const currentItem = items[currentIndex];
 
-  const playAudio = (url: string) => {
+  const playAudio = (url?: string) => {
     if (!url && currentItem?.sentence) {
       fallbackToSpeechSynthesis(currentItem.sentence);
       return;
     }
+    if (!url) return;
     const safeUrl = url.replace(/ /g, '%20');
     const audio = new Audio(safeUrl);
     audio.play().catch(e => {

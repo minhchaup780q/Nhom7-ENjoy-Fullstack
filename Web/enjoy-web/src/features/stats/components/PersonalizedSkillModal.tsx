@@ -5,6 +5,7 @@ import { mistakeApi, type MistakeItem } from '../../learning/services/mistakeApi
 import { chatbotApi, type AdaptiveChallenge } from '../../learning/services/chatbotApi';
 import { MistakePracticePlayer } from '../../practice/components/MistakePracticePlayer';
 import { PersonalizedSpeakingModal } from './PersonalizedSpeakingModal';
+import { ArrowPathIcon } from '@heroicons/react/24/outline';
 
 interface SkillDef {
   key: string;
@@ -100,8 +101,8 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
   const roundType = getRoundTypeBySkill(skillKey);
 
   // Fetch dữ liệu từ Backend - Phân tách dữ liệu chính xác theo từng vòng (Không lấy lẫn lộn)
-  const fetchMistakes = useCallback(async () => {
-    setLoading(true);
+  const fetchMistakes = useCallback(async (showSpinner = true) => {
+    if (showSpinner) setLoading(true);
     try {
       const targetRound = getRoundTypeBySkill(skillKey);
       // Không truyền status để lấy TẤT CẢ trạng thái (NEEDS_REVIEW + REVIEWED)
@@ -117,7 +118,7 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
       console.warn('Lỗi khi tải dữ liệu câu làm sai:', err);
       setMistakes([]);
     } finally {
-      setLoading(false);
+      if (showSpinner) setLoading(false);
     }
   }, [skillKey]);
 
@@ -134,16 +135,45 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
     setActivePracticeItems(practiceItems);
   }, []);
 
-  // Sinh thử thách thích ứng AI theo đúng chủ đề đang chọn
+  // Sinh thử thách thích ứng AI theo đúng chủ đề đang chọn (Lưu vào CSDL Backend, chỉ tạo mới khi bấm đổi)
   const loadAiChallenge = useCallback(async (forceRefresh = false) => {
-    if (aiChallenge && !forceRefresh) return;
     setIsAiLoading(true);
     setSelectedAiOption(null);
     setAiAnswerChecked(false);
     setAiAnswerCorrect(false);
 
+    // 1. Nếu không phải forceRefresh, ưu tiên đọc từ CSDL Backend trước
+    if (!forceRefresh) {
+      try {
+        const dbChallenge = await mistakeApi.getAiChallenge(skillKey, selectedTopic);
+        if (
+          dbChallenge &&
+          dbChallenge.story &&
+          dbChallenge.question &&
+          Array.isArray(dbChallenge.options) &&
+          dbChallenge.options.length > 0 &&
+          dbChallenge.correctAnswer
+        ) {
+          setAiChallenge({
+            title: dbChallenge.title,
+            story: dbChallenge.story,
+            storyVi: dbChallenge.storyVi || '',
+            question: dbChallenge.question,
+            options: dbChallenge.options,
+            correctAnswer: dbChallenge.correctAnswer,
+            hint: dbChallenge.hint || '',
+          });
+          setIsAiLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.warn('Lỗi khi tải AI challenge từ CSDL:', err);
+      }
+    }
+
+    // 2. Nếu chưa có trong CSDL hoặc bấm nút Đổi thử thách: Gọi AI sinh thử thách mới
     const sourceList = filteredMistakes.length > 0 ? filteredMistakes : mistakes;
-    const mistakeItems = sourceList.slice(0, 4).map(m => ({
+    const mistakeItems = sourceList.map(m => ({
       word: m.contentText || m.keyword || '',
       translation: m.translation || '',
       wrongAttempt: m.wrongAnswerSubmitted || '',
@@ -158,18 +188,32 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
         topicLabel
       );
       setAiChallenge(challenge);
+
+      // 3. Tự động lưu dữ liệu AI vừa sinh vào CSDL Backend để tái sử dụng
+      await mistakeApi.saveAiChallenge({
+        skillKey,
+        topicId: selectedTopic,
+        topicName: selectedTopic,
+        title: challenge.title,
+        story: challenge.story,
+        storyVi: challenge.storyVi,
+        question: challenge.question,
+        options: challenge.options,
+        correctAnswer: challenge.correctAnswer,
+        hint: challenge.hint,
+      });
     } catch (err) {
       console.warn('Lỗi khi tạo thử thách AI:', err);
     } finally {
       setIsAiLoading(false);
     }
-  }, [aiChallenge, filteredMistakes, mistakes, selectedTopic, skillDef.nameVi]);
+  }, [filteredMistakes, mistakes, selectedTopic, skillDef.nameVi, skillKey]);
 
   useEffect(() => {
     if (activeTab === 'ai_challenge') {
       loadAiChallenge(false);
     }
-  }, [activeTab, loadAiChallenge]);
+  }, [activeTab, selectedTopic]);
 
   // Phát âm thanh chuẩn
   const playWord = useCallback((text: string, keyId: string, audioUrl?: string) => {
@@ -206,11 +250,11 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
         mistakes={activePracticeItems}
         onClose={() => {
           setActivePracticeItems(null);
-          fetchMistakes();
+          fetchMistakes(false);
         }}
         onFinished={() => {
           setActivePracticeItems(null);
-          fetchMistakes();
+          fetchMistakes(false);
         }}
       />
     );
@@ -274,7 +318,7 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
                 : 'bg-transparent text-slate-600 border-transparent hover:bg-white/60'
             }`}
           >
-            <span>THỬ THÁCH AI THÍCH ỨNG</span>
+            <span>THỬ THÁCH ENJOY AI</span>
           </button>
         </div>
 
@@ -415,7 +459,7 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
                 <div className="space-y-3 animate-fadeIn">
                   {isAiLoading ? (
                     <div className="py-12 text-center space-y-2 bg-white rounded-2xl border border-slate-200">
-                      <p className="text-xs font-bold text-pink-500">AI đang tạo câu chuyện ôn tập thích ứng...</p>
+                      <p className="text-xs font-bold text-pink-500">ENjoy AI đang tạo câu chuyện ôn tập thích ứng...</p>
                     </div>
                   ) : aiChallenge ? (
                     <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4 shadow-2xs">
@@ -426,9 +470,11 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
                         </span>
                         <button
                           onClick={() => loadAiChallenge(true)}
-                          className="text-[11px] font-bold text-pink-600 hover:text-pink-700 cursor-pointer"
+                          className="flex items-center gap-2 px-2.5 py-1 rounded-xl bg-pink-50 hover:bg-pink-100 text-pink-700 border border-pink-200 text-[11px] font-bold cursor-pointer transition-colors shadow-2xs active:scale-95"
+                          title="Bấm để tạo thử thách / câu chuyện ENjoy AI mới"
                         >
-                          Đổi câu chuyện
+                          <ArrowPathIcon className="w-5 h-5" />
+                          Đổi thử thách khác 
                         </button>
                       </div>
 
@@ -448,7 +494,16 @@ export const PersonalizedSkillModal: React.FC<Props> = ({
                       {/* Câu hỏi trắc nghiệm */}
                       <div className="space-y-2.5">
                         <p className="text-xs font-bold text-slate-800">
-                          <strong>Câu hỏi:</strong> {aiChallenge.question}
+                          <strong>Câu hỏi:</strong>{' '}
+                          {aiChallenge.question.split('**').map((part, i) =>
+                            i % 2 === 1 ? (
+                              <span key={i} className="font-bold text-pink-700 px-1.5 py-0.5 mx-0.5 bg-pink-50 rounded-md border border-pink-200 shadow-2xs">
+                                {part}
+                              </span>
+                            ) : (
+                              part
+                            )
+                          )}
                         </p>
 
                         <div className="grid grid-cols-2 gap-2">
