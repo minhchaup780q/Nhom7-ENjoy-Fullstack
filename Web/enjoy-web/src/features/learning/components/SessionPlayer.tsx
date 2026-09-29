@@ -295,7 +295,8 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
        session.sessionType !== SessionType.RE_ORDER_SENTENCE && 
        session.sessionType !== SessionType.CONVERSATION && 
        session.sessionType !== SessionType.FLASHCARD && 
-       session.sessionType !== SessionType.MATCH_WORD && (
+       session.sessionType !== SessionType.MATCH_WORD && 
+       session.sessionType !== SessionType.SPEAKING && (
         <div className="session-player-title">
           <h2>{session.title}</h2>
         </div>
