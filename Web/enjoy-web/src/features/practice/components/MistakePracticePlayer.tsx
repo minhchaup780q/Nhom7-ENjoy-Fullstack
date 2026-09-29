@@ -263,7 +263,6 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
       <div className="session-progress-bar bg-slate-100 rounded-full overflow-hidden border border-slate-200">
         <div className="session-progress-fill bg-pink-400" style={{ width: `${progressPercent}%` }} />
       </div>
-
       <span className="text-xs font-bold text-slate-500">
         {currentIndex + 1} / {mistakes.length}
       </span>

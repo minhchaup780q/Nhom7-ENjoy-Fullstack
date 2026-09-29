@@ -14,9 +14,28 @@ interface Props {
   onProgress?: (current: number, total: number) => void;
 }
 
-function playAudio(url: string): void {
-  const audio = new Audio(url);
-  audio.play().catch(() => {});
+function fallbackToSpeechSynthesis(text: string) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'en-US';
+  utterance.rate = 0.9;
+  window.speechSynthesis.speak(utterance);
+}
+
+function playAudio(url: string, fallbackText?: string): void {
+  if (!url && fallbackText) {
+    fallbackToSpeechSynthesis(fallbackText);
+    return;
+  }
+  const safeUrl = url.replace(/ /g, '%20');
+  const audio = new Audio(safeUrl);
+  audio.play().catch(e => {
+    console.warn('Primary audio failed, falling back to Web Speech API...', e);
+    if (fallbackText) {
+      fallbackToSpeechSynthesis(fallbackText);
+    }
+  });
 }
 
 export const FillInBlankExercise: React.FC<Props> = ({
@@ -47,7 +66,7 @@ export const FillInBlankExercise: React.FC<Props> = ({
 
       // Play audio automatically
       if (currentItem.audio_url) {
-        timeoutId = setTimeout(() => playAudio(currentItem.audio_url), 300);
+        timeoutId = setTimeout(() => playAudio(currentItem.audio_url, currentItem.sentence), 300);
       }
     }
 
@@ -97,6 +116,11 @@ export const FillInBlankExercise: React.FC<Props> = ({
         }
       }
     }
+  };
+
+  const handleRetry = () => {
+    setSelectedOption(null);
+    setFooterStatus('idle');
   };
 
   const handleNext = () => {
@@ -151,7 +175,7 @@ export const FillInBlankExercise: React.FC<Props> = ({
         {/* Câu hỏi có chỗ trống (hiển thị kèm loa) */}
         <div className="flex items-center justify-center gap-4 mt-2">
           <button 
-            onClick={() => { if (currentItem.audio_url) playAudio(currentItem.audio_url); }}
+            onClick={() => { if (currentItem.audio_url) playAudio(currentItem.audio_url, currentItem.sentence); }}
             className="text-primary hover:scale-110 active:scale-95 transition-transform"
           >
             <SpeakerWaveIcon className="w-8 h-8 drop-shadow-md" />
@@ -201,8 +225,11 @@ export const FillInBlankExercise: React.FC<Props> = ({
           status={footerStatus}
           onCheck={handleCheck}
           onNext={handleNext}
+          onRetry={footerStatus === 'incorrect' ? handleRetry : undefined}
+          hideNextButton={footerStatus === 'incorrect'}
           disabled={!selectedOption}
           correctAnswer={currentItem.answer}
+          nextLabel={currentIndex === items.length - 1 ? 'Hoàn thành' : 'Tiếp tục'}
         />
       </div>
     </div>

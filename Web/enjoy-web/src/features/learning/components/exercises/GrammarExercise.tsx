@@ -15,10 +15,29 @@ function formatQuestionText(text: string): string {
   return text.replace(/\[\]/g, '_____');
 }
 
+function fallbackToSpeechSynthesis(text: string) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'en-US';
+  utterance.rate = 0.9;
+  window.speechSynthesis.speak(utterance);
+}
+
 /** Tự động play audio, trả về ref cleanup */
-function playAudio(url: string): void {
-  const audio = new Audio(url);
-  audio.play().catch(() => {});
+function playAudio(url: string, fallbackText?: string): void {
+  if (!url && fallbackText) {
+    fallbackToSpeechSynthesis(fallbackText);
+    return;
+  }
+  const safeUrl = url.replace(/ /g, '%20');
+  const audio = new Audio(safeUrl);
+  audio.play().catch(e => {
+    console.warn('Primary audio failed, falling back to Web Speech API...', e);
+    if (fallbackText) {
+      fallbackToSpeechSynthesis(fallbackText);
+    }
+  });
 }
 
 interface QuestionState {
@@ -78,7 +97,7 @@ export const GrammarExercise: React.FC<GrammarExerciseProps> = ({
     ) {
       playedAudioIndexes.current.add(lastIndex);
       // Delay nhỏ để đảm bảo animation render xong
-      setTimeout(() => playAudio(lastBlock.audio_url!), 300);
+      setTimeout(() => playAudio(lastBlock.audio_url!, lastBlock.text), 300);
     }
   }, [visibleCount, blocks]);
 
@@ -168,7 +187,7 @@ export const GrammarExercise: React.FC<GrammarExerciseProps> = ({
               {block.audio_url && (
                 <button
                   className="grammar-audio-btn"
-                  onClick={() => playAudio(block.audio_url!)}
+                  onClick={() => playAudio(block.audio_url!, block.text)}
                   title="Nghe lại"
                 >
                   🔊
@@ -220,14 +239,13 @@ export const GrammarExercise: React.FC<GrammarExerciseProps> = ({
       <div className="grammar-blocks-container">
         {visibleBlocks.map((block, index) => renderBlock(block, index))}
 
-        {/* Nút Tiếp tục nằm ngay dưới block cuối cùng */}
         <div className="grammar-next-area" ref={bottomRef}>
           <button
             className={`grammar-next-btn ${canProceed ? '' : 'disabled'}`}
             onClick={handleNext}
             disabled={!canProceed}
           >
-            {isLastBlock ? 'Hoàn thành ✓' : 'Tiếp tục →'}
+            {isLastBlock ? 'Hoàn thành' : 'Tiếp tục'}
           </button>
         </div>
       </div>
