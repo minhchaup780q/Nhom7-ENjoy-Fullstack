@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Button3D } from '../../../components/ui/Button3D';
 import { mistakeApi, type MistakeItem } from '../../learning/services/mistakeApi';
 import {
   chatbotApi,
@@ -10,6 +9,7 @@ import { learningApi } from '../../learning/services/learningApi';
 import { MistakePracticePlayer } from '../../practice/components/MistakePracticePlayer';
 import { PronunciationCoachCard } from './PronunciationCoachCard';
 import { PronunciationGuideDetailModal } from './PronunciationGuideDetailModal';
+import { renderFormattedAiText } from './FormattedAiText';
 
 interface Props {
   skillScore: number;
@@ -25,27 +25,29 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
   const [diagnosis, setDiagnosis] = useState<SpeakingDiagnosisResult | null>(null);
   const [activePracticeItems, setActivePracticeItems] = useState<MistakeItem[] | null>(null);
 
-  // Audio playing state
   const [playingKey, setPlayingKey] = useState<string | null>(null);
 
-  // Mic assessment state per word
   const [recordingWordId, setRecordingWordId] = useState<string | number | null>(null);
   const [wordAssessments, setWordAssessments] = useState<
     Record<string | number, { isCorrect: boolean; score: number; message: string }>
   >({});
 
-  // Pronunciation Guide detail modal
   const [guideModalPhoneme, setGuideModalPhoneme] = useState<{ phoneme: string; word: string } | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
-  // Tải danh sách lỗi sai Speaking (Vòng 3) & AI chuẩn đoán 2 nhóm
   const loadData = useCallback(async (showSpinner = true) => {
     if (showSpinner) setLoading(true);
     try {
-      const res = await mistakeApi.getUserMistakesPaged({ roundType: 3, size: 30 });
-      const list: MistakeItem[] = (res as any)?.content || (res as any)?.data?.content || [];
+      const [res3, res9] = await Promise.all([
+        mistakeApi.getUserMistakesPaged({ roundType: 3, size: 30 }).catch(() => null),
+        mistakeApi.getUserMistakesPaged({ roundType: 9, size: 30 }).catch(() => null),
+      ]);
+      const list3: MistakeItem[] = (res3 as any)?.content || (res3 as any)?.data?.content || [];
+      const list9: MistakeItem[] = (res9 as any)?.content || (res9 as any)?.data?.content || [];
+      const list = [...list3, ...list9];
+
       const result = await chatbotApi.diagnoseSpeakingMistakes(list);
       setDiagnosis(result);
       if (result.completelyWrongItems.length === 0 && result.nearCorrectItems.length > 0) {
@@ -69,8 +71,10 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
     };
   }, [loadData]);
 
-  // Bắt đầu luyện tập bài học thật cho từ phát âm (kết nối trực tiếp Mistake API)
-  const startPracticeSingle = useCallback((item: AnalyzedSpeakingItem, targetRound: number) => {
+  const startPracticeSingle = useCallback((item: AnalyzedSpeakingItem, targetRound?: number) => {
+    const isSentence = item.roundType === 9 || (item.word && item.word.trim().includes(' '));
+    const effectiveRound = targetRound || (isSentence ? 9 : 3);
+
     const practiceItem: MistakeItem = {
       id: Number(item.id) || 0,
       userId: 0,
@@ -81,33 +85,14 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
       imageUrl: item.imageUrl,
       audioUrl: item.audioUrl,
       wrongAnswerSubmitted: item.recognizedText,
-      roundType: targetRound,
+      roundType: effectiveRound,
       status: 'NEEDS_REVIEW',
       createdAt: new Date().toISOString(),
     };
-    const allItems = [...(diagnosis?.completelyWrongItems || []), ...(diagnosis?.nearCorrectItems || [])];
-    const otherItems: MistakeItem[] = allItems
-      .filter((m) => m.id !== item.id)
-      .slice(0, 3)
-      .map((m) => ({
-        id: Number(m.id) || 0,
-        userId: 0,
-        questionId: Number(m.questionId) || 0,
-        keyword: m.word,
-        contentText: m.word,
-        translation: m.translation,
-        imageUrl: m.imageUrl,
-        audioUrl: m.audioUrl,
-        wrongAnswerSubmitted: m.recognizedText,
-        roundType: targetRound,
-        status: 'NEEDS_REVIEW',
-        createdAt: new Date().toISOString(),
-      }));
 
-    setActivePracticeItems([practiceItem, ...otherItems]);
-  }, [diagnosis]);
+    setActivePracticeItems([practiceItem]);
+  }, []);
 
-  // Phát âm chuẩn (Web Speech API hoặc Audio URL)
   const playWord = (text: string, keyId: string, audioUrl?: string) => {
     setPlayingKey(keyId);
     if (audioUrl) {
@@ -120,7 +105,6 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'en-US';
       utterance.rate = 0.85;
-      utterance.pitch = 1.0;
       utterance.onend = () => setPlayingKey(null);
       utterance.onerror = () => setPlayingKey(null);
       window.speechSynthesis.speak(utterance);
@@ -129,7 +113,6 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
     }
   };
 
-  // Thu âm & Chấm điểm phát âm trực tiếp từ micro
   const handleToggleRecordWord = async (item: AnalyzedSpeakingItem) => {
     const itemId = item.id;
     if (recordingWordId === itemId) {
@@ -166,8 +149,8 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
               isCorrect,
               score,
               message: isCorrect
-                ? `Bé đọc rất chuẩn (${score}đ)! Giỏi lắm!`
-                : `Bé được ${score}đ. Thử lại lần nữa nhé!`,
+                ? `Đọc chuẩn (${score} điểm)! Giỏi lắm!`
+                : `Được ${score} điểm. Hãy thử lại lần nữa nhé!`,
             },
           }));
         } catch {
@@ -177,7 +160,7 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
             [itemId]: {
               isCorrect: true,
               score: 85,
-              message: `Bé đọc rất tốt! Tiếp tục phát huy nhé!`,
+              message: `Đọc tốt! Tiếp tục phát huy nhé!`,
             },
           }));
         }
@@ -196,7 +179,6 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
 
   const [selectedTopic, setSelectedTopic] = useState<string>('Tất cả');
 
-  // Lấy danh sách topic duy nhất từ cả 2 nhóm lỗi phát âm
   const topics = useMemo(() => {
     const list = [...completelyWrongList, ...nearCorrectList];
     const set = new Set<string>();
@@ -219,7 +201,6 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
     return nearCorrectList.filter((item) => (item.topic?.trim() || 'Chủ đề chung') === selectedTopic);
   }, [nearCorrectList, selectedTopic]);
 
-  // Mở trực tiếp UI bài học của MistakePracticePlayer (liên kết chuẩn Mistake API & tăng streak)
   if (activePracticeItems && activePracticeItems.length > 0) {
     return (
       <MistakePracticePlayer
@@ -237,77 +218,62 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in select-none">
-      <div className="bg-white border-2 border-slate-200 rounded-3xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95">
+    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in select-none">
+      <div className="bg-white border border-pink-100 rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-xl overflow-hidden">
         
         {/* Header Modal */}
-        <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/80">
+        <div className="px-6 py-5 border-b border-pink-50 flex items-center justify-between bg-white">
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg sm:text-xl font-display font-black text-slate-800">
-                Phân Tích Phát Âm Cùng ENjoy AI
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-xl font-bold text-slate-800">
+                Phát âm & Nói
               </h2>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-pink-100 text-pink-700 border border-pink-200 shadow-2xs">
+              <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-pink-50 text-[#ff5e97] border border-pink-200">
                 {skillScore}%
               </span>
             </div>
-            <p className="text-xs font-medium text-slate-500 mt-0.5">
-              {diagnosis?.summary || 'Cùng ENjoy nhận diện lỗi phát âm và luyện sửa từng âm vị chuẩn xác nhé!'}
+            <p className="text-xs text-slate-500 mt-1">
+              {renderFormattedAiText(diagnosis?.summary) || 'Nhận diện lỗi phát âm và luyện sửa từng âm vị chuẩn xác cùng ENjoy AI'}
             </p>
           </div>
 
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors shadow-2xs cursor-pointer font-bold"
-            aria-label="Đóng"
+            className="w-9 h-9 flex items-center justify-center rounded-xl bg-pink-50/70 hover:bg-pink-100 text-slate-500 hover:text-slate-700 transition-colors font-bold text-sm cursor-pointer"
           >
             ✕
           </button>
         </div>
 
-        {/* Chuyển Đổi Tab (Cần Học Lại Từ vs Cần Sửa Âm) */}
-        <div className="flex border-b border-slate-200 bg-slate-100/60 p-1.5 gap-1.5">
+        {/* Tab Switcher */}
+        <div className="flex border-b border-pink-50 px-6 bg-white">
           <button
             onClick={() => setActiveTab('completely_wrong')}
-            className={`flex-1 py-2.5 px-3 rounded-2xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+            className={`py-3 px-4 font-bold text-xs sm:text-sm border-b-2 transition-all cursor-pointer ${
               activeTab === 'completely_wrong'
-                ? 'bg-white text-slate-800 shadow-xs border border-slate-200 font-black'
-                : 'text-slate-500 hover:text-slate-700'
+                ? 'border-[#ff5e97] text-[#ff5e97]'
+                : 'border-transparent text-slate-400 hover:text-slate-600'
             }`}
           >
-            <span>CẦN HỌC LẠI TỪ</span>
-            <span
-              className={`px-2 py-0.5 rounded-full text-[10px] font-mono ${
-                activeTab === 'completely_wrong' ? 'bg-pink-100 text-pink-700 font-bold' : 'bg-slate-200 text-slate-600'
-              }`}
-            >
-              {completelyWrongList.length}
-            </span>
+            Cần học lại từ ({completelyWrongList.length})
           </button>
 
           <button
             onClick={() => setActiveTab('near_correct')}
-            className={`flex-1 py-2.5 px-3 rounded-2xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+            className={`py-3 px-4 font-bold text-xs sm:text-sm border-b-2 transition-all cursor-pointer ${
               activeTab === 'near_correct'
-                ? 'bg-white text-pink-600 shadow-xs border border-slate-200 font-black'
-                : 'text-slate-500 hover:text-slate-700'
+                ? 'border-[#ff5e97] text-[#ff5e97]'
+                : 'border-transparent text-slate-400 hover:text-slate-600'
             }`}
           >
-            <span>CẦN SỬA ÂM (ENJOY AI)</span>
-            <span
-              className={`px-2 py-0.5 rounded-full text-[10px] font-mono ${
-                activeTab === 'near_correct' ? 'bg-pink-100 text-pink-700 font-bold' : 'bg-slate-200 text-slate-600'
-              }`}
-            >
-              {nearCorrectList.length}
-            </span>
+            Cần sửa âm (ENjoy AI) ({nearCorrectList.length})
           </button>
         </div>
 
-        {/* Thanh Chọn Chủ Đề (Topic Filter) */}
+        {/* Topic Filter */}
         {topics.length > 1 && (
-          <div className="px-4 py-2 bg-slate-50 border-b border-slate-100 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1">
+          <div className="px-6 py-2.5 bg-pink-50/30 border-b border-pink-50 flex items-center gap-2 overflow-x-auto no-scrollbar">
+            <span className="text-xs font-semibold text-slate-400 shrink-0">
               Chủ đề:
             </span>
             {topics.map((topicName: string) => {
@@ -319,15 +285,15 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
                 <button
                   key={topicName}
                   onClick={() => setSelectedTopic(topicName)}
-                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer border ${
+                  className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer ${
                     selectedTopic === topicName
-                      ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
-                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                      ? 'bg-[#ff5e97] text-white shadow-xs'
+                      : 'bg-white text-slate-600 border border-pink-100 hover:bg-pink-50/60'
                   }`}
                 >
                   {topicName}
                   {topicName !== 'Tất cả' && (
-                    <span className="ml-1.5 text-[10px] opacity-75">({countTotal})</span>
+                    <span className="ml-1 text-[10px] opacity-75">({countTotal})</span>
                   )}
                 </button>
               );
@@ -335,112 +301,96 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
           </div>
         )}
 
-        {/* Danh Sách Thẻ Từ & Phân Tích */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 bg-slate-50/40">
+        {/* Content Body */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white">
           {loading ? (
-            <div className="py-16 flex flex-col items-center justify-center gap-2 text-pink-500">
-              <p className="text-xs font-bold text-slate-600">Đang chuẩn bị bài học cho bé...</p>
+            <div className="py-16 flex flex-col items-center justify-center gap-3">
+              <div className="w-8 h-8 border-2 border-[#ff5e97] border-t-transparent rounded-full animate-spin" />
+              <p className="text-xs text-slate-500">Đang chuẩn bị dữ liệu bài học...</p>
             </div>
           ) : (
             <>
-              {/* ========================================================= */}
-              {/* TAB 1: CẦN HỌC LẠI TỪ                                     */}
-              {/* ========================================================= */}
               {activeTab === 'completely_wrong' && (
-                <div className="space-y-3 animate-fadeIn">
+                <div className="space-y-3">
                   {filteredCompletelyWrongList.length === 0 ? (
-                    <div className="text-center py-12 space-y-2 bg-white rounded-2xl border border-slate-200">
-                      <p className="text-sm font-bold text-slate-700">
+                    <div className="text-center py-16 space-y-1.5 bg-pink-50/20 rounded-2xl border border-pink-100">
+                      <p className="text-sm font-bold text-slate-800">
                         {selectedTopic === 'Tất cả'
-                          ? 'Tuyệt vời! Bé không có từ nào bị quên.'
+                          ? 'Bé không có từ nào bị phát âm sai hoàn toàn.'
                           : `Không có từ nào cần học lại trong chủ đề "${selectedTopic}".`}
                       </p>
                     </div>
                   ) : (
-                    filteredCompletelyWrongList.map((item: AnalyzedSpeakingItem) => (
-                      <div
-                        key={item.id}
-                        className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-2xs hover:border-slate-300 transition-all space-y-3"
-                      >
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                          {/* Từ vựng & Lỗi sai */}
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-xl font-display font-black text-slate-800">{item.word}</span>
-                              <span className="text-xs font-mono font-bold text-pink-700 px-2 py-0.5 bg-pink-50 rounded-lg border border-pink-200">
-                                {item.ipa}
-                              </span>
-                              <span className="text-xs font-semibold text-slate-500">({item.translation})</span>
+                    filteredCompletelyWrongList.map((item: AnalyzedSpeakingItem) => {
+                      const isSentence = item.roundType === 9 || (item.word && item.word.trim().includes(' '));
+                      return (
+                        <div
+                          key={item.id}
+                          className="bg-pink-50/30 border border-pink-100/80 rounded-2xl p-4 sm:p-5 hover:border-pink-200 hover:bg-pink-50/50 transition-all space-y-3"
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-lg font-bold text-slate-800">{item.word}</span>
+                                <span className="text-xs font-mono font-semibold text-[#ff5e97] px-2 py-0.5 bg-pink-50 rounded-md border border-pink-200">
+                                  {item.ipa}
+                                </span>
+                                {isSentence && (
+                                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-pink-100/80 text-[#ff5e97] border border-pink-200">
+                                    Luyện nói câu
+                                  </span>
+                                )}
+                                <span className="text-xs text-slate-500">({item.translation})</span>
+                              </div>
+
+                              <div className="text-xs flex items-center gap-1.5">
+                                <span className="text-slate-500">Đã nhận diện:</span>
+                                <span className="font-semibold text-slate-700 bg-white px-2 py-0.5 rounded-md border border-pink-100">
+                                  {item.recognizedText}
+                                </span>
+                              </div>
                             </div>
 
-                            <div className="text-xs flex items-center gap-1.5">
-                              <span className="text-slate-500 font-medium">Bé đọc:</span>
-                              <span className="font-bold text-pink-600 bg-pink-50 px-2 py-0.5 rounded-md border border-pink-200 line-through">
-                                {item.recognizedText}
-                              </span>
+                            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                              <button
+                                onClick={() => playWord(item.word, `comp_${item.id}`)}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-semibold cursor-pointer border transition-colors ${
+                                  playingKey === `comp_${item.id}`
+                                    ? 'bg-[#ff5e97] border-[#ff5e97] text-white'
+                                    : 'bg-white hover:bg-pink-50 text-[#ff5e97] border-pink-200'
+                                }`}
+                              >
+                                {playingKey === `comp_${item.id}` ? 'Đang phát...' : 'Phát âm'}
+                              </button>
+
+                              <button
+                                onClick={() => startPracticeSingle(item)}
+                                className="px-4 py-2 rounded-xl bg-[#ff5e97] hover:bg-[#e84c85] text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                              >
+                                {isSentence ? 'Luyện nói câu' : 'Luyện phát âm'}
+                              </button>
                             </div>
                           </div>
 
-                          {/* Các nút hành động */}
-                          <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
-                            <button
-                              onClick={() => playWord(item.word, `comp_${item.id}`)}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer border transition-colors shadow-2xs ${
-                                playingKey === `comp_${item.id}`
-                                  ? 'bg-pink-50 border-pink-300 text-pink-600'
-                                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
-                              }`}
-                            >
-                              Nghe
-                            </button>
-
-                            <button
-                              onClick={() => startPracticeSingle(item, 1)}
-                              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer border border-slate-200 transition-all shadow-2xs active:scale-95"
-                            >
-                              Vòng 1
-                            </button>
-
-                            <button
-                              onClick={() => startPracticeSingle(item, 2)}
-                              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer border border-slate-200 transition-all shadow-2xs active:scale-95"
-                            >
-                              Vòng 2
-                            </button>
-
-                            <Button3D
-                              variant="pink"
-                              size="sm"
-                              onClick={() => startPracticeSingle(item, 3)}
-                              className="text-[11px]"
-                            >
-                              Luyện Tập
-                            </Button3D>
-                          </div>
+                          {item.aiAnalysisVi && (
+                            <p className="text-xs text-slate-600 bg-white p-3 rounded-xl border border-pink-100 leading-relaxed">
+                              <strong className="text-slate-800">ENjoy AI:</strong> {renderFormattedAiText(item.aiAnalysisVi)}
+                            </p>
+                          )}
                         </div>
-
-                        {/* Gợi ý AI */}
-                        {item.aiAnalysisVi && (
-                          <p className="text-xs font-medium text-slate-600 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 leading-relaxed">
-                            <strong className="text-slate-800">Gợi ý từ ENjoy AI:</strong> {item.aiAnalysisVi}
-                          </p>
-                        )}
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               )}
 
-              {/* ========================================================= */}
-              {/* TAB 2: CẦN SỬA ÂM (UI REDESIGNED THEO YÊU CẦU)            */}
-              {/* ========================================================= */}
               {activeTab === 'near_correct' && (
-                <div className="space-y-4 animate-fadeIn">
+                <div className="space-y-4">
                   {filteredNearCorrectList.length === 0 ? (
-                    <div className="text-center py-12 space-y-2 bg-white rounded-3xl border border-slate-200">
-                      <p className="text-sm font-bold text-slate-700">
+                    <div className="text-center py-16 space-y-1.5 bg-pink-50/20 rounded-2xl border border-pink-100">
+                      <p className="text-sm font-bold text-slate-800">
                         {selectedTopic === 'Tất cả'
-                          ? 'Tuyệt vời! Bé phát âm rất chuẩn.'
+                          ? 'Bé phát âm rất chuẩn các từ vựng.'
                           : `Không có từ nào cần sửa âm trong chủ đề "${selectedTopic}".`}
                       </p>
                     </div>
@@ -458,7 +408,7 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
                         onPlayWord={() => playWord(item.word, `near_${item.id}`, item.audioUrl)}
                         onToggleRecord={() => handleToggleRecordWord(item)}
                         onOpenGuide={(phoneme) => setGuideModalPhoneme({ phoneme, word: item.word })}
-                        onStartPractice={() => startPracticeSingle(item, 3)}
+                        onStartPractice={() => startPracticeSingle(item)}
                       />
                     ))
                   )}
@@ -468,7 +418,6 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
           )}
         </div>
 
-        {/* Modal Hướng Dẫn Đọc Âm IPA Chi Tiết */}
         {guideModalPhoneme && (
           <PronunciationGuideDetailModal
             focusPhoneme={guideModalPhoneme.phoneme}
@@ -477,16 +426,16 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
           />
         )}
 
-        {/* Footer Modal với Nút Đóng Tinh Tế */}
-        <div className="p-3.5 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
-          <span className="text-[11px] font-medium text-slate-400">
-            Hệ thống phân tích phát âm thông minh ENjoy AI
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-pink-50 bg-white flex items-center justify-between">
+          <span className="text-xs text-slate-400">
+            Hệ thống phân tích phát âm ENjoy AI
           </span>
           <button
             onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-display font-extrabold text-xs tracking-wider cursor-pointer shadow-xs transition-all"
+            className="px-5 py-2 rounded-xl bg-pink-50 hover:bg-pink-100 text-slate-700 font-bold text-xs cursor-pointer transition-all"
           >
-            ĐÓNG
+            Đóng
           </button>
         </div>
       </div>

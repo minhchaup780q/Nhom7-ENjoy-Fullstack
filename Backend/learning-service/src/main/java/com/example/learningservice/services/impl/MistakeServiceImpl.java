@@ -6,10 +6,12 @@ import com.example.learningservice.dto.MistakeStatsResponse;
 import com.example.learningservice.dto.PageResponse;
 import com.example.learningservice.entities.Mistake;
 import com.example.learningservice.entities.PartVocabulary;
+import com.example.learningservice.entities.Session;
 import com.example.learningservice.entities.Vocabulary;
 import com.example.learningservice.entities.enums.MistakeStatus;
 import com.example.learningservice.repositories.MistakeRepository;
 import com.example.learningservice.repositories.PartVocabularyRepository;
+import com.example.learningservice.repositories.SessionRepository;
 import com.example.learningservice.repositories.VocabularyRepository;
 import com.example.learningservice.services.MistakeService;
 import lombok.RequiredArgsConstructor;
@@ -38,8 +40,26 @@ public class MistakeServiceImpl implements MistakeService {
     private final MistakeRepository mistakeRepository;
     private final VocabularyRepository vocabularyRepository;
     private final PartVocabularyRepository partVocabularyRepository;
+    private final com.example.learningservice.repositories.SessionRepository sessionRepository;
     private final com.example.learningservice.repositories.PersonalizedAiChallengeRepository personalizedAiChallengeRepository;
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+
+    private com.example.learningservice.entities.enums.SessionType mapRoundTypeToSessionType(Integer roundType) {
+        if (roundType == null) return null;
+        switch (roundType) {
+            case 1: return com.example.learningservice.entities.enums.SessionType.FLASHCARD;
+            case 2: return com.example.learningservice.entities.enums.SessionType.MATCH_WORD;
+            case 3: return com.example.learningservice.entities.enums.SessionType.SPEAKING;
+            case 4: return com.example.learningservice.entities.enums.SessionType.RE_ORDER;
+            case 5: return com.example.learningservice.entities.enums.SessionType.DRAG_DROP;
+            case 6: return com.example.learningservice.entities.enums.SessionType.GRAMMAR;
+            case 7: return com.example.learningservice.entities.enums.SessionType.FILL_IN_BLANK;
+            case 8: return com.example.learningservice.entities.enums.SessionType.RE_ORDER_SENTENCE;
+            case 9: return com.example.learningservice.entities.enums.SessionType.SPEAKING_SENTENCE;
+            case 10: return com.example.learningservice.entities.enums.SessionType.CONVERSATION;
+            default: return null;
+        }
+    }
 
     private MistakeResponse enrichMistakeResponse(MistakeResponse response) {
         if (response == null || response.getQuestionId() == null) return response;
@@ -47,10 +67,27 @@ public class MistakeServiceImpl implements MistakeService {
             List<PartVocabulary> pvList = partVocabularyRepository.findByVocabularyIdWithTopic(response.getQuestionId());
             if (pvList != null && !pvList.isEmpty()) {
                 PartVocabulary pv = pvList.get(0);
-                if (pv.getPart() != null && pv.getPart().getTopic() != null) {
-                    response.setKeyword(pv.getPart().getTopic().getTitle());
-                } else if (pv.getPart() != null) {
-                    response.setKeyword(pv.getPart().getTitle());
+                if (pv.getPart() != null) {
+                    Long partId = pv.getPart().getId();
+                    response.setPartId(partId);
+                    if (pv.getPart().getTopic() != null) {
+                        response.setKeyword(pv.getPart().getTopic().getTitle());
+                    } else {
+                        response.setKeyword(pv.getPart().getTitle());
+                    }
+
+                    if (response.getRoundType() != null) {
+                        com.example.learningservice.entities.enums.SessionType sType = mapRoundTypeToSessionType(response.getRoundType());
+                        if (sType != null) {
+                            List<Session> sessions = sessionRepository.findByPartIdAndIsDeleteFalseOrderByOrderIndexAsc(partId);
+                            for (Session s : sessions) {
+                                if (s.getSessionType() == sType && s.getPayload() != null) {
+                                    response.setSessionPayload(s.getPayload());
+                                    break;
+                                }
+                            }
+                        }
+                    }
                 }
             }
         } catch (Exception e) {
@@ -69,19 +106,22 @@ public class MistakeServiceImpl implements MistakeService {
         if (vocabIds.isEmpty()) return responses;
 
         Map<Long, String> topicMap = new HashMap<>();
+        Map<Long, Long> partMap = new HashMap<>();
         try {
             List<PartVocabulary> pvList = partVocabularyRepository.findByVocabularyIdsWithTopic(vocabIds);
             if (pvList != null) {
                 for (PartVocabulary pv : pvList) {
-                    if (pv.getVocabulary() != null) {
+                    if (pv.getVocabulary() != null && pv.getPart() != null) {
+                        Long vId = pv.getVocabulary().getId();
+                        partMap.putIfAbsent(vId, pv.getPart().getId());
                         String title = null;
-                        if (pv.getPart() != null && pv.getPart().getTopic() != null) {
+                        if (pv.getPart().getTopic() != null) {
                             title = pv.getPart().getTopic().getTitle();
-                        } else if (pv.getPart() != null) {
+                        } else {
                             title = pv.getPart().getTitle();
                         }
                         if (title != null) {
-                            topicMap.putIfAbsent(pv.getVocabulary().getId(), title);
+                            topicMap.putIfAbsent(vId, title);
                         }
                     }
                 }
@@ -90,9 +130,40 @@ public class MistakeServiceImpl implements MistakeService {
             log.warn("Error fetching topic batch for mistakes: {}", e.getMessage());
         }
 
+        Map<String, String> sessionPayloadMap = new HashMap<>();
+        List<Long> partIds = partMap.values().stream().distinct().collect(Collectors.toList());
+        if (!partIds.isEmpty()) {
+            try {
+                List<Session> sessions = sessionRepository.findByPartIdInAndIsDeleteFalse(partIds);
+                for (Session s : sessions) {
+                    if (s.getPart() != null && s.getSessionType() != null && s.getPayload() != null) {
+                        String key = s.getPart().getId() + "_" + s.getSessionType().name();
+                        sessionPayloadMap.put(key, s.getPayload());
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Error fetching sessions for mistakes: {}", e.getMessage());
+            }
+        }
+
         for (MistakeResponse r : responses) {
-            if (r.getQuestionId() != null && topicMap.containsKey(r.getQuestionId())) {
-                r.setKeyword(topicMap.get(r.getQuestionId()));
+            if (r.getQuestionId() != null) {
+                if (topicMap.containsKey(r.getQuestionId())) {
+                    r.setKeyword(topicMap.get(r.getQuestionId()));
+                }
+                if (partMap.containsKey(r.getQuestionId())) {
+                    Long pId = partMap.get(r.getQuestionId());
+                    r.setPartId(pId);
+                    if (r.getRoundType() != null) {
+                        com.example.learningservice.entities.enums.SessionType sType = mapRoundTypeToSessionType(r.getRoundType());
+                        if (sType != null) {
+                            String key = pId + "_" + sType.name();
+                            if (sessionPayloadMap.containsKey(key)) {
+                                r.setSessionPayload(sessionPayloadMap.get(key));
+                            }
+                        }
+                    }
+                }
             }
         }
         return responses;

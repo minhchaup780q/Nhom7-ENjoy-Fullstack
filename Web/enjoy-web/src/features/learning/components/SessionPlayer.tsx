@@ -229,6 +229,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
         return (
           <ReorderSentenceExercise
             payload={payload}
+            vocabularies={partVocabs}
             onComplete={handleSessionComplete}
             onMistake={handleMistake}
             onProgress={handleProgress}
@@ -240,6 +241,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
         return (
           <SpeakingSentenceExercise
             payload={payload}
+            vocabularies={partVocabs}
             onComplete={handleSessionComplete}
             onMistake={handleMistake}
             onProgress={handleProgress}
@@ -251,6 +253,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
         return (
           <ConversationExercise
             payload={session.payload}
+            vocabularies={partVocabs}
             onComplete={handleSessionComplete}
             onMistake={handleMistake}
             onProgress={(cur, total) => setProgress((cur / total) * 100)}

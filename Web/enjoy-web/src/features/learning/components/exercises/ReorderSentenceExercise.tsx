@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import type { ReorderSentenceItem } from '../../types';
+import type { ReorderSentenceItem, Vocabulary } from '../../types';
+import type { MistakeCreatePayload } from '../../services/mistakeApi';
 import { ExerciseFooter, type FooterStatus } from '../ui/ExerciseFooter';
 import { SpeakerWaveIcon } from '@heroicons/react/24/solid';
 
 interface ReorderSentenceExerciseProps {
   payload: any;
+  vocabularies?: Vocabulary[];
   onComplete: () => void;
-  onMistake: () => void;
+  onMistake?: (data: MistakeCreatePayload) => void;
   onProgress?: (current: number, total: number) => void;
 }
 
@@ -17,6 +19,7 @@ interface WordOption {
 
 export const ReorderSentenceExercise: React.FC<ReorderSentenceExerciseProps> = ({
   payload,
+  vocabularies,
   onComplete,
   onMistake,
   onProgress
@@ -127,7 +130,15 @@ export const ReorderSentenceExercise: React.FC<ReorderSentenceExerciseProps> = (
       setFooterStatus('correct');
     } else {
       setFooterStatus('incorrect');
-      onMistake();
+      if (onMistake) {
+        const vocabId = vocabularies?.[currentIndex]?.id || vocabularies?.[0]?.id || 1;
+        onMistake({
+          questionId: vocabId,
+          roundType: 8,
+          wrongAnswerSubmitted: userSentence || 'Sai thứ tự câu',
+          phonemeErrorType: currentItem.sentence,
+        });
+      }
     }
   };
 

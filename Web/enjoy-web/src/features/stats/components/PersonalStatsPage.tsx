@@ -32,6 +32,7 @@ export interface SkillScores {
   reading: number;
   writing: number;
   vocabGrammar: number;
+  grammar: number;
 }
 
 export interface SkillDefinition {
@@ -90,7 +91,19 @@ export const SKILL_DEFINITIONS: SkillDefinition[] = [
     bgLight: 'bg-amber-50 text-amber-600 border-amber-200',
     icon: LanguageIcon,
   },
+  { 
+    key: 'grammar', 
+    index: 6, 
+    nameVi: 'Ngữ pháp', 
+    nameEn: 'Grammar', 
+    color: '#06b6d4', 
+    bgLight: 'bg-cyan-50 text-cyan-600 border-cyan-200',
+    icon: AcademicCapIcon,
+  },
 ];
+
+const PERSONALIZED_SKILLS = ['vocabGrammar', 'speaking', 'writing', 'reading'];
+const isPersonalizedSkill = (skillKey: string) => PERSONALIZED_SKILLS.includes(skillKey);
 
 // Component Spider Chart 5 Góc (Pentagon Radar Chart đa sắc thái hài hòa)
 interface SpiderChart5DProps {
@@ -119,10 +132,12 @@ const SpiderChart5D: React.FC<SpiderChart5DProps> = ({
   const center = size / 2;
   const radius = (size / 2) - 56;
 
-  // 5 đỉnh ngũ giác đều bắt đầu từ -90 độ (Đỉnh 1: Listening)
+  const numSkills = SKILL_DEFINITIONS.length;
+
+  // Các đỉnh đa giác đều bắt đầu từ -90 độ (Đỉnh 1: Listening)
   const getPointCoordinates = (index: number, score: number, maxScore: number = 100) => {
     const safeScore = typeof score === 'number' && !isNaN(score) ? score : 0;
-    const angle = -Math.PI / 2 + (index * 2 * Math.PI) / 5;
+    const angle = -Math.PI / 2 + (index * 2 * Math.PI) / numSkills;
     const r = (Math.max(0, Math.min(safeScore, maxScore)) / maxScore) * radius;
     const x = center + r * Math.cos(angle);
     const y = center + r * Math.sin(angle);
@@ -168,9 +183,9 @@ const SpiderChart5D: React.FC<SpiderChart5DProps> = ({
           </filter>
         </defs>
 
-        {/* 1. Lưới ngũ giác đều các mức % với nền xen kẽ nhẹ */}
+        {/* 1. Lưới đa giác đều các mức % với nền xen kẽ nhẹ */}
         {gridLevels.map((lvl) => {
-          const pts = Array.from({ length: 5 }).map((_, idx) => {
+          const pts = Array.from({ length: numSkills }).map((_, idx) => {
             const pt = getPointCoordinates(idx, lvl);
             return `${pt.x.toFixed(1)},${pt.y.toFixed(1)}`;
           }).join(' ');
@@ -197,7 +212,7 @@ const SpiderChart5D: React.FC<SpiderChart5DProps> = ({
           );
         })}
 
-        {/* 2. Các trục từ tâm tới 5 góc với màu tương ứng từng kỹ năng */}
+        {/* 2. Các trục từ tâm tới các góc với màu tương ứng từng kỹ năng */}
         {SKILL_DEFINITIONS.map((def, idx) => {
           const pt = getPointCoordinates(idx, 100);
           const isHighlighted = highlightedSkill === def.key;
@@ -259,6 +274,8 @@ const SpiderChart5D: React.FC<SpiderChart5DProps> = ({
             const pt = getPointCoordinates(idx, score);
             const isHighlighted = highlightedSkill === def.key;
 
+            const isSupported = isPersonalizedSkill(def.key);
+
             return (
               <circle
                 key={`curr-dot-${def.key}`}
@@ -268,54 +285,56 @@ const SpiderChart5D: React.FC<SpiderChart5DProps> = ({
                 fill="#ff5e97"
                 stroke="#ffffff"
                 strokeWidth="2.5"
-                className="transition-all duration-200 cursor-pointer hover:scale-125"
+                className={`transition-all duration-200 ${isSupported ? 'cursor-pointer hover:scale-125' : 'cursor-default'}`}
                 onMouseEnter={() => onHoverSkill?.(def.key)}
                 onMouseLeave={() => onHoverSkill?.(null)}
-                onClick={() => onClickSkill?.(def.key)}
+                onClick={() => isSupported && onClickSkill?.(def.key)}
               />
             );
           })}
         </g>
 
-        {/* 5. Nhãn 5 góc có màu sắc phân biệt từng kỹ năng */}
+        {/* 5. Nhãn các góc có màu sắc phân biệt từng kỹ năng */}
         {SKILL_DEFINITIONS.map((def, idx) => {
           const ptOuter = getPointCoordinates(idx, 118);
           const isHighlighted = highlightedSkill === def.key;
           const currScore = currentSkills[def.key];
           const prevScore = previousSkills ? previousSkills[def.key] : null;
+          const isSupported = isPersonalizedSkill(def.key);
+
+          const cosVal = Math.cos(ptOuter.angle);
+          const sinVal = Math.sin(ptOuter.angle);
 
           let textAnchor: 'middle' | 'start' | 'end' = 'middle';
           let xOffset = 0;
           let yOffset = 0;
 
-          if (idx === 0) {
+          if (cosVal > 0.25) {
+            textAnchor = 'start';
+            xOffset = 10;
+          } else if (cosVal < -0.25) {
+            textAnchor = 'end';
+            xOffset = -10;
+          } else {
             textAnchor = 'middle';
+            xOffset = 0;
+          }
+
+          if (sinVal < -0.4) {
             yOffset = -8;
-          } else if (idx === 1) {
-            textAnchor = 'start';
-            xOffset = 10;
-            yOffset = -2;
-          } else if (idx === 2) {
-            textAnchor = 'start';
-            xOffset = 10;
-            yOffset = 8;
-          } else if (idx === 3) {
-            textAnchor = 'end';
-            xOffset = -10;
-            yOffset = 8;
-          } else if (idx === 4) {
-            textAnchor = 'end';
-            xOffset = -10;
-            yOffset = -2;
+          } else if (sinVal > 0.4) {
+            yOffset = 10;
+          } else {
+            yOffset = 0;
           }
 
           return (
             <g
               key={`label-${def.key}`}
-              className="cursor-pointer transition-all duration-150 hover:opacity-80"
+              className={`transition-all duration-150 ${isSupported ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
               onMouseEnter={() => onHoverSkill?.(def.key)}
               onMouseLeave={() => onHoverSkill?.(null)}
-              onClick={() => onClickSkill?.(def.key)}
+              onClick={() => isSupported && onClickSkill?.(def.key)}
             >
               <text
                 x={ptOuter.x + xOffset}
@@ -400,19 +419,24 @@ const SkillBarOverview: React.FC<SkillBarOverviewProps> = ({
         const score = skills ? (skills[def.key] ?? 0) : 0;
         const isHighlighted = highlightedSkill === def.key;
         const evalBadge = getSkillEvaluation(score);
+        const isSupported = isPersonalizedSkill(def.key);
 
         return (
           <div
             key={def.key}
             onMouseEnter={() => onHoverSkill?.(def.key)}
             onMouseLeave={() => onHoverSkill?.(null)}
-            onClick={() => onClickSkill?.(def.key)}
-            className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer ${
-              isHighlighted
-                ? 'bg-white shadow-md ring-2 ring-purple-300 scale-[1.01]'
-                : 'bg-slate-50/90 hover:bg-white hover:border-slate-300 hover:shadow-xs'
+            onClick={() => isSupported && onClickSkill?.(def.key)}
+            className={`p-4 rounded-2xl border transition-all duration-200 ${
+              isSupported ? 'cursor-pointer' : 'cursor-default'
+            } ${
+              isHighlighted && isSupported
+                ? 'bg-white shadow-md ring-2 ring-pink-200 scale-[1.01]'
+                : isSupported
+                ? 'bg-slate-50/90 hover:bg-white hover:border-pink-200 hover:shadow-xs'
+                : 'bg-slate-50/60'
             }`}
-            style={{ borderColor: isHighlighted ? def.color : undefined }}
+            style={{ borderColor: isHighlighted && isSupported ? def.color : undefined }}
           >
             <div className="flex items-center justify-between gap-3 mb-2.5">
               <div className="flex items-center gap-3">
@@ -444,9 +468,11 @@ const SkillBarOverview: React.FC<SkillBarOverviewProps> = ({
                   </span>
                   <span className="text-xs font-bold text-slate-400">%</span>
                 </div>
-                <span className="text-[10px] font-bold text-purple-600 block hover:underline">
-                  Mở lộ trình →
-                </span>
+                {isSupported && (
+                  <span className="text-[10px] font-bold text-[#ff5e97] block hover:underline">
+                    Cá nhân hóa →
+                  </span>
+                )}
               </div>
             </div>
 
@@ -489,25 +515,30 @@ const SkillRingsOverview: React.FC<SkillRingsOverviewProps> = ({
   const circumference = 2 * Math.PI * radius;
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 py-4 w-full">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 py-4 w-full">
       {SKILL_DEFINITIONS.map((def) => {
         const Icon = def.icon;
         const score = skills ? (skills[def.key] ?? 0) : 0;
         const strokeDashoffset = circumference - (score / 100) * circumference;
         const isHighlighted = highlightedSkill === def.key;
+        const isSupported = isPersonalizedSkill(def.key);
 
         return (
           <div
             key={def.key}
             onMouseEnter={() => onHoverSkill?.(def.key)}
             onMouseLeave={() => onHoverSkill?.(null)}
-            onClick={() => onClickSkill?.(def.key)}
-            className={`p-4 rounded-3xl border flex flex-col items-center justify-center text-center transition-all duration-200 cursor-pointer ${
-              isHighlighted
-                ? 'bg-white shadow-lg ring-2 ring-purple-300 scale-105'
-                : 'bg-slate-50/90 hover:bg-white hover:border-slate-300 hover:shadow-sm'
+            onClick={() => isSupported && onClickSkill?.(def.key)}
+            className={`p-4 rounded-3xl border flex flex-col items-center justify-center text-center transition-all duration-200 ${
+              isSupported ? 'cursor-pointer' : 'cursor-default'
+            } ${
+              isHighlighted && isSupported
+                ? 'bg-white shadow-lg ring-2 ring-pink-200 scale-105'
+                : isSupported
+                ? 'bg-slate-50/90 hover:bg-white hover:border-pink-200 hover:shadow-sm'
+                : 'bg-slate-50/70'
             }`}
-            style={{ borderColor: isHighlighted ? def.color : undefined }}
+            style={{ borderColor: isHighlighted && isSupported ? def.color : undefined }}
           >
             {/* Vòng tròn SVG */}
             <div className="relative w-24 h-24 flex items-center justify-center my-1">
@@ -589,7 +620,7 @@ export const PersonalStatsPage: React.FC = () => {
   // Highlight kỹ năng khi hover
   const [hoveredSkill, setHoveredSkill] = useState<string | null>(null);
 
-  // Kiểu hiển thị biểu đồ: 'bars' (Thanh năng lực trực quan) | 'rings' (Vòng tròn) | 'radar' (Ngũ giác)
+  // Kiểu hiển thị biểu đồ: 'bars' (Thanh năng lực trực quan) | 'rings' (Vòng tròn) | 'radar' (Đa giác Radar)
   const [chartDisplayType, setChartDisplayType] = useState<'bars' | 'rings' | 'radar'>('bars');
 
   // Dữ liệu kỹ năng (Mặc định 0 khi chưa tải hoặc chưa học)
@@ -599,6 +630,7 @@ export const PersonalStatsPage: React.FC = () => {
     reading: 0,
     writing: 0,
     vocabGrammar: 0,
+    grammar: 0,
   });
 
   const [skillsPrevious, setSkillsPrevious] = useState<SkillScores>({
@@ -607,6 +639,7 @@ export const PersonalStatsPage: React.FC = () => {
     reading: 0,
     writing: 0,
     vocabGrammar: 0,
+    grammar: 0,
   });
 
   const [skillsLoading, setSkillsLoading] = useState<boolean>(false);
@@ -721,6 +754,7 @@ export const PersonalStatsPage: React.FC = () => {
         reading: 0,
         writing: 0,
         vocabGrammar: 0,
+        grammar: 0,
       });
 
       setSkillsPrevious(data?.previousSkills || {
@@ -729,6 +763,7 @@ export const PersonalStatsPage: React.FC = () => {
         reading: 0,
         writing: 0,
         vocabGrammar: 0,
+        grammar: 0,
       });
     } catch (err) {
       console.warn("Lỗi khi tải thống kê kỹ năng:", err);
@@ -738,6 +773,7 @@ export const PersonalStatsPage: React.FC = () => {
         reading: 0,
         writing: 0,
         vocabGrammar: 0,
+        grammar: 0,
       });
       setSkillsPrevious({
         listening: 0,
@@ -745,6 +781,7 @@ export const PersonalStatsPage: React.FC = () => {
         reading: 0,
         writing: 0,
         vocabGrammar: 0,
+        grammar: 0,
       });
     } finally {
       setSkillsLoading(false);
@@ -788,7 +825,7 @@ export const PersonalStatsPage: React.FC = () => {
   const recentSessions: RecentSession[] = stats?.recentSessions || [];
 
   const calcAverage = (skills: SkillScores) => {
-    const scores = [skills.listening, skills.speaking, skills.reading, skills.writing, skills.vocabGrammar];
+    const scores = [skills.listening, skills.speaking, skills.reading, skills.writing, skills.vocabGrammar, skills.grammar];
     const learnedScores = scores.filter(s => s > 0);
     if (learnedScores.length === 0) return 0;
     return Math.round(learnedScores.reduce((a, b) => a + b, 0) / learnedScores.length);
@@ -936,7 +973,7 @@ export const PersonalStatsPage: React.FC = () => {
             <div className="text-[11px] font-bold text-slate-600 bg-white px-3.5 py-2 rounded-xl border border-primary/20 flex items-center gap-2">
               {selectedChild ? (
                 <span>
-                  Đang hiển thị kết quả học tập & đánh giá 5 kỹ năng của bé: <strong className="text-primary">{selectedChild.studentName || selectedChild.studentEmail}</strong>
+                  Đang hiển thị kết quả học tập & đánh giá năng lực của bé: <strong className="text-primary">{selectedChild.studentName || selectedChild.studentEmail}</strong>
                 </span>
               ) : (
                 <span>
@@ -1021,7 +1058,7 @@ export const PersonalStatsPage: React.FC = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* 4. PHẦN ĐÁNH GIÁ NĂNG LỰC 5 KỸ NĂNG (2 TAB: HIỆN TẠI & SO SÁNH 2 NGÀY)     */}
+      {/* 4. PHẦN ĐÁNH GIÁ NĂNG LỰC CÁC KỸ NĂNG (2 TAB: HIỆN TẠI & SO SÁNH 2 NGÀY)     */}
       {/* ========================================================================= */}
       <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 shadow-xs space-y-6">
         
@@ -1029,12 +1066,12 @@ export const PersonalStatsPage: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
           <div>
             <h2 className="text-lg font-black text-slate-800 uppercase tracking-wide flex items-center gap-2">
-              Đánh giá năng lực 5 kỹ năng
+              Đánh giá năng lực các kỹ năng
               {skillsLoading && <ArrowPathIcon className="w-4 h-4 text-primary animate-spin" />}
             </h2>
             <p className="text-xs text-slate-500">
               {activeSkillTab === 'current'
-                ? 'Biểu đồ năng lực hiện tại: Nghe, Nói, Đọc, Viết, Từ vựng'
+                ? 'Biểu đồ năng lực hiện tại: Nghe, Nói, Đọc, Viết, Từ vựng, Ngữ pháp'
                 : 'Đối sánh năng lực giữa 2 mốc ngày để theo dõi sự tiến bộ'}
             </p>
           </div>
@@ -1108,7 +1145,7 @@ export const PersonalStatsPage: React.FC = () => {
                     }`}
                   >
                     <span>🕸️</span>
-                    <span>Ngũ Giác Radar</span>
+                    <span>Biểu Đồ Radar</span>
                   </button>
                 </div>
               </div>
@@ -1120,7 +1157,7 @@ export const PersonalStatsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Render Kiểu 1: Thanh Năng Lực 5 Kỹ Năng (Rõ ràng & Dễ nhìn nhất) */}
+            {/* Render Kiểu 1: Thanh Năng Lực (Rõ ràng & Dễ nhìn nhất) */}
             {chartDisplayType === 'bars' && (
               <div className="space-y-3 animate-fadeIn">
                 <div className="flex items-center justify-between">
@@ -1141,13 +1178,13 @@ export const PersonalStatsPage: React.FC = () => {
               </div>
             )}
 
-            {/* Render Kiểu 2: Vòng Tròn Tiến Độ 5 Kỹ Năng */}
+            {/* Render Kiểu 2: Vòng Tròn Tiến Độ */}
             {chartDisplayType === 'rings' && (
               <div className="space-y-4 animate-fadeIn">
                 <div className="p-5 rounded-3xl bg-gradient-to-b from-pink-50/25 to-slate-50/80 border border-pink-100">
                   <div className="flex items-center justify-between border-b border-pink-100 pb-3 mb-2 text-xs">
                     <span className="font-extrabold text-[#e03a74] uppercase">
-                      Vòng tròn tiến độ 5 kỹ năng (Ngày {formatDateVN(currentDate)})
+                      Vòng tròn tiến độ các kỹ năng (Ngày {formatDateVN(currentDate)})
                     </span>
                     <span className="text-xs text-slate-400 font-medium">Bấm vào vòng tròn để can thiệp</span>
                   </div>
@@ -1162,7 +1199,7 @@ export const PersonalStatsPage: React.FC = () => {
               </div>
             )}
 
-            {/* Render Kiểu 3: Biểu đồ Ngũ Giác Spider Chart */}
+            {/* Render Kiểu 3: Biểu đồ Spider Chart */}
             {chartDisplayType === 'radar' && (
               <div className="space-y-6 animate-fadeIn">
                 <div className="p-6 rounded-3xl bg-gradient-to-b from-pink-50/25 to-slate-50/80 border border-pink-100 flex flex-col items-center">
@@ -1186,11 +1223,11 @@ export const PersonalStatsPage: React.FC = () => {
                   />
                 </div>
 
-                {/* 5 Thẻ chi tiết kỹ năng bên dưới */}
+                {/* Thẻ chi tiết kỹ năng bên dưới */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">
-                      Chi tiết điểm số 5 kỹ năng
+                      Chi tiết điểm số các kỹ năng
                     </span>
                     <span className="text-[11px] text-purple-600 font-bold bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200">
                       Bấm vào kỹ năng để mở lộ trình khắc phục
@@ -1419,11 +1456,11 @@ export const PersonalStatsPage: React.FC = () => {
 
             </div>
 
-            {/* 5 Thẻ đối sánh chi tiết 5 kỹ năng */}
+            {/* Thẻ đối sánh chi tiết các kỹ năng */}
             <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">
-                  Chi tiết 5 kỹ năng & Mức độ tiến bộ
+                  Chi tiết các kỹ năng & Mức độ tiến bộ
                 </span>
                 <span className="text-[11px] text-slate-400 font-medium">Rà chuột để làm nổi bật trên biểu đồ</span>
               </div>

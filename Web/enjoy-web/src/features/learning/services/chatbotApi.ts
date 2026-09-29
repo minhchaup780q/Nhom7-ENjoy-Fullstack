@@ -424,22 +424,28 @@ Trả về DUY NHẤT 1 chuỗi JSON hợp lệ (không kèm markdown \`\`\`json
         }
       }
 
+      const isSentence = target.includes(' ') || (m.roundType === 9);
+      if (isSentence && (!m.aiExplanationCache || !customIpa || customIpa.includes('/'))) {
+        customIpa = 'Luyện nói câu';
+      }
+
       return {
         id: m.id,
         questionId: m.questionId,
-        word: target,
+        word: m.contentText || m.keyword || target,
+        roundType: m.roundType || (isSentence ? 9 : 3),
         ipa: customIpa,
         focusPhoneme: customFocusPhoneme,
         phonemeType: meta.phonemeType,
         phonemeNameVi: customPhonemeNameVi,
         videoUrl: undefined,
-        translation: m.translation || 'Từ vựng',
+        translation: m.translation || (isSentence ? 'Câu luyện nói' : 'Từ vựng'),
         imageUrl: m.imageUrl,
         audioUrl: m.audioUrl,
         topic: m.keyword?.trim() || 'Chủ đề chung',
         recognizedText: displayRecognized,
         classification: isCompletelyWrong ? 'COMPLETELY_WRONG' : 'NEAR_CORRECT_PHONEME',
-        wrongPhonemeLabel: isCompletelyWrong ? 'Chưa nhớ từ vựng' : meta.wrongLabel,
+        wrongPhonemeLabel: isCompletelyWrong ? (isSentence ? 'Chưa đọc trọn vẹn câu' : 'Chưa nhớ từ vựng') : meta.wrongLabel,
         mouthShapeGuide: customMouthGuide,
         aiAnalysisVi: customAiAnalysis,
         rawCache: rawCacheData,
@@ -888,6 +894,7 @@ export interface AnalyzedSpeakingItem {
   id: string | number;
   questionId?: string | number;
   word: string;
+  roundType?: number;
   ipa: string;
   translation: string;
   imageUrl?: string;

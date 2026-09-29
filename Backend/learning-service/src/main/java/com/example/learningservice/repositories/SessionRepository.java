@@ -13,5 +13,7 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
     // Lấy tất cả session của 1 part cụ thể (chưa xóa)
     List<Session> findByPartIdAndIsDeleteFalseOrderByOrderIndexAsc(Long partId);
 
+    List<Session> findByPartIdInAndIsDeleteFalse(List<Long> partIds);
+
     Optional<Session> findByIdAndIsDeleteFalse(Long id);
 }

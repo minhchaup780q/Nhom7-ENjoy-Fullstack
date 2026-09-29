@@ -127,17 +127,21 @@ export function resolvePronunciationAnalysis(
   const primaryDiff = differences[0];
   const primaryPhoneme = primaryDiff ? primaryDiff.from.replace(/[\/]/g, '') : 's';
 
+  const isSentence = cleanTarget.includes(' ') || cleanTarget.split(' ').length > 1;
+
   return {
     targetWord: cleanTarget,
-    targetIPA: `/${cleanTarget}/`,
+    targetIPA: isSentence ? 'Luyện nói cả câu' : `/${cleanTarget}/`,
     targetMeaning: meaning,
     userWord: cleanUser || 'Chưa đọc',
-    userIPA: cleanUser ? `/${cleanUser}/` : '—',
+    userIPA: cleanUser ? (isSentence ? 'Đã thu âm câu' : `/${cleanUser}/`) : '—',
     phonemes,
     differences,
     fixTips,
     aiAdvice: differences.length > 0
-      ? `AI đang phân tích chi tiết phát âm cho "${cleanTarget}". Bé hãy bấm Hướng dẫn đọc âm để xem chi tiết nhé!`
+      ? (isSentence 
+          ? `Bé hãy chú ý luyện phát âm trôi chảy cả câu "${cleanTarget}". Đặc biệt chú ý các từ bé đọc chưa khớp nhé!` 
+          : `AI đang phân tích chi tiết phát âm cho "${cleanTarget}". Bé hãy bấm Hướng dẫn đọc âm để xem chi tiết nhé!`)
       : `Bé phát âm rất tốt "${cleanTarget}". Hãy tiếp tục luyện tập nhé!`,
     primaryPhoneme,
     phoneticGuideItem: findGuidePhoneticItem(primaryPhoneme),
@@ -146,11 +150,17 @@ export function resolvePronunciationAnalysis(
 
 // Hàm phân rã và so sánh chuỗi âm/từ động hoàn toàn (không fix cứng từ vựng)
 function buildDynamicPhonemes(target: string, user: string): PhonemeDiffItem[] {
+  const isSentence = target.trim().includes(' ');
   const tTokens = tokenizeText(target);
   const uTokens = tokenizeText(user);
 
   const result: PhonemeDiffItem[] = [];
   const maxLen = Math.max(tTokens.length, uTokens.length);
+
+  const format = (tok: string | null) => {
+    if (!tok) return null;
+    return isSentence ? tok : `/${tok}/`;
+  };
 
   for (let i = 0; i < maxLen; i++) {
     const t = tTokens[i] || null;
@@ -158,18 +168,18 @@ function buildDynamicPhonemes(target: string, user: string): PhonemeDiffItem[] {
 
     if (t && u) {
       if (t.toLowerCase() === u.toLowerCase()) {
-        result.push({ target: `/${t}/`, user: `/${u}/`, status: 'match' });
+        result.push({ target: format(t)!, user: format(u), status: 'match' });
       } else {
-        result.push({ target: `/${t}/`, user: `/${u}/`, status: 'different' });
+        result.push({ target: format(t)!, user: format(u), status: 'different' });
       }
     } else if (t && !u) {
-      result.push({ target: `/${t}/`, user: null, status: 'missing' });
+      result.push({ target: format(t)!, user: null, status: 'missing' });
     } else if (!t && u) {
-      result.push({ target: '—', user: `/${u}/`, status: 'extra' });
+      result.push({ target: '—', user: format(u), status: 'extra' });
     }
   }
 
-  return result.length > 0 ? result : [{ target: `/${target}/`, user: user ? `/${user}/` : null, status: 'match' }];
+  return result.length > 0 ? result : [{ target: format(target)!, user: user ? format(user) : null, status: 'match' }];
 }
 
 // Bóc tách từ hoặc câu thành mảng âm/ký tự/từ ngữ động

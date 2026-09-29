@@ -19,7 +19,8 @@ export interface MistakeItem {
   aiExplanationCache?: string | null;
   status: MistakeStatus;
   correctStreakDays?: number; // 0, 1, 2, 3
-  masteryScore?: number; // 0.0 -> 0.33 -> 0.67 -> 1.0
+  partId?: number;
+  sessionPayload?: any;
   lastPracticedAt?: string | null;
   nextReviewAt?: string | null;
   createdAt: string;

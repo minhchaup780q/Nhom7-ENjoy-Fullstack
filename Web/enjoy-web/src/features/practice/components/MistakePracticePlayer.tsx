@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Button3D } from '../../../components/ui/Button3D';
+import React, { useState, useMemo, useCallback } from 'react';
+import { XMarkIcon } from '@heroicons/react/24/solid';
 import { BASE_URL } from '../../../services/apiClient';
-import { mistakeApi, type MistakeItem } from '../../learning/services/mistakeApi';
-import { chatbotApi } from '../../learning/services/chatbotApi';
+import { mistakeApi, type MistakeItem, type MistakeCreatePayload } from '../../learning/services/mistakeApi';
 import type { Vocabulary, SessionPayload } from '../../learning/types';
 import { FlashcardExercise } from '../../learning/components/exercises/FlashcardExercise';
 import { MatchWordExercise } from '../../learning/components/exercises/MatchWordExercise';
@@ -11,6 +10,9 @@ import { ReorderExercise } from '../../learning/components/exercises/ReorderExer
 import { DragDropExercise } from '../../learning/components/exercises/DragDropExercise';
 import { GrammarExercise } from '../../learning/components/exercises/GrammarExercise';
 import { FillInBlankExercise } from '../../learning/components/exercises/FillInBlankExercise';
+import { ReorderSentenceExercise } from '../../learning/components/exercises/ReorderSentenceExercise';
+import { SpeakingSentenceExercise } from '../../learning/components/exercises/SpeakingSentenceExercise';
+import { ConversationExercise } from '../../learning/components/exercises/ConversationExercise';
 import { CongratulationScreen } from '../../learning/components/ui/CongratulationScreen';
 
 interface MistakePracticePlayerProps {
@@ -21,26 +23,7 @@ interface MistakePracticePlayerProps {
   skipStatusUpdate?: boolean;
 }
 
-const isImageUrl = (val?: string | null): boolean => {
-  if (!val) return false;
-  const s = val.trim().toLowerCase();
-  return (
-    s.startsWith('http://') ||
-    s.startsWith('https://') ||
-    s.startsWith('/') ||
-    s.startsWith('data:image') ||
-    s.includes('.webp') ||
-    s.includes('.png') ||
-    s.includes('.jpg') ||
-    s.includes('.jpeg') ||
-    s.includes('.svg') ||
-    s.includes('s3.') ||
-    s.includes('amazonaws.com') ||
-    s.includes('unsplash.com')
-  );
-};
-
-const getAssetUrl = (path?: string | null) => {
+const getAssetUrl = (path?: string | null): string => {
   if (!path) return '';
   const trimmed = path.trim();
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:')) {
@@ -49,15 +32,10 @@ const getAssetUrl = (path?: string | null) => {
   return `${BASE_URL.replace(/\/$/, '')}/${trimmed.replace(/^\//, '')}`;
 };
 
-const ROUND_NAMES: Record<number, string> = {
-  1: 'Vòng 1: Học từ vựng',
-  2: 'Vòng 2: Nối từ vựng',
-  3: 'Vòng 3: Luyện nói',
-  4: 'Vòng 4: Sắp xếp chữ cái',
-  5: 'Vòng 5: Kéo thả toạ độ',
-  6: 'Vòng 6: Ngữ pháp trắc nghiệm',
-  7: 'Vòng 7: Điền từ vào chỗ trống',
-};
+interface PracticeRound {
+  roundType: number;
+  items: MistakeItem[];
+}
 
 export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
   mistakes,
@@ -65,207 +43,386 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
   onFinished,
   skipStatusUpdate = false,
 }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [masteredCount, setMasteredCount] = useState(0);
-  const [totalScore, setTotalScore] = useState(0);
-  const [isFinished, setIsFinished] = useState(false);
+  const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
+  const [roundProgress, setRoundProgress] = useState({ current: 0, total: 1 });
   const [showExitModal, setShowExitModal] = useState(false);
+  const [isFinished, setIsFinished] = useState(false);
 
-  // States dành cho AI Advice Modal
-  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiAdvice, setAiAdvice] = useState<string>('');
-  const [lastWrongAnswer, setLastWrongAnswer] = useState<string | null>(null);
-
-  const currentItem = mistakes[currentIndex];
-
-  useEffect(() => {
-    if (currentItem) {
-      setLastWrongAnswer(currentItem.wrongAnswerSubmitted || null);
-    }
-  }, [currentIndex, currentItem]);
-
-  const handleOpenAiAdvice = async () => {
-    if (!currentItem) return;
-    setIsAiModalOpen(true);
-    setAiLoading(true);
-    setAiAdvice('');
-    try {
-      const explanation = await chatbotApi.explainMistake(currentItem, lastWrongAnswer || undefined);
-      setAiAdvice(explanation);
-      mistakeApi.updateAiExplanation(currentItem.id, explanation).catch(() => {});
-    } catch {
-      setAiAdvice('ENjoy AI đang bận một chút. Bé hãy xem lại từ vựng và đáp án đúng nhé!');
-    } finally {
-      setAiLoading(false);
-    }
-  };
-
-  const progressPercent = mistakes.length > 0 ? (currentIndex / mistakes.length) * 100 : 0;
-
-  const handleStepSuccess = async () => {
-    if (!currentItem) return;
-    // Chỉ gọi API cập nhật status khi KHÔNG phải chế độ luyện cá nhân hoá
-    if (!skipStatusUpdate) {
-      try {
-        await mistakeApi.submitPracticeStep(currentItem.id, true);
-      } catch (err) {
-        console.warn('Lỗi khi nộp kết quả luyện tập:', err);
+  // Nhóm các câu sai theo roundType liên tiếp thành các vòng học hoàn chỉnh
+  const rounds: PracticeRound[] = useMemo(() => {
+    if (!mistakes || mistakes.length === 0) return [];
+    const result: PracticeRound[] = [];
+    mistakes.forEach((m) => {
+      const last = result[result.length - 1];
+      const rType = m.roundType || 4;
+      if (last && last.roundType === rType) {
+        last.items.push(m);
+      } else {
+        result.push({ roundType: rType, items: [m] });
       }
-    }
-    setMasteredCount(prev => prev + 1);
-    setTotalScore(prev => prev + 20);
+    });
+    return result;
+  }, [mistakes]);
 
-    if (currentIndex < mistakes.length - 1) {
-      setCurrentIndex(prev => prev + 1);
+  const currentRound = rounds[currentRoundIndex];
+
+  // Tính toán phần trăm tiến độ bài học mượt mà dựa trên số câu
+  const completedItemsBeforeCurrentRound = useMemo(() => {
+    return rounds.slice(0, currentRoundIndex).reduce((sum, r) => sum + r.items.length, 0);
+  }, [rounds, currentRoundIndex]);
+
+  const totalMistakesCount = mistakes.length;
+
+  const progressPercent = useMemo(() => {
+    if (totalMistakesCount === 0) return 100;
+    const progressInCurrentRound = roundProgress.current;
+    const completedTotal = completedItemsBeforeCurrentRound + progressInCurrentRound;
+    return Math.min(100, Math.round((completedTotal / totalMistakesCount) * 100));
+  }, [completedItemsBeforeCurrentRound, roundProgress.current, totalMistakesCount]);
+
+  // Xử lý khi hoàn thành một vòng luyện tập
+  const handleRoundComplete = useCallback(async () => {
+    if (!currentRound) return;
+
+    // Cập nhật mastered status cho các item trong vòng nếu không skip
+    if (!skipStatusUpdate) {
+      await Promise.allSettled(
+        currentRound.items.map((item) =>
+          mistakeApi.submitPracticeStep(item.id, true).catch((e) => {
+            console.warn('Lỗi submit practice step:', e);
+          })
+        )
+      );
+    }
+
+    if (currentRoundIndex < rounds.length - 1) {
+      setCurrentRoundIndex((prev) => prev + 1);
+      setRoundProgress({ current: 0, total: 1 });
     } else {
       setIsFinished(true);
       onFinished({
-        total: mistakes.length,
-        mastered: masteredCount + 1,
-        score: totalScore + 20,
+        total: totalMistakesCount,
+        mastered: totalMistakesCount,
+        score: totalMistakesCount * 20,
       });
     }
-  };
+  }, [currentRound, currentRoundIndex, rounds.length, skipStatusUpdate, totalMistakesCount, onFinished]);
 
-  const handleStepMistake = async (wrongAns?: string) => {
-    if (!currentItem) return;
-    if (wrongAns) {
-      setLastWrongAnswer(wrongAns);
-    }
-    // Chỉ gọi API cập nhật status khi KHÔNG phải chế độ luyện cá nhân hoá
-    if (!skipStatusUpdate) {
-      try {
-        await mistakeApi.submitPracticeStep(currentItem.id, false);
-      } catch (err) {
-        console.warn('Lỗi khi ghi nhận sai trong lúc luyện tập:', err);
+  // Xử lý khi làm sai trong bài tập
+  const handleMistake = useCallback(
+    async (mistakeData?: MistakeCreatePayload) => {
+      if (!skipStatusUpdate && mistakeData?.questionId) {
+        try {
+          await mistakeApi.submitPracticeStep(mistakeData.questionId, false);
+        } catch (err) {
+          console.warn('Lỗi ghi nhận sai khi luyện tập:', err);
+        }
+      }
+    },
+    [skipStatusUpdate]
+  );
+
+  // Callback nhận tiến độ từ từng component bài tập
+  const handleProgress = useCallback((current: number, total: number) => {
+    setRoundProgress({ current, total: Math.max(1, total) });
+  }, []);
+
+  // Danh sách từ vựng cho các vòng 1, 2, 3, 4
+  const currentRoundVocabs: Vocabulary[] = useMemo(() => {
+    if (!currentRound) return [];
+    return currentRound.items.map((m, idx) => ({
+      id: m.questionId || m.id || idx + 1,
+      word: m.contentText || m.keyword || '',
+      translation: m.translation || '',
+      imageUrl: m.imageUrl ? getAssetUrl(m.imageUrl) : undefined,
+      audioUrl: m.audioUrl ? getAssetUrl(m.audioUrl) : undefined,
+    }));
+  }, [currentRound]);
+
+  // Payload cho các dạng bài nâng cao (vòng 5, 6, 7, 8, 9, 10)
+  const currentRoundPayload: SessionPayload = useMemo(() => {
+    if (!currentRound) return {};
+    const items = currentRound.items;
+
+    // 1. Ưu tiên hàng đầu: Lấy trực tiếp payload gốc của Session từ CSDL
+    for (const m of items) {
+      if (m.sessionPayload) {
+        try {
+          const raw = typeof m.sessionPayload === 'string' ? JSON.parse(m.sessionPayload) : m.sessionPayload;
+          if (raw && (raw.items || raw.blocks || raw.coordinates)) {
+            const resolved: SessionPayload = { ...raw };
+            if (Array.isArray(resolved.items)) {
+              resolved.items = resolved.items.map((it: any) => ({
+                ...it,
+                image_url: it.image_url ? getAssetUrl(it.image_url) : it.image_url,
+                audio_url: it.audio_url ? getAssetUrl(it.audio_url) : it.audio_url,
+                question: it.question ? {
+                  ...it.question,
+                  audio_url: it.question.audio_url ? getAssetUrl(it.question.audio_url) : it.question.audio_url,
+                } : it.question,
+                answer: it.answer && typeof it.answer === 'object' ? {
+                  ...it.answer,
+                  audio_url: it.answer.audio_url ? getAssetUrl(it.answer.audio_url) : it.answer.audio_url,
+                } : it.answer,
+                distractor: it.distractor && typeof it.distractor === 'object' ? {
+                  ...it.distractor,
+                  audio_url: it.distractor.audio_url ? getAssetUrl(it.distractor.audio_url) : it.distractor.audio_url,
+                } : it.distractor,
+              }));
+            }
+            return resolved;
+          }
+        } catch (e) {
+          console.warn('Lỗi khi phân giải sessionPayload gốc:', e);
+        }
       }
     }
-    // Không trừ mạng, chỉ ghi nhận sai để chuyển câu tiếp theo
-    if (currentIndex < mistakes.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-    } else {
-      setIsFinished(true);
-      onFinished({ total: mistakes.length, mastered: masteredCount, score: totalScore });
-    }
-  };
 
-  // Tạo Vocabulary object cho item hiện tại
-  const currentVocab: Vocabulary = useMemo(() => {
-    if (!currentItem) {
-      return { id: 0, word: '', translation: '' };
-    }
-    return {
-      id: currentItem.questionId || currentItem.id,
-      word: currentItem.contentText || currentItem.keyword || '',
-      translation: currentItem.translation || '',
-      imageUrl: currentItem.imageUrl ? getAssetUrl(currentItem.imageUrl) : undefined,
-      audioUrl: currentItem.audioUrl ? getAssetUrl(currentItem.audioUrl) : undefined,
-    };
-  }, [currentItem]);
-
-  // Danh sách từ vựng cho bài tập ghép cặp (Vòng 2) - Lấy trực tiếp từ vựng của câu sai
-  const matchVocabs: Vocabulary[] = useMemo(() => {
-    if (!currentItem) return [];
-    return [currentVocab];
-  }, [currentVocab, currentItem]);
-
-  // Payload cho các dạng bài nâng cao (DragDrop, Grammar, FillInBlank)
-  const currentPayload: SessionPayload = useMemo(() => {
-    if (!currentItem) return {};
-    const wordText = currentItem.keyword || currentItem.contentText || '';
-
-    // Dạng Fill In Blank
-    if (currentItem.roundType === 7) {
-      const otherWords = mistakes
-        .filter(m => m.id !== currentItem.id)
-        .map(m => m.keyword || m.contentText)
-        .filter(Boolean);
-      const distractors = Array.from(new Set(otherWords)).slice(0, 3);
-
+    // 2. Dự phòng: Tổng hợp từ phonemeErrorType hoặc dữ liệu câu sai nếu chưa có sessionPayload
+    // Vòng 7: Fill In Blank (Điền từ vào chỗ trống)
+    if (currentRound.roundType === 7) {
       return {
-        items: [{
-          order: 1,
-          sentence: currentItem.contentText && currentItem.contentText.includes('[]')
-            ? currentItem.contentText
-            : `[${wordText}]`,
-          image_url: currentItem.imageUrl || '',
-          audio_url: currentItem.audioUrl || '',
-          answer: wordText,
-          distractors,
-        }],
+        items: items.map((m, idx) => {
+          const wordText = m.contentText || m.keyword || '';
+          let sentence = m.contentText || `[${wordText}]`;
+          let answer = wordText;
+          let distractors: string[] = [];
+          let imageUrl = m.imageUrl || '';
+          let audioUrl = m.audioUrl || '';
+
+          if (m.phonemeErrorType) {
+            try {
+              const parsed = JSON.parse(m.phonemeErrorType);
+              if (parsed.sentence) sentence = parsed.sentence;
+              if (parsed.answer) answer = parsed.answer;
+              if (Array.isArray(parsed.distractors)) distractors = parsed.distractors;
+              if (parsed.imageUrl) imageUrl = parsed.imageUrl;
+              if (parsed.audioUrl) audioUrl = parsed.audioUrl;
+            } catch {}
+          }
+
+          if (!distractors || distractors.length === 0) {
+            const otherWords = mistakes
+              .filter((other) => other.id !== m.id)
+              .map((other) => other.contentText || other.keyword)
+              .filter(Boolean);
+            distractors = Array.from(new Set(otherWords)).slice(0, 3);
+          }
+
+          // Đảm bảo câu có dấu ngoặc vuông bao quanh vị trí điền
+          if (!sentence.includes('[')) {
+            if (answer && sentence.toLowerCase().includes(answer.toLowerCase())) {
+              const regex = new RegExp(`(${answer})`, 'i');
+              sentence = sentence.replace(regex, '[$1]');
+            } else {
+              sentence = `[${sentence}]`;
+            }
+          }
+
+          return {
+            order: idx + 1,
+            sentence,
+            image_url: getAssetUrl(imageUrl),
+            audio_url: getAssetUrl(audioUrl),
+            answer,
+            distractors: distractors.filter((d) => d && d.toLowerCase() !== answer.toLowerCase()),
+          };
+        }),
       };
     }
 
-    // Dạng Grammar
-    if (currentItem.roundType === 6) {
-      const otherWords = mistakes
-        .filter(m => m.id !== currentItem.id)
-        .map(m => m.keyword || m.contentText)
-        .filter(Boolean);
-      const optionsList = [wordText, ...otherWords.slice(0, 3)];
+    // Vòng 8: Reorder Sentence (Sắp xếp câu)
+    if (currentRound.roundType === 8) {
+      return {
+        items: items.map((m, idx) => {
+          let sentence = m.contentText || m.keyword || '';
+          let imageUrl = m.imageUrl || '';
+          let audioUrl = m.audioUrl || '';
+
+          if (m.phonemeErrorType) {
+            try {
+              const parsed = JSON.parse(m.phonemeErrorType);
+              if (parsed.sentence) sentence = parsed.sentence;
+              if (parsed.imageUrl) imageUrl = parsed.imageUrl;
+              if (parsed.audioUrl) audioUrl = parsed.audioUrl;
+            } catch {
+              if (m.phonemeErrorType.trim().length > 0) {
+                sentence = m.phonemeErrorType.trim();
+              }
+            }
+          }
+
+          return {
+            order: idx + 1,
+            sentence,
+            image_url: getAssetUrl(imageUrl),
+            audio_url: getAssetUrl(audioUrl),
+          };
+        }),
+      };
+    }
+
+    // Vòng 9: Speaking Sentence (Luyện nói câu)
+    if (currentRound.roundType === 9) {
+      return {
+        items: items.map((m, idx) => {
+          let sentence = m.contentText || m.keyword || '';
+          let imageUrl = m.imageUrl || '';
+          let audioUrl = m.audioUrl || '';
+
+          if (m.phonemeErrorType) {
+            try {
+              const parsed = JSON.parse(m.phonemeErrorType);
+              if (parsed.sentence) sentence = parsed.sentence;
+              if (parsed.imageUrl) imageUrl = parsed.imageUrl;
+              if (parsed.audioUrl) audioUrl = parsed.audioUrl;
+            } catch {
+              if (m.phonemeErrorType.trim().length > 0) {
+                sentence = m.phonemeErrorType.trim();
+              }
+            }
+          }
+
+          return {
+            order: idx + 1,
+            sentence,
+            image_url: getAssetUrl(imageUrl),
+            audio_url: getAssetUrl(audioUrl),
+          };
+        }),
+      };
+    }
+
+    // Vòng 10: Conversation (Hội thoại đọc hiểu)
+    if (currentRound.roundType === 10) {
+      return {
+        items: items.map((m, idx) => {
+          let questionObj = {
+            type: 'question' as const,
+            text: m.contentText || 'How are you today?',
+            audio_url: m.audioUrl ? getAssetUrl(m.audioUrl) : '',
+          };
+          let answerObj = {
+            type: 'answer' as const,
+            text: m.contentText || m.keyword || 'I am fine, thank you.',
+            audio_url: m.audioUrl ? getAssetUrl(m.audioUrl) : '',
+            is_correct: true,
+          };
+          let distractorObj = {
+            type: 'distractor' as const,
+            text: 'No, thank you.',
+            audio_url: '',
+            is_correct: false,
+          };
+
+          if (m.phonemeErrorType) {
+            try {
+              const parsed = JSON.parse(m.phonemeErrorType);
+              if (parsed.question) {
+                questionObj = {
+                  ...questionObj,
+                  ...parsed.question,
+                  audio_url: getAssetUrl(parsed.question.audio_url || ''),
+                };
+              }
+              if (parsed.answer) {
+                answerObj = {
+                  ...answerObj,
+                  ...parsed.answer,
+                  audio_url: getAssetUrl(parsed.answer.audio_url || ''),
+                };
+              }
+              if (parsed.distractor) {
+                distractorObj = {
+                  ...distractorObj,
+                  ...parsed.distractor,
+                  audio_url: getAssetUrl(parsed.distractor.audio_url || ''),
+                };
+              }
+            } catch {}
+          }
+
+          return {
+            order: idx + 1,
+            question: questionObj,
+            answer: answerObj,
+            distractor: distractorObj,
+          };
+        }),
+      };
+    }
+
+    // Vòng 6: Grammar (Ngữ pháp trắc nghiệm)
+    if (currentRound.roundType === 6) {
       return {
         title: 'Ôn tập Ngữ pháp',
-        blocks: [{
-          order: 1,
-          type: 'QUESTION',
-          text: currentItem.contentText || `Chọn từ đúng: []`,
-          audio_url: currentItem.audioUrl,
-          options: optionsList.map((opt, idx) => ({
-            id: String(idx),
-            text: opt,
-            is_correct: opt.toLowerCase() === wordText.toLowerCase(),
-          })),
-        }],
+        blocks: items.map((m, idx) => {
+          const wordText = m.contentText || m.keyword || '';
+          const otherWords = mistakes
+            .filter((other) => other.id !== m.id)
+            .map((other) => other.contentText || other.keyword)
+            .filter(Boolean);
+          const optionsList = [wordText, ...otherWords.slice(0, 3)];
+          return {
+            order: idx + 1,
+            type: 'QUESTION' as const,
+            text: m.contentText || `Chọn từ đúng: []`,
+            audio_url: m.audioUrl ? getAssetUrl(m.audioUrl) : undefined,
+            options: optionsList.map((opt, optIdx) => ({
+              id: String(optIdx),
+              text: opt,
+              is_correct: opt.toLowerCase() === wordText.toLowerCase(),
+            })),
+          };
+        }),
       };
     }
 
-    // Dạng Drag & Drop
-    if (currentItem.roundType === 5) {
+    // Vòng 5: Drag & Drop (Kéo thả toạ độ)
+    if (currentRound.roundType === 5) {
       return {
-        image_url: currentItem.imageUrl || '',
-        audio_url: currentItem.audioUrl || '',
-        coordinates: [
-          { word: wordText, x: 0.35, y: 0.35, width: 0.3, height: 0.3 }
-        ],
+        image_url: items[0]?.imageUrl ? getAssetUrl(items[0].imageUrl) : '',
+        audio_url: items[0]?.audioUrl ? getAssetUrl(items[0].audioUrl) : '',
+        coordinates: items.map((m) => ({
+          word: m.contentText || m.keyword || '',
+          x: 0.35,
+          y: 0.35,
+          width: 0.3,
+          height: 0.3,
+        })),
       };
     }
 
-    return {
-      word: wordText,
-      translation: currentItem.translation,
-      image_url: currentItem.imageUrl,
-      audio_url: currentItem.audioUrl,
-    };
-  }, [currentItem, mistakes]);
+    return {};
+  }, [currentRound, mistakes]);
 
   // ──────────────────────────────────────────────
   // Màn hình kết thúc
   // ──────────────────────────────────────────────
-  if (!currentItem || isFinished) {
+  if (!currentRound || isFinished) {
     return <CongratulationScreen onNext={onClose} />;
   }
 
   // ──────────────────────────────────────────────
-  // Header giống SessionPlayer
+  // Header chuẩn giống SessionPlayer
   // ──────────────────────────────────────────────
   const Header = () => (
-    <div className="session-player-header bg-white border-b border-slate-200 shrink-0">
+    <div className="session-player-header sticky top-0 z-30 bg-white border-b border-slate-200 shadow-xs flex items-center gap-4 px-4 md:px-8 py-3 shrink-0">
       <button
-        id="practice-player-exit-btn"
-        className="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 font-bold text-xs cursor-pointer transition-colors"
+        id="session-player-exit-btn"
+        className="session-exit-btn p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer text-slate-500 hover:text-slate-700"
         onClick={() => setShowExitModal(true)}
         aria-label="Thoát ôn tập"
       >
-        Đóng
+        <XMarkIcon className="w-6 h-6" />
       </button>
 
-      <div className="session-progress-bar bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-        <div className="session-progress-fill bg-pink-400" style={{ width: `${progressPercent}%` }} />
+      <div className="session-progress-bar flex-1 h-3 bg-slate-100 border border-slate-200 rounded-full overflow-hidden">
+        <div 
+          className="session-progress-fill h-full bg-[#ff5e97] rounded-full transition-all duration-300" 
+          style={{ width: `${progressPercent}%` }} 
+        />
       </div>
-      <span className="text-xs font-bold text-slate-500">
-        {currentIndex + 1} / {mistakes.length}
-      </span>
     </div>
   );
 
@@ -273,238 +430,183 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
   // Chọn Exercise Component theo roundType thực tế
   // ──────────────────────────────────────────────
   const renderExercise = () => {
-    switch (currentItem.roundType) {
+    const roundKey = `round-${currentRoundIndex}-${currentRound.roundType}`;
+
+    switch (currentRound.roundType) {
       case 1: // FLASHCARD
         return (
           <FlashcardExercise
-            key={`flashcard-${currentItem.id}`}
-            vocabularies={[currentVocab]}
-            onComplete={handleStepSuccess}
+            key={roundKey}
+            vocabularies={currentRoundVocabs}
+            onComplete={handleRoundComplete}
+            onProgress={handleProgress}
           />
         );
 
       case 2: // MATCH_WORD
         return (
           <MatchWordExercise
-            key={`matchword-${currentItem.id}`}
+            key={roundKey}
             partId={0}
-            vocabularies={matchVocabs}
-            onComplete={handleStepSuccess}
-            onMistake={(m) => handleStepMistake(m.wrongAnswerSubmitted)}
+            vocabularies={currentRoundVocabs}
+            onComplete={handleRoundComplete}
+            onMistake={handleMistake}
+            onProgress={handleProgress}
           />
         );
 
       case 3: // SPEAKING
         return (
           <SpeakingExercise
-            key={`speaking-${currentItem.id}`}
-            vocabularies={[currentVocab]}
-            onComplete={handleStepSuccess}
-            onMistake={(m) => handleStepMistake(m.wrongAnswerSubmitted)}
+            key={roundKey}
+            vocabularies={currentRoundVocabs}
+            onComplete={handleRoundComplete}
+            onMistake={handleMistake}
+            onProgress={handleProgress}
           />
         );
 
       case 4: // RE_ORDER
         return (
           <ReorderExercise
-            key={`reorder-${currentItem.id}`}
-            vocabularies={[currentVocab]}
-            onComplete={handleStepSuccess}
-            onMistake={(m) => handleStepMistake(m.wrongAnswerSubmitted)}
+            key={roundKey}
+            vocabularies={currentRoundVocabs}
+            onComplete={handleRoundComplete}
+            onMistake={handleMistake}
+            onProgress={handleProgress}
           />
         );
 
       case 5: // DRAG_DROP
         return (
           <DragDropExercise
-            key={`dragdrop-${currentItem.id}`}
-            payload={currentPayload}
-            vocabularies={[currentVocab]}
-            onComplete={handleStepSuccess}
-            onMistake={(m) => handleStepMistake(m.wrongAnswerSubmitted)}
+            key={roundKey}
+            payload={currentRoundPayload}
+            vocabularies={currentRoundVocabs}
+            onComplete={handleRoundComplete}
+            onMistake={handleMistake}
+            onProgress={handleProgress}
           />
         );
 
       case 6: // GRAMMAR
         return (
           <GrammarExercise
-            key={`grammar-${currentItem.id}`}
-            payload={currentPayload}
-            vocabularies={[currentVocab]}
-            onComplete={handleStepSuccess}
-            onMistake={(m) => handleStepMistake(m.wrongAnswerSubmitted)}
+            key={roundKey}
+            payload={currentRoundPayload}
+            vocabularies={currentRoundVocabs}
+            onComplete={handleRoundComplete}
+            onMistake={handleMistake}
+            onProgress={handleProgress}
           />
         );
 
       case 7: // FILL_IN_BLANK
         return (
           <FillInBlankExercise
-            key={`fillblank-${currentItem.id}`}
-            payload={currentPayload}
-            vocabularies={[currentVocab]}
-            onComplete={handleStepSuccess}
-            onMistake={(m) => handleStepMistake(m.wrongAnswerSubmitted)}
+            key={roundKey}
+            payload={currentRoundPayload}
+            vocabularies={currentRoundVocabs}
+            onComplete={handleRoundComplete}
+            onMistake={handleMistake}
+            onProgress={handleProgress}
+          />
+        );
+
+      case 8: // RE_ORDER_SENTENCE
+        return (
+          <ReorderSentenceExercise
+            key={roundKey}
+            payload={currentRoundPayload}
+            vocabularies={currentRoundVocabs}
+            onComplete={handleRoundComplete}
+            onMistake={handleMistake}
+            onProgress={handleProgress}
+          />
+        );
+
+      case 9: // SPEAKING_SENTENCE
+        return (
+          <SpeakingSentenceExercise
+            key={roundKey}
+            payload={currentRoundPayload}
+            vocabularies={currentRoundVocabs}
+            onComplete={handleRoundComplete}
+            onMistake={handleMistake}
+            onProgress={handleProgress}
+          />
+        );
+
+      case 10: // CONVERSATION
+        return (
+          <ConversationExercise
+            key={roundKey}
+            payload={currentRoundPayload}
+            vocabularies={currentRoundVocabs}
+            onComplete={handleRoundComplete}
+            onMistake={handleMistake}
+            onProgress={handleProgress}
           />
         );
 
       default:
         return (
           <ReorderExercise
-            key={`default-${currentItem.id}`}
-            vocabularies={[currentVocab]}
-            onComplete={handleStepSuccess}
-            onMistake={(m) => handleStepMistake(m.wrongAnswerSubmitted)}
+            key={roundKey}
+            vocabularies={currentRoundVocabs}
+            onComplete={handleRoundComplete}
+            onMistake={handleMistake}
+            onProgress={handleProgress}
           />
         );
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-slate-50 flex flex-col overflow-y-auto session-player">
-      <Header />
-
-      {/* Top Banner Lỗi Sai Trước Đó & Trợ Lý AI */}
-      <div className="max-w-3xl mx-auto w-full px-4 pt-3 flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-2">
-          <span className="px-3 py-1 bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-xs font-display font-black">
-            {ROUND_NAMES[currentItem.roundType] || `Vòng ${currentItem.roundType}`}
-          </span>
-          <span className="text-xs font-bold text-slate-500">
-            Câu {currentIndex + 1} / {mistakes.length}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {(currentItem.recognizedAudioTranscript || currentItem.wrongAnswerSubmitted) && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-pink-50 border border-pink-200 rounded-xl text-xs text-pink-700 font-semibold">
-              <span>{currentItem.roundType === 3 || currentItem.recognizedAudioTranscript ? 'Lần trước đọc: ' : 'Lần trước sai: '}</span>
-              {isImageUrl(currentItem.wrongAnswerSubmitted) ? (
-                <div className="w-6 h-6 rounded border border-pink-300 overflow-hidden inline-flex items-center justify-center bg-white p-0.5">
-                  <img src={getAssetUrl(currentItem.wrongAnswerSubmitted)} alt="Wrong" className="w-full h-full object-cover" />
-                </div>
-              ) : (
-                <strong className="line-through">
-                  {currentItem.recognizedAudioTranscript || currentItem.wrongAnswerSubmitted}
-                </strong>
-              )}
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={handleOpenAiAdvice}
-            className="px-3.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-display font-black text-xs transition-all cursor-pointer shadow-xs"
+  // ──────────────────────────────────────────────
+  // Exit Modal
+  // ──────────────────────────────────────────────
+  const ExitModal = () => (
+    <div 
+      className="fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
+      onClick={() => setShowExitModal(false)}
+    >
+      <div 
+        className="bg-white border-2 border-slate-200 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center animate-in zoom-in-95" 
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="text-lg font-bold text-slate-800">Dừng luyện tập?</h3>
+        <p className="text-xs text-slate-500 font-medium leading-relaxed">
+          Tiến độ của các câu chưa hoàn thành sẽ không được lưu. Bé có chắc muốn dừng không?
+        </p>
+        <div className="flex items-center justify-center gap-3 pt-2">
+          <button 
+            id="exit-modal-stay-btn" 
+            className="flex-1 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer border border-slate-200 transition-colors" 
+            onClick={() => setShowExitModal(false)}
           >
-            HỎI AI
+            Tiếp tục ôn
+          </button>
+          <button 
+            id="exit-modal-leave-btn" 
+            className="flex-1 px-4 py-2.5 rounded-xl bg-[#ff5e97] hover:bg-[#e84c85] text-white font-bold text-xs cursor-pointer transition-colors shadow-xs" 
+            onClick={onClose}
+          >
+            Thoát
           </button>
         </div>
       </div>
+    </div>
+  );
 
-      {/* Khu vực trò chơi */}
-      <div className="session-exercise-area">
+  return (
+    <div className="fixed inset-0 z-[100] bg-[#f8fafc] flex flex-col overflow-y-auto session-player">
+      <Header />
+
+      <div className="session-exercise-area flex-1 flex flex-col items-center justify-start w-full max-w-4xl mx-auto px-4 py-6 pb-32">
         {renderExercise()}
       </div>
 
-      {/* Exit Modal */}
-      {showExitModal && (
-        <div className="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white border-2 border-slate-200 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center">
-            <h3 className="text-base font-display font-black text-slate-800">Dừng phiên luyện tập?</h3>
-            <p className="text-xs text-slate-500 font-medium">Tiến độ của các câu chưa hoàn thành sẽ không được tính.</p>
-            <div className="flex items-center justify-center gap-2 pt-2">
-              <button
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer border border-slate-200"
-                onClick={() => setShowExitModal(false)}
-              >
-                Tiếp tục ôn
-              </button>
-              <button
-                className="px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs cursor-pointer"
-                onClick={onClose}
-              >
-                Thoát
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* AI Advice Modal */}
-      {isAiModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white border-2 border-slate-200 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-              <span className="font-display font-black text-slate-800 text-sm uppercase">
-                Hướng Dẫn Lỗi Sai Từ ENjoy AI
-              </span>
-              <button
-                onClick={() => setIsAiModalOpen(false)}
-                className="p-1 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-700 cursor-pointer text-xs font-bold"
-              >
-                Đóng
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-xs space-y-2">
-                <div className="flex items-center gap-3">
-                  {currentItem.imageUrl && (
-                    <div className="w-14 h-14 rounded-xl border border-slate-200 overflow-hidden shrink-0 bg-white p-1">
-                      <img
-                        src={getAssetUrl(currentItem.imageUrl)}
-                        alt="Question"
-                        className="w-full h-full object-contain"
-                      />
-                    </div>
-                  )}
-                  <div className="flex-1 space-y-0.5">
-                    <p className="font-bold text-slate-800">
-                      Từ / Câu chuẩn: <strong className="text-pink-600">{currentItem.contentText || currentItem.keyword}</strong>
-                    </p>
-                    {currentItem.translation && (
-                      <p className="text-slate-500 text-[11px]">({currentItem.translation})</p>
-                    )}
-                  </div>
-                </div>
-
-                {lastWrongAnswer && (
-                  <div className="flex items-center gap-2 text-pink-600 font-semibold pt-2 border-t border-slate-200">
-                    <span className="shrink-0 text-slate-500 font-medium">Bé đã đọc/chọn:</span>
-                    {isImageUrl(lastWrongAnswer) ? (
-                      <div className="w-8 h-8 rounded border border-pink-200 overflow-hidden shrink-0 bg-white p-0.5 inline-flex items-center justify-center">
-                        <img src={getAssetUrl(lastWrongAnswer)} alt="Wrong" className="w-full h-full object-cover" />
-                      </div>
-                    ) : (
-                      <strong className="line-through bg-pink-50 px-2 py-0.5 rounded border border-pink-200">{lastWrongAnswer}</strong>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-medium text-slate-700 leading-relaxed min-h-[90px] flex items-center">
-                {aiLoading ? (
-                  <div className="w-full flex flex-col items-center justify-center gap-2 py-3 text-slate-600">
-                    <p className="text-xs font-bold text-slate-700">ENjoy AI đang chuẩn bị lời khuyên...</p>
-                  </div>
-                ) : (
-                  <div className="space-y-1.5 w-full">
-                    <p className="font-bold text-slate-800 uppercase text-[11px]">
-                      Lời khuyên từ ENjoy AI:
-                    </p>
-                    <p className="text-slate-700 leading-relaxed whitespace-pre-line text-xs">
-                      {aiAdvice || 'Bé hãy chú ý từ vựng và luyện tập lại thật kỹ nhé!'}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <Button3D variant="pink" fullWidth size="md" onClick={() => setIsAiModalOpen(false)}>
-              ĐÃ HIỂU RỒI!
-            </Button3D>
-          </div>
-        </div>
-      )}
+      {showExitModal && <ExitModal />}
     </div>
   );
 };
