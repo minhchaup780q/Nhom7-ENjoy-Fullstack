@@ -11,7 +11,7 @@ class WhisperModelSingleton:
     @classmethod
     def get_instance(cls):
         if cls._model is None:
-            model_size = os.getenv("WHISPER_MODEL_SIZE", "small")
+            model_size = os.getenv("WHISPER_MODEL_SIZE", "small.en")
             device = os.getenv("WHISPER_DEVICE", "cpu")
             compute_type = os.getenv("WHISPER_COMPUTE_TYPE", "int8")
             

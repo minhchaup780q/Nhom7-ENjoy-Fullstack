@@ -4,7 +4,7 @@ import mascotImg from '../../../../assets/mascot.png';
 import fightingImg from '../../../../assets/fighting.jpg';
 import { RocketLaunchIcon } from '@heroicons/react/24/solid';
 
-export type FooterStatus = 'idle' | 'selected' | 'correct' | 'incorrect';
+export type FooterStatus = 'idle' | 'selected' | 'correct' | 'incorrect' | 'learning';
 
 interface ExerciseFooterProps {
   status: FooterStatus;
@@ -14,6 +14,8 @@ interface ExerciseFooterProps {
   correctAnswer?: string;
   onRetry?: () => void;
   nextLabel?: string;
+  customMessage?: string;
+  hideNextButton?: boolean;
 }
 
 export const ExerciseFooter: React.FC<ExerciseFooterProps> = ({
@@ -23,12 +25,15 @@ export const ExerciseFooter: React.FC<ExerciseFooterProps> = ({
   disabled,
   correctAnswer,
   onRetry,
-  nextLabel
+  nextLabel,
+  customMessage,
+  hideNextButton
 }) => {
   const getBackgroundColorStyle = () => {
     switch (status) {
       case 'correct': return '#58cc02';
-      case 'incorrect': return '#ff4b4b';
+      case 'incorrect': return 'var(--color-red-600, #dc2626)'; // Fallback to tailwind red-600 hex if var is undefined
+      case 'learning': return '#e5e7eb';
       case 'idle':
       case 'selected':
       default: return '#e5e7eb';
@@ -36,11 +41,16 @@ export const ExerciseFooter: React.FC<ExerciseFooterProps> = ({
   };
 
   const getMessage = () => {
+    if (customMessage && status !== 'correct' && status !== 'incorrect') {
+      return customMessage;
+    }
     switch (status) {
       case 'idle':
         return 'Chưa có câu trả lời';
       case 'selected':
         return 'Sẵn sàng kiểm tra';
+      case 'learning':
+        return 'Hãy ghi nhớ từ mới nhé!';
       case 'correct':
         return 'Tuyệt vời!';
       case 'incorrect':
@@ -55,6 +65,7 @@ export const ExerciseFooter: React.FC<ExerciseFooterProps> = ({
       case 'idle':
         return 'text-gray-500';
       case 'selected':
+      case 'learning':
         return 'text-gray-700';
       case 'correct':
       case 'incorrect':
@@ -102,27 +113,38 @@ export const ExerciseFooter: React.FC<ExerciseFooterProps> = ({
             </Button3D>
           )}
 
-          {(status === 'idle' || status === 'selected') ? (
-            <Button3D
-              variant={status === 'selected' ? 'green' : 'gray'} 
-              onClick={onCheck}
-              disabled={disabled || status === 'idle'}
-              size="md"
-            >
-              <div className="flex items-center gap-2">
-                <RocketLaunchIcon className="w-5 h-5 md:w-6 md:h-6" />
-                <span className="text-sm md:text-base">KIỂM TRA ĐÁP ÁN</span>
-              </div>
-            </Button3D>
-          ) : (
-            <Button3D
-              variant={status === 'correct' ? 'green' : 'red'}
-              onClick={onNext}
-              size="md"
-              className="text-sm md:text-base !border-white"
-            >
-              {nextLabel ? nextLabel.toUpperCase() : 'TIẾP TỤC'}
-            </Button3D>
+          {!hideNextButton && (
+            (status === 'idle' || status === 'selected') ? (
+              <Button3D
+                variant={status === 'selected' ? 'green' : 'gray'} 
+                onClick={onCheck}
+                disabled={disabled || status === 'idle'}
+                size="md"
+              >
+                <div className="flex items-center gap-2">
+                  <RocketLaunchIcon className="w-5 h-5 md:w-6 md:h-6" />
+                  <span className="text-sm md:text-base">KIỂM TRA ĐÁP ÁN</span>
+                </div>
+              </Button3D>
+            ) : status === 'learning' ? (
+              <Button3D
+                variant="green"
+                onClick={onNext}
+                size="md"
+                className="text-sm md:text-base !border-white"
+              >
+                {nextLabel ? nextLabel.toUpperCase() : 'TIẾP TỤC'}
+              </Button3D>
+            ) : (
+              <Button3D
+                variant={status === 'correct' ? 'green' : 'red'}
+                onClick={onNext}
+                size="md"
+                className="text-sm md:text-base !border-white"
+              >
+                {nextLabel ? nextLabel.toUpperCase() : 'TIẾP TỤC'}
+              </Button3D>
+            )
           )}
         </div>
       </div>

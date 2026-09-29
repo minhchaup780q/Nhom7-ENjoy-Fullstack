@@ -118,6 +118,11 @@ export const FillInBlankExercise: React.FC<Props> = ({
     }
   };
 
+  const handleRetry = () => {
+    setSelectedOption(null);
+    setFooterStatus('idle');
+  };
+
   const handleNext = () => {
     if (currentIndex < items.length - 1) {
       setCurrentIndex(prev => prev + 1);
@@ -220,8 +225,11 @@ export const FillInBlankExercise: React.FC<Props> = ({
           status={footerStatus}
           onCheck={handleCheck}
           onNext={handleNext}
+          onRetry={footerStatus === 'incorrect' ? handleRetry : undefined}
+          hideNextButton={footerStatus === 'incorrect'}
           disabled={!selectedOption}
           correctAnswer={currentItem.answer}
+          nextLabel={currentIndex === items.length - 1 ? 'Hoàn thành' : 'Tiếp tục'}
         />
       </div>
     </div>

@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { SessionPayload, Vocabulary } from '../../types';
 import type { MistakeCreatePayload } from '../../services/mistakeApi';
+import { ExerciseFooter, type FooterStatus } from '../ui/ExerciseFooter';
+
+import { SpeakerWaveIcon } from '@heroicons/react/24/solid';
 
 interface DragDropExerciseProps {
   payload: SessionPayload;
@@ -17,38 +20,34 @@ export const DragDropExercise: React.FC<DragDropExerciseProps> = ({
   onMistake,
   onProgress
 }) => {
-  // Debug: log raw payload to check what comes from API
-  console.log('[DragDropExercise] payload received:', JSON.stringify(payload, null, 2));
-  
-  // Defensive: payload may be a JsonNode object with different property access patterns
-  // Try direct access first, then try to handle edge cases
+  const onProgressRef = useRef(onProgress);
+  const onMistakeRef = useRef(onMistake);
+
+  useEffect(() => {
+    onProgressRef.current = onProgress;
+    onMistakeRef.current = onMistake;
+  }, [onProgress, onMistake]);
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const raw = payload as any;
   const imageUrl: string = raw?.image_url ?? raw?.imageUrl ?? '';
   const audioUrl: string = raw?.audio_url ?? raw?.audioUrl ?? '';
   
-  // coordinates can be a proper array or need extraction
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let rawCoords: any[] = [];
   if (Array.isArray(raw?.coordinates)) {
     rawCoords = raw.coordinates;
   }
-  console.log('[DragDropExercise] imageUrl:', imageUrl, '| coords count:', rawCoords.length);
 
   const coords = rawCoords as { word: string; x: number; y: number; width: number; height: number }[];
   
-  // List of words to drag, taken directly from payload coordinates, shuffled
   const [draggableWords] = useState(() => 
     coords.map(c => c.word).sort(() => Math.random() - 0.5)
   );
 
-  // State maps coordinate index to the word placed in it
   const [placedWords, setPlacedWords] = useState<Record<number, string>>({});
-  
-  // State for wrong boxes (indices)
   const [wrongBoxes, setWrongBoxes] = useState<number[]>([]);
-  const [checked, setChecked] = useState(false);
-  const [isCorrect, setIsCorrect] = useState(false);
+  const [footerStatus, setFooterStatus] = useState<FooterStatus>('idle');
 
   const fallbackToSpeechSynthesis = (text: string) => {
     if (!window.speechSynthesis) return;
@@ -59,8 +58,7 @@ export const DragDropExercise: React.FC<DragDropExerciseProps> = ({
     window.speechSynthesis.speak(utterance);
   };
 
-  // Auto play audio when component mounts
-  useEffect(() => {
+  const playAudio = () => {
     if (audioUrl) {
       const safeUrl = audioUrl.replace(/ /g, '%20');
       const audio = new Audio(safeUrl);
@@ -73,9 +71,19 @@ export const DragDropExercise: React.FC<DragDropExerciseProps> = ({
       const fallbackText = raw?.sentence || coords.map(c => c.word).join(' ');
       if (fallbackText) fallbackToSpeechSynthesis(fallbackText);
     }
-  }, [audioUrl, raw?.sentence, coords]);
+  };
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      playAudio();
+    }, 300);
+    
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioUrl, raw?.sentence]);
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, word: string, sourceIndex?: number) => {
+    if (footerStatus === 'correct' || footerStatus === 'incorrect') return;
     e.dataTransfer.setData('text/plain', word);
     if (sourceIndex !== undefined) {
       e.dataTransfer.setData('source-index', sourceIndex.toString());
@@ -84,60 +92,52 @@ export const DragDropExercise: React.FC<DragDropExerciseProps> = ({
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetIndex: number) => {
     e.preventDefault();
-    if (checked && isCorrect) return; // Prevent changes if already correct
+    if (footerStatus === 'correct' || footerStatus === 'incorrect') return; 
 
     const word = e.dataTransfer.getData('text/plain');
     const sourceIndexStr = e.dataTransfer.getData('source-index');
-
     if (!word) return;
 
     setPlacedWords(prev => {
       const newPlaced = { ...prev };
-      
-      // If word came from another box, empty the source box
       if (sourceIndexStr) {
         const sourceIndex = parseInt(sourceIndexStr, 10);
         if (sourceIndex !== targetIndex) {
           delete newPlaced[sourceIndex];
         }
       }
-
-      // If the target box already had a word, we just overwrite it.
-      // The old word goes back to the list automatically (because it's not in placedWords anymore).
       newPlaced[targetIndex] = word;
       
-      if (onProgress) {
-        onProgress(Object.keys(newPlaced).length, coords.length);
+      if (onProgressRef.current) {
+        onProgressRef.current(Object.keys(newPlaced).length, coords.length);
       }
+      
+      const isFull = Object.keys(newPlaced).length === coords.length;
+      setFooterStatus(isFull ? 'selected' : 'idle');
 
       return newPlaced;
     });
-
-    // Reset check state if they modify something
-    if (checked) {
-      setChecked(false);
-      setWrongBoxes([]);
-    }
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault(); // allow dropping
+    e.preventDefault();
   };
 
   const handleRemoveWord = (index: number) => {
-    if (checked && isCorrect) return;
+    if (footerStatus === 'correct' || footerStatus === 'incorrect') return;
     setPlacedWords(prev => {
       const newPlaced = { ...prev };
       delete newPlaced[index];
-      if (onProgress) {
-        onProgress(Object.keys(newPlaced).length, coords.length);
+      
+      if (onProgressRef.current) {
+        onProgressRef.current(Object.keys(newPlaced).length, coords.length);
       }
+      
+      const isFull = Object.keys(newPlaced).length === coords.length;
+      setFooterStatus(isFull ? 'selected' : 'idle');
+
       return newPlaced;
     });
-    if (checked) {
-      setChecked(false);
-      setWrongBoxes([]);
-    }
   };
 
   const handleCheck = () => {
@@ -150,13 +150,13 @@ export const DragDropExercise: React.FC<DragDropExerciseProps> = ({
         hasMistake = true;
         mistakes.push(index);
 
-        if (onMistake) {
+        if (onMistakeRef.current) {
           const matchedVocab = vocabularies?.find(v => v.word.toLowerCase() === c.word.toLowerCase())
             || vocabularies?.[index]
             || vocabularies?.[0];
 
           if (matchedVocab) {
-            onMistake({
+            onMistakeRef.current({
               questionId: matchedVocab.id,
               roundType: 5,
               wrongAnswerSubmitted: placed || '(trống)',
@@ -166,121 +166,149 @@ export const DragDropExercise: React.FC<DragDropExerciseProps> = ({
       }
     });
 
-    setChecked(true);
-
     if (hasMistake) {
       setWrongBoxes(mistakes);
-      setIsCorrect(false);
+      setFooterStatus('incorrect');
     } else {
       setWrongBoxes([]);
-      setIsCorrect(true);
+      setFooterStatus('correct');
     }
   };
 
-  // Find which words are currently placed in boxes
+  const handleRetry = () => {
+    setWrongBoxes([]);
+    setPlacedWords({});
+    setFooterStatus('idle');
+  };
+
+  const handleNext = () => {
+    if (onProgressRef.current) onProgressRef.current(coords.length, coords.length);
+    onComplete();
+  };
+
   const placedWordsArray = Object.values(placedWords);
 
   return (
-    <div className="dragdrop-exercise">
-      <p className="exercise-instruction">Kéo các từ vựng vào đúng vị trí trên bức tranh</p>
-      
-      <div className="dragdrop-container">
-        {/* Left Side: Image with drop zones */}
-        <div className="dragdrop-image-area">
-          <img 
-            src={imageUrl} 
-            alt="Drag Drop Context" 
-            className="dragdrop-main-image"
-          />
-          
-          {coords.map((coord, index) => {
-            const isWrong = wrongBoxes.includes(index);
-            const currentWord = placedWords[index];
+    <div className="flex flex-col h-full w-full justify-start items-center relative animate-fade-in pb-24">
+      <div className="w-full max-w-5xl flex-grow flex flex-col items-center justify-start gap-4 md:gap-6 pt-4 md:pt-6 px-4">
+        
+        <h2 className="text-xl md:text-2xl font-bold text-text-main text-center tracking-wide">
+          Drag the correct words onto the picture
+        </h2>
+        
+        <div className="flex flex-col md:flex-row w-full gap-6 md:gap-8 items-center md:items-start justify-center mt-2">
+          {/* Left Side: Image with drop zones */}
+          <div className="relative inline-block mx-auto flex-shrink-0">
+            <img 
+              src={imageUrl} 
+              alt="Drag Drop Context" 
+              className="max-h-[50vh] md:max-h-[60vh] max-w-[90vw] md:max-w-2xl w-auto h-auto object-contain rounded-2xl md:rounded-3xl shadow-xl border-4 border-white bg-white select-none"
+              draggable="false"
+            />
+            
+            {coords.map((coord, index) => {
+              const isWrong = wrongBoxes.includes(index);
+              const currentWord = placedWords[index];
 
-            return (
-              <div
-                key={index}
-                className={`dragdrop-box ${isWrong ? 'box-wrong animate-shake' : ''} ${currentWord ? 'box-filled' : ''} ${checked && isCorrect ? 'box-correct' : ''}`}
-                style={{
-                  left: `${coord.x * 100}%`,
-                  top: `${coord.y * 100}%`,
-                  width: `${coord.width * 100}%`,
-                  height: `${coord.height * 100}%`
-                }}
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, index)}
-                onClick={() => currentWord && handleRemoveWord(index)}
-              >
-                {currentWord ? (
-                  <div 
-                    className="dragdrop-placed-word"
-                    draggable={!checked || !isCorrect}
-                    onDragStart={(e) => handleDragStart(e, currentWord, index)}
-                  >
-                    {currentWord}
-                  </div>
-                ) : (
-                  <div className="dragdrop-box-placeholder">+</div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Right Side: Draggable words */}
-        <div className="dragdrop-words-area">
-          <h3 className="dragdrop-words-title">Từ vựng</h3>
-          <div className="dragdrop-words-list">
-            {draggableWords.map((word, idx) => {
-              // Only show the word in the list if it is not placed yet
-              const isPlaced = placedWordsArray.includes(word);
-
-              if (isPlaced) {
-                // Return a placeholder to keep layout stable
-                return <div key={idx} className="dragdrop-word-btn placeholder"></div>;
+              let boxClass = "absolute border-2 border-dashed flex items-center justify-center transition-all bg-white/60 backdrop-blur-sm rounded-lg overflow-hidden ";
+              let textClass = "w-full h-full flex items-center justify-center font-display font-bold text-[10px] sm:text-xs md:text-sm lg:text-base cursor-grab active:cursor-grabbing select-none text-center leading-tight p-0.5 md:p-1 break-words ";
+              
+              if (footerStatus === 'incorrect' || footerStatus === 'correct') {
+                if (isWrong) {
+                  boxClass += "border-red-500 ring-2 ring-red-400 animate-shake";
+                  textClass += "text-red-600";
+                } else if (currentWord) {
+                  boxClass += "border-[#58cc02] ring-2 ring-[#58cc02]/40";
+                  textClass += "text-[#58cc02]";
+                } else {
+                  boxClass += "border-gray-500";
+                }
+              } else {
+                if (currentWord) {
+                  boxClass += "border-primary ring-2 ring-primary/40";
+                } else {
+                  boxClass += "border-gray-500 hover:border-primary";
+                }
+                textClass += "text-primary";
               }
 
               return (
                 <div
-                  key={idx}
-                  className="dragdrop-word-btn"
-                  draggable={true}
-                  onDragStart={(e) => handleDragStart(e, word)}
+                  key={index}
+                  className={boxClass}
+                  style={{
+                    left: `${coord.x * 100}%`,
+                    top: `${coord.y * 100}%`,
+                    width: `${coord.width * 100}%`,
+                    height: `${coord.height * 100}%`
+                  }}
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, index)}
+                  onClick={() => currentWord && handleRemoveWord(index)}
                 >
-                  {word}
+                  {currentWord ? (
+                    <div 
+                      className={textClass}
+                      draggable={footerStatus !== 'correct' && footerStatus !== 'incorrect'}
+                      onDragStart={(e) => handleDragStart(e, currentWord, index)}
+                    >
+                      {currentWord}
+                    </div>
+                  ) : (
+                    <div className="text-gray-500 font-bold text-lg md:text-xl pointer-events-none">+</div>
+                  )}
                 </div>
               );
             })}
           </div>
+
+          {/* Right Side: Draggable words (Hidden container background, 2 columns layout) */}
+          <div className="flex-shrink-0 flex flex-col items-center justify-start min-w-[200px]">
+            {/* Speaker Button */}
+            <button 
+              onClick={playAudio}
+              className="mb-2 text-primary hover:scale-110 active:scale-95 transition-transform"
+              title="Nghe lại đoạn ghi âm"
+            >
+              <SpeakerWaveIcon className="w-8 h-8 md:w-10 md:h-10 drop-shadow-md" />
+            </button>
+
+            {/* The words are rendered in a 2-column grid */}
+            <div className="grid grid-cols-2 gap-3 md:gap-4 p-2">
+              {draggableWords.map((word, idx) => {
+                const isPlaced = placedWordsArray.includes(word);
+
+                if (isPlaced) {
+                  return <div key={idx} className="w-[100px] h-12 md:h-14"></div>; // Placeholder to keep grid layout stable
+                }
+
+                return (
+                  <div
+                    key={idx}
+                    className="w-[100px] h-12 md:h-14 bg-white border-2 border-b-4 border-gray-200 rounded-xl flex items-center justify-center text-text-main font-bold font-display text-sm cursor-grab active:cursor-grabbing hover:border-primary hover:text-primary transition-all shadow-sm select-none"
+                    draggable={footerStatus !== 'correct' && footerStatus !== 'incorrect'}
+                    onDragStart={(e) => handleDragStart(e, word)}
+                  >
+                    {word}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
+
       </div>
 
-      {/* Result & Actions */}
-      <div className="dragdrop-actions">
-        {!isCorrect && (
-          <button
-            className="btn-check"
-            onClick={handleCheck}
-            disabled={Object.keys(placedWords).length !== coords.length}
-          >
-            Kiểm tra ✔
-          </button>
-        )}
-
-        {checked && isCorrect && (
-          <div className="dragdrop-result correct">
-            <p>✅ Chính xác hoàn toàn!</p>
-            <button className="btn-next-exercise mt-2" onClick={() => onComplete()}>
-              Tiếp tục →
-            </button>
-          </div>
-        )}
-
-        {checked && !isCorrect && (
-          <div className="dragdrop-result incorrect">
-            <p>❌ Có ô chưa đúng. Vui lòng thử lại!</p>
-          </div>
-        )}
+      <div className="fixed bottom-0 left-0 w-full z-10 shadow-[0_-4px_10px_rgba(0,0,0,0.1)]">
+        <ExerciseFooter
+          status={footerStatus}
+          onCheck={handleCheck}
+          onNext={handleNext}
+          onRetry={footerStatus === 'incorrect' ? handleRetry : undefined}
+          disabled={Object.keys(placedWords).length !== coords.length}
+          hideNextButton={footerStatus === 'incorrect'}
+          nextLabel="Hoàn thành"
+        />
       </div>
     </div>
   );
