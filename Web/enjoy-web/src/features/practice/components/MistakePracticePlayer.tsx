@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   XMarkIcon, 
-  HeartIcon, 
   ExclamationTriangleIcon, 
   CpuChipIcon,
   SparklesIcon,
@@ -71,7 +70,6 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
   onFinished,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [hearts, setHearts] = useState(5);
   const [masteredCount, setMasteredCount] = useState(0);
   const [totalScore, setTotalScore] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
@@ -141,13 +139,6 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
     } catch (err) {
       console.warn('Lỗi khi ghi nhận sai trong lúc luyện tập:', err);
     }
-    setHearts(h => {
-      const next = Math.max(0, h - 1);
-      if (next === 0) {
-        setIsFinished(true);
-      }
-      return next;
-    });
   };
 
   // Tạo Vocabulary object cho item hiện tại
@@ -263,26 +254,7 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
   // Màn hình kết thúc
   // ──────────────────────────────────────────────
   if (!currentItem || isFinished) {
-    if (hearts > 0) {
-      return <CongratulationScreen onNext={onClose} />;
-    }
-
-    return (
-      <div className="session-finished">
-        <div className="session-finished-card">
-          <div className="session-finished-emoji">😢</div>
-          <h2 className="session-finished-title">Hết lượt! Cố lên lần sau nhé!</h2>
-          <p className="text-sm text-text-muted mt-2">
-            Bé đã hoàn thành {masteredCount}/{mistakes.length} câu trong phiên ôn tập này.
-          </p>
-          <div className="mt-4 flex justify-center">
-            <Button3D variant="blue" size="md" onClick={onClose}>
-              Quay lại danh sách ôn tập
-            </Button3D>
-          </div>
-        </div>
-      </div>
-    );
+    return <CongratulationScreen onNext={onClose} />;
   }
 
   // ──────────────────────────────────────────────
@@ -301,15 +273,6 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
 
       <div className="session-progress-bar">
         <div className="session-progress-fill" style={{ width: `${progressPercent}%` }} />
-      </div>
-
-      <div className="session-hearts">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <HeartIcon
-            key={i}
-            className={`w-5 h-5 ${i < hearts ? 'text-red-500' : 'text-gray-300'}`}
-          />
-        ))}
       </div>
     </div>
   );

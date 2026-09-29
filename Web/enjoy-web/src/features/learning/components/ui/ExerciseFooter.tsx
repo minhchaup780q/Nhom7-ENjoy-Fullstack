@@ -14,6 +14,7 @@ interface ExerciseFooterProps {
   correctAnswer?: string;
   onRetry?: () => void;
   nextLabel?: string;
+  customMessage?: string;
 }
 
 export const ExerciseFooter: React.FC<ExerciseFooterProps> = ({
@@ -23,7 +24,8 @@ export const ExerciseFooter: React.FC<ExerciseFooterProps> = ({
   disabled,
   correctAnswer,
   onRetry,
-  nextLabel
+  nextLabel,
+  customMessage
 }) => {
   const getBackgroundColorStyle = () => {
     switch (status) {
@@ -37,6 +39,9 @@ export const ExerciseFooter: React.FC<ExerciseFooterProps> = ({
   };
 
   const getMessage = () => {
+    if (customMessage && status !== 'correct' && status !== 'incorrect') {
+      return customMessage;
+    }
     switch (status) {
       case 'idle':
         return 'Chưa có câu trả lời';
@@ -114,8 +119,8 @@ export const ExerciseFooter: React.FC<ExerciseFooterProps> = ({
               size="md"
             >
               <div className="flex items-center gap-2">
-                <RocketLaunchIcon className="w-5 h-5 md:w-6 md:h-6" />
-                <span className="text-sm md:text-base">KIỂM TRA ĐÁP ÁN</span>
+                {!nextLabel && <RocketLaunchIcon className="w-5 h-5 md:w-6 md:h-6" />}
+                <span className="text-sm md:text-base">{nextLabel ? nextLabel.toUpperCase() : 'KIỂM TRA ĐÁP ÁN'}</span>
               </div>
             </Button3D>
           ) : status === 'learning' ? (
