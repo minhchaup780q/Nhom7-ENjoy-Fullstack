@@ -2,12 +2,19 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLearningStore } from '../store/useLearningStore';
 import { SessionType } from '../types';
 import type { Session, Vocabulary } from '../types';
+import { mistakeApi, type MistakeCreatePayload } from '../services/mistakeApi';
 import { FlashcardExercise } from './exercises/FlashcardExercise';
 import { MatchWordExercise } from './exercises/MatchWordExercise';
 import { SpeakingExercise } from './exercises/SpeakingExercise';
 import { ReorderExercise } from './exercises/ReorderExercise';
 import { DragDropExercise } from './exercises/DragDropExercise';
-import { XMarkIcon, HeartIcon } from '@heroicons/react/24/solid';
+import { GrammarExercise } from './exercises/GrammarExercise';
+import { FillInBlankExercise } from './exercises/FillInBlankExercise';
+import { ReorderSentenceExercise } from './exercises/ReorderSentenceExercise';
+import { SpeakingSentenceExercise } from './exercises/SpeakingSentenceExercise';
+import { ConversationExercise } from './exercises/ConversationExercise';
+import { CongratulationScreen } from './ui/CongratulationScreen';
+import { XMarkIcon } from '@heroicons/react/24/solid';
 
 interface SessionPlayerProps {
   session: Session;
@@ -23,12 +30,12 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     resetSessionState,
   } = useLearningStore();
 
-  const [hearts, setHearts] = useState(5);
   const [sessionFinished, setSessionFinished] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
   const [progress, setProgress] = useState(0); // 0-100%
   const [partVocabs, setPartVocabs] = useState<Vocabulary[]>([]);
   const [loadingVocabs, setLoadingVocabs] = useState(false);
+  const [recordedMistakes, setRecordedMistakes] = useState<MistakeCreatePayload[]>([]);
 
   const sessionStartTime = useRef(Date.now());
 
@@ -36,18 +43,11 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   useEffect(() => {
     selectSession(session);
     sessionStartTime.current = Date.now();
+    setRecordedMistakes([]);
   }, [session.id]);
 
-  // Fetch từ vựng của Part nếu cần
-  const needsVocabs = [
-    SessionType.FLASHCARD,
-    SessionType.MATCH_WORD,
-    SessionType.SPEAKING,
-    SessionType.RE_ORDER,
-  ].includes(session.sessionType);
-
+  // Fetch từ vựng của Part cho tất cả các vòng cần thông tin từ vựng / ghi nhận lỗi sai
   useEffect(() => {
-    if (!needsVocabs) return;
     const partId = session.part?.id ?? (activePart?.id ?? 0);
     if (!partId) return;
     setLoadingVocabs(true);
@@ -55,25 +55,38 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       setPartVocabs(vocabs);
       setLoadingVocabs(false);
     });
-  }, [session.id, needsVocabs]);
+  }, [session.id, session.part?.id, activePart?.id]);
 
-  const handleMistake = () => {
-    setHearts(h => {
-      const next = Math.max(0, h - 1);
-      if (next === 0) handleSessionFailed();
-      return next;
-    });
+  const handleMistake = (mistakeData?: MistakeCreatePayload) => {
+    if (mistakeData && mistakeData.questionId) {
+      setRecordedMistakes(prev => {
+        const existingIdx = prev.findIndex(
+          m => m.questionId === mistakeData.questionId && m.roundType === mistakeData.roundType
+        );
+        if (existingIdx >= 0) {
+          const updated = [...prev];
+          updated[existingIdx] = mistakeData;
+          return updated;
+        }
+        return [...prev, mistakeData];
+      });
+    }
   };
 
   const handleSessionComplete = async () => {
     const durationSeconds = Math.round((Date.now() - sessionStartTime.current) / 1000);
     setSessionFinished(true);
-    await completeSession(session.id, durationSeconds);
-  };
 
-  const handleSessionFailed = () => {
-    setSessionFinished(true);
-    // không gọi completeSession vì học chưa xong
+    // Gửi toàn bộ danh sách câu làm sai trong màn chơi vào hệ thống ôn tập
+    if (recordedMistakes.length > 0) {
+      try {
+        await mistakeApi.logBatchMistakes(recordedMistakes);
+      } catch (err) {
+        console.error('Failed to log batch mistakes upon session completion:', err);
+      }
+    }
+
+    await completeSession(session.id, durationSeconds);
   };
 
   const handleClose = () => {
@@ -85,23 +98,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   // Màn hình hoàn thành
   // ──────────────────────────────────────────────
   if (sessionFinished) {
-    const failed = hearts === 0;
-    return (
-      <div className="session-finished">
-        <div className="session-finished-card">
-          <div className="session-finished-emoji">{failed ? '😢' : '🎉'}</div>
-          <h2 className="session-finished-title">
-            {failed ? 'Hết lượt! Cố lên lần sau nhé!' : 'Hoàn thành bài học!'}
-          </h2>
-          {!failed && (
-            <p className="session-finished-subtitle">Bạn đã hoàn thành «{session.title}» thành công!</p>
-          )}
-          <button id="session-finished-close-btn" className="btn-primary" onClick={handleClose}>
-            Quay lại
-          </button>
-        </div>
-      </div>
-    );
+    return <CongratulationScreen onNext={handleClose} />;
   }
 
   let payload = session.payload ?? {};
@@ -128,15 +125,6 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
 
       <div className="session-progress-bar">
         <div className="session-progress-fill" style={{ width: `${progress}%` }} />
-      </div>
-
-      <div className="session-hearts">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <HeartIcon
-            key={i}
-            className={`w-5 h-5 ${i < hearts ? 'text-red-500' : 'text-gray-300'}`}
-          />
-        ))}
       </div>
     </div>
   );
@@ -173,6 +161,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
             partId={session.part?.id ?? activePart?.id ?? 0}
             vocabularies={partVocabs}
             onComplete={handleSessionComplete}
+            onMistake={handleMistake}
             onProgress={handleProgress}
           />
         );
@@ -204,6 +193,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
         return (
           <DragDropExercise
             payload={payload}
+            vocabularies={partVocabs}
             onComplete={handleSessionComplete}
             onMistake={handleMistake}
             onProgress={handleProgress}
@@ -211,14 +201,60 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
         );
 
       case SessionType.GRAMMAR:
-      case SessionType.CONVERSATION:
+        if (!payload || Object.keys(payload).length === 0) return <div className="session-placeholder"><p>Dữ liệu bài tập trống.</p></div>;
         return (
-          <div className="session-placeholder">
-            <p>🚧 Vòng <strong>{session.sessionType}</strong> đang được xây dựng...</p>
-            <button className="btn-next-exercise" onClick={handleSessionComplete}>
-              Bỏ qua →
-            </button>
-          </div>
+          <GrammarExercise
+            payload={payload}
+            vocabularies={partVocabs}
+            onComplete={handleSessionComplete}
+            onMistake={handleMistake}
+            onProgress={handleProgress}
+          />
+        );
+
+      case SessionType.FILL_IN_BLANK:
+        if (!payload || !payload.items || payload.items.length === 0) return <div className="session-placeholder"><p>Dữ liệu bài tập trống.</p></div>;
+        return (
+          <FillInBlankExercise
+            payload={payload}
+            vocabularies={partVocabs}
+            onComplete={handleSessionComplete}
+            onMistake={handleMistake}
+            onProgress={handleProgress}
+          />
+        );
+
+      case SessionType.RE_ORDER_SENTENCE:
+        if (!payload || !payload.items || payload.items.length === 0) return <div className="session-placeholder"><p>Dữ liệu bài tập trống.</p></div>;
+        return (
+          <ReorderSentenceExercise
+            payload={payload}
+            onComplete={handleSessionComplete}
+            onMistake={handleMistake}
+            onProgress={handleProgress}
+          />
+        );
+
+      case SessionType.SPEAKING_SENTENCE:
+        if (!payload || !payload.items || payload.items.length === 0) return <div className="session-placeholder"><p>Dữ liệu bài tập trống.</p></div>;
+        return (
+          <SpeakingSentenceExercise
+            payload={payload}
+            onComplete={handleSessionComplete}
+            onMistake={handleMistake}
+            onProgress={handleProgress}
+          />
+        );
+
+      case SessionType.CONVERSATION:
+        if (!session.payload) return <div>Không có dữ liệu bài học Conversation.</div>;
+        return (
+          <ConversationExercise
+            payload={session.payload}
+            onComplete={handleSessionComplete}
+            onMistake={handleMistake}
+            onProgress={(cur, total) => setProgress((cur / total) * 100)}
+          />
         );
 
       default:
@@ -255,9 +291,18 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     <div className="session-player">
       <Header />
 
-      <div className="session-player-title">
-        <h2>{session.title}</h2>
-      </div>
+      {session.sessionType !== SessionType.FILL_IN_BLANK && 
+       session.sessionType !== SessionType.RE_ORDER_SENTENCE && 
+       session.sessionType !== SessionType.CONVERSATION && 
+       session.sessionType !== SessionType.FLASHCARD && 
+       session.sessionType !== SessionType.MATCH_WORD && 
+       session.sessionType !== SessionType.SPEAKING && 
+       session.sessionType !== SessionType.RE_ORDER && 
+       session.sessionType !== SessionType.DRAG_DROP && (
+        <div className="session-player-title">
+          <h2>{session.title}</h2>
+        </div>
+      )}
 
       <div className="session-exercise-area">
         {renderExercise()}

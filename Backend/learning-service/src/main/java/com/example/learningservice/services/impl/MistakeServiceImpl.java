@@ -49,26 +49,36 @@ public class MistakeServiceImpl implements MistakeService {
         Optional<Mistake> existingMistakeOpt = mistakeRepository
                 .findByUserIdAndVocabularyIdAndRoundType(targetUserId, request.getQuestionId(), request.getRoundType());
 
-        Mistake mistake;
         if (existingMistakeOpt.isPresent()) {
-            mistake = existingMistakeOpt.get();
-            mistake.setWrongAnswerSubmitted(request.getWrongAnswerSubmitted());
-            mistake.setDurationSeconds(request.getDurationSeconds());
-            mistake.setStatus(MistakeStatus.NEEDS_REVIEW); // Reset trạng thái về cần ôn tập
-            mistake.setCreatedAt(LocalDateTime.now());
-            // Xóa cache AI cũ nếu đáp án sai khác đi
-            mistake.setAiExplanationCache(null);
-        } else {
-            mistake = Mistake.builder()
-                    .userId(targetUserId)
-                    .vocabulary(vocabulary)
-                    .roundType(request.getRoundType() != null ? request.getRoundType() : 1)
-                    .wrongAnswerSubmitted(request.getWrongAnswerSubmitted())
-                    .durationSeconds(request.getDurationSeconds())
-                    .status(MistakeStatus.NEEDS_REVIEW)
-                    .createdAt(LocalDateTime.now())
-                    .build();
+            Mistake existing = existingMistakeOpt.get();
+            if (existing.getStatus() == MistakeStatus.MASTERED) {
+                // Đã ôn xong (MASTERED), nhưng tự học sai lại -> reset về NEEDS_REVIEW
+                existing.setWrongAnswerSubmitted(request.getWrongAnswerSubmitted());
+                existing.setDurationSeconds(request.getDurationSeconds());
+                existing.setStatus(MistakeStatus.NEEDS_REVIEW);
+                existing.setCorrectStreakDays(0);
+                existing.setMasteryScore(0.0);
+                existing.setNextReviewAt(null);
+                existing.setLastPracticedAt(null);
+                existing.setCreatedAt(LocalDateTime.now());
+                existing.setAiExplanationCache(null);
+                Mistake saved = mistakeRepository.save(existing);
+                return MistakeResponse.fromEntity(saved);
+            } else {
+                // Đang trong quá trình ôn tập (NEEDS_REVIEW hoặc REVIEWED) -> không cho ghi đè, bỏ qua
+                return MistakeResponse.fromEntity(existing);
+            }
         }
+
+        Mistake mistake = Mistake.builder()
+                .userId(targetUserId)
+                .vocabulary(vocabulary)
+                .roundType(request.getRoundType() != null ? request.getRoundType() : 1)
+                .wrongAnswerSubmitted(request.getWrongAnswerSubmitted())
+                .durationSeconds(request.getDurationSeconds())
+                .status(MistakeStatus.NEEDS_REVIEW)
+                .createdAt(LocalDateTime.now())
+                .build();
 
         Mistake saved = mistakeRepository.save(mistake);
         return MistakeResponse.fromEntity(saved);
@@ -198,11 +208,8 @@ public class MistakeServiceImpl implements MistakeService {
                 if (newStreak >= 3) {
                     mistake.setMasteryScore(1.0);
                     mistake.setStatus(MistakeStatus.MASTERED);
-                } else if (newStreak == 2) {
-                    mistake.setMasteryScore(0.67);
-                    mistake.setStatus(MistakeStatus.REVIEWED);
                 } else {
-                    mistake.setMasteryScore(0.33);
+                    mistake.setMasteryScore(0.0);
                     mistake.setStatus(MistakeStatus.REVIEWED);
                 }
             } else {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLearningStore } from '../store/useLearningStore';
-import { SessionStatus } from '../types';
+import { SessionStatus, SessionType } from '../types';
 import type { Session, Topic } from '../types';
 import { Button3D } from '../../../components/ui/Button3D';
 import { Mascot } from '../../../components/ui/Mascot';
@@ -11,8 +11,15 @@ import {
   SparklesIcon, 
   StarIcon, 
   LockClosedIcon, 
-  CheckCircleIcon, 
-  ArrowLeftIcon 
+  ArrowLeftIcon,
+  DocumentTextIcon,
+  PuzzlePieceIcon,
+  MicrophoneIcon,
+  Bars3BottomLeftIcon,
+  CursorArrowRaysIcon,
+  BookOpenIcon,
+  PencilSquareIcon,
+  ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/solid';
 
 interface LearningMapProps {
@@ -140,33 +147,65 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
   };
 
   // Hàm tính toán độ dịch chuyển ngang (margin-left) để tạo đường cong hình chữ S
-  const getCurveMargin = (index: number) => {
-    const pattern = [0, 50, 90, 50, 0, -50, -90, -50];
+  const getCurveMargin = (index: number, isGrammar: boolean = false) => {
+    const patternVocab = [0, 50, 90, 50, 0, -50, -90, -50];
+    const patternGrammar = [0, -50, -90, -50, 0, 50, 90, 50];
+    const pattern = isGrammar ? patternGrammar : patternVocab;
     const offset = pattern[index % pattern.length];
     return { transform: `translateX(${offset}px)` };
   };
 
-  const getSessionIcon = (session: Session) => {
-    if (session.status === SessionStatus.LOCK) {
-      return <LockClosedIcon className="w-6 h-6 text-text-muted" />;
-    }
-    if (session.status === SessionStatus.FINISH) {
-      return <CheckCircleIcon className="w-8 h-8 text-success fill-white stroke-[2.5]" />;
-    }
-    return <StarIcon className="w-7 h-7 text-white fill-white animate-pulse" />;
+  const getSessionPalette = (partIdx: number) => {
+    const palettes = [
+      { name: 'green', bg: 'bg-[#58cc02]', border: 'border-[#489d02]', ring: 'ring-[#58cc02]/25', shadow: 'shadow-[0_4px_0_0_#489d02]', textClass: 'text-[#58cc02]', borderClass: 'border-[#58cc02]', btnVariant: 'green' as const },
+      { name: 'orange', bg: 'bg-[#ff9600]', border: 'border-[#cc7800]', ring: 'ring-[#ff9600]/25', shadow: 'shadow-[0_4px_0_0_#cc7800]', textClass: 'text-[#ff9600]', borderClass: 'border-[#ff9600]', btnVariant: 'pink' as const },
+      { name: 'blue', bg: 'bg-[#1cb0f6]', border: 'border-[#1899d6]', ring: 'ring-[#1cb0f6]/25', shadow: 'shadow-[0_4px_0_0_#1899d6]', textClass: 'text-[#1cb0f6]', borderClass: 'border-[#1cb0f6]', btnVariant: 'blue' as const },
+      { name: 'pink', bg: 'bg-[#ff71a2]', border: 'border-[#cc5a81]', ring: 'ring-[#ff71a2]/25', shadow: 'shadow-[0_4px_0_0_#cc5a81]', textClass: 'text-[#ff71a2]', borderClass: 'border-[#ff71a2]', btnVariant: 'pink' as const }
+    ];
+    return palettes[partIdx % 4];
   };
 
-  const getNodeBackground = (session: Session, isSelected: boolean) => {
+  const getSessionIcon = (session: any) => {
+    let Icon = StarIcon;
+    switch (session.sessionType) {
+      case SessionType.FLASHCARD: Icon = DocumentTextIcon; break;
+      case SessionType.MATCH_WORD: Icon = PuzzlePieceIcon; break;
+      case SessionType.SPEAKING: 
+      case SessionType.SPEAKING_SENTENCE:
+        Icon = MicrophoneIcon; break;
+      case SessionType.RE_ORDER:
+      case SessionType.RE_ORDER_SENTENCE:
+        Icon = Bars3BottomLeftIcon;
+        break;
+      case SessionType.DRAG_DROP: Icon = CursorArrowRaysIcon; break;
+      case SessionType.GRAMMAR: Icon = BookOpenIcon; break;
+      case SessionType.FILL_IN_BLANK: Icon = PencilSquareIcon; break;
+      case SessionType.CONVERSATION: Icon = ChatBubbleLeftRightIcon; break;
+    }
+
     if (session.status === SessionStatus.LOCK) {
-      return 'bg-[#e5e5e5] text-[#afafaf] border-[#c0c0c0] border-b-4 hover:brightness-100 cursor-not-allowed';
+      return <Icon className="w-8 h-8 text-[#afafaf] opacity-60" />;
     }
+    return <Icon className="w-8 h-8 text-white drop-shadow-sm" />;
+  };
+
+  const getNodeBackground = (session: any, isSelected: boolean) => {
+    const base3D = 'border-b-[6px] active:border-b-0 active:translate-y-1.5 shadow-[inset_0_-2px_0_rgba(0,0,0,0.1),_inset_0_4px_0_rgba(255,255,255,0.3)]';
+
+    if (session.status === SessionStatus.LOCK) {
+      return 'bg-[#e5e5e5] border-[#c0c0c0] text-[#afafaf] border-b-[6px] shadow-[inset_0_4px_0_rgba(255,255,255,0.5)] cursor-not-allowed hover:brightness-100';
+    }
+
+    const palette = getSessionPalette(session.partIdx || 0);
+
     if (session.status === SessionStatus.FINISH) {
-      return 'bg-[#58cc02] text-white border-[#58a700] border-b-4 hover:brightness-110';
+      return `${palette.bg} text-white ${palette.border} ${base3D} hover:brightness-110`;
     }
+
     // Đang mở khóa (UNLOCK)
     return isSelected
-      ? 'bg-[#a55eea] text-white border-[#8854d0] border-b-4 ring-8 ring-[#a55eea]/20 scale-110 animate-bounce-soft shadow-[0_4px_0_0_#8854d0]'
-      : 'bg-[#a55eea] text-white border-[#8854d0] border-b-4 hover:scale-105 hover:brightness-110 ring-4 ring-[#a55eea]/10 shadow-[0_4px_0_0_#8854d0] animate-pulse';
+      ? `${palette.bg} text-white ${palette.border} ring-8 ${palette.ring} scale-110 ${base3D}`
+      : `${palette.bg} text-white ${palette.border} hover:scale-105 hover:brightness-110 ring-4 ${palette.ring} ${base3D} animate-pulse`;
   };
 
   const handleNodeClick = (session: Session) => {
@@ -510,108 +549,151 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
             </div>
           ) : (
             <div className="flex flex-col items-center py-12 w-full relative min-h-[500px]">
-              {/* The vertical road line */}
-              <div className="absolute top-0 bottom-0 w-2.5 bg-[#e5e5e5] -z-10" />
+              {currentParts.map((part, partIdx) => {
+                const partSessions = allSessionsInTopic.filter(s => s.partId === part.id);
+                
+                const isGrammarSession = (session: Session) => {
+                  const sAny = session as any;
+                  return (
+                    session.sessionType === SessionType.GRAMMAR ||
+                    session.sessionType === SessionType.FILL_IN_BLANK ||
+                    session.sessionType === SessionType.RE_ORDER_SENTENCE ||
+                    session.sessionType === SessionType.SPEAKING_SENTENCE ||
+                    (session.orderIndex !== undefined && session.orderIndex !== null && session.orderIndex >= 6) ||
+                    (sAny.sessionIdx !== undefined && sAny.sessionIdx >= 5)
+                  );
+                };
 
-              {allSessionsInTopic.map((session, index) => {
-              const isSelected = selectedNodeId === session.id;
-              const isUnlocked = session.status === SessionStatus.UNLOCK;
-              const curveStyle = getCurveMargin(index);
+                const vocabSessions = partSessions.filter(s => !isGrammarSession(s));
+                const grammarSessions = partSessions.filter(s => isGrammarSession(s));
 
-              // Alternating Mascot placement next to the road
-              const hasMascotLeft = index === 2; // Mascot on the left of node 3 (offset is +90, so left is empty)
-              const hasMascotRight = index === 6; // Mascot on the right of node 7 (offset is -90, so right is empty)
+                const renderSessionNode = (session: typeof partSessions[0], localIdx: number, isGrammar: boolean) => {
+                  const isSelected = selectedNodeId === session.id;
+                  const isUnlocked = session.status === SessionStatus.UNLOCK;
+                  const curveStyle = getCurveMargin(localIdx, isGrammar);
+                  const palette = getSessionPalette((session as any).partIdx || 0);
 
-              return (
-                <React.Fragment key={session.id}>
-                  {/* Part Separator Divider line right before the first session of each Part */}
-                  {session.sessionIdx === 0 && (
+                  // Alternating Mascot placement next to the road
+                  const hasMascotLeft = !isGrammar && localIdx === 2; // Mascot on the left of node 3
+                  const hasMascotRight = isGrammar && localIdx === 1; // Mascot on the right of node 7 (which is index 1 of grammar)
+
+                  return (
+                    <div key={session.id} className={`w-full max-w-2xl flex justify-center items-center relative py-6 ${isSelected ? 'z-20' : ''}`}>
+                      
+                      {/* Left mascot placement */}
+                      {hasMascotLeft && (
+                        <div className="absolute left-0 sm:left-4 md:left-12 top-1/2 -translate-y-1/2">
+                          <Mascot expression="happy" speechBubbleText="Bé học xuất sắc quá!" bubblePosition="right" size={90} />
+                        </div>
+                      )}
+
+                      {/* Node container with S-curve offset */}
+                      <div className={`relative flex flex-col items-center ${isSelected ? 'z-20' : ''}`} style={curveStyle}>
+                        
+                        {/* Floating Start tag */}
+                        {isUnlocked && (
+                          <div className={`absolute bottom-full mb-3 bg-white border-2 font-display font-extrabold text-[10px] tracking-wider uppercase px-2.5 py-1 rounded-xl shadow-md animate-bounce-soft whitespace-nowrap z-10 ${palette.textClass} ${palette.borderClass}`}>
+                            BẮT ĐẦU
+                            {/* Little bubble tail */}
+                            <div className={`absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-solid border-x-transparent border-b-transparent border-t-current`} style={{borderTopColor: 'inherit'}} />
+                          </div>
+                        )}
+
+                        {/* Circular Node button */}
+                        <button
+                          onClick={() => handleNodeClick(session)}
+                          className={`w-16 h-16 rounded-full flex items-center justify-center font-display font-extrabold transition-all duration-150 cursor-pointer ${getNodeBackground(
+                            session,
+                            isSelected
+                          )}`}
+                        >
+                          {getSessionIcon(session)}
+                        </button>
+
+                        {/* Tooltip Dialog for starting session */}
+                        {isSelected && (
+                          <div className="absolute bottom-full mb-4 bg-white border-2 border-[#e5e5e5] rounded-[2rem] p-5 shadow-2xl z-20 w-72 text-center animate-fade-in-up">
+                            <span className={`text-[10px] font-extrabold tracking-widest uppercase block mb-1 text-center ${palette.textClass}`}>
+                              Vòng {session.sessionIdx + 1}
+                            </span>
+                            <h4 className="text-sm font-display font-extrabold text-text-main m-0 leading-tight mb-4 text-center">
+                              {session.title}
+                            </h4>
+                            <div className="flex gap-2">
+                              <Button3D
+                                variant={palette.btnVariant}
+                                fullWidth
+                                size="sm"
+                                onClick={() => onStartSession(session)}
+                              >
+                                BẮT ĐẦU
+                              </Button3D>
+                              <button
+                                onClick={() => setSelectedNodeId(null)}
+                                className="px-3 border-2 border-border-main rounded-xl hover:bg-bg-light text-xs font-bold text-text-main cursor-pointer"
+                              >
+                                Đóng
+                              </button>
+                            </div>
+                            {/* Tooltip arrow pointer */}
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-[10px] border-solid border-t-white border-x-transparent border-b-transparent" />
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-[11px] border-solid border-t-[#e5e5e5] border-x-transparent border-b-transparent -z-10" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right mascot placement */}
+                      {hasMascotRight && (
+                        <div className="absolute right-0 sm:right-4 md:right-12 top-1/2 -translate-y-1/2">
+                          <Mascot expression="thinking" speechBubbleText="Cùng cố lên nào bé yêu!" bubblePosition="left" size={90} />
+                        </div>
+                      )}
+
+                    </div>
+                  );
+                };
+
+                return (
+                  <React.Fragment key={part.id}>
+                    {/* Part Separator Divider line right before the first session of each Part */}
                     <div className="w-full max-w-2xl text-center my-6 py-2 border-b-2 border-dashed border-border-main/50 relative z-10">
                       <span className="bg-bg-main px-4 text-xs font-display font-extrabold text-text-muted tracking-widest uppercase">
-                        PHẦN {session.partIdx + 1}: {session.partTitle}
+                        PHẦN {partIdx + 1}: {part.title}
                       </span>
                     </div>
-                  )}
 
-                  <div className={`w-full max-w-2xl flex justify-center items-center relative py-6 ${isSelected ? 'z-20' : ''}`}>
-                    
-                    {/* Left mascot placement */}
-                    {hasMascotLeft && (
-                      <div className="absolute left-0 sm:left-4 md:left-12 top-1/2 -translate-y-1/2">
-                        <Mascot expression="happy" speechBubbleText="Bé học xuất sắc quá!" bubblePosition="right" size={90} />
+                    {/* Vòng Từ vựng */}
+                    {vocabSessions.length > 0 && (
+                      <div className="flex flex-col items-center w-full relative py-4">
+                        {/* Đường ray dọc riêng của cụm Từ vựng */}
+                        <div className="absolute top-4 bottom-4 w-2.5 bg-[#e5e5e5] rounded-full -z-10" />
+                        {vocabSessions.map((session, localIdx) => renderSessionNode(session, localIdx, false))}
                       </div>
                     )}
 
-                    {/* Node container with S-curve offset */}
-                    <div className={`relative flex flex-col items-center ${isSelected ? 'z-20' : ''}`} style={curveStyle}>
-                      
-                      {/* Floating Start tag */}
-                      {isUnlocked && (
-                        <div className="absolute bottom-full mb-3 bg-white text-primary border-2 border-primary font-display font-extrabold text-[10px] tracking-wider uppercase px-2.5 py-1 rounded-xl shadow-md animate-bounce-soft whitespace-nowrap z-10">
-                          BẮT ĐẦU
-                          {/* Little bubble tail */}
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-solid border-t-primary border-x-transparent border-b-transparent" />
+                    {/* Dải phân cách nhẹ nhàng */}
+                    {vocabSessions.length > 0 && grammarSessions.length > 0 && (
+                      <div className="w-full max-w-md my-8 flex items-center justify-center gap-3 relative z-10">
+                        <div className="flex-1 h-[1.5px] bg-gradient-to-r from-transparent via-[#d8b4fe] to-transparent" />
+                        <div className="px-4 py-1.5 rounded-full bg-[#faf5ff] border border-[#d8b4fe] text-[#8854d0] text-xs font-display font-extrabold tracking-wider uppercase flex items-center gap-2 shadow-sm">
+                          <span>✨</span>
+                          <span>Ngữ pháp & Luyện tập</span>
                         </div>
-                      )}
-
-                      {/* Circular Node button */}
-                      <button
-                        onClick={() => handleNodeClick(session)}
-                        className={`w-16 h-16 rounded-full flex items-center justify-center border-b-4 font-display font-extrabold transition-all duration-150 cursor-pointer ${getNodeBackground(
-                          session,
-                          isSelected
-                        )}`}
-                      >
-                        {getSessionIcon(session)}
-                      </button>
-
-                      {/* Tooltip Dialog for starting session */}
-                      {isSelected && (
-                        <div className="absolute bottom-full mb-4 bg-white border-2 border-[#e5e5e5] rounded-[2rem] p-5 shadow-2xl z-20 w-72 text-center animate-fade-in-up">
-                          <span className="text-[10px] font-extrabold text-primary tracking-widest uppercase block mb-1">
-                            Vòng {session.sessionIdx + 1}: {session.sessionType}
-                          </span>
-                          <h4 className="text-sm font-display font-extrabold text-text-main m-0 leading-tight">
-                            {session.title}
-                          </h4>
-
-                          <p className="text-[11px] font-semibold text-text-main/60 leading-relaxed mb-4">
-                            {session.description}
-                          </p>
-                          <div className="flex gap-2">
-                            <Button3D
-                              variant="pink"
-                              fullWidth
-                              size="sm"
-                              onClick={() => onStartSession(session)}
-                            >
-                              BẮT ĐẦU
-                            </Button3D>
-                            <button
-                              onClick={() => setSelectedNodeId(null)}
-                              className="px-3 border-2 border-border-main rounded-xl hover:bg-bg-light text-xs font-bold text-text-main cursor-pointer"
-                            >
-                              Đóng
-                            </button>
-                          </div>
-                          {/* Tooltip arrow pointer */}
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-[10px] border-solid border-t-white border-x-transparent border-b-transparent" />
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-[11px] border-solid border-t-[#e5e5e5] border-x-transparent border-b-transparent -z-10" />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Right mascot placement */}
-                    {hasMascotRight && (
-                      <div className="absolute right-0 sm:right-4 md:right-12 top-1/2 -translate-y-1/2">
-                        <Mascot expression="thinking" speechBubbleText="Cùng cố lên nào bé yêu!" bubblePosition="left" size={90} />
+                        <div className="flex-1 h-[1.5px] bg-gradient-to-l from-transparent via-[#d8b4fe] to-transparent" />
                       </div>
                     )}
 
-                  </div>
-                </React.Fragment>
-              );
-            })}
+                    {/* Vòng Ngữ pháp */}
+                    {grammarSessions.length > 0 && (
+                      <div className="flex flex-col items-center w-full relative py-4">
+                        {/* Đường ray dọc riêng của cụm Ngữ pháp - tone tím nhạt nhẹ nhàng */}
+                        <div className="absolute top-4 bottom-4 w-2.5 bg-[#ede9fe] rounded-full -z-10" />
+                        {grammarSessions.map((session, localIdx) => renderSessionNode(session, localIdx, true))}
+                      </div>
+                    )}
+                  </React.Fragment>
+                );
+              })}
             </div>
           )}
         </div>

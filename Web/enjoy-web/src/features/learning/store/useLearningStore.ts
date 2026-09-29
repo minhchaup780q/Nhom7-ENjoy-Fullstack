@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { learningApi } from '../services/learningApi';
 import type { Level, Topic, Part, Session, Vocabulary } from '../types';
-import { SessionStatus } from '../types';
 
 interface LearningState {
   // Trạng thái dữ liệu
@@ -120,7 +119,7 @@ export const useLearningStore = create<LearningState>((set, get) => ({
       const sessionsMap: Record<number, Session[]> = {};
 
       await Promise.all(
-        parts.map(async (part) => {
+        parts.map(async (part: Part) => {
           try {
             const sessRes = await learningApi.getSessionsByPart(part.id);
             const sessionsOfPart = Array.isArray(sessRes) ? sessRes : (sessRes as any)?.data || [];

@@ -27,7 +27,7 @@ export const RegisterPage: React.FC = () => {
 
   // Countdown timer effect
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setInterval>;
     if (step === 'OTP' && timeLeft > 0) {
       timer = setInterval(() => {
         setTimeLeft((prev) => prev - 1);
