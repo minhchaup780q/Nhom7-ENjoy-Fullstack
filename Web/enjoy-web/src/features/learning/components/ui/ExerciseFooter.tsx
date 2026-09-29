@@ -30,7 +30,7 @@ export const ExerciseFooter: React.FC<ExerciseFooterProps> = ({
   const getBackgroundColorStyle = () => {
     switch (status) {
       case 'correct': return '#58cc02';
-      case 'incorrect': return '#ff4b4b';
+      case 'incorrect': return 'var(--color-red-600, #dc2626)'; // Fallback to tailwind red-600 hex if var is undefined
       case 'learning': return '#e5e7eb';
       case 'idle':
       case 'selected':
