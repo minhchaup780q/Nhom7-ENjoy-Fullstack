@@ -8,6 +8,7 @@ import { PersonalStatsPage } from '../features/stats/components/PersonalStatsPag
 import { LoginPage } from '../features/auth/components/LoginPage';
 import { RegisterPage } from '../features/auth/components/RegisterPage';
 import { useAuthStore } from '../features/auth/store/useAuthStore';
+import { PlacementTestPage } from '../features/placement-test/components/PlacementTestPage';
 import type { Session } from '../features/learning/types';
 
 import { AdminDashboard } from '../features/admin/components/AdminDashboard';
@@ -77,6 +78,8 @@ export const AppRoutes: React.FC<AppRoutesProps> = ({ onStartSession }) => {
 
       {/* Protected Routes - Bắt buộc phải đăng nhập */}
       <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
+        {/* Welcome / Placement Test - hiện khi user mới đăng ký */}
+        <Route path="/welcome" element={<PlacementTestPage />} />
         <Route path="/learn" element={<LearningMap onStartSession={onStartSession} />} />
         <Route path="/explore" element={<ExploreDashboard />} />
         <Route path="/practice" element={<PracticeDashboard />} />

@@ -239,17 +239,39 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
     }));
   });
 
-  // Map trạng thái bài học dựa trên userProgress cá nhân
-  const allSessionsInTopic = rawSessionsInTopic.map((session, index) => {
+  // Lọc bỏ sessions đã SKIPPED bởi placement test (không hiển thị trên UI)
+  // Nhưng vẫn giữ nguyên rawSessionsInTopic đầy đủ để tính toán chain unlock
+  const skippedSessionIds = new Set(
+    userProgress
+      .filter(p => p.status === SessionStatus.SKIPPED && p.session)
+      .map(p => p.session.id)
+  );
+  const visibleSessionsInTopic = rawSessionsInTopic.filter(s => !skippedSessionIds.has(s.id));
+
+  // Map trạng thái bài học dựa trên userProgress cá nhân (dùng rawSessionsInTopic đầy đủ để tính chain)
+  const allSessionsInTopic = visibleSessionsInTopic.map((session, index) => {
     const prog = userProgress.find(p => p.session && p.session.id === session.id);
     let calculatedStatus = SessionStatus.LOCK;
 
     if (prog) {
-      calculatedStatus = prog.status;
+      // SKIPPED từ placement test → không còn hiển thị (đã lọc ở trên), giữ logic an toàn
+      calculatedStatus = prog.status === SessionStatus.SKIPPED ? SessionStatus.FINISH : prog.status;
     } else {
-      const prevSession = index > 0 ? rawSessionsInTopic[index - 1] : null;
-      const prevProg = prevSession ? userProgress.find(p => p.session && p.session.id === prevSession.id) : null;
-      const isPrevFinished = prevProg ? prevProg.status === SessionStatus.FINISH : false;
+      // Chỉ kiểm tra session liền kề trước đó trong danh sách RAW
+      const myRawIdx = rawSessionsInTopic.findIndex(s => s.id === session.id);
+      let isPrevFinished = false;
+      if (myRawIdx > 0) {
+        const prevRaw = rawSessionsInTopic[myRawIdx - 1];
+        const prevProg = userProgress.find(p => p.session && p.session.id === prevRaw.id);
+        if (prevProg) {
+          isPrevFinished = prevProg.status === SessionStatus.FINISH || prevProg.status === SessionStatus.SKIPPED;
+        } else {
+          // Bài học liền trước chưa có tiến độ (chưa học) -> bài này không được mở khóa
+          isPrevFinished = false;
+        }
+      } else {
+        isPrevFinished = true; // session đầu tiên → luôn mở khóa
+      }
 
       if (index === 0 || isPrevFinished) {
         calculatedStatus = SessionStatus.UNLOCK;
@@ -290,9 +312,10 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
     // Chủ đề đầu tiên (Chủ đề 1) luôn luôn được mở khóa mặc định
     if (index === 0) return true;
 
-    // Nếu chủ đề này đã có bài học nào được UNLOCK hoặc FINISH trong userProgress -> Đã mở khóa
+    // Nếu chủ đề này đã có bài học nào được UNLOCK, FINISH hoặc SKIPPED (từ placement test) -> Đã mở khóa
     const hasProgressInThisTopic = userProgress.some(
-      p => p.session?.part?.topic?.id === topic.id && (p.status === SessionStatus.FINISH || p.status === SessionStatus.UNLOCK)
+      p => p.session?.part?.topic?.id === topic.id &&
+        (p.status === SessionStatus.FINISH || p.status === SessionStatus.UNLOCK || p.status === SessionStatus.SKIPPED)
     );
     if (hasProgressInThisTopic) return true;
 
@@ -671,8 +694,8 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                       </div>
                     )}
 
-                    {/* Dải phân cách nhẹ nhàng */}
-                    {vocabSessions.length > 0 && grammarSessions.length > 0 && (
+                    {/* Dải phân cách nhẹ nhàng báo hiệu phần Ngữ pháp */}
+                    {grammarSessions.length > 0 && (
                       <div className="w-full max-w-md my-8 flex items-center justify-center gap-3 relative z-10">
                         <div className="flex-1 h-[1.5px] bg-gradient-to-r from-transparent via-[#d8b4fe] to-transparent" />
                         <div className="px-4 py-1.5 rounded-full bg-[#faf5ff] border border-[#d8b4fe] text-[#8854d0] text-xs font-display font-extrabold tracking-wider uppercase flex items-center gap-2 shadow-sm">

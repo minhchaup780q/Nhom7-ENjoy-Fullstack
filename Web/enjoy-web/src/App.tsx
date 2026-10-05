@@ -15,6 +15,8 @@ function App() {
 
   // 1. Kiểm tra xem người dùng có đang ở trang Login hoặc Register hay không
   const isAuthPage = ['/login', '/register'].includes(location.pathname);
+  // Trang Welcome / Placement Test: ẩn toàn bộ sidebar, hiện full-screen
+  const isWelcomePage = location.pathname === '/welcome';
   const isAdminPage = location.pathname.startsWith('/admin');
 
   // 2. Trường hợp 1: Người dùng đang học bài -> Ẩn toàn bộ Sidebar để hiển thị màn hình làm bài tập tràn màn hình (Full-screen)
@@ -27,7 +29,16 @@ function App() {
     );
   }
 
-  // 3. Người dùng đang ở trang Đăng nhập / Đăng ký => Ẩn 2 Sidebar bên trái & bên phải để hiển thị Form Đăng nhập căn giữa
+  // 3. Trang Welcome / Placement Test => Full-screen không sidebar
+  if (isWelcomePage) {
+    return (
+      <div className="min-h-screen bg-white w-full">
+        <AppRoutes onStartSession={(session) => setPlayingSession(session)} />
+      </div>
+    );
+  }
+
+  // 3b. Người dùng đang ở trang Đăng nhập / Đăng ký => Ẩn 2 Sidebar bên trái & bên phải để hiển thị Form Đăng nhập căn giữa
   if (isAuthPage) {
     return (
       <div className="min-h-screen bg-white w-full">
