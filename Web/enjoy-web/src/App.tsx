@@ -18,6 +18,7 @@ function App() {
   // Trang Welcome / Placement Test: ẩn toàn bộ sidebar, hiện full-screen
   const isWelcomePage = location.pathname === '/welcome';
   const isAdminPage = location.pathname.startsWith('/admin');
+  const isExamPage = location.pathname.startsWith('/exams');
 
   // 2. Trường hợp 1: Người dùng đang học bài -> Ẩn toàn bộ Sidebar để hiển thị màn hình làm bài tập tràn màn hình (Full-screen)
   if (playingSession) {
@@ -68,14 +69,16 @@ function App() {
       <SidebarLeft />
 
       {/* Main Container Content Area */}
-      <main className="flex-grow min-h-screen pl-64 pr-0 lg:pr-80 flex flex-col bg-bg-light">
+      <main className={`flex-grow min-h-screen pl-64 flex flex-col bg-bg-light ${!isExamPage ? 'pr-0 lg:pr-80' : 'pr-0'}`}>
         <AppRoutes onStartSession={(session) => setPlayingSession(session)} />
       </main>
 
       {/* Sidebar Right Info Stats Widgets */}
-      <div className="w-80 fixed right-0 top-0 bottom-0 border-l-2 border-border-main overflow-y-auto hidden lg:block bg-white">
-        <SidebarRight />
-      </div>
+      {!isExamPage && (
+        <div className="w-80 fixed right-0 top-0 bottom-0 border-l-2 border-border-main overflow-y-auto hidden lg:block bg-white">
+          <SidebarRight />
+        </div>
+      )}
     </div>
   );
 }
