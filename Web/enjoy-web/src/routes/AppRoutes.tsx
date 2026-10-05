@@ -8,6 +8,7 @@ import { PersonalStatsPage } from '../features/stats/components/PersonalStatsPag
 import { LoginPage } from '../features/auth/components/LoginPage';
 import { RegisterPage } from '../features/auth/components/RegisterPage';
 import { useAuthStore } from '../features/auth/store/useAuthStore';
+import { PronunciationGuidePage } from '../features/pronunciation/components/PronunciationGuidePage';
 import { PlacementTestPage } from '../features/placement-test/components/PlacementTestPage';
 import type { Session } from '../features/learning/types';
 
@@ -88,6 +89,7 @@ export const AppRoutes: React.FC<AppRoutesProps> = ({ onStartSession }) => {
         <Route path="/shop" element={<FeatureUnderDevelopment tabName="CỬA HÀNG" />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/stats" element={<PersonalStatsPage />} />
+        <Route path="/pronunciation" element={<PronunciationGuidePage />} />
       </Route>
 
       {/* Admin Routes */}

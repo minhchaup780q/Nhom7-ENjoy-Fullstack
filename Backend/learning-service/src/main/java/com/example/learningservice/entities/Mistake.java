@@ -37,6 +37,12 @@ public class Mistake extends BaseEntity {
     @Column(name = "wrong_answer_submitted", columnDefinition = "TEXT", nullable = false)
     private String wrongAnswerSubmitted; // Đáp án user đã chọn sai
 
+    @Column(name = "phoneme_error_type", columnDefinition = "TEXT")
+    private String phonemeErrorType; // Loại lỗi ngữ âm hoặc JSON dữ liệu bài tập câu hoàn chỉnh (Vòng 7, 8, 9, 10)
+
+    @Column(name = "recognized_audio_transcript", columnDefinition = "TEXT")
+    private String recognizedAudioTranscript; // Văn bản nhận diện được từ giọng nói qua Whisper/AI
+
     @Column(name = "duration_seconds")
     private Integer durationSeconds; // Số giây user mất để đưa ra câu trả lời sai
 
