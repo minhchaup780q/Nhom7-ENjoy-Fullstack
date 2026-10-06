@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -116,24 +117,25 @@ public class ExamServiceImpl implements ExamService {
             // --- Trích xuất từ vựng đúng/sai và cập nhật tracking ---
             List<String> wrongWords = new ArrayList<>();
             List<String> correctWords = new ArrayList<>();
+            Map<String, String> wordImages = new HashMap<>();
             Map<String, java.util.List<String>> wrongVocabByTopic = new java.util.LinkedHashMap<>();
             try {
                 vocabularyTrackingService.extractListeningPart2(
                         listeningNode.path("part2"), request.getListening() != null ? request.getListening().get("part2") : null,
-                        wrongWords, correctWords);
+                        wrongWords, correctWords, wordImages);
                 vocabularyTrackingService.extractListeningPart4(
                         listeningNode.path("part4"), request.getListening() != null ? request.getListening().get("part4") : null,
-                        wrongWords, correctWords);
+                        wrongWords, correctWords, wordImages);
                 vocabularyTrackingService.extractReadingPart1(
                         readingNode.path("part1"), request.getReading() != null ? request.getReading().get("part1") : null,
-                        wrongWords, correctWords);
+                        wrongWords, correctWords, wordImages);
                 vocabularyTrackingService.extractReadingPart3(
                         readingNode.path("part3"), request.getReading() != null ? request.getReading().get("part3") : null,
-                        wrongWords, correctWords);
+                        wrongWords, correctWords, wordImages);
                 vocabularyTrackingService.extractReadingPart4(
                         readingNode.path("part4"), request.getReading() != null ? request.getReading().get("part4") : null,
-                        wrongWords, correctWords);
-                wrongVocabByTopic = vocabularyTrackingService.processExamResult(userId, wrongWords, correctWords);
+                        wrongWords, correctWords, wordImages);
+                wrongVocabByTopic = vocabularyTrackingService.processExamResult(userId, wrongWords, correctWords, wordImages);
             } catch (Exception vocabEx) {
                 log.warn("Lỗi khi xử lý tracking từ vựng: {}", vocabEx.getMessage());
             }

@@ -12,6 +12,16 @@ spring:
         options:
           model: ${OLLAMA_MODEL:qwen2.5:7b}
           temperature: 0.7
+      embedding:
+        options:
+          model: ${OLLAMA_EMBEDDING_MODEL:nomic-embed-text}
+
+    vectorstore:
+      qdrant:
+        host: ${QDRANT_HOST:localhost}
+        port: ${QDRANT_GRPC_PORT:6334}
+        collection-name: ${QDRANT_COLLECTION:grammar_docs}
+        initialize-schema: true
 
 eureka:
   instance:
