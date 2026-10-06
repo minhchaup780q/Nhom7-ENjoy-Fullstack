@@ -1,10 +1,16 @@
-package com.example.learningservice.services;
-
+import com.example.learningservice.dto.SaveAiChallengeRequest;
+import com.example.learningservice.dto.TopicWeakWordDetailDto;
+import com.example.learningservice.dto.VocabAiChallengeDto;
 import com.example.learningservice.dto.VocabStatsResponse;
 import com.example.learningservice.entities.UserVocabularyTracking;
+import com.example.learningservice.entities.VocabPracticeAiChallenge;
+import com.example.learningservice.entities.Vocabulary;
 import com.example.learningservice.entities.enums.VocabTrackingStatus;
 import com.example.learningservice.repositories.MockVocabularyRepository;
 import com.example.learningservice.repositories.UserVocabularyTrackingRepository;
+import com.example.learningservice.repositories.VocabPracticeAiChallengeRepository;
+import com.example.learningservice.repositories.VocabularyRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +31,9 @@ public class VocabularyTrackingService {
 
     private final UserVocabularyTrackingRepository trackingRepository;
     private final MockVocabularyRepository mockVocabularyRepository;
+    private final VocabularyRepository vocabularyRepository;
+    private final VocabPracticeAiChallengeRepository aiChallengeRepository;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     // =========================================================
     // Hàm chính: gọi sau khi nộp bài thi
@@ -139,6 +148,138 @@ public class VocabularyTrackingService {
                 .noExamHistory(false)
                 .topics(stats)
                 .build();
+    }
+
+    // =========================================================
+    // Các hàm phục vụ Luyện tập từ vựng sai theo chủ đề
+    // =========================================================
+
+    /**
+     * Lấy danh sách chi tiết các từ sai của 1 topic kèm metadata hình ảnh, phát âm, nghĩa tiếng Việt.
+     */
+    public List<TopicWeakWordDetailDto> getTopicWeakWords(Long userId, String topicName) {
+        List<UserVocabularyTracking> weakRecords = trackingRepository.findByUserIdAndStatus(userId, VocabTrackingStatus.WEAK);
+
+        List<String> targetWords = weakRecords.stream()
+                .filter(r -> r.getTopic() != null && r.getTopic().equalsIgnoreCase(topicName.trim()))
+                .map(UserVocabularyTracking::getWord)
+                .map(this::normalize)
+                .distinct()
+                .toList();
+
+        if (targetWords.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Vocabulary> vocabEntities = vocabularyRepository.findByWordInIgnoreCase(targetWords);
+        Map<String, Vocabulary> vocabMap = vocabEntities.stream()
+                .collect(Collectors.toMap(v -> normalize(v.getWord()), v -> v, (a, b) -> a));
+
+        List<TopicWeakWordDetailDto> result = new ArrayList<>();
+        long fallbackId = 1000L;
+        for (String w : targetWords) {
+            Vocabulary entity = vocabMap.get(w);
+            if (entity != null) {
+                result.add(TopicWeakWordDetailDto.builder()
+                        .id(entity.getId())
+                        .word(entity.getWord())
+                        .translation(entity.getTranslation())
+                        .imageUrl(entity.getImageUrl())
+                        .audioUrl(entity.getAudioUrl())
+                        .topic(topicName)
+                        .build());
+            } else {
+                result.add(TopicWeakWordDetailDto.builder()
+                        .id(fallbackId++)
+                        .word(w)
+                        .translation(w)
+                        .imageUrl(null)
+                        .audioUrl(null)
+                        .topic(topicName)
+                        .build());
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Đánh dấu hoàn thành luyện tập cho 1 từ vựng (chuyển WEAK -> CORRECT).
+     */
+    @Transactional
+    public boolean completePracticeWord(Long userId, String word, String topic) {
+        String cleanWord = normalize(word);
+        if (cleanWord.isEmpty()) return false;
+
+        Optional<UserVocabularyTracking> recordOpt = trackingRepository.findByUserIdAndWord(userId, cleanWord);
+        if (recordOpt.isPresent()) {
+            UserVocabularyTracking record = recordOpt.get();
+            record.setStatus(VocabTrackingStatus.CORRECT);
+            record.setUpdatedAt(LocalDateTime.now());
+            trackingRepository.save(record);
+            return true;
+        } else {
+            String resolvedTopic = (topic != null && !topic.isBlank()) ? topic : mockVocabularyRepository.findTopicByWord(cleanWord);
+            if (resolvedTopic != null) {
+                trackingRepository.save(UserVocabularyTracking.builder()
+                        .userId(userId)
+                        .word(cleanWord)
+                        .topic(resolvedTopic)
+                        .status(VocabTrackingStatus.CORRECT)
+                        .createdAt(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now())
+                        .build());
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Lấy câu hỏi ngữ pháp AI đã lưu cho từ vựng của user (nếu force=false).
+     */
+    public VocabAiChallengeDto getAiChallenge(Long userId, String word, boolean force) {
+        if (force) return null;
+        String cleanWord = normalize(word);
+        return aiChallengeRepository.findFirstByUserIdAndWordOrderByUpdatedAtDesc(userId, cleanWord)
+                .map(VocabAiChallengeDto::fromEntity)
+                .orElse(null);
+    }
+
+    /**
+     * Lưu hoặc cập nhật câu hỏi ngữ pháp AI sinh ra cho từ vựng của user.
+     */
+    @Transactional
+    public VocabAiChallengeDto saveAiChallenge(SaveAiChallengeRequest req) {
+        if (req == null || req.getUserId() == null || req.getWord() == null) return null;
+
+        String cleanWord = normalize(req.getWord());
+        Optional<VocabPracticeAiChallenge> existingOpt = aiChallengeRepository.findFirstByUserIdAndWordOrderByUpdatedAtDesc(req.getUserId(), cleanWord);
+
+        String optionsJson = "[]";
+        if (req.getOptions() != null) {
+            try {
+                optionsJson = objectMapper.writeValueAsString(req.getOptions());
+            } catch (Exception ignored) {
+            }
+        }
+
+        VocabPracticeAiChallenge challenge = existingOpt.orElseGet(() -> VocabPracticeAiChallenge.builder()
+                .userId(req.getUserId())
+                .word(cleanWord)
+                .createdAt(LocalDateTime.now())
+                .build());
+
+        challenge.setTopic(req.getTopic());
+        challenge.setGrammarName(req.getGrammarName());
+        challenge.setSentence(req.getSentence());
+        challenge.setOptionsJson(optionsJson);
+        challenge.setCorrectAnswer(req.getCorrectAnswer());
+        challenge.setTranslation(req.getTranslation());
+        challenge.setHint(req.getHint());
+        challenge.setUpdatedAt(LocalDateTime.now());
+
+        VocabPracticeAiChallenge saved = aiChallengeRepository.save(challenge);
+        return VocabAiChallengeDto.fromEntity(saved);
     }
 
     // =========================================================
