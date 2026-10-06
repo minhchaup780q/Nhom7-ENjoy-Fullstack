@@ -1,10 +1,18 @@
 package com.example.learningservice.services;
 
+import com.example.learningservice.dto.SaveAiChallengeRequest;
+import com.example.learningservice.dto.TopicWeakWordDetailDto;
+import com.example.learningservice.dto.VocabAiChallengeDto;
 import com.example.learningservice.dto.VocabStatsResponse;
 import com.example.learningservice.entities.UserVocabularyTracking;
+import com.example.learningservice.entities.VocabPracticeAiChallenge;
+import com.example.learningservice.entities.Vocabulary;
 import com.example.learningservice.entities.enums.VocabTrackingStatus;
 import com.example.learningservice.repositories.MockVocabularyRepository;
 import com.example.learningservice.repositories.UserVocabularyTrackingRepository;
+import com.example.learningservice.repositories.VocabPracticeAiChallengeRepository;
+import com.example.learningservice.repositories.VocabularyRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +33,9 @@ public class VocabularyTrackingService {
 
     private final UserVocabularyTrackingRepository trackingRepository;
     private final MockVocabularyRepository mockVocabularyRepository;
+    private final VocabularyRepository vocabularyRepository;
+    private final VocabPracticeAiChallengeRepository aiChallengeRepository;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     // =========================================================
     // Hàm chính: gọi sau khi nộp bài thi
@@ -42,8 +53,26 @@ public class VocabularyTrackingService {
      * @return Map: topic -> danh sách các từ sai THUỘC topic đó (để hiển thị trên result page)
      */
     @Transactional
-    public Map<String, List<String>> processExamResult(Long userId, List<String> wrongWords, List<String> correctWords) {
+    public Map<String, List<String>> processExamResult(
+            Long userId,
+            List<String> wrongWords,
+            List<String> correctWords,
+            Map<String, String> wordImages) {
         Map<String, List<String>> wrongByTopic = new LinkedHashMap<>();
+
+        // Tìm trước trong Vocabulary table để lấy ảnh/nghĩa nếu có
+        List<String> allCleanWords = wrongWords.stream()
+                .map(this::normalize)
+                .filter(w -> !w.isEmpty())
+                .distinct()
+                .toList();
+
+        Map<String, Vocabulary> vocabMap = Collections.emptyMap();
+        if (!allCleanWords.isEmpty()) {
+            List<Vocabulary> vocabList = vocabularyRepository.findByWordInIgnoreCase(allCleanWords);
+            vocabMap = vocabList.stream()
+                    .collect(Collectors.toMap(v -> normalize(v.getWord()), v -> v, (a, b) -> a));
+        }
 
         // 1. Xử lý từ sai
         for (String rawWord : wrongWords) {
@@ -53,12 +82,21 @@ public class VocabularyTrackingService {
             String topic = mockVocabularyRepository.findTopicByWord(word);
             if (topic == null) continue; // Từ không thuộc topic nào -> bỏ qua
 
+            // Xác định ảnh từ exam hoặc từ bảng vocabularies
+            String imgUrl = (wordImages != null) ? wordImages.get(word) : null;
+            if ((imgUrl == null || imgUrl.isBlank()) && vocabMap.containsKey(word)) {
+                imgUrl = vocabMap.get(word).getImageUrl();
+            }
+
             // Lưu vào DB
             Optional<UserVocabularyTracking> existing = trackingRepository.findByUserIdAndWord(userId, word);
             if (existing.isPresent()) {
                 // Đã có bản ghi -> luôn set về WEAK (dù trước đó CORRECT hay WEAK)
                 UserVocabularyTracking record = existing.get();
                 record.setStatus(VocabTrackingStatus.WEAK);
+                if (imgUrl != null && !imgUrl.isBlank()) {
+                    record.setImageUrl(imgUrl);
+                }
                 record.setUpdatedAt(LocalDateTime.now());
                 trackingRepository.save(record);
             } else {
@@ -67,6 +105,7 @@ public class VocabularyTrackingService {
                         .userId(userId)
                         .word(word)
                         .topic(topic)
+                        .imageUrl(imgUrl)
                         .status(VocabTrackingStatus.WEAK)
                         .createdAt(LocalDateTime.now())
                         .updatedAt(LocalDateTime.now())
@@ -92,6 +131,11 @@ public class VocabularyTrackingService {
         }
 
         return wrongByTopic;
+    }
+
+    @Transactional
+    public Map<String, List<String>> processExamResult(Long userId, List<String> wrongWords, List<String> correctWords) {
+        return processExamResult(userId, wrongWords, correctWords, Collections.emptyMap());
     }
 
     // =========================================================
@@ -124,7 +168,14 @@ public class VocabularyTrackingService {
             String topic = (String) row[0];
             int weak = ((Number) row[1]).intValue();
             int correct = ((Number) row[2]).intValue();
-            String status = correct > weak ? "Developing" : "Weak";
+            String status;
+            if (weak == 0) {
+                status = "Mastered";
+            } else if (correct > 0) {
+                status = "Developing";
+            } else {
+                status = "Weak";
+            }
             List<String> weakWords = weakWordsByTopic.getOrDefault(topic, List.of());
             return VocabStatsResponse.TopicStat.builder()
                     .topicName(topic)
@@ -142,6 +193,150 @@ public class VocabularyTrackingService {
     }
 
     // =========================================================
+    // Các hàm phục vụ Luyện tập từ vựng sai theo chủ đề
+    // =========================================================
+
+    /**
+     * Lấy danh sách chi tiết các từ sai của 1 topic kèm metadata hình ảnh, phát âm, nghĩa tiếng Việt.
+     */
+    public List<TopicWeakWordDetailDto> getTopicWeakWords(Long userId, String topicName) {
+        List<UserVocabularyTracking> weakRecords = trackingRepository.findByUserIdAndStatus(userId, VocabTrackingStatus.WEAK);
+
+        List<UserVocabularyTracking> targetRecords = weakRecords.stream()
+                .filter(r -> r.getTopic() != null && r.getTopic().equalsIgnoreCase(topicName.trim()))
+                .toList();
+
+        if (targetRecords.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<String> targetWords = targetRecords.stream()
+                .map(UserVocabularyTracking::getWord)
+                .map(this::normalize)
+                .distinct()
+                .toList();
+
+        List<Vocabulary> vocabEntities = vocabularyRepository.findByWordInIgnoreCase(targetWords);
+        Map<String, Vocabulary> vocabMap = vocabEntities.stream()
+                .collect(Collectors.toMap(v -> normalize(v.getWord()), v -> v, (a, b) -> a));
+
+        Map<String, String> trackingImageMap = targetRecords.stream()
+                .filter(r -> r.getImageUrl() != null && !r.getImageUrl().isBlank())
+                .collect(Collectors.toMap(r -> normalize(r.getWord()), UserVocabularyTracking::getImageUrl, (a, b) -> a));
+
+        List<TopicWeakWordDetailDto> result = new ArrayList<>();
+        long fallbackId = 1000L;
+        for (String w : targetWords) {
+            Vocabulary entity = vocabMap.get(w);
+            String trackingImg = trackingImageMap.get(w);
+            String finalImg = (trackingImg != null && !trackingImg.isBlank()) ? trackingImg : (entity != null ? entity.getImageUrl() : null);
+            String translation = (entity != null && entity.getTranslation() != null && !entity.getTranslation().isBlank())
+                    ? entity.getTranslation() : w;
+            String audioUrl = entity != null ? entity.getAudioUrl() : null;
+
+            result.add(TopicWeakWordDetailDto.builder()
+                    .id(entity != null ? entity.getId() : fallbackId++)
+                    .word(w)
+                    .translation(translation)
+                    .imageUrl(finalImg)
+                    .audioUrl(audioUrl)
+                    .topic(topicName)
+                    .build());
+        }
+        return result;
+    }
+
+
+    /**
+     * Đánh dấu hoàn thành luyện tập cho 1 từ vựng (chuyển WEAK -> CORRECT).
+     */
+    @Transactional
+    public boolean completePracticeWord(Long userId, String word, String topic) {
+        String cleanWord = normalize(word);
+        if (cleanWord.isEmpty()) return false;
+
+        Optional<UserVocabularyTracking> recordOpt = trackingRepository.findByUserIdAndWord(userId, cleanWord);
+        if (recordOpt.isPresent()) {
+            UserVocabularyTracking record = recordOpt.get();
+            record.setStatus(VocabTrackingStatus.CORRECT);
+            record.setUpdatedAt(LocalDateTime.now());
+            trackingRepository.save(record);
+            return true;
+        } else {
+            String resolvedTopic = (topic != null && !topic.isBlank()) ? topic : mockVocabularyRepository.findTopicByWord(cleanWord);
+            if (resolvedTopic != null) {
+                trackingRepository.save(UserVocabularyTracking.builder()
+                        .userId(userId)
+                        .word(cleanWord)
+                        .topic(resolvedTopic)
+                        .status(VocabTrackingStatus.CORRECT)
+                        .createdAt(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now())
+                        .build());
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Lấy câu hỏi ngữ pháp AI đã lưu cho từ vựng của user (nếu force=false).
+     */
+    public VocabAiChallengeDto getAiChallenge(Long userId, String word, boolean force) {
+        if (force) return null;
+        String cleanWord = normalize(word);
+        return aiChallengeRepository.findFirstByUserIdAndWordOrderByUpdatedAtDesc(userId, cleanWord)
+                .map(VocabAiChallengeDto::fromEntity)
+                .orElse(null);
+    }
+
+    /**
+     * Lưu hoặc cập nhật câu hỏi ngữ pháp AI sinh ra cho từ vựng của user.
+     */
+    @Transactional
+    public VocabAiChallengeDto saveAiChallenge(SaveAiChallengeRequest req) {
+        if (req == null || req.getUserId() == null || req.getWord() == null) return null;
+
+        String cleanWord = normalize(req.getWord());
+        Optional<VocabPracticeAiChallenge> existingOpt = aiChallengeRepository.findFirstByUserIdAndWordOrderByUpdatedAtDesc(req.getUserId(), cleanWord);
+
+        String optionsJson = "[]";
+        if (req.getOptions() != null) {
+            try {
+                optionsJson = objectMapper.writeValueAsString(req.getOptions());
+            } catch (Exception ignored) {
+            }
+        }
+
+        String blanksJson = "[]";
+        if (req.getBlanks() != null) {
+            try {
+                blanksJson = objectMapper.writeValueAsString(req.getBlanks());
+            } catch (Exception ignored) {
+            }
+        }
+
+        VocabPracticeAiChallenge challenge = existingOpt.orElseGet(() -> VocabPracticeAiChallenge.builder()
+                .userId(req.getUserId())
+                .word(cleanWord)
+                .createdAt(LocalDateTime.now())
+                .build());
+
+        challenge.setTopic(req.getTopic());
+        challenge.setGrammarName(req.getGrammarName());
+        challenge.setSentence(req.getSentence());
+        challenge.setBlanksJson(blanksJson);
+        challenge.setOptionsJson(optionsJson);
+        challenge.setCorrectAnswer(req.getCorrectAnswer());
+        challenge.setTranslation(req.getTranslation());
+        challenge.setHint(req.getHint());
+        challenge.setUpdatedAt(LocalDateTime.now());
+
+        VocabPracticeAiChallenge saved = aiChallengeRepository.save(challenge);
+        return VocabAiChallengeDto.fromEntity(saved);
+    }
+
+    // =========================================================
     // Trích xuất từ vựng từ bài thi (gọi sau khi score xong)
     // =========================================================
 
@@ -151,15 +346,20 @@ public class VocabularyTrackingService {
     public void extractListeningPart2(
             com.fasterxml.jackson.databind.JsonNode part,
             java.util.List<com.example.learningservice.dto.ExamSubmitRequest.PartAnswer> userAnswers,
-            List<String> wrongWords, List<String> correctWords) {
+            List<String> wrongWords, List<String> correctWords,
+            Map<String, String> wordImages) {
 
         if (part == null || part.isMissingNode() || userAnswers == null) return;
+        String partImg = part.path("img_url").asText("").trim();
         com.fasterxml.jackson.databind.JsonNode questions = part.path("questions");
         int ansIdx = 0;
         for (com.fasterxml.jackson.databind.JsonNode q : questions) {
             if (!q.path("is_example").asBoolean(false)) {
                 String expected = normalize(q.path("keyword").asText(""));
                 if (!expected.isEmpty()) {
+                    if (wordImages != null && !partImg.isEmpty()) {
+                        wordImages.put(expected, partImg);
+                    }
                     if (ansIdx < userAnswers.size()) {
                         String given = normalize(userAnswers.get(ansIdx).getAnswer());
                         if (expected.equals(given)) correctWords.add(expected);
@@ -173,21 +373,33 @@ public class VocabularyTrackingService {
         }
     }
 
+    public void extractListeningPart2(
+            com.fasterxml.jackson.databind.JsonNode part,
+            java.util.List<com.example.learningservice.dto.ExamSubmitRequest.PartAnswer> userAnswers,
+            List<String> wrongWords, List<String> correctWords) {
+        extractListeningPart2(part, userAnswers, wrongWords, correctWords, null);
+    }
+
     /**
      * Trích xuất từ vựng làm SAI từ Listening Part 4 (màu sắc).
      */
     public void extractListeningPart4(
             com.fasterxml.jackson.databind.JsonNode part,
             List<com.example.learningservice.dto.ExamSubmitRequest.PartAnswer> userAnswers,
-            List<String> wrongWords, List<String> correctWords) {
+            List<String> wrongWords, List<String> correctWords,
+            Map<String, String> wordImages) {
 
         if (part == null || part.isMissingNode() || userAnswers == null) return;
+        String partImg = part.path("img_url").asText("").trim();
         com.fasterxml.jackson.databind.JsonNode coords = part.path("coordinates");
         int ansIdx = 0;
         for (com.fasterxml.jackson.databind.JsonNode c : coords) {
             if (!c.path("is_example").asBoolean(false)) {
                 String expected = normalize(c.path("word").asText(""));
                 if (!expected.isEmpty()) {
+                    if (wordImages != null && !partImg.isEmpty()) {
+                        wordImages.put(expected, partImg);
+                    }
                     if (ansIdx < userAnswers.size()) {
                         String given = normalize(userAnswers.get(ansIdx).getAnswer());
                         if (expected.equals(given)) correctWords.add(expected);
@@ -199,6 +411,13 @@ public class VocabularyTrackingService {
                 }
             }
         }
+    }
+
+    public void extractListeningPart4(
+            com.fasterxml.jackson.databind.JsonNode part,
+            List<com.example.learningservice.dto.ExamSubmitRequest.PartAnswer> userAnswers,
+            List<String> wrongWords, List<String> correctWords) {
+        extractListeningPart4(part, userAnswers, wrongWords, correctWords, null);
     }
 
     /**
@@ -208,7 +427,8 @@ public class VocabularyTrackingService {
     public void extractReadingPart1(
             com.fasterxml.jackson.databind.JsonNode part,
             List<com.example.learningservice.dto.ExamSubmitRequest.PartAnswer> userAnswers,
-            List<String> wrongWords, List<String> correctWords) {
+            List<String> wrongWords, List<String> correctWords,
+            Map<String, String> wordImages) {
 
         if (part == null || part.isMissingNode() || !part.isArray() || userAnswers == null) return;
         int ansIdx = 0;
@@ -216,9 +436,16 @@ public class VocabularyTrackingService {
             if (!q.path("is_example").asBoolean(false)) {
                 String question = q.path("question").asText("").trim();
                 String expectedStatus = normalize(q.path("status").asText(""));
+                String qImg = q.path("img_url").asText("").trim();
+                if (qImg.isEmpty()) {
+                    qImg = q.path("image_url").asText("").trim();
+                }
                 // Lấy từ cuối câu làm keyword
                 String lastWord = extractLastWord(question);
                 if (!lastWord.isEmpty()) {
+                    if (wordImages != null && !qImg.isEmpty()) {
+                        wordImages.put(lastWord, qImg);
+                    }
                     if (ansIdx < userAnswers.size()) {
                         String givenStatus = normalize(userAnswers.get(ansIdx).getAnswer());
                         if (expectedStatus.equals(givenStatus)) correctWords.add(lastWord);
@@ -232,20 +459,35 @@ public class VocabularyTrackingService {
         }
     }
 
+    public void extractReadingPart1(
+            com.fasterxml.jackson.databind.JsonNode part,
+            List<com.example.learningservice.dto.ExamSubmitRequest.PartAnswer> userAnswers,
+            List<String> wrongWords, List<String> correctWords) {
+        extractReadingPart1(part, userAnswers, wrongWords, correctWords, null);
+    }
+
     /**
      * Trích xuất từ vựng từ Reading Part 3 (gõ từ đúng).
      */
     public void extractReadingPart3(
             com.fasterxml.jackson.databind.JsonNode part,
             List<com.example.learningservice.dto.ExamSubmitRequest.PartAnswer> userAnswers,
-            List<String> wrongWords, List<String> correctWords) {
+            List<String> wrongWords, List<String> correctWords,
+            Map<String, String> wordImages) {
 
         if (part == null || part.isMissingNode() || !part.isArray() || userAnswers == null) return;
         int ansIdx = 0;
         for (com.fasterxml.jackson.databind.JsonNode q : part) {
             if (!q.path("is_example").asBoolean(false)) {
                 String expected = normalize(q.path("word").asText(""));
+                String qImg = q.path("img_url").asText("").trim();
+                if (qImg.isEmpty()) {
+                    qImg = q.path("image_url").asText("").trim();
+                }
                 if (!expected.isEmpty()) {
+                    if (wordImages != null && !qImg.isEmpty()) {
+                        wordImages.put(expected, qImg);
+                    }
                     if (ansIdx < userAnswers.size()) {
                         String given = normalize(userAnswers.get(ansIdx).getAnswer());
                         if (expected.equals(given)) correctWords.add(expected);
@@ -259,15 +501,39 @@ public class VocabularyTrackingService {
         }
     }
 
+    public void extractReadingPart3(
+            com.fasterxml.jackson.databind.JsonNode part,
+            List<com.example.learningservice.dto.ExamSubmitRequest.PartAnswer> userAnswers,
+            List<String> wrongWords, List<String> correctWords) {
+        extractReadingPart3(part, userAnswers, wrongWords, correctWords, null);
+    }
+
     /**
      * Trích xuất từ vựng từ Reading Part 4 (điền từ vào đoạn văn).
      */
     public void extractReadingPart4(
             com.fasterxml.jackson.databind.JsonNode part,
             List<com.example.learningservice.dto.ExamSubmitRequest.PartAnswer> userAnswers,
-            List<String> wrongWords, List<String> correctWords) {
+            List<String> wrongWords, List<String> correctWords,
+            Map<String, String> wordImages) {
 
         if (part == null || part.isMissingNode() || userAnswers == null) return;
+
+        // Trích xuất hình ảnh từ danh sách options nếu có
+        com.fasterxml.jackson.databind.JsonNode options = part.path("options");
+        if (options.isArray() && wordImages != null) {
+            for (com.fasterxml.jackson.databind.JsonNode opt : options) {
+                String optWord = normalize(opt.path("word").asText(""));
+                String optImg = opt.path("img_url").asText("").trim();
+                if (optImg.isEmpty()) {
+                    optImg = opt.path("image_url").asText("").trim();
+                }
+                if (!optWord.isEmpty() && !optImg.isEmpty()) {
+                    wordImages.put(optWord, optImg);
+                }
+            }
+        }
+
         com.fasterxml.jackson.databind.JsonNode answers = part.path("answers");
         for (com.fasterxml.jackson.databind.JsonNode ans : answers) {
             int pos = ans.path("position").asInt(0);
@@ -286,6 +552,14 @@ public class VocabularyTrackingService {
             if (!found) wrongWords.add(expected);
         }
     }
+
+    public void extractReadingPart4(
+            com.fasterxml.jackson.databind.JsonNode part,
+            List<com.example.learningservice.dto.ExamSubmitRequest.PartAnswer> userAnswers,
+            List<String> wrongWords, List<String> correctWords) {
+        extractReadingPart4(part, userAnswers, wrongWords, correctWords, null);
+    }
+
 
     // =========================================================
     // Helper
