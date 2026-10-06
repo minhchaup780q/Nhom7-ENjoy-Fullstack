@@ -1,4 +1,4 @@
-package com.example.learningservice.services;
+﻿package com.example.learningservice.services;
 
 import com.example.learningservice.dto.SaveAiChallengeRequest;
 import com.example.learningservice.dto.TopicWeakWordDetailDto;
@@ -23,8 +23,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Service xử lý toàn bộ logic tracking và thống kê từ vựng.
- * Được gọi sau khi chấm điểm bài thi xong.
+ * Service xß╗¡ l├╜ to├án bß╗Ö logic tracking v├á thß╗æng k├¬ tß╗½ vß╗▒ng.
+ * ─É╞░ß╗úc gß╗ìi sau khi chß║Ñm ─æiß╗âm b├ái thi xong.
  */
 @Slf4j
 @Service
@@ -34,24 +34,23 @@ public class VocabularyTrackingService {
     private final UserVocabularyTrackingRepository trackingRepository;
     private final MockVocabularyRepository mockVocabularyRepository;
     private final VocabularyRepository vocabularyRepository;
-    private final com.example.learningservice.repositories.ExamHistoryRepository examHistoryRepository;
     private final VocabPracticeAiChallengeRepository aiChallengeRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     // =========================================================
-    // Hàm chính: gọi sau khi nộp bài thi
+    // H├ám ch├¡nh: gß╗ìi sau khi nß╗Öp b├ái thi
     // =========================================================
 
     /**
-     * Xử lý cập nhật tracking dựa trên danh sách từ đúng/sai.
-     * Quy tắc:
-     *  - wrongWords: Nếu từ thuộc 1 topic -> INSERT với WEAK (hoặc cập nhật WEAK nếu đã có).
-     *  - correctWords: Nếu từ đã có record trong DB -> cập nhật thành CORRECT.
+     * Xß╗¡ l├╜ cß║¡p nhß║¡t tracking dß╗▒a tr├¬n danh s├ích tß╗½ ─æ├║ng/sai.
+     * Quy tß║»c:
+     *  - wrongWords: Nß║┐u tß╗½ thuß╗Öc 1 topic -> INSERT vß╗¢i WEAK (hoß║╖c cß║¡p nhß║¡t WEAK nß║┐u ─æ├ú c├│).
+     *  - correctWords: Nß║┐u tß╗½ ─æ├ú c├│ record trong DB -> cß║¡p nhß║¡t th├ánh CORRECT.
      *
-     * @param userId       ID của user
-     * @param wrongWords   Danh sách các từ làm sai
-     * @param correctWords Danh sách các từ làm đúng
-     * @return Map: topic -> danh sách các từ sai THUỘC topic đó (để hiển thị trên result page)
+     * @param userId       ID cß╗ºa user
+     * @param wrongWords   Danh s├ích c├íc tß╗½ l├ám sai
+     * @param correctWords Danh s├ích c├íc tß╗½ l├ám ─æ├║ng
+     * @return Map: topic -> danh s├ích c├íc tß╗½ sai THUß╗ÿC topic ─æ├│ (─æß╗â hiß╗ân thß╗ï tr├¬n result page)
      */
     @Transactional
     public Map<String, List<String>> processExamResult(
@@ -61,7 +60,7 @@ public class VocabularyTrackingService {
             Map<String, String> wordImages) {
         Map<String, List<String>> wrongByTopic = new LinkedHashMap<>();
 
-        // Tìm trước trong Vocabulary table để lấy ảnh/nghĩa nếu có
+        // T├¼m tr╞░ß╗¢c trong Vocabulary table ─æß╗â lß║Ñy ß║únh/ngh─⌐a nß║┐u c├│
         List<String> allCleanWords = wrongWords.stream()
                 .map(this::normalize)
                 .filter(w -> !w.isEmpty())
@@ -75,24 +74,24 @@ public class VocabularyTrackingService {
                     .collect(Collectors.toMap(v -> normalize(v.getWord()), v -> v, (a, b) -> a));
         }
 
-        // 1. Xử lý từ sai
+        // 1. Xß╗¡ l├╜ tß╗½ sai
         for (String rawWord : wrongWords) {
             String word = normalize(rawWord);
             if (word.isEmpty()) continue;
 
             String topic = mockVocabularyRepository.findTopicByWord(word);
-            if (topic == null) continue; // Từ không thuộc topic nào -> bỏ qua
+            if (topic == null) continue; // Tß╗½ kh├┤ng thuß╗Öc topic n├áo -> bß╗Å qua
 
-            // Xác định ảnh từ exam hoặc từ bảng vocabularies
+            // X├íc ─æß╗ïnh ß║únh tß╗½ exam hoß║╖c tß╗½ bß║úng vocabularies
             String imgUrl = (wordImages != null) ? wordImages.get(word) : null;
             if ((imgUrl == null || imgUrl.isBlank()) && vocabMap.containsKey(word)) {
                 imgUrl = vocabMap.get(word).getImageUrl();
             }
 
-            // Lưu vào DB
+            // L╞░u v├áo DB
             Optional<UserVocabularyTracking> existing = trackingRepository.findByUserIdAndWord(userId, word);
             if (existing.isPresent()) {
-                // Đã có bản ghi -> luôn set về WEAK (dù trước đó CORRECT hay WEAK)
+                // ─É├ú c├│ bß║ún ghi -> lu├┤n set vß╗ü WEAK (d├╣ tr╞░ß╗¢c ─æ├│ CORRECT hay WEAK)
                 UserVocabularyTracking record = existing.get();
                 record.setStatus(VocabTrackingStatus.WEAK);
                 if (imgUrl != null && !imgUrl.isBlank()) {
@@ -101,7 +100,7 @@ public class VocabularyTrackingService {
                 record.setUpdatedAt(LocalDateTime.now());
                 trackingRepository.save(record);
             } else {
-                // Chưa có -> insert mới
+                // Ch╞░a c├│ -> insert mß╗¢i
                 trackingRepository.save(UserVocabularyTracking.builder()
                         .userId(userId)
                         .word(word)
@@ -113,11 +112,11 @@ public class VocabularyTrackingService {
                         .build());
             }
 
-            // Gom vào map để trả về cho result page
+            // Gom v├áo map ─æß╗â trß║ú vß╗ü cho result page
             wrongByTopic.computeIfAbsent(topic, k -> new ArrayList<>()).add(word);
         }
 
-        // 2. Xử lý từ đúng: chỉ cập nhật nếu từ đó ĐÃ CÓ bản ghi (từng sai trước)
+        // 2. Xß╗¡ l├╜ tß╗½ ─æ├║ng: chß╗ë cß║¡p nhß║¡t nß║┐u tß╗½ ─æ├│ ─É├â C├ô bß║ún ghi (tß╗½ng sai tr╞░ß╗¢c)
         for (String rawWord : correctWords) {
             String word = normalize(rawWord);
             if (word.isEmpty()) continue;
@@ -140,11 +139,11 @@ public class VocabularyTrackingService {
     }
 
     // =========================================================
-    // Hàm thống kê cho trang Statistics
+    // H├ám thß╗æng k├¬ cho trang Statistics
     // =========================================================
 
     /**
-     * Lấy thống kê từ vựng của user để hiển thị trên trang thống kê.
+     * Lß║Ñy thß╗æng k├¬ tß╗½ vß╗▒ng cß╗ºa user ─æß╗â hiß╗ân thß╗ï tr├¬n trang thß╗æng k├¬.
      */
     public VocabStatsResponse getVocabStats(Long userId) {
         boolean hasHistory = trackingRepository.existsByUserId(userId);
@@ -157,7 +156,7 @@ public class VocabularyTrackingService {
 
         List<Object[]> rows = trackingRepository.findTopicStatsByUserId(userId);
 
-        // Lấy danh sách các từ WEAK để gắn vào mỗi topic
+        // Lß║Ñy danh s├ích c├íc tß╗½ WEAK ─æß╗â gß║»n v├áo mß╗ùi topic
         List<UserVocabularyTracking> weakRecords = trackingRepository.findByUserIdAndStatus(userId, VocabTrackingStatus.WEAK);
         Map<String, List<String>> weakWordsByTopic = weakRecords.stream()
                 .collect(Collectors.groupingBy(
@@ -187,52 +186,18 @@ public class VocabularyTrackingService {
                     .build();
         }).collect(Collectors.toList());
 
-        // Lấy 5 bài thi gần nhất để vẽ biểu đồ
-        List<VocabStatsResponse.ExamHistoryStat> historyStats = examHistoryRepository
-                .findByUserIdOrderByCompletedAtDesc(userId).stream()
-                .sorted(Comparator.comparing(com.example.learningservice.entities.ExamHistory::getCompletedAt)) // Đảo ngược để vẽ timeline từ cũ đến mới
-                .map(h -> VocabStatsResponse.ExamHistoryStat.builder()
-                        .date(h.getCompletedAt() != null ? String.format("%02d/%02d", h.getCompletedAt().getDayOfMonth(), h.getCompletedAt().getMonthValue()) : "")
-                        .listeningScore(h.getPartScoresPayload() != null ? extractScoreFromPayload(h.getPartScoresPayload(), "listening") : 0)
-                        .readingScore(h.getPartScoresPayload() != null ? extractScoreFromPayload(h.getPartScoresPayload(), "reading") : 0)
-                        .build())
-                .collect(Collectors.toList());
-
         return VocabStatsResponse.builder()
                 .noExamHistory(false)
                 .topics(stats)
-                .examHistories(historyStats)
                 .build();
     }
 
-    private int extractScoreFromPayload(String payload, String type) {
-        if (payload == null || payload.isEmpty()) return 0;
-        try {
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(payload);
-            com.fasterxml.jackson.databind.JsonNode typeNode = root.get(type); // "listening" or "reading"
-            if (typeNode != null) {
-                int score = 0;
-                for (int i = 1; i <= 5; i++) {
-                    com.fasterxml.jackson.databind.JsonNode partNode = typeNode.get("part" + i + "Correct");
-                    if (partNode != null) {
-                        score += partNode.asInt();
-                    }
-                }
-                return score;
-            }
-        } catch (Exception e) {
-            log.error("Failed to parse partScoresPayload", e);
-        }
-        return 0;
-    }
-
     // =========================================================
-    // Các hàm phục vụ Luyện tập từ vựng sai theo chủ đề
+    // C├íc h├ám phß╗Ñc vß╗Ñ Luyß╗çn tß║¡p tß╗½ vß╗▒ng sai theo chß╗º ─æß╗ü
     // =========================================================
 
     /**
-     * Lấy danh sách chi tiết các từ sai của 1 topic kèm metadata hình ảnh, phát âm, nghĩa tiếng Việt.
+     * Lß║Ñy danh s├ích chi tiß║┐t c├íc tß╗½ sai cß╗ºa 1 topic k├¿m metadata h├¼nh ß║únh, ph├ít ├óm, ngh─⌐a tiß║┐ng Viß╗çt.
      */
     public List<TopicWeakWordDetailDto> getTopicWeakWords(Long userId, String topicName) {
         List<UserVocabularyTracking> weakRecords = trackingRepository.findByUserIdAndStatus(userId, VocabTrackingStatus.WEAK);
@@ -281,8 +246,9 @@ public class VocabularyTrackingService {
         return result;
     }
 
+
     /**
-     * Đánh dấu hoàn thành luyện tập cho 1 từ vựng (chuyển WEAK -> CORRECT).
+     * ─É├ính dß║Ñu ho├án th├ánh luyß╗çn tß║¡p cho 1 tß╗½ vß╗▒ng (chuyß╗ân WEAK -> CORRECT).
      */
     @Transactional
     public boolean completePracticeWord(Long userId, String word, String topic) {
@@ -314,7 +280,7 @@ public class VocabularyTrackingService {
     }
 
     /**
-     * Lấy câu hỏi ngữ pháp AI đã lưu cho từ vựng của user (nếu force=false).
+     * Lß║Ñy c├óu hß╗Åi ngß╗» ph├íp AI ─æ├ú l╞░u cho tß╗½ vß╗▒ng cß╗ºa user (nß║┐u force=false).
      */
     public VocabAiChallengeDto getAiChallenge(Long userId, String word, boolean force) {
         if (force) return null;
@@ -325,7 +291,7 @@ public class VocabularyTrackingService {
     }
 
     /**
-     * Lưu hoặc cập nhật câu hỏi ngữ pháp AI sinh ra cho từ vựng của user.
+     * L╞░u hoß║╖c cß║¡p nhß║¡t c├óu hß╗Åi ngß╗» ph├íp AI sinh ra cho tß╗½ vß╗▒ng cß╗ºa user.
      */
     @Transactional
     public VocabAiChallengeDto saveAiChallenge(SaveAiChallengeRequest req) {
@@ -371,11 +337,11 @@ public class VocabularyTrackingService {
     }
 
     // =========================================================
-    // Trích xuất từ vựng từ bài thi (gọi sau khi score xong)
+    // Tr├¡ch xuß║Ñt tß╗½ vß╗▒ng tß╗½ b├ái thi (gß╗ìi sau khi score xong)
     // =========================================================
 
     /**
-     * Trích xuất từ vựng làm SAI từ Listening Part 2 (keyword).
+     * Tr├¡ch xuß║Ñt tß╗½ vß╗▒ng l├ám SAI tß╗½ Listening Part 2 (keyword).
      */
     public void extractListeningPart2(
             com.fasterxml.jackson.databind.JsonNode part,
@@ -415,7 +381,7 @@ public class VocabularyTrackingService {
     }
 
     /**
-     * Trích xuất từ vựng làm SAI từ Listening Part 4 (màu sắc).
+     * Tr├¡ch xuß║Ñt tß╗½ vß╗▒ng l├ám SAI tß╗½ Listening Part 4 (m├áu sß║»c).
      */
     public void extractListeningPart4(
             com.fasterxml.jackson.databind.JsonNode part,
@@ -455,8 +421,8 @@ public class VocabularyTrackingService {
     }
 
     /**
-     * Trích xuất từ vựng từ Reading Part 1 (từ cuối câu - keyword mô tả).
-     * Câu dạng: "This is a cat." -> từ cuối là "cat."
+     * Tr├¡ch xuß║Ñt tß╗½ vß╗▒ng tß╗½ Reading Part 1 (tß╗½ cuß╗æi c├óu - keyword m├┤ tß║ú).
+     * C├óu dß║íng: "This is a cat." -> tß╗½ cuß╗æi l├á "cat."
      */
     public void extractReadingPart1(
             com.fasterxml.jackson.databind.JsonNode part,
@@ -474,7 +440,7 @@ public class VocabularyTrackingService {
                 if (qImg.isEmpty()) {
                     qImg = q.path("image_url").asText("").trim();
                 }
-                // Lấy từ cuối câu làm keyword
+                // Lß║Ñy tß╗½ cuß╗æi c├óu l├ám keyword
                 String lastWord = extractLastWord(question);
                 if (!lastWord.isEmpty()) {
                     if (wordImages != null && !qImg.isEmpty()) {
@@ -501,7 +467,7 @@ public class VocabularyTrackingService {
     }
 
     /**
-     * Trích xuất từ vựng từ Reading Part 3 (gõ từ đúng).
+     * Tr├¡ch xuß║Ñt tß╗½ vß╗▒ng tß╗½ Reading Part 3 (g├╡ tß╗½ ─æ├║ng).
      */
     public void extractReadingPart3(
             com.fasterxml.jackson.databind.JsonNode part,
@@ -543,7 +509,7 @@ public class VocabularyTrackingService {
     }
 
     /**
-     * Trích xuất từ vựng từ Reading Part 4 (điền từ vào đoạn văn).
+     * Tr├¡ch xuß║Ñt tß╗½ vß╗▒ng tß╗½ Reading Part 4 (─æiß╗ün tß╗½ v├áo ─æoß║ín v─ân).
      */
     public void extractReadingPart4(
             com.fasterxml.jackson.databind.JsonNode part,
@@ -553,7 +519,7 @@ public class VocabularyTrackingService {
 
         if (part == null || part.isMissingNode() || userAnswers == null) return;
 
-        // Trích xuất hình ảnh từ danh sách options nếu có
+        // Tr├¡ch xuß║Ñt h├¼nh ß║únh tß╗½ danh s├ích options nß║┐u c├│
         com.fasterxml.jackson.databind.JsonNode options = part.path("options");
         if (options.isArray() && wordImages != null) {
             for (com.fasterxml.jackson.databind.JsonNode opt : options) {
@@ -602,11 +568,11 @@ public class VocabularyTrackingService {
     private String normalize(String s) {
         if (s == null) return "";
         return s.trim().toLowerCase()
-                .replaceAll("[.,!?;:\"]$", "") // bỏ dấu câu cuối
+                .replaceAll("[.,!?;:\"]$", "") // bß╗Å dß║Ñu c├óu cuß╗æi
                 .trim();
     }
 
-    /** Lấy từ cuối cùng trong câu, loại bỏ dấu câu */
+    /** Lß║Ñy tß╗½ cuß╗æi c├╣ng trong c├óu, loß║íi bß╗Å dß║Ñu c├óu */
     private String extractLastWord(String sentence) {
         if (sentence == null || sentence.isBlank()) return "";
         String[] tokens = sentence.trim().split("\\s+");
