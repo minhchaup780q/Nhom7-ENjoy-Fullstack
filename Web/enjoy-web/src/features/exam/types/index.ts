@@ -217,3 +217,25 @@ export interface VocabStatsResponse {
   topics: TopicStat[];
 }
 
+export interface TopicWeakWordDetail {
+  id: number;
+  word: string;
+  translation?: string;
+  imageUrl?: string;
+  audioUrl?: string;
+  topic: string;
+}
+
+export interface VocabAiChallenge {
+  id?: number;
+  userId?: number;
+  word: string;
+  topic: string;
+  grammarName: string;
+  sentence: string;
+  options: string[];
+  correctAnswer: string;
+  translation: string;
+  hint?: string;
+}
+

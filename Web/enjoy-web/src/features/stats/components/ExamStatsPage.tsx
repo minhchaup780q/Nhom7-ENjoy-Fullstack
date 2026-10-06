@@ -13,6 +13,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { CheckBadgeIcon, SparklesIcon } from '@heroicons/react/24/solid';
 
+import { VocabPracticeModal } from './VocabPracticeModal';
+
 // ──────────────────────────────────────────────
 // Fake data dùng cho Target, Progress, Grammar, Skill
 // ──────────────────────────────────────────────
@@ -61,13 +63,18 @@ export const ExamStatsPage: React.FC = () => {
   const { user } = useAuthStore();
   const [vocabStats, setVocabStats] = useState<VocabStatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedPracticeTopic, setSelectedPracticeTopic] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchStats = () => {
     if (!user?.id) return;
     vocabStatsApi.getVocabStats(user.id)
       .then(setVocabStats)
       .catch(() => setVocabStats({ noExamHistory: true, topics: [] }))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchStats();
   }, [user?.id]);
 
   const totalWeak = vocabStats?.topics.reduce((s, t) => s + t.weakCount, 0) ?? 0;
@@ -191,7 +198,8 @@ export const ExamStatsPage: React.FC = () => {
                         {topic.status !== 'Mastered' ? (
                           <button
                             id={`practice-btn-${topic.topicName.replace(/\s+/g, '-').toLowerCase()}`}
-                            className="px-2.5 py-1 text-xs font-bold text-white bg-primary rounded-full hover:bg-primary/90 transition-colors"
+                            onClick={() => setSelectedPracticeTopic(topic.topicName)}
+                            className="px-2.5 py-1 text-xs font-bold text-white bg-primary rounded-full hover:bg-primary/90 transition-colors cursor-pointer"
                           >
                             Luyện tập
                           </button>
@@ -337,6 +345,16 @@ export const ExamStatsPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* ── Modal Luyện tập từ vựng sai theo Topic ── */}
+      {selectedPracticeTopic && user?.id && (
+        <VocabPracticeModal
+          userId={user.id}
+          topicName={selectedPracticeTopic}
+          onClose={() => setSelectedPracticeTopic(null)}
+          onTopicUpdated={fetchStats}
+        />
+      )}
     </div>
   );
 };
