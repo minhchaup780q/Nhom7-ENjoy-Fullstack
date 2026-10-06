@@ -13,12 +13,12 @@ function App() {
   const [playingSession, setPlayingSession] = useState<Session | null>(null);
   const location = useLocation();
 
-  // 1. Kiểm tra xem người dùng có đang ở trang Login hoặc Register hay không
   const isAuthPage = ['/login', '/register'].includes(location.pathname);
   // Trang Welcome / Placement Test: ẩn toàn bộ sidebar, hiện full-screen
   const isWelcomePage = location.pathname === '/welcome';
   const isAdminPage = location.pathname.startsWith('/admin');
   const isExamPage = location.pathname.startsWith('/exams');
+  const isStatsPage = location.pathname.startsWith('/stats');
 
   // 2. Trường hợp 1: Người dùng đang học bài -> Ẩn toàn bộ Sidebar để hiển thị màn hình làm bài tập tràn màn hình (Full-screen)
   if (playingSession) {
@@ -62,6 +62,9 @@ function App() {
     );
   }
 
+  // Luôn ẩn right-sidebar trên tất cả các trang
+  const hideRightSidebar = true;
+
   // 5. Người dùng ở các trang bình thường -> Hiển thị đầy đủ Bố cục 3 cột (Sidebar trái - Nội dung chính AppRoutes - Sidebar phải)
   return (
     <div className="min-h-screen bg-white flex w-full relative">
@@ -69,12 +72,12 @@ function App() {
       <SidebarLeft />
 
       {/* Main Container Content Area */}
-      <main className={`flex-grow min-h-screen pl-64 flex flex-col bg-bg-light ${!isExamPage ? 'pr-0 lg:pr-80' : 'pr-0'}`}>
+      <main className={`flex-grow min-h-screen pl-64 flex flex-col bg-bg-light ${!hideRightSidebar ? 'pr-0 lg:pr-80' : 'pr-0'}`}>
         <AppRoutes onStartSession={(session) => setPlayingSession(session)} />
       </main>
 
       {/* Sidebar Right Info Stats Widgets */}
-      {!isExamPage && (
+      {!hideRightSidebar && (
         <div className="w-80 fixed right-0 top-0 bottom-0 border-l-2 border-border-main overflow-y-auto hidden lg:block bg-white">
           <SidebarRight />
         </div>

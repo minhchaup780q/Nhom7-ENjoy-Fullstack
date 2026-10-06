@@ -5,6 +5,7 @@ import { ExploreDashboard } from '../features/explore/components/ExploreDashboar
 import { ProfilePage } from '../features/profile/components/ProfilePage';
 import { PracticeDashboard } from '../features/practice/components/PracticeDashboard';
 import { PersonalStatsPage } from '../features/stats/components/PersonalStatsPage';
+import { ExamStatsPage } from '../features/stats/components/ExamStatsPage';
 import { LoginPage } from '../features/auth/components/LoginPage';
 import { RegisterPage } from '../features/auth/components/RegisterPage';
 import { useAuthStore } from '../features/auth/store/useAuthStore';
@@ -71,7 +72,7 @@ export const AppRoutes: React.FC<AppRoutesProps> = ({ onStartSession }) => {
         <Route path="/exams/:examId" element={<ExamPage />} />
         <Route path="/exam" element={<Navigate to="/exams" replace />} />
         <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/stats" element={<PersonalStatsPage />} />
+        <Route path="/stats" element={<ExamStatsPage />} />
         <Route path="/pronunciation" element={<PronunciationGuidePage />} />
       </Route>
 

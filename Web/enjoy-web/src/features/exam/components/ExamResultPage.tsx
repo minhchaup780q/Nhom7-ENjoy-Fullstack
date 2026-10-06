@@ -1,7 +1,7 @@
 import React from 'react';
 import { useExamStore } from '../store/useExamStore';
-import { ShieldCheckIcon, TrophyIcon, ArrowPathIcon } from '@heroicons/react/24/solid';
-import { SpeakerWaveIcon, BookOpenIcon } from '@heroicons/react/24/outline';
+import { ShieldCheckIcon, ArrowPathIcon, BookmarkIcon } from '@heroicons/react/24/solid';
+import { SpeakerWaveIcon, BookOpenIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 
 const Shield: React.FC<{ filled: boolean }> = ({ filled }) => (
   <ShieldCheckIcon className={`w-8 h-8 ${filled ? 'text-primary' : 'text-gray-200'}`} />
@@ -19,7 +19,6 @@ export const ExamResultPage: React.FC = () => {
   const { result, currentExam, reset } = useExamStore();
   if (!result) return null;
 
-  const totalShields = result.listeningShields + result.readingShields;
   const pct = Math.round((result.totalCorrect / result.totalQuestions) * 100);
 
   const getEmoji = () => {
@@ -44,6 +43,9 @@ export const ExamResultPage: React.FC = () => {
       </span>
     </div>
   );
+
+  const wrongVocabByTopic = result.wrongVocabByTopic;
+  const hasWrongVocab = wrongVocabByTopic && Object.keys(wrongVocabByTopic).length > 0;
 
   return (
     <div className="flex-1 flex flex-col items-center justify-start py-8 px-4 max-w-2xl mx-auto w-full gap-6">
@@ -117,6 +119,39 @@ export const ExamResultPage: React.FC = () => {
           <PartRow label="Part 5" correct={result.readingPartScores.part5Correct || 0} total={result.readingPartScores.part5Total || 0} />
         </div>
       </div>
+
+      {/* Lỗi sai từ vựng */}
+      {hasWrongVocab && (
+        <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <ExclamationCircleIcon className="w-5 h-5 text-amber-500 flex-shrink-0" />
+            <p className="font-bold text-sm text-amber-800">Từ vựng cần ôn lại</p>
+          </div>
+          <div className="flex flex-col gap-3">
+            {Object.entries(wrongVocabByTopic!).map(([topic, words]) => (
+              <div key={topic} className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-2">
+                  <BookmarkIcon className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+                  <span className="text-xs font-bold text-amber-700 uppercase tracking-wide">{topic}</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 pl-5">
+                  {words.map((word, i) => (
+                    <span
+                      key={i}
+                      className="px-2.5 py-1 bg-white border border-amber-200 text-amber-800 text-xs font-semibold rounded-full shadow-sm"
+                    >
+                      {word}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-amber-600 mt-3 pl-1">
+            💡 Xem chi tiết tiến trình ôn tập tại trang <strong>Thống kê</strong>.
+          </p>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex gap-4 w-full mt-2">
