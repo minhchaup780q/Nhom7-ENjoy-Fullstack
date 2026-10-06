@@ -43,9 +43,13 @@ public class UserVocabularyTracking {
     @Column(name = "status", nullable = false, length = 20)
     private VocabTrackingStatus status;
 
+    @Column(name = "image_url", length = 500)
+    private String imageUrl;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 }
+

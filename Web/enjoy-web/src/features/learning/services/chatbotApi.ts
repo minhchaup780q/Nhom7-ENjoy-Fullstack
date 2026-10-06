@@ -48,6 +48,40 @@ export const chatbotApi = {
     }
   },
 
+  /**
+   * [RAG] Gọi endpoint grammar-challenge trên backend.
+   * Backend tự truy vấn Qdrant Vector DB lấy ngữ pháp phù hợp → inject vào AI → sinh câu.
+   * Frontend CHỈ gửi {word, topic} — KHÔNG gửi grammar docs nữa.
+   */
+  grammarChallenge: async (word: string, topic: string, avoidGrammarName?: string): Promise<string> => {
+    console.log('[ChatbotAPI] 🧠 Gọi RAG Grammar Challenge:', { word, topic, avoidGrammarName });
+
+    const payload = { word, topic, avoidGrammarName: avoidGrammarName || null };
+
+    // Bước 1: Thử qua Gateway
+    try {
+      const res = await apiClient.post<ApiResponseWrapper<ChatbotResponse>>('/api/v1/chatbot/grammar-challenge', payload);
+      console.log('[ChatbotAPI] ✅ RAG Grammar Challenge thành công qua Gateway');
+      return res.data?.reply || '{}';
+    } catch (gatewayErr: unknown) {
+      console.warn('[ChatbotAPI] ⚠️ Gateway thất bại, thử direct port 8085...');
+
+      // Bước 2: Fallback direct
+      try {
+        const directRes = await axios.post<ApiResponseWrapper<ChatbotResponse>>(
+          `${DIRECT_CHATBOT_URL}/api/v1/chatbot/grammar-challenge`,
+          payload,
+          { headers: { 'Content-Type': 'application/json' }, timeout: 30000 }
+        );
+        console.log('[ChatbotAPI] ✅ RAG Grammar Challenge thành công qua direct 8085');
+        return directRes.data.data?.reply || directRes.data.message || '{}';
+      } catch (directErr: unknown) {
+        console.error('[ChatbotAPI] ❌ RAG Grammar Challenge thất bại cả 2 cổng:', directErr);
+        return '{}';
+      }
+    }
+  },
+
   // Phân tích thông minh lý do bé làm sai theo từng vòng học (So sánh trực diện từ khóa/câu bé làm & đáp án chuẩn)
   explainMistake: async (item: MistakeItem, currentAttempt?: string): Promise<string> => {
     const targetText = item.contentText || item.keyword || '';

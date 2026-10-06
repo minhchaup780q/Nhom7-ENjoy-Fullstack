@@ -226,16 +226,26 @@ export interface TopicWeakWordDetail {
   topic: string;
 }
 
+export interface BlankDetail {
+  blankIndex: number;
+  label: string; // "Ngữ pháp" hoặc "Từ vựng"
+  type: 'grammar' | 'vocab';
+  correctAnswer: string;
+  options: string[];
+}
+
 export interface VocabAiChallenge {
   id?: number;
   userId?: number;
   word: string;
   topic: string;
   grammarName: string;
-  sentence: string;
-  options: string[];
-  correctAnswer: string;
-  translation: string;
+  sentence: string; // Chuỗi câu chứa các chỗ trống e.g. "Look! [____ 1 ____] a cute [____ 2 ____] in the tree."
+  blanks: BlankDetail[];
+  options?: string[]; // Fallback list nếu có
+  correctAnswer: string; // Đáp án tổng hợp
+  translation: string; // Bản dịch tiếng Việt đầy đủ và chuẩn xác
   hint?: string;
 }
+
 

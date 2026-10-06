@@ -175,7 +175,7 @@ export const ExamStatsPage: React.FC = () => {
               ) : (
                 <>
                   {/* Table header */}
-                  <div className="grid grid-cols-[1fr_100px_100px_110px_80px] gap-2 px-5 py-2.5 bg-surface text-xs font-semibold text-text-muted border-b border-border">
+                  <div className="grid grid-cols-[1fr_100px_100px_110px_110px] gap-2 px-5 py-2.5 bg-surface text-xs font-semibold text-text-muted border-b border-border">
                     <span>Tên</span>
                     <span className="text-center">Cần cải thiện</span>
                     <span className="text-center">Đã cải thiện</span>
@@ -183,32 +183,38 @@ export const ExamStatsPage: React.FC = () => {
                     <span className="text-center">Action</span>
                   </div>
                   {/* Table rows */}
-                  {vocabStats!.topics.map((topic: TopicStat) => (
-                    <div
-                      key={topic.topicName}
-                      className="grid grid-cols-[1fr_100px_100px_110px_80px] gap-2 px-5 py-3 border-b border-border/50 last:border-0 hover:bg-surface/50 transition-colors items-center"
-                    >
-                      <span className="font-medium text-sm text-text-main">{topic.topicName}</span>
-                      <span className="text-center text-sm font-semibold text-red-500">{topic.weakCount}</span>
-                      <span className="text-center text-sm font-semibold text-emerald-600">{topic.correctCount}</span>
-                      <div className="flex justify-center">
-                        <StatusBadge status={topic.status} />
+                  {vocabStats!.topics.map((topic: TopicStat) => {
+                    const isCompleted = topic.weakCount === 0 || topic.status === 'Mastered';
+                    return (
+                      <div
+                        key={topic.topicName}
+                        className="grid grid-cols-[1fr_100px_100px_110px_110px] gap-2 px-5 py-3 border-b border-border/50 last:border-0 hover:bg-surface/50 transition-colors items-center"
+                      >
+                        <span className="font-medium text-sm text-text-main">{topic.topicName}</span>
+                        <span className="text-center text-sm font-semibold text-red-500">{topic.weakCount}</span>
+                        <span className="text-center text-sm font-semibold text-emerald-600">{topic.correctCount}</span>
+                        <div className="flex justify-center">
+                          <StatusBadge status={topic.status} />
+                        </div>
+                        <div className="flex justify-center">
+                          {isCompleted ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-full border border-emerald-200 shadow-xs">
+                              <CheckBadgeIcon className="w-3.5 h-3.5 text-emerald-600" />
+                              Hoàn thành
+                            </span>
+                          ) : (
+                            <button
+                              id={`practice-btn-${topic.topicName.replace(/\s+/g, '-').toLowerCase()}`}
+                              onClick={() => setSelectedPracticeTopic(topic.topicName)}
+                              className="px-3 py-1 text-xs font-bold text-white bg-primary rounded-full hover:bg-primary/90 transition-all cursor-pointer shadow-xs active:scale-95"
+                            >
+                              Luyện tập
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex justify-center">
-                        {topic.status !== 'Mastered' ? (
-                          <button
-                            id={`practice-btn-${topic.topicName.replace(/\s+/g, '-').toLowerCase()}`}
-                            onClick={() => setSelectedPracticeTopic(topic.topicName)}
-                            className="px-2.5 py-1 text-xs font-bold text-white bg-primary rounded-full hover:bg-primary/90 transition-colors cursor-pointer"
-                          >
-                            Luyện tập
-                          </button>
-                        ) : (
-                          <span className="text-xs text-text-muted">—</span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   {/* Summary row */}
                   {(totalWeak > 0 || totalCorrect > 0) && (
                     <div className="px-5 py-3 bg-surface flex items-center gap-3 flex-wrap">

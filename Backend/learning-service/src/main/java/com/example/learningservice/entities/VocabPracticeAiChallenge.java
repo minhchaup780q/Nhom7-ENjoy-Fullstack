@@ -38,6 +38,9 @@ public class VocabPracticeAiChallenge {
     @Column(name = "sentence", columnDefinition = "TEXT")
     private String sentence;
 
+    @Column(name = "blanks_json", columnDefinition = "TEXT")
+    private String blanksJson;
+
     @Column(name = "options_json", columnDefinition = "TEXT")
     private String optionsJson;
 

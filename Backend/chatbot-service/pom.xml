@@ -27,10 +27,16 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- Spring AI Ollama (Hỗ trợ chạy local AI Model như qwen2.5:7b) -->
+        <!-- Spring AI Ollama (Chat + Embedding) -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-ollama-spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- Spring AI Qdrant Vector Store (RAG) -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-qdrant-store-spring-boot-starter</artifactId>
         </dependency>
 
         <!-- Spring Cloud Eureka Client -->

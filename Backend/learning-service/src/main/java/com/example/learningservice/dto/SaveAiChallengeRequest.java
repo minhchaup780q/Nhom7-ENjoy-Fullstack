@@ -15,6 +15,7 @@ public class SaveAiChallengeRequest {
     private String topic;
     private String grammarName;
     private String sentence;
+    private List<Object> blanks;
     private List<String> options;
     private String correctAnswer;
     private String translation;

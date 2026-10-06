@@ -54,12 +54,13 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
   const audioChunksRef = useRef<Blob[]>([]);
 
   // ──────────────────────────────────────────────
-  // Step 4: AI Grammar State
+  // Step 4: AI Grammar State (Hỗ trợ đục lỗ nhiều vị trí: Ngữ pháp + Từ vựng)
   // ──────────────────────────────────────────────
   const [aiChallenge, setAiChallenge] = useState<VocabAiChallenge | null>(null);
   const [loadingAi, setLoadingAi] = useState(false);
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [selectedBlanks, setSelectedBlanks] = useState<Record<number, string>>({});
   const [aiStatus, setAiStatus] = useState<'idle' | 'correct' | 'incorrect'>('idle');
+  const [aiFeedback, setAiFeedback] = useState<string>('');
 
   // Load danh sách từ sai của Topic
   useEffect(() => {
@@ -109,8 +110,9 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
     setAssessing(false);
 
     // Reset AI
-    setSelectedOption(null);
+    setSelectedBlanks({});
     setAiStatus('idle');
+    setAiFeedback('');
   }, [currentWordIndex, currentWord]);
 
   // Load AI Grammar Challenge khi vào Step 4
@@ -124,8 +126,9 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
   const loadAiChallenge = async (forceRegenerate: boolean = false) => {
     if (!currentWord) return;
     setLoadingAi(true);
-    setSelectedOption(null);
+    setSelectedBlanks({});
     setAiStatus('idle');
+    setAiFeedback('');
     try {
       const challenge = await vocabStatsApi.getOrGenerateAiChallenge(
         userId,
@@ -248,16 +251,57 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
   };
 
   // ──────────────────────────────────────────────
-  // Handlers for Step 4: AI Grammar
+  // Handlers for Step 4: AI Grammar (Đục lỗ nhiều vị trí)
   // ──────────────────────────────────────────────
-  const handleSelectOption = (opt: string) => {
+  const handleSelectBlankOption = (blankIndex: number, optValue: string) => {
     if (!aiChallenge || aiStatus === 'correct') return;
-    setSelectedOption(opt);
-    if (opt.toLowerCase().trim() === aiChallenge.correctAnswer.toLowerCase().trim()) {
-      setAiStatus('correct');
-      playWordAudio(aiChallenge.correctAnswer);
+
+    const nextSelected = { ...selectedBlanks, [blankIndex]: optValue };
+    setSelectedBlanks(nextSelected);
+
+    const blanks = aiChallenge.blanks && aiChallenge.blanks.length > 0 ? aiChallenge.blanks : [];
+
+    // Nếu là chế độ nhiều chỗ trống
+    if (blanks.length > 0) {
+      const allFilled = blanks.every((b) => Boolean(nextSelected[b.blankIndex]));
+      if (allFilled) {
+        const allCorrect = blanks.every((b) => {
+          const chosen = (nextSelected[b.blankIndex] || '').trim().toLowerCase();
+          const expected = b.correctAnswer.trim().toLowerCase();
+          return chosen === expected;
+        });
+
+        if (allCorrect) {
+          setAiStatus('correct');
+          setAiFeedback('Tuyệt vời! Bé đã hoàn thành chính xác cả ngữ pháp và từ vựng!');
+          playWordAudio(currentWord?.word || '');
+        } else {
+          setAiStatus('incorrect');
+          const wrongList = blanks.filter((b) => {
+            const chosen = (nextSelected[b.blankIndex] || '').trim().toLowerCase();
+            const expected = b.correctAnswer.trim().toLowerCase();
+            return chosen !== expected;
+          });
+          if (wrongList.length === 1) {
+            setAiFeedback(`Vị trí ${wrongList[0].blankIndex} (${wrongList[0].label}) chưa đúng, bé hãy chọn lại nhé!`);
+          } else {
+            setAiFeedback('Chưa chính xác rồi, bé hãy quan sát kỹ và chọn lại các chỗ trống nhé!');
+          }
+        }
+      } else {
+        setAiStatus('idle');
+        setAiFeedback('');
+      }
     } else {
-      setAiStatus('incorrect');
+      // Fallback single blank
+      if (optValue.trim().toLowerCase() === aiChallenge.correctAnswer.trim().toLowerCase()) {
+        setAiStatus('correct');
+        setAiFeedback('Chính xác! Bé làm rất tốt! 🎉');
+        playWordAudio(currentWord?.word || '');
+      } else {
+        setAiStatus('incorrect');
+        setAiFeedback(aiChallenge.hint || 'Chưa chính xác rồi, bé hãy chọn lại nhé!');
+      }
     }
   };
 
@@ -350,7 +394,7 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
                 {currentStep === 1 && 'Vòng 1: Xem Flashcard'}
                 {currentStep === 2 && 'Vòng 2: Ghép đúng chữ cái'}
                 {currentStep === 3 && 'Vòng 3: Luyện phát âm chuẩn'}
-                {currentStep === 4 && 'Vòng 4: Thử thách Ngữ pháp AI'}
+                {currentStep === 4 && 'Vòng 4: Thử thách với ngữ pháp'}
               </p>
             </div>
           </div>
@@ -370,7 +414,7 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
             { step: 1, label: '1. Flashcard' },
             { step: 2, label: '2. Gõ từ' },
             { step: 3, label: '3. Luyện nói' },
-            { step: 4, label: '4. Ngữ pháp AI' },
+            { step: 4, label: '4. Luyện câu với ENjoy AI' },
           ].map((s) => {
             const isActive = currentStep === s.step;
             const isDone = currentStep > s.step;
@@ -442,7 +486,14 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
           {/* STEP 2: SPELLING / GÕ TỪ */}
           {/* ══════════════════════════════════════════════════════════════ */}
           {currentStep === 2 && (
-            <div className="w-full flex flex-col items-center gap-6">
+            <div className="w-full flex flex-col items-center gap-5">
+              {currentWord.imageUrl && (
+                <img
+                  src={currentWord.imageUrl}
+                  alt={currentWord.word}
+                  className="w-20 h-20 object-contain rounded-2xl bg-white p-1.5 shadow-sm border border-border"
+                />
+              )}
               <div className="text-center">
                 <p className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Hãy ghép thành từ đúng</p>
                 <p className="text-lg font-bold text-primary">Nghĩa: {currentWord.translation || currentWord.word}</p>
@@ -475,7 +526,7 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
               </div>
 
               {/* Scrambled Letter Tiles */}
-              <div className="flex gap-2 justify-center flex-wrap mt-2">
+              <div className="flex gap-2 justify-center flex-wrap mt-1">
                 {scrambledLetters.map((letter, idx) => (
                   <button
                     key={idx}
@@ -524,7 +575,14 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
           {/* STEP 3: SPEAKING / LUYỆN NÓI */}
           {/* ══════════════════════════════════════════════════════════════ */}
           {currentStep === 3 && (
-            <div className="w-full flex flex-col items-center gap-6 text-center">
+            <div className="w-full flex flex-col items-center gap-5 text-center">
+              {currentWord.imageUrl && (
+                <img
+                  src={currentWord.imageUrl}
+                  alt={currentWord.word}
+                  className="w-24 h-24 object-contain rounded-2xl bg-white p-2 shadow-sm border border-border"
+                />
+              )}
               <div>
                 <p className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Bé hãy nói to từ sau</p>
                 <h2 className="text-3xl font-display font-extrabold text-text-main">{currentWord.word}</h2>
@@ -578,22 +636,22 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
                   onClick={() => setCurrentStep(4)}
                   className="px-8 py-3 bg-emerald-600 text-white font-bold rounded-2xl shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-all cursor-pointer animate-fadeIn"
                 >
-                  Sang Vòng 4 (Ngữ pháp AI)
+                  Sang Vòng 4 (Luyện câu với ENjoy AI)
                 </button>
               )}
             </div>
           )}
 
           {/* ══════════════════════════════════════════════════════════════ */}
-          {/* STEP 4: AI GRAMMAR CHALLENGE (ĐỤC LỖ CÂU) */}
+          {/* STEP 4: AI GRAMMAR CHALLENGE (ĐỤC LỖ NHIỀU VỊ TRÍ) */}
           {/* ══════════════════════════════════════════════════════════════ */}
           {currentStep === 4 && (
-            <div className="w-full flex flex-col items-center gap-6">
+            <div className="w-full flex flex-col items-center gap-5">
               {loadingAi ? (
                 <div className="flex flex-col items-center gap-3 py-12">
                   <div className="w-10 h-10 border-3 border-violet-500 border-t-transparent rounded-full animate-spin" />
                   <p className="text-sm font-bold text-text-muted flex items-center gap-2">
-                    <SparklesIcon className="w-4 h-4 text-violet-500 animate-pulse" /> AI đang phân tích và tạo câu ngữ cảnh mới...
+                    <SparklesIcon className="w-4 h-4 text-violet-500 animate-pulse" /> AI đang phân tích và tạo câu đục lỗ ngữ pháp...
                   </p>
                 </div>
               ) : aiChallenge ? (
@@ -601,7 +659,7 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
                   {/* Grammar Badge & Regenerate Button */}
                   <div className="w-full flex items-center justify-between gap-2">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-violet-50 text-violet-700 border border-violet-200 shadow-xs">
-                      <SparklesIcon className="w-3.5 h-3.5 text-violet-500" /> Cấu trúc: {aiChallenge.grammarName}
+                      <SparklesIcon className="w-3.5 h-3.5 text-violet-500" /> Ngữ pháp: {aiChallenge.grammarName}
                     </span>
                     <button
                       onClick={() => loadAiChallenge(true)}
@@ -613,76 +671,138 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
                     </button>
                   </div>
 
-                  {/* Sentence Card with Blank */}
+                  {/* Sentence Card with Multi-Blank Slots */}
                   <div className="w-full bg-surface rounded-2xl p-5 border-2 border-primary/20 text-center shadow-sm">
-                    <p className="text-lg sm:text-xl font-bold text-text-main tracking-wide leading-relaxed">
-                      {aiChallenge.sentence.split('_____').map((part, i, arr) => (
-                        <React.Fragment key={i}>
-                          {part}
-                          {i < arr.length - 1 && (
-                            <span className="inline-block mx-1.5 px-3.5 py-1 border-b-2 border-primary font-black text-primary bg-primary/10 rounded-lg shadow-inner">
-                              {selectedOption || '_____'}
-                            </span>
-                          )}
-                        </React.Fragment>
-                      ))}
-                    </p>
-                    
-                    {/* Bản dịch tiếng Việt đầy đủ, rõ ràng */}
-                    <div className="mt-3.5 pt-3 border-t border-border/60">
-                      <p className="text-xs sm:text-sm text-text-muted font-medium italic">
-                        <span className="font-bold text-text-main not-italic mr-1">Dịch nghĩa:</span>
+                    <div className="text-base sm:text-lg font-bold text-text-main tracking-wide leading-relaxed flex flex-wrap items-center justify-center gap-1.5">
+                      {aiChallenge.blanks && aiChallenge.blanks.length > 0 ? (
+                        aiChallenge.sentence
+                          .split(/(\[____\s*\d+\s*____\])/g)
+                          .map((segment, segIdx) => {
+                            const match = segment.match(/\[____\s*(\d+)\s*____\]/);
+                            if (match) {
+                              const bIdx = parseInt(match[1], 10);
+                              const bInfo = aiChallenge.blanks.find((b) => b.blankIndex === bIdx) || aiChallenge.blanks[bIdx - 1];
+                              const userChoice = selectedBlanks[bIdx];
+                              const isFilled = Boolean(userChoice);
+                              const isAllCorrect = aiStatus === 'correct';
+                              const isThisWrong =
+                                aiStatus === 'incorrect' &&
+                                userChoice &&
+                                bInfo &&
+                                userChoice.trim().toLowerCase() !== bInfo.correctAnswer.trim().toLowerCase();
+
+                              return (
+                                <span
+                                  key={segIdx}
+                                  className={`inline-flex items-center gap-1 px-3 py-1 rounded-xl font-black text-sm sm:text-base border-2 transition-all shadow-xs ${
+                                    isAllCorrect
+                                      ? 'bg-emerald-100 border-emerald-500 text-emerald-800'
+                                      : isThisWrong
+                                      ? 'bg-red-100 border-red-500 text-red-700'
+                                      : isFilled
+                                      ? bInfo?.type === 'grammar'
+                                        ? 'bg-violet-100 border-violet-400 text-violet-800'
+                                        : 'bg-primary/15 border-primary text-primary'
+                                      : 'bg-white border-dashed border-gray-400 text-gray-400'
+                                  }`}
+                                >
+                                  <span className="text-[10px] font-extrabold uppercase opacity-75">
+                                    ({bIdx})
+                                  </span>
+                                  {userChoice || (bInfo?.label ? `[ ${bInfo.label} ]` : '_____')}
+                                </span>
+                              );
+                            }
+                            return <span key={segIdx}>{segment}</span>;
+                          })
+                      ) : (
+                        aiChallenge.sentence
+                      )}
+                    </div>
+
+                    {/* Bản dịch tiếng Việt đầy đủ và tự nhiên */}
+                    <div className="mt-4 pt-3 border-t border-border/70 text-left bg-white/80 rounded-xl p-3 shadow-xs">
+                      <p className="text-xs sm:text-sm text-text-main font-medium leading-normal">
+                        <span className="font-bold text-primary mr-1.5 uppercase text-[11px] tracking-wide">Dịch nghĩa:</span>
                         "{aiChallenge.translation}"
                       </p>
                     </div>
                   </div>
 
-                  {/* Multiple Choice Options */}
-                  <div className="grid grid-cols-2 gap-3 w-full">
-                    {aiChallenge.options.map((opt, idx) => {
-                      const isSelected = selectedOption === opt;
-                      const isCorrect = aiStatus === 'correct' && opt.trim().toLowerCase() === aiChallenge.correctAnswer.trim().toLowerCase();
-                      const isWrong = isSelected && aiStatus === 'incorrect';
+                  {/* Options Groups: Vị trí 1 (Ngữ pháp) & Vị trí 2 (Từ vựng) */}
+                  {aiChallenge.blanks && aiChallenge.blanks.length > 0 ? (
+                    <div className="w-full flex flex-col gap-4">
+                      {aiChallenge.blanks.map((b) => {
+                        const currentVal = selectedBlanks[b.blankIndex];
+                        return (
+                          <div key={b.blankIndex} className="bg-gray-50/80 rounded-2xl p-3.5 border border-border">
+                            <div className="flex items-center justify-between mb-2.5">
+                              <span className="text-xs font-extrabold text-text-main flex items-center gap-1.5">
+                                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-white text-[11px] font-bold ${b.type === 'grammar' ? 'bg-violet-600' : 'bg-primary'}`}>
+                                  {b.blankIndex}
+                                </span>
+                                {b.label}
+                              </span>
+                              {currentVal && (
+                                <span className="text-xs font-bold text-primary">
+                                  Đã chọn: <span className="underline">{currentVal}</span>
+                                </span>
+                              )}
+                            </div>
 
-                      return (
-                        <button
-                          key={idx}
-                          onClick={() => handleSelectOption(opt)}
-                          className={`py-3.5 px-4 rounded-xl border-2 font-bold text-sm transition-all cursor-pointer flex items-center justify-center text-center ${
-                            isCorrect
-                              ? 'bg-emerald-50 border-emerald-500 text-emerald-800 shadow-sm'
-                              : isWrong
-                              ? 'bg-red-50 border-red-400 text-red-700 shadow-sm'
-                              : isSelected
-                              ? 'bg-primary/10 border-primary text-primary'
-                              : 'bg-white border-border hover:border-primary/50 text-text-main shadow-xs active:scale-98'
-                          }`}
-                        >
-                          {opt}
-                        </button>
-                      );
-                    })}
-                  </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                              {b.options.map((opt, optIdx) => {
+                                const isSelected = (currentVal || '').trim().toLowerCase() === opt.trim().toLowerCase();
+                                const isCorrectAnswer = opt.trim().toLowerCase() === b.correctAnswer.trim().toLowerCase();
+                                const isAllPass = aiStatus === 'correct' && isSelected;
+                                const isWrongSelection = aiStatus === 'incorrect' && isSelected && !isCorrectAnswer;
+
+                                return (
+                                  <button
+                                    key={optIdx}
+                                    onClick={() => handleSelectBlankOption(b.blankIndex, opt)}
+                                    className={`py-2.5 px-3 rounded-xl border-2 font-bold text-xs sm:text-sm transition-all cursor-pointer flex items-center justify-center text-center ${
+                                      isAllPass
+                                        ? 'bg-emerald-50 border-emerald-500 text-emerald-800 shadow-sm'
+                                        : isWrongSelection
+                                        ? 'bg-red-50 border-red-400 text-red-700 shadow-sm'
+                                        : isSelected
+                                        ? b.type === 'grammar'
+                                          ? 'bg-violet-100 border-violet-500 text-violet-900'
+                                          : 'bg-primary/15 border-primary text-primary'
+                                        : 'bg-white border-border hover:border-primary/50 text-text-main shadow-xs active:scale-95'
+                                    }`}
+                                  >
+                                    {opt}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : null}
 
                   {/* Status & Next Button */}
                   {aiStatus === 'correct' && (
-                    <div className="w-full flex flex-col items-center gap-3 animate-fadeIn mt-2">
+                    <div className="w-full flex flex-col items-center gap-3 animate-fadeIn mt-1">
                       <p className="text-sm font-bold text-emerald-600 flex items-center gap-1.5">
-                        <CheckCircleIcon className="w-5 h-5" /> Chuẩn xác! Bé đã hiểu cấu trúc ngữ pháp này!
+                        <CheckCircleIcon className="w-5 h-5" /> {aiFeedback || 'Chuẩn xác! Bé đã hoàn thành xuất sắc!'}
                       </p>
                       <button
                         onClick={handleWordComplete}
-                        className="w-full py-3.5 bg-emerald-600 text-white font-bold rounded-2xl shadow-lg shadow-emerald-600/25 hover:bg-emerald-700 transition-all cursor-pointer"
+                        className="w-full py-3.5 bg-emerald-600 text-white font-bold rounded-2xl shadow-lg shadow-emerald-600/25 hover:bg-emerald-700 transition-all cursor-pointer text-sm sm:text-base"
                       >
-                        {currentWordIndex < words.length - 1 ? 'Hoàn thành từ này & Sang từ tiếp theo' : 'Hoàn thành bài luyện tập 🎉'}
+                        {currentWordIndex < words.length - 1 ? 'Hoàn thành từ này & Sang từ tiếp theo' : 'Hoàn thành toàn bộ bài luyện tập'}
                       </button>
                     </div>
                   )}
 
                   {aiStatus === 'incorrect' && (
-                    <div className="w-full text-center animate-fadeIn">
-                      <p className="text-xs font-semibold text-red-500">
-                        {aiChallenge.hint || 'Chưa chính xác rồi, bé hãy quan sát kỹ câu và chọn lại nhé!'}
+                    <div className="w-full text-center animate-fadeIn bg-red-50 border border-red-200 rounded-xl p-3">
+                      <p className="text-xs sm:text-sm font-semibold text-red-600">
+                        {aiFeedback || aiChallenge.hint || 'Chưa chính xác rồi, bé hãy quan sát kỹ câu và chọn lại nhé!'}
                       </p>
                     </div>
                   )}

@@ -41,7 +41,13 @@ export const vocabStatsApi = {
     if (!forceRegenerate) {
       try {
         const cached = await vocabStatsApi.getSavedAiChallenge(userId, word, false);
-        if (cached && cached.sentence && cached.correctAnswer && cached.sentence.includes('_____')) {
+        if (
+          cached &&
+          cached.sentence &&
+          Array.isArray(cached.blanks) &&
+          cached.blanks.length >= 2 &&
+          (cached.sentence.includes('[____') || cached.sentence.includes('_____'))
+        ) {
           console.log('[VocabStatsAPI] 🎯 Sử dụng câu hỏi ngữ pháp AI từ DB Cache:', cached);
           return cached;
         }
