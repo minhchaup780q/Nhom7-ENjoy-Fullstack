@@ -8,14 +8,32 @@ import {
   SpeakerWaveIcon,
   ChartBarIcon,
   ArrowTrendingUpIcon,
-  StarIcon,
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
-import { CheckBadgeIcon, SparklesIcon } from '@heroicons/react/24/solid';
+import { CheckBadgeIcon, SparklesIcon, ShieldCheckIcon } from '@heroicons/react/24/solid';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+  ReferenceLine
+} from 'recharts';
 
 // ──────────────────────────────────────────────
 // Fake data dùng cho Target, Progress, Grammar, Skill
 // ──────────────────────────────────────────────
+const FAKE_GROWTH_DATA = [
+  { date: '01/10', listeningScore: 12, readingScore: 15 },
+  { date: '08/10', listeningScore: 14, readingScore: 18 },
+  { date: '15/10', listeningScore: 18, readingScore: 22 },
+  { date: '22/10', listeningScore: 20, readingScore: 24 },
+  { date: '29/10', listeningScore: 19, readingScore: 25 },
+];
+
 const FAKE_GRAMMAR_DATA = [
   { name: 'Have got', status: 'Mastered' as const },
   { name: 'To be', status: 'Mastered' as const },
@@ -24,10 +42,40 @@ const FAKE_GRAMMAR_DATA = [
   { name: 'Can / Can\'t', status: 'Developing' as const },
 ];
 
-const FAKE_SKILL_DATA = [
-  { name: 'Listening', start: 40, current: 82, icon: SpeakerWaveIcon, color: 'text-blue-500', bg: 'bg-blue-100' },
-  { name: 'Reading & writing', start: 45, current: 76, icon: BookOpenIcon, color: 'text-emerald-500', bg: 'bg-emerald-100' },
-];
+const renderShields = (shields: number, x: number, y: number) => {
+  if (shields === 0) return null;
+  return (
+    <g transform={`translate(${x - (shields * 10) - 5},${y - 5})`}>
+      {Array.from({ length: shields }).map((_, i) => (
+        <svg key={i} x={i * 10} y={0} width="10" height="10" viewBox="0 0 24 24" fill="#fbbf24">
+          <path fillRule="evenodd" d="M12.516 2.17a.75.75 0 00-1.032 0 11.209 11.209 0 01-7.877 3.08.75.75 0 00-.722.515A12.74 12.74 0 002.25 9.735c0 5.942 4.064 10.933 9.563 12.348a.749.749 0 00.374 0c5.499-1.415 9.563-6.406 9.563-12.348 0-1.39-.223-2.73-.635-3.97a.75.75 0 00-.722-.516l-.143.001c-2.996 0-5.717-1.17-7.734-3.08zm3.094 8.016a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
+        </svg>
+      ))}
+    </g>
+  );
+};
+
+const ListeningTick = (props: any) => {
+  const { x, y, payload } = props;
+  let shields = 0;
+  if (payload.value === 10) shields = 1;
+  else if (payload.value === 11) shields = 2;
+  else if (payload.value === 13) shields = 3;
+  else if (payload.value === 16) shields = 4;
+  else if (payload.value === 18) shields = 5;
+  return renderShields(shields, x, y);
+};
+
+const ReadingTick = (props: any) => {
+  const { x, y, payload } = props;
+  let shields = 0;
+  if (payload.value === 12) shields = 1;
+  else if (payload.value === 13) shields = 2;
+  else if (payload.value === 16) shields = 3;
+  else if (payload.value === 19) shields = 4;
+  else if (payload.value === 21) shields = 5;
+  return renderShields(shields, x, y);
+};
 
 // ──────────────────────────────────────────────
 // Status Badge Component
@@ -107,7 +155,7 @@ export const ExamStatsPage: React.FC = () => {
                   </div>
                   <div className="flex gap-1">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <StarIcon key={i} className="w-5 h-5 text-amber-400 fill-amber-400" />
+                      <ShieldCheckIcon key={i} className={`w-5 h-5 ${i < 4 ? 'text-amber-400' : 'text-gray-200'}`} />
                     ))}
                   </div>
                 </div>
@@ -132,18 +180,94 @@ export const ExamStatsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* ── Row 2: Knowledge Mastery + Skill ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4 items-start">
+        {/* ── Row 2 & 3: Biểu đồ & Knowledge Mastery ── */}
+        <div className="flex flex-col gap-6">
 
-          {/* Knowledge Mastery */}
-          <div className="flex flex-col gap-4">
-            <div>
-              <h2 className="text-base font-bold text-text-main">Knowledge mastery</h2>
-              <p className="text-xs text-text-muted mt-0.5">So sánh bài đầu vào và bài thi thử gần nhất.</p>
+          {/* Row 2: Biểu đồ Tăng trưởng */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            
+            {/* Listening Chart */}
+            <div className="bg-white rounded-2xl border border-border shadow-sm p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-base font-bold text-text-main">Listening Growth</h2>
+                  <p className="text-xs text-text-muted mt-0.5">Tiến độ điểm (mục tiêu 4 khiên)</p>
+                </div>
+                <SpeakerWaveIcon className="w-5 h-5 text-blue-500" />
+              </div>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={FAKE_GROWTH_DATA} margin={{ top: 5, right: 10, bottom: 5, left: 55 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" strokeWidth={1.5} />
+                    <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#6b7280' }} tickMargin={10} axisLine={false} tickLine={false} />
+                    <YAxis 
+                      domain={[0, 20]} 
+                      ticks={[10, 11, 13, 16, 18]}
+                      interval={0}
+                      tick={<ListeningTick />}
+                      axisLine={false} 
+                      tickLine={false} 
+                    />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)' }}
+                      itemStyle={{ fontSize: '14px', fontWeight: 600 }}
+                      formatter={(value: number) => [`${value} câu đúng`, 'Điểm số']}
+                    />
+                    <ReferenceLine y={16} stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="5 5" label={{ position: 'insideTopRight', value: 'Mục tiêu', fill: '#f59e0b', fontSize: 12, fontWeight: 700 }} />
+                    <Line type="monotone" name="Listening" dataKey="listeningScore" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
             </div>
 
-            {/* Topic Table */}
-            <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
+            {/* Reading & Writing Chart */}
+            <div className="bg-white rounded-2xl border border-border shadow-sm p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-base font-bold text-text-main">Reading & Writing Growth</h2>
+                  <p className="text-xs text-text-muted mt-0.5">Tiến độ điểm (mục tiêu 4 khiên)</p>
+                </div>
+                <BookOpenIcon className="w-5 h-5 text-emerald-500" />
+              </div>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={FAKE_GROWTH_DATA} margin={{ top: 5, right: 10, bottom: 5, left: 55 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" strokeWidth={1.5} />
+                    <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#6b7280' }} tickMargin={10} axisLine={false} tickLine={false} />
+                    <YAxis 
+                      domain={[0, 25]} 
+                      ticks={[12, 13, 16, 19, 21]}
+                      interval={0}
+                      tick={<ReadingTick />}
+                      axisLine={false} 
+                      tickLine={false} 
+                    />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)' }}
+                      itemStyle={{ fontSize: '14px', fontWeight: 600 }}
+                      formatter={(value: number) => [`${value} câu đúng`, 'Điểm số']}
+                    />
+                    <ReferenceLine y={19} stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="5 5" label={{ position: 'insideTopRight', value: 'Mục tiêu', fill: '#f59e0b', fontSize: 12, fontWeight: 700 }} />
+                    <Line type="monotone" name="Reading & Writing" dataKey="readingScore" stroke="#10b981" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+          </div>
+
+            {/* Knowledge Mastery Section */}
+            <div className="flex flex-col gap-4">
+              <div>
+                <h2 className="text-base font-bold text-text-main">Knowledge mastery</h2>
+                <p className="text-xs text-text-muted mt-0.5">So sánh bài đầu vào và bài thi thử gần nhất.</p>
+              </div>
+
+              {/* Topic & Grammar Side-by-Side */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+
+                {/* Topic Table */}
+                <div className="bg-white rounded-2xl border border-border shadow-sm overflow-x-auto">
               <div className="flex items-center justify-between px-5 py-3 border-b border-border">
                 <div className="flex items-center gap-2">
                   <BookOpenIcon className="w-4 h-4 text-primary" />
@@ -256,6 +380,8 @@ export const ExamStatsPage: React.FC = () => {
               ))}
             </div>
 
+              </div> {/* Kết thúc Grid 2 cột */}
+
             {/* Legend */}
             <div className="flex gap-4 flex-wrap text-xs text-text-muted">
               <span className="flex items-center gap-1">
@@ -269,73 +395,8 @@ export const ExamStatsPage: React.FC = () => {
               </span>
             </div>
           </div>
-
-          {/* Skill Panel */}
-          <div className="bg-white rounded-2xl border border-border shadow-sm p-5 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-bold text-sm text-text-main">Skill</p>
-                <p className="text-xs text-text-muted mt-0.5">Tiến bộ ở từng nhóm kiến thức.</p>
-              </div>
-              <ArrowTrendingUpIcon className="w-5 h-5 text-emerald-500" />
-            </div>
-
-            <div className="border-t border-border pt-4">
-              <p className="text-xs font-bold text-text-muted mb-3">Từ khởi đầu đến hiện tại</p>
-              {/* Header row */}
-              <div className="grid grid-cols-[1fr_40px_50px_50px] gap-2 text-xs font-semibold text-text-muted mb-2">
-                <span>Knowledge</span>
-                <span className="text-center">Start</span>
-                <span className="text-center">Current</span>
-                <span className="text-center">Growth</span>
-              </div>
-              {FAKE_SKILL_DATA.map((skill) => {
-                const growth = skill.current - skill.start;
-                return (
-                  <div key={skill.name} className="grid grid-cols-[1fr_40px_50px_50px] gap-2 items-center py-2.5 border-b border-border/50 last:border-0">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-7 h-7 rounded-lg ${skill.bg} flex items-center justify-center flex-shrink-0`}>
-                        <skill.icon className={`w-4 h-4 ${skill.color}`} />
-                      </div>
-                      <span className="text-sm text-text-main font-medium">{skill.name}</span>
-                    </div>
-                    <span className="text-center text-sm text-text-muted">{skill.start}</span>
-                    <span className="text-center text-sm font-bold text-text-main">{skill.current}</span>
-                    <span className="text-center text-sm font-bold text-emerald-600">+{growth}</span>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2 text-xs text-emerald-700 font-medium flex items-center gap-2">
-              <SparklesIcon className="w-4 h-4 flex-shrink-0" />
-              Have got tổng tiến bộ nhiều nhất: +44 điểm
-            </div>
-
-            {/* Fake mini chart bar */}
-            <div className="border-t border-border pt-3">
-              <p className="text-xs text-text-muted mb-2 font-semibold">Tổng quan tuần này</p>
-              <div className="flex items-end gap-1.5 h-16">
-                {[40, 55, 48, 70, 65, 82, 76].map((v, i) => (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                    <div
-                      className="w-full bg-primary/20 rounded-t"
-                      style={{ height: `${(v / 100) * 56}px` }}
-                    >
-                      <div
-                        className="w-full bg-primary rounded-t"
-                        style={{ height: `${(v / 100) * 56}px` }}
-                      />
-                    </div>
-                    <span className="text-[10px] text-text-muted">
-                      {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'][i]}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
         </div>
+
       </div>
     </div>
   );
