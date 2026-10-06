@@ -60,13 +60,21 @@ public class AuthenticationFilter implements GlobalFilter {
                     java.time.Instant lastActive = lastActivityMap.get(userId);
                     if (lastActive == null || java.time.Duration.between(lastActive, now).toMinutes() >= 15) {
                         lastActivityMap.put(userId, now);
-                        // Send async request to update DB
-                        webClientBuilder.build()
-                                .put()
-                                .uri("lb://user-service/api/user/internal/activity/" + userId)
-                                .retrieve()
-                                .bodyToMono(Void.class)
-                                .subscribe(); // fire and forget
+                        try {
+                            // Send async request to update DB
+                            webClientBuilder.build()
+                                    .put()
+                                    .uri("http://localhost:8888/api/user/internal/activity/" + userId)
+                                    .header(HttpHeaders.AUTHORIZATION, authHeader)
+                                    .retrieve()
+                                    .bodyToMono(Void.class)
+                                    .subscribe(
+                                            success -> {},
+                                            error -> System.out.println("Lỗi gọi internal activity: " + error.getMessage())
+                                    ); // fire and forget
+                        } catch (Exception ex) {
+                            System.out.println("Lỗi gọi webclient internal activity: " + ex.getMessage());
+                        }
                     }
                 }
 
