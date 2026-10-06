@@ -4,7 +4,27 @@ import { useGoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 import { authApi } from '../api/authApi';
 import { useAuthStore } from '../store/useAuthStore';
+import { learningApi } from '../../learning/services/learningApi';
 import { ApiError } from '../../../services/apiClient';
+
+// Helper: kiểm tra placement test status và redirect
+async function redirectAfterLogin(userId: number | string | undefined, role: string | undefined, navigate: (path: string, opts?: object) => void) {
+  if (role === 'ROLE_ADMIN') {
+    navigate('/admin/dashboard', { replace: true });
+    return;
+  }
+  try {
+    const statusRes = await learningApi.getPlacementTestStatus(Number(userId));
+    if (statusRes.data.hasCompleted) {
+      navigate('/learn', { replace: true });
+    } else {
+      navigate('/welcome', { replace: true });
+    }
+  } catch {
+    // Fallback: nếu lỗi API thì vào /welcome để an toàn
+    navigate('/welcome', { replace: true });
+  }
+}
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -43,11 +63,7 @@ export const LoginPage: React.FC = () => {
         response.refreshToken
       );
 
-      if (user.role === 'ROLE_ADMIN') {
-        navigate('/admin/dashboard', { replace: true });
-      } else {
-        navigate('/learn', { replace: true });
-      }
+      await redirectAfterLogin(user.id, user.role, navigate);
     } catch (err) {
       if (err instanceof ApiError) {
         setErrorMsg(err.message || 'Sai Email hoặc Mật khẩu. Vui lòng kiểm tra lại!');
@@ -93,11 +109,7 @@ export const LoginPage: React.FC = () => {
           response.refreshToken
         );
 
-        if (user.role === 'ROLE_ADMIN') {
-          navigate('/admin/dashboard', { replace: true });
-        } else {
-          navigate('/learn', { replace: true });
-        }
+        await redirectAfterLogin(user.id, user.role, navigate);
       } catch (err) {
         if (err instanceof ApiError) {
           setErrorMsg(err.message || 'Đăng nhập Google thất bại!');

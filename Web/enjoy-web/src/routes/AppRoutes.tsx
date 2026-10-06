@@ -9,6 +9,8 @@ import { LoginPage } from '../features/auth/components/LoginPage';
 import { RegisterPage } from '../features/auth/components/RegisterPage';
 import { useAuthStore } from '../features/auth/store/useAuthStore';
 import { PronunciationGuidePage } from '../features/pronunciation/components/PronunciationGuidePage';
+import { PlacementTestPage } from '../features/placement-test/components/PlacementTestPage';
+import { ExamPage } from '../features/exam/components/ExamPage';
 import type { Session } from '../features/learning/types';
 
 import { AdminDashboard } from '../features/admin/components/AdminDashboard';
@@ -16,24 +18,6 @@ import { AdminLessons } from '../features/admin/components/AdminLessons';
 import { AdminUsers } from '../features/admin/components/AdminUsers';
 import { AdminSystem } from '../features/admin/components/AdminSystem';
 import { AdminProfile } from '../features/admin/components/AdminProfile';
-
-interface FeatureUnderDevelopmentProps {
-  tabName: string;
-}
-
-const FeatureUnderDevelopment: React.FC<FeatureUnderDevelopmentProps> = ({ tabName }) => {
-  return (
-    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center max-w-xl mx-auto space-y-4">
-      <h2 className="text-3xl font-display font-extrabold text-primary">
-        Tính năng đang cập nhật!
-      </h2>
-      <p className="text-sm font-semibold text-text-muted">
-        Cảm ơn bé đã quan tâm! Thẻ <strong>{tabName}</strong> đang được hoàn thiện. 
-        Hãy nhấn nút <strong>HỌC</strong> ở menu bên trái để chơi thử các bài tập tiếng Anh cùng Enjoy nha!
-      </p>
-    </div>
-  );
-};
 
 interface ProtectedRouteProps {
   isAuthenticated: boolean;
@@ -78,12 +62,14 @@ export const AppRoutes: React.FC<AppRoutesProps> = ({ onStartSession }) => {
 
       {/* Protected Routes - Bắt buộc phải đăng nhập */}
       <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
+        {/* Welcome / Placement Test - hiện khi user mới đăng ký */}
+        <Route path="/welcome" element={<PlacementTestPage />} />
         <Route path="/learn" element={<LearningMap onStartSession={onStartSession} />} />
         <Route path="/explore" element={<ExploreDashboard />} />
         <Route path="/practice" element={<PracticeDashboard />} />
-        <Route path="/leaderboard" element={<FeatureUnderDevelopment tabName="BẢNG XẾP HẠNG" />} />
-        <Route path="/quests" element={<FeatureUnderDevelopment tabName="NHIỆM VỤ" />} />
-        <Route path="/shop" element={<FeatureUnderDevelopment tabName="CỬA HÀNG" />} />
+        <Route path="/exams" element={<ExamPage />} />
+        <Route path="/exams/:examId" element={<ExamPage />} />
+        <Route path="/exam" element={<Navigate to="/exams" replace />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/stats" element={<PersonalStatsPage />} />
         <Route path="/pronunciation" element={<PronunciationGuidePage />} />

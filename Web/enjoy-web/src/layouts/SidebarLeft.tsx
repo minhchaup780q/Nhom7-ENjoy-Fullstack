@@ -5,10 +5,8 @@ import {
   SparklesIcon, 
   SpeakerWaveIcon,
   PuzzlePieceIcon, 
-  ChartBarIcon,
-  TrophyIcon, 
-  FlagIcon, 
-  ShoppingBagIcon, 
+  AcademicCapIcon,
+  ChartBarIcon, 
   UserIcon 
 } from '@heroicons/react/24/outline';
 import { SettingsFlyoutMenu } from './SettingsFlyoutMenu';
@@ -26,10 +24,8 @@ export const SidebarLeft: React.FC = () => {
     { id: 'explore', label: 'KHÁM PHÁ', icon: <SparklesIcon className="w-6 h-6 stroke-[2.5]" />, path: '/explore' },
     { id: 'pronunciation', label: 'PHÁT ÂM', icon: <SpeakerWaveIcon className="w-6 h-6 stroke-[2.5]" />, path: '/pronunciation' },
     { id: 'practice', label: 'LUYỆN TẬP', icon: <PuzzlePieceIcon className="w-6 h-6 stroke-[2.5]" />, path: '/practice' },
+    { id: 'exam', label: 'ĐỀ THI', icon: <AcademicCapIcon className="w-6 h-6 stroke-[2.5]" />, path: '/exams' },
     { id: 'stats', label: 'THỐNG KÊ', icon: <ChartBarIcon className="w-6 h-6 stroke-[2.5]" />, path: '/stats' },
-    { id: 'leaderboard', label: 'BẢNG XẾP HẠNG', icon: <TrophyIcon className="w-6 h-6 stroke-[2.5]" />, path: '/leaderboard' },
-    { id: 'quests', label: 'NHIỆM VỤ', icon: <FlagIcon className="w-6 h-6 stroke-[2.5]" />, path: '/quests' },
-    { id: 'shop', label: 'CỬA HÀNG', icon: <ShoppingBagIcon className="w-6 h-6 stroke-[2.5]" />, path: '/shop' },
     { id: 'profile', label: 'HỒ SƠ', icon: <UserIcon className="w-6 h-6 stroke-[2.5]" />, path: '/profile' },
   ];
 
@@ -68,7 +64,7 @@ export const SidebarLeft: React.FC = () => {
 
       {/* Footer copyright */}
       <div className="p-4 border-t-2 border-border-main text-[11px] font-semibold text-text-muted text-left tracking-wide select-none">
-        <p className="hover:text-primary transition-colors cursor-pointer">GIỚI THIỆU • CỬA HÀNG • ĐIỀU KHOẢN</p>
+        <p className="hover:text-primary transition-colors cursor-pointer">GIỚI THIỆU • ĐIỀU KHOẢN</p>
         <p className="mt-1">© 2026 ENJOY TEAM</p>
       </div>
     </aside>

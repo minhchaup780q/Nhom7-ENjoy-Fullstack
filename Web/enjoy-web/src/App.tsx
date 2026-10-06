@@ -15,7 +15,10 @@ function App() {
 
   // 1. Kiểm tra xem người dùng có đang ở trang Login hoặc Register hay không
   const isAuthPage = ['/login', '/register'].includes(location.pathname);
+  // Trang Welcome / Placement Test: ẩn toàn bộ sidebar, hiện full-screen
+  const isWelcomePage = location.pathname === '/welcome';
   const isAdminPage = location.pathname.startsWith('/admin');
+  const isExamPage = location.pathname.startsWith('/exams');
 
   // 2. Trường hợp 1: Người dùng đang học bài -> Ẩn toàn bộ Sidebar để hiển thị màn hình làm bài tập tràn màn hình (Full-screen)
   if (playingSession) {
@@ -27,7 +30,16 @@ function App() {
     );
   }
 
-  // 3. Người dùng đang ở trang Đăng nhập / Đăng ký => Ẩn 2 Sidebar bên trái & bên phải để hiển thị Form Đăng nhập căn giữa
+  // 3. Trang Welcome / Placement Test => Full-screen không sidebar
+  if (isWelcomePage) {
+    return (
+      <div className="min-h-screen bg-white w-full">
+        <AppRoutes onStartSession={(session) => setPlayingSession(session)} />
+      </div>
+    );
+  }
+
+  // 3b. Người dùng đang ở trang Đăng nhập / Đăng ký => Ẩn 2 Sidebar bên trái & bên phải để hiển thị Form Đăng nhập căn giữa
   if (isAuthPage) {
     return (
       <div className="min-h-screen bg-white w-full">
@@ -57,14 +69,16 @@ function App() {
       <SidebarLeft />
 
       {/* Main Container Content Area */}
-      <main className="flex-grow min-h-screen pl-64 pr-0 lg:pr-80 flex flex-col bg-bg-light">
+      <main className={`flex-grow min-h-screen pl-64 flex flex-col bg-bg-light ${!isExamPage ? 'pr-0 lg:pr-80' : 'pr-0'}`}>
         <AppRoutes onStartSession={(session) => setPlayingSession(session)} />
       </main>
 
       {/* Sidebar Right Info Stats Widgets */}
-      <div className="w-80 fixed right-0 top-0 bottom-0 border-l-2 border-border-main overflow-y-auto hidden lg:block bg-white">
-        <SidebarRight />
-      </div>
+      {!isExamPage && (
+        <div className="w-80 fixed right-0 top-0 bottom-0 border-l-2 border-border-main overflow-y-auto hidden lg:block bg-white">
+          <SidebarRight />
+        </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,12 @@
 import axios from 'axios';
 import { apiClient } from '../../../services/apiClient';
 import type { Level, Topic, Part, Session, UserProgress, Vocabulary } from '../types';
+import type {
+  PlacementTestData,
+  PlacementTestSubmitRequest,
+  PlacementTestResult,
+  TopicWithProgress
+} from '../types/placementTest';
 
 export interface DailyStudyTime {
   day: string;
@@ -161,6 +167,36 @@ export const learningApi = {
       });
       return directResponse.data;
     }
+  },
+
+  // ============================================================
+  // PLACEMENT TEST APIs
+  // ============================================================
+
+  /** Tạo đề bài kiểm tra đầu vào */
+  generatePlacementTest: () => {
+    return apiClient.get<PlacementTestData>('/api/placement-test/generate');
+  },
+
+  /** Nộp bài kiểm tra đầu vào */
+  submitPlacementTest: (userId: number, request: PlacementTestSubmitRequest) => {
+    return apiClient.post<PlacementTestResult>('/api/placement-test/submit', request, {
+      params: { userId }
+    });
+  },
+
+  /** Kiểm tra user đã làm bài kiểm tra đầu vào chưa */
+  getPlacementTestStatus: (userId: number) => {
+    return apiClient.get<{ hasCompleted: boolean }>('/api/placement-test/status', {
+      params: { userId }
+    });
+  },
+
+  /** Lấy danh sách Topics kèm trạng thái học cá nhân hóa của user */
+  getTopicsWithProgress: (levelId: number, userId: number) => {
+    return apiClient.get<TopicWithProgress[]>('/api/topics/with-progress', {
+      params: { levelId, userId }
+    });
   },
 };
 
