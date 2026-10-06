@@ -26,6 +26,11 @@ public class VocabStatsResponse {
      */
     private List<TopicStat> topics;
 
+    /**
+     * Dữ liệu lịch sử bài kiểm tra dùng cho biểu đồ tăng trưởng.
+     */
+    private List<ExamHistoryStat> examHistories;
+
     @Data
     @Builder
     @NoArgsConstructor
@@ -38,5 +43,15 @@ public class VocabStatsResponse {
         private String status;
         /** Danh sách các từ đang WEAK (để hiển thị trên Result Page) */
         private List<String> weakWords;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ExamHistoryStat {
+        private String date; // "dd/MM"
+        private int listeningScore;
+        private int readingScore;
     }
 }

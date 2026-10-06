@@ -141,33 +141,33 @@ export const ExamStatsPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
           {/* Target */}
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6">
+          <div className="bg-amber-50 rounded-3xl border-2 border-amber-300 shadow-[0_8px_30px_rgb(245,158,11,0.08)] p-6">
             <div className="flex items-center justify-between mb-5">
-              <p className="font-medium text-lg text-gray-800">Target</p>
+              <p className="font-medium text-lg text-amber-900">Target</p>
               <span className="text-xs font-medium text-gray-400">Mục tiêu kỳ thi</span>
             </div>
 
             <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between pb-4 border-b border-gray-100">
-                <div className="flex items-center gap-2 text-sm font-medium text-gray-600">
-                  <SpeakerWaveIcon className="w-5 h-5 text-gray-400" />
+              <div className="flex items-center justify-between pb-4 border-b border-amber-200/60">
+                <div className="flex items-center gap-2 text-sm font-medium text-amber-800">
+                  <SpeakerWaveIcon className="w-5 h-5 text-amber-600" />
                   Listening
                 </div>
                 <div className="flex gap-1">
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <ShieldCheckIcon key={i} className={`w-6 h-6 ${i < 4 ? 'text-amber-400' : 'text-amber-400/30'}`} />
+                    <ShieldCheckIcon key={i} className={`w-6 h-6 ${i < 4 ? 'text-amber-500' : 'text-gray-400'}`} />
                   ))}
                 </div>
               </div>
 
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm font-medium text-gray-600">
-                  <BookOpenIcon className="w-5 h-5 text-gray-400" />
+                <div className="flex items-center gap-2 text-sm font-medium text-amber-800">
+                  <BookOpenIcon className="w-5 h-5 text-amber-600" />
                   Reading + Writing
                 </div>
                 <div className="flex gap-1">
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <ShieldCheckIcon key={i} className={`w-6 h-6 ${i < 4 ? 'text-amber-400' : 'text-amber-400/30'}`} />
+                    <ShieldCheckIcon key={i} className={`w-6 h-6 ${i < 4 ? 'text-amber-500' : 'text-gray-400'}`} />
                   ))}
                 </div>
               </div>
@@ -175,7 +175,7 @@ export const ExamStatsPage: React.FC = () => {
           </div>
 
           {/* Progress */}
-          <div className="bg-[#f0f9f6] rounded-3xl border border-[#e0f2ec] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 relative overflow-hidden">
+          <div className="bg-[#f0f9f6] rounded-3xl border-2 border-teal-300 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 relative overflow-hidden">
             <div className="flex items-center justify-between mb-4">
               <p className="font-medium text-lg text-teal-900">Progress</p>
               <span className="text-xs font-bold text-teal-700 flex items-center gap-1">
@@ -203,7 +203,7 @@ export const ExamStatsPage: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
             {/* Listening Chart */}
-            <div className="bg-white rounded-3xl border-2 border-blue-100 shadow-[0_8px_30px_rgb(59,130,246,0.1)] p-5 relative hover:shadow-[0_8px_30px_rgb(59,130,246,0.15)] transition-shadow duration-300">
+            <div className="bg-white rounded-3xl border-2 border-blue-300 shadow-[0_8px_30px_rgb(59,130,246,0.1)] p-5 relative hover:shadow-[0_8px_30px_rgb(59,130,246,0.15)] transition-shadow duration-300">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-base font-bold text-text-main">Listening Growth</h2>
@@ -213,7 +213,7 @@ export const ExamStatsPage: React.FC = () => {
               </div>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={FAKE_GROWTH_DATA} margin={{ top: 5, right: 10, bottom: 5, left: 55 }}>
+                  <LineChart data={vocabStats?.examHistories || []} margin={{ top: 5, right: 10, bottom: 5, left: 55 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" strokeWidth={1.5} />
                     <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#6b7280' }} tickMargin={10} axisLine={false} tickLine={false} />
                     <YAxis
@@ -237,7 +237,7 @@ export const ExamStatsPage: React.FC = () => {
             </div>
 
             {/* Reading & Writing Chart */}
-            <div className="bg-white rounded-3xl border-2 border-emerald-100 shadow-[0_8px_30px_rgb(16,185,129,0.1)] p-5 relative hover:shadow-[0_8px_30px_rgb(16,185,129,0.15)] transition-shadow duration-300">
+            <div className="bg-white rounded-3xl border-2 border-emerald-300 shadow-[0_8px_30px_rgb(16,185,129,0.1)] p-5 relative hover:shadow-[0_8px_30px_rgb(16,185,129,0.15)] transition-shadow duration-300">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-base font-bold text-text-main">Reading & Writing Growth</h2>
@@ -247,7 +247,7 @@ export const ExamStatsPage: React.FC = () => {
               </div>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={FAKE_GROWTH_DATA} margin={{ top: 5, right: 10, bottom: 5, left: 55 }}>
+                  <LineChart data={vocabStats?.examHistories || []} margin={{ top: 5, right: 10, bottom: 5, left: 55 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" strokeWidth={1.5} />
                     <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#6b7280' }} tickMargin={10} axisLine={false} tickLine={false} />
                     <YAxis
@@ -283,7 +283,7 @@ export const ExamStatsPage: React.FC = () => {
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
 
               {/* Topic Table */}
-              <div className="bg-white rounded-3xl border-2 border-indigo-100 shadow-[0_8px_30px_rgb(99,102,241,0.1)] overflow-x-auto relative hover:shadow-[0_8px_30px_rgb(99,102,241,0.15)] transition-shadow duration-300">
+              <div className="bg-white rounded-3xl border-2 border-indigo-300 shadow-[0_8px_30px_rgb(99,102,241,0.1)] overflow-x-auto relative hover:shadow-[0_8px_30px_rgb(99,102,241,0.15)] transition-shadow duration-300">
                 <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
@@ -363,7 +363,7 @@ export const ExamStatsPage: React.FC = () => {
               </div>
 
               {/* Grammar Table (fake data) */}
-              <div className="bg-white rounded-3xl border-2 border-violet-100 shadow-[0_8px_30px_rgb(139,92,246,0.1)] overflow-hidden relative hover:shadow-[0_8px_30px_rgb(139,92,246,0.15)] transition-shadow duration-300">
+              <div className="bg-white rounded-3xl border-2 border-violet-300 shadow-[0_8px_30px_rgb(139,92,246,0.1)] overflow-hidden relative hover:shadow-[0_8px_30px_rgb(139,92,246,0.15)] transition-shadow duration-300">
                 <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center">

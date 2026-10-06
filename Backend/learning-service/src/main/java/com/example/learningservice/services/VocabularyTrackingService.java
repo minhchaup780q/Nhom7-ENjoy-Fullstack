@@ -25,6 +25,7 @@ public class VocabularyTrackingService {
 
     private final UserVocabularyTrackingRepository trackingRepository;
     private final MockVocabularyRepository mockVocabularyRepository;
+    private final com.example.learningservice.repositories.ExamHistoryRepository examHistoryRepository;
 
     // =========================================================
     // Hàm chính: gọi sau khi nộp bài thi
@@ -135,10 +136,44 @@ public class VocabularyTrackingService {
                     .build();
         }).collect(Collectors.toList());
 
+        // Lấy 5 bài thi gần nhất để vẽ biểu đồ
+        List<VocabStatsResponse.ExamHistoryStat> historyStats = examHistoryRepository
+                .findByUserIdOrderByCompletedAtDesc(userId).stream()
+                .sorted(Comparator.comparing(com.example.learningservice.entities.ExamHistory::getCompletedAt)) // Đảo ngược để vẽ timeline từ cũ đến mới
+                .map(h -> VocabStatsResponse.ExamHistoryStat.builder()
+                        .date(h.getCompletedAt() != null ? String.format("%02d/%02d", h.getCompletedAt().getDayOfMonth(), h.getCompletedAt().getMonthValue()) : "")
+                        .listeningScore(h.getPartScoresPayload() != null ? extractScoreFromPayload(h.getPartScoresPayload(), "listening") : 0)
+                        .readingScore(h.getPartScoresPayload() != null ? extractScoreFromPayload(h.getPartScoresPayload(), "reading") : 0)
+                        .build())
+                .collect(Collectors.toList());
+
         return VocabStatsResponse.builder()
                 .noExamHistory(false)
                 .topics(stats)
+                .examHistories(historyStats)
                 .build();
+    }
+
+    private int extractScoreFromPayload(String payload, String type) {
+        if (payload == null || payload.isEmpty()) return 0;
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(payload);
+            com.fasterxml.jackson.databind.JsonNode typeNode = root.get(type); // "listening" or "reading"
+            if (typeNode != null) {
+                int score = 0;
+                for (int i = 1; i <= 5; i++) {
+                    com.fasterxml.jackson.databind.JsonNode partNode = typeNode.get("part" + i + "Correct");
+                    if (partNode != null) {
+                        score += partNode.asInt();
+                    }
+                }
+                return score;
+            }
+        } catch (Exception e) {
+            log.error("Failed to parse partScoresPayload", e);
+        }
+        return 0;
     }
 
     // =========================================================
