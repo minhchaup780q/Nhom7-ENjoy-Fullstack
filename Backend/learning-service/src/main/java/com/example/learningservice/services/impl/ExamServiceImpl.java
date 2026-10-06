@@ -37,9 +37,17 @@ public class ExamServiceImpl implements ExamService {
     // -------------------------------------------------------
 
     @Override
-    public List<ExamSummaryResponse> getAllExams() {
+    public List<ExamSummaryResponse> getAllExams(Long userId) {
+        java.util.Set<Long> completedExamIds = new java.util.HashSet<>();
+        if (userId != null) {
+            completedExamIds = examHistoryRepository.findByUserIdOrderByCompletedAtDesc(userId).stream()
+                .map(h -> h.getExam().getId())
+                .collect(java.util.stream.Collectors.toSet());
+        }
+
+        final java.util.Set<Long> finalCompletedExamIds = completedExamIds;
         return examRepository.findAllActive().stream()
-                .map(this::toSummary)
+                .map(e -> toSummary(e, finalCompletedExamIds.contains(e.getId())))
                 .toList();
     }
 
@@ -457,7 +465,7 @@ public class ExamServiceImpl implements ExamService {
     // -------------------------------------------------------
     // Mapper: Entity -> DTO
     // -------------------------------------------------------
-    private ExamSummaryResponse toSummary(Exam e) {
+    private ExamSummaryResponse toSummary(Exam e, boolean isCompleted) {
         return ExamSummaryResponse.builder()
                 .id(e.getId())
                 .examType(e.getExamType() != null ? e.getExamType().name() : null)
@@ -468,6 +476,7 @@ public class ExamServiceImpl implements ExamService {
                 .readingDuration(e.getReadingDuration())
                 .totalListeningQuestions(e.getTotalListeningQuestions())
                 .totalReadingQuestions(e.getTotalReadingQuestions())
+                .isCompleted(isCompleted)
                 .build();
     }
 

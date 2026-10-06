@@ -24,4 +24,5 @@ public class ExamSummaryResponse {
     private Integer readingDuration;
     private Integer totalListeningQuestions;
     private Integer totalReadingQuestions;
+    private Boolean isCompleted;
 }

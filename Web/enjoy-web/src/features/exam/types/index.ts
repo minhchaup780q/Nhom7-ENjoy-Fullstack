@@ -13,6 +13,7 @@ export interface ExamSummary {
   readingDuration: number;    // phút
   totalListeningQuestions: number;
   totalReadingQuestions: number;
+  isCompleted?: boolean;
 }
 
 // --- Chi tiết đề thi ---

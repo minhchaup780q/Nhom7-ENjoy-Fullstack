@@ -9,6 +9,9 @@ import {
   ChartBarIcon,
   ArrowTrendingUpIcon,
   ExclamationTriangleIcon,
+  CheckIcon,
+  ArrowPathIcon,
+  Squares2X2Icon,
 } from '@heroicons/react/24/outline';
 import { CheckBadgeIcon, SparklesIcon, ShieldCheckIcon } from '@heroicons/react/24/solid';
 import {
@@ -83,21 +86,21 @@ const ReadingTick = (props: any) => {
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   if (status === 'Mastered') {
     return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-        <CheckBadgeIcon className="w-3.5 h-3.5" /> Mastered
+      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full bg-emerald-100 text-emerald-700">
+        <CheckIcon className="w-3.5 h-3.5 stroke-[3]" /> Mastered
       </span>
     );
   }
   if (status === 'Developing') {
     return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full bg-orange-50 text-orange-600 border border-orange-200">
-        <SparklesIcon className="w-3.5 h-3.5" /> Developing
+      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full bg-amber-100 text-amber-700">
+        <ArrowPathIcon className="w-3.5 h-3.5 stroke-[3]" /> Developing
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full bg-red-50 text-red-600 border border-red-200">
-      <ExclamationTriangleIcon className="w-3.5 h-3.5" /> Weak
+    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full bg-red-100 text-red-600">
+      <ArrowPathIcon className="w-3.5 h-3.5 stroke-[3]" /> Weak
     </span>
   );
 };
@@ -124,7 +127,7 @@ export const ExamStatsPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-surface pb-16">
       {/* ── Header ── */}
-      <div className="bg-white border-b border-border px-6 py-5">
+      <div className="bg-white border-b-[3px] border-[#8c4513] shadow-sm px-6 py-5">
         <p className="text-xs text-primary font-bold mb-1 uppercase tracking-widest">PRE-A1 STARTERS · Báo cáo học tập</p>
         <h1 className="text-2xl font-display font-extrabold text-text-main">Mỗi ngày học, một bước tiến</h1>
         <p className="text-sm text-text-muted mt-1">
@@ -132,51 +135,64 @@ export const ExamStatsPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-6 flex flex-col gap-6">
+      <div className="max-w-[1440px] mx-auto px-6 py-8 flex flex-col gap-6">
 
         {/* ── Row 1: Target + Progress ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
           {/* Target */}
-          <div className="bg-white rounded-2xl border border-border shadow-sm p-5">
-            <div className="flex items-center justify-between mb-4">
-              <p className="font-bold text-sm text-text-main">Target</p>
-              <span className="text-xs text-text-muted">Mục tiêu kỳ thi</span>
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6">
+            <div className="flex items-center justify-between mb-5">
+              <p className="font-medium text-lg text-gray-800">Target</p>
+              <span className="text-xs font-medium text-gray-400">Mục tiêu kỳ thi</span>
             </div>
-            <div className="flex flex-col gap-3">
-              {[
-                { label: 'Listening', icon: SpeakerWaveIcon },
-                { label: 'Reading + Writing', icon: BookOpenIcon },
-              ].map(({ label, icon: Icon }) => (
-                <div key={label} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-text-muted">
-                    <Icon className="w-4 h-4" />
-                    {label}
-                  </div>
-                  <div className="flex gap-1">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <ShieldCheckIcon key={i} className={`w-5 h-5 ${i < 4 ? 'text-amber-400' : 'text-gray-200'}`} />
-                    ))}
-                  </div>
+
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+                <div className="flex items-center gap-2 text-sm font-medium text-gray-600">
+                  <SpeakerWaveIcon className="w-5 h-5 text-gray-400" />
+                  Listening
                 </div>
-              ))}
+                <div className="flex gap-1">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <ShieldCheckIcon key={i} className={`w-6 h-6 ${i < 4 ? 'text-amber-400' : 'text-amber-400/30'}`} />
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm font-medium text-gray-600">
+                  <BookOpenIcon className="w-5 h-5 text-gray-400" />
+                  Reading + Writing
+                </div>
+                <div className="flex gap-1">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <ShieldCheckIcon key={i} className={`w-6 h-6 ${i < 4 ? 'text-amber-400' : 'text-amber-400/30'}`} />
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Progress */}
-          <div className="bg-white rounded-2xl border border-border shadow-sm p-5">
-            <div className="flex items-center justify-between mb-2">
-              <p className="font-bold text-sm text-text-main">Progress</p>
-              <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
-                <ArrowTrendingUpIcon className="w-4 h-4" /> Đang tiến bộ
+          <div className="bg-[#f0f9f6] rounded-3xl border border-[#e0f2ec] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 relative overflow-hidden">
+            <div className="flex items-center justify-between mb-4">
+              <p className="font-medium text-lg text-teal-900">Progress</p>
+              <span className="text-xs font-bold text-teal-700 flex items-center gap-1">
+                <SparklesIcon className="w-4 h-4" /> Đang tiến bộ
               </span>
             </div>
-            <p className="text-4xl font-display font-extrabold text-text-main mb-1">68%</p>
-            <div className="w-full bg-gray-100 rounded-full h-2.5 mb-2">
-              <div className="bg-primary h-2.5 rounded-full" style={{ width: '68%' }} />
+
+            <div className="flex items-baseline gap-2 mb-3">
+              <p className="text-5xl font-display font-bold text-teal-800">68%</p>
+              <p className="text-sm font-medium text-teal-700/80">8/12 bài học đã hoàn thành</p>
             </div>
-            <p className="text-xs text-text-muted">8/12 bài học đã hoàn thành</p>
-            <p className="text-xs text-primary mt-1 font-medium">Chỉ còn 4 bài học nữa để hoàn thành lộ trình!</p>
+
+            <div className="w-full bg-teal-900/10 rounded-full h-3 mb-3">
+              <div className="bg-teal-700 h-3 rounded-full" style={{ width: '68%' }} />
+            </div>
+
+            <p className="text-xs text-teal-700 font-medium">Chỉ còn 4 bài học nữa để hoàn thành lộ trình!</p>
           </div>
         </div>
 
@@ -185,9 +201,9 @@ export const ExamStatsPage: React.FC = () => {
 
           {/* Row 2: Biểu đồ Tăng trưởng */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            
+
             {/* Listening Chart */}
-            <div className="bg-white rounded-2xl border border-border shadow-sm p-5">
+            <div className="bg-white rounded-3xl border-2 border-blue-100 shadow-[0_8px_30px_rgb(59,130,246,0.1)] p-5 relative hover:shadow-[0_8px_30px_rgb(59,130,246,0.15)] transition-shadow duration-300">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-base font-bold text-text-main">Listening Growth</h2>
@@ -200,15 +216,15 @@ export const ExamStatsPage: React.FC = () => {
                   <LineChart data={FAKE_GROWTH_DATA} margin={{ top: 5, right: 10, bottom: 5, left: 55 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" strokeWidth={1.5} />
                     <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#6b7280' }} tickMargin={10} axisLine={false} tickLine={false} />
-                    <YAxis 
-                      domain={[0, 20]} 
+                    <YAxis
+                      domain={[0, 20]}
                       ticks={[10, 11, 13, 16, 18]}
                       interval={0}
                       tick={<ListeningTick />}
-                      axisLine={false} 
-                      tickLine={false} 
+                      axisLine={false}
+                      tickLine={false}
                     />
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)' }}
                       itemStyle={{ fontSize: '14px', fontWeight: 600 }}
                       formatter={(value: number) => [`${value} câu đúng`, 'Điểm số']}
@@ -221,7 +237,7 @@ export const ExamStatsPage: React.FC = () => {
             </div>
 
             {/* Reading & Writing Chart */}
-            <div className="bg-white rounded-2xl border border-border shadow-sm p-5">
+            <div className="bg-white rounded-3xl border-2 border-emerald-100 shadow-[0_8px_30px_rgb(16,185,129,0.1)] p-5 relative hover:shadow-[0_8px_30px_rgb(16,185,129,0.15)] transition-shadow duration-300">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-base font-bold text-text-main">Reading & Writing Growth</h2>
@@ -234,15 +250,15 @@ export const ExamStatsPage: React.FC = () => {
                   <LineChart data={FAKE_GROWTH_DATA} margin={{ top: 5, right: 10, bottom: 5, left: 55 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" strokeWidth={1.5} />
                     <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#6b7280' }} tickMargin={10} axisLine={false} tickLine={false} />
-                    <YAxis 
-                      domain={[0, 25]} 
+                    <YAxis
+                      domain={[0, 25]}
                       ticks={[12, 13, 16, 19, 21]}
                       interval={0}
                       tick={<ReadingTick />}
-                      axisLine={false} 
-                      tickLine={false} 
+                      axisLine={false}
+                      tickLine={false}
                     />
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)' }}
                       itemStyle={{ fontSize: '14px', fontWeight: 600 }}
                       formatter={(value: number) => [`${value} câu đúng`, 'Điểm số']}
@@ -256,131 +272,139 @@ export const ExamStatsPage: React.FC = () => {
 
           </div>
 
-            {/* Knowledge Mastery Section */}
-            <div className="flex flex-col gap-4">
-              <div>
-                <h2 className="text-base font-bold text-text-main">Knowledge mastery</h2>
-                <p className="text-xs text-text-muted mt-0.5">So sánh bài đầu vào và bài thi thử gần nhất.</p>
-              </div>
-
-              {/* Topic & Grammar Side-by-Side */}
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-
-                {/* Topic Table */}
-                <div className="bg-white rounded-2xl border border-border shadow-sm overflow-x-auto">
-              <div className="flex items-center justify-between px-5 py-3 border-b border-border">
-                <div className="flex items-center gap-2">
-                  <BookOpenIcon className="w-4 h-4 text-primary" />
-                  <span className="font-bold text-sm text-text-main">Topic</span>
-                  {!loading && !vocabStats?.noExamHistory && (
-                    <span className="text-xs text-text-muted">· {vocabStats?.topics.length || 0} chủ đề</span>
-                  )}
-                </div>
-                <span className="text-xs text-text-muted">Từ vựng theo chủ đề</span>
-              </div>
-
-              {loading ? (
-                <div className="flex items-center justify-center py-10 gap-2 text-text-muted text-sm">
-                  <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  Đang tải...
-                </div>
-              ) : vocabStats?.noExamHistory ? (
-                <div className="flex flex-col items-center justify-center py-10 gap-3 px-6">
-                  <AcademicCapIcon className="w-10 h-10 text-text-muted opacity-40" />
-                  <p className="text-sm text-text-muted text-center">Hãy làm bài kiểm tra để theo dõi sự tiến bộ!</p>
-                </div>
-              ) : (
-                <>
-                  {/* Table header */}
-                  <div className="grid grid-cols-[1fr_100px_100px_110px_80px] gap-2 px-5 py-2.5 bg-surface text-xs font-semibold text-text-muted border-b border-border">
-                    <span>Tên</span>
-                    <span className="text-center">Cần cải thiện</span>
-                    <span className="text-center">Đã cải thiện</span>
-                    <span className="text-center">Status</span>
-                    <span className="text-center">Action</span>
-                  </div>
-                  {/* Table rows */}
-                  {vocabStats!.topics.map((topic: TopicStat) => (
-                    <div
-                      key={topic.topicName}
-                      className="grid grid-cols-[1fr_100px_100px_110px_80px] gap-2 px-5 py-3 border-b border-border/50 last:border-0 hover:bg-surface/50 transition-colors items-center"
-                    >
-                      <span className="font-medium text-sm text-text-main">{topic.topicName}</span>
-                      <span className="text-center text-sm font-semibold text-red-500">{topic.weakCount}</span>
-                      <span className="text-center text-sm font-semibold text-emerald-600">{topic.correctCount}</span>
-                      <div className="flex justify-center">
-                        <StatusBadge status={topic.status} />
-                      </div>
-                      <div className="flex justify-center">
-                        {topic.status !== 'Mastered' ? (
-                          <button
-                            id={`practice-btn-${topic.topicName.replace(/\s+/g, '-').toLowerCase()}`}
-                            className="px-2.5 py-1 text-xs font-bold text-white bg-primary rounded-full hover:bg-primary/90 transition-colors"
-                          >
-                            Luyện tập
-                          </button>
-                        ) : (
-                          <span className="text-xs text-text-muted">—</span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  {/* Summary row */}
-                  {(totalWeak > 0 || totalCorrect > 0) && (
-                    <div className="px-5 py-3 bg-surface flex items-center gap-3 flex-wrap">
-                      <span className="text-xs text-text-muted">
-                        <span className="inline-block w-2 h-2 rounded-full bg-red-400 mr-1" />
-                        Cần cải thiện: <strong>{totalWeak}</strong> từ
-                      </span>
-                      <span className="text-xs text-text-muted">
-                        <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 mr-1" />
-                        Đã cải thiện: <strong>{totalCorrect}</strong> từ
-                      </span>
-                    </div>
-                  )}
-                </>
-              )}
+          {/* Knowledge Mastery Section */}
+          <div className="flex flex-col gap-4">
+            <div>
+              <h2 className="text-base font-bold text-text-main">Knowledge mastery</h2>
+              <p className="text-xs text-text-muted mt-0.5">So sánh bài đầu vào và bài thi thử gần nhất.</p>
             </div>
 
-            {/* Grammar Table (fake data) */}
-            <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-3 border-b border-border">
-                <div className="flex items-center gap-2">
-                  <AcademicCapIcon className="w-4 h-4 text-violet-500" />
-                  <span className="font-bold text-sm text-text-main">Grammar</span>
-                  <span className="text-xs text-text-muted">· {FAKE_GRAMMAR_DATA.length} nội dung</span>
-                </div>
-                <span className="text-xs text-text-muted">Cấu trúc ngữ pháp</span>
-              </div>
-              {/* Table header */}
-              <div className="grid grid-cols-[1fr_110px_80px] gap-2 px-5 py-2.5 bg-surface text-xs font-semibold text-text-muted border-b border-border">
-                <span>Tên</span>
-                <span className="text-center">Status</span>
-                <span className="text-center">Action</span>
-              </div>
-              {FAKE_GRAMMAR_DATA.map((g) => (
-                <div
-                  key={g.name}
-                  className="grid grid-cols-[1fr_110px_80px] gap-2 px-5 py-3 border-b border-border/50 last:border-0 items-center hover:bg-surface/50 transition-colors"
-                >
-                  <span className="font-medium text-sm text-text-main">{g.name}</span>
-                  <div className="flex justify-center">
-                    <StatusBadge status={g.status} />
+            {/* Topic & Grammar Side-by-Side */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+
+              {/* Topic Table */}
+              <div className="bg-white rounded-3xl border-2 border-indigo-100 shadow-[0_8px_30px_rgb(99,102,241,0.1)] overflow-x-auto relative hover:shadow-[0_8px_30px_rgb(99,102,241,0.15)] transition-shadow duration-300">
+                <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                      <Squares2X2Icon className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="font-medium text-lg text-gray-800">Topic</span>
+                      {!loading && !vocabStats?.noExamHistory && (
+                        <span className="text-sm font-medium text-gray-400">{vocabStats?.topics.length || 0} nội dung</span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex justify-center">
-                    {g.status !== 'Mastered' ? (
-                      <button className="px-2.5 py-1 text-xs font-bold text-white bg-violet-500 rounded-full hover:bg-violet-600 transition-colors">
-                        Luyện tập
-                      </button>
-                    ) : (
-                      <span className="text-xs text-text-muted">—</span>
+                  <span className="text-sm font-medium text-gray-400">Từ vựng theo chủ đề</span>
+                </div>
+
+                {loading ? (
+                  <div className="flex items-center justify-center py-10 gap-2 text-text-muted text-sm">
+                    <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    Đang tải...
+                  </div>
+                ) : vocabStats?.noExamHistory ? (
+                  <div className="flex flex-col items-center justify-center py-10 gap-3 px-6">
+                    <AcademicCapIcon className="w-10 h-10 text-text-muted opacity-40" />
+                    <p className="text-sm text-text-muted text-center">Hãy làm bài kiểm tra để theo dõi sự tiến bộ!</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Table header */}
+                    <div className="grid grid-cols-[1fr_80px_80px_130px_100px] gap-3 px-5 py-4 bg-gray-50/50 text-sm font-medium text-gray-500 border-b border-gray-100">
+                      <span>Tên</span>
+                      <span className="text-center">Cần cải thiện</span>
+                      <span className="text-center">Đã cải thiện</span>
+                      <span className="text-center">Status</span>
+                      <span className="text-center">Action</span>
+                    </div>
+                    {/* Table rows */}
+                    {vocabStats!.topics.map((topic: TopicStat) => (
+                      <div
+                        key={topic.topicName}
+                        className="grid grid-cols-[1fr_80px_80px_130px_100px] gap-3 px-5 py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors items-center"
+                      >
+                        <span className="font-medium text-base text-gray-700">{topic.topicName}</span>
+                        <span className="text-center text-base font-medium text-gray-500">{topic.weakCount}</span>
+                        <span className="text-center text-base font-bold text-emerald-600">{topic.correctCount}</span>
+                        <div className="flex justify-center">
+                          <StatusBadge status={topic.status} />
+                        </div>
+                        <div className="flex justify-center">
+                          {topic.status !== 'Mastered' ? (
+                            <button
+                              id={`practice-btn-${topic.topicName.replace(/\s+/g, '-').toLowerCase()}`}
+                              className="px-4 py-1.5 text-sm font-bold text-blue-600 bg-blue-50 border border-blue-200 rounded-full hover:bg-blue-100 transition-colors"
+                            >
+                              Luyện tập
+                            </button>
+                          ) : (
+                            <span className="text-gray-300">—</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {/* Summary row */}
+                    {(totalWeak > 0 || totalCorrect > 0) && (
+                      <div className="px-5 py-3 bg-surface flex items-center gap-3 flex-wrap">
+                        <span className="text-xs text-text-muted">
+                          <span className="inline-block w-2 h-2 rounded-full bg-red-400 mr-1" />
+                          Cần cải thiện: <strong>{totalWeak}</strong> từ
+                        </span>
+                        <span className="text-xs text-text-muted">
+                          <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 mr-1" />
+                          Đã cải thiện: <strong>{totalCorrect}</strong> từ
+                        </span>
+                      </div>
                     )}
-                  </div>
-                </div>
-              ))}
-            </div>
+                  </>
+                )}
+              </div>
 
-              </div> {/* Kết thúc Grid 2 cột */}
+              {/* Grammar Table (fake data) */}
+              <div className="bg-white rounded-3xl border-2 border-violet-100 shadow-[0_8px_30px_rgb(139,92,246,0.1)] overflow-hidden relative hover:shadow-[0_8px_30px_rgb(139,92,246,0.15)] transition-shadow duration-300">
+                <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center">
+                      <AcademicCapIcon className="w-5 h-5 text-violet-600" />
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="font-medium text-lg text-gray-800">Grammar</span>
+                      <span className="text-sm font-medium text-gray-400">{FAKE_GRAMMAR_DATA.length} nội dung</span>
+                    </div>
+                  </div>
+                  <span className="text-sm font-medium text-gray-400">Cấu trúc ngữ pháp</span>
+                </div>
+                {/* Table header */}
+                <div className="grid grid-cols-[1fr_130px_100px] gap-2 px-6 py-4 bg-gray-50/50 text-sm font-medium text-gray-500 border-b border-gray-100">
+                  <span>Tên</span>
+                  <span className="text-center">Status</span>
+                  <span className="text-center">Action</span>
+                </div>
+                {FAKE_GRAMMAR_DATA.map((g) => (
+                  <div
+                    key={g.name}
+                    className="grid grid-cols-[1fr_130px_100px] gap-2 px-6 py-4 border-b border-gray-100 last:border-0 items-center hover:bg-gray-50/50 transition-colors"
+                  >
+                    <span className="font-medium text-base text-gray-700">{g.name}</span>
+                    <div className="flex justify-center">
+                      <StatusBadge status={g.status} />
+                    </div>
+                    <div className="flex justify-center">
+                      {g.status !== 'Mastered' ? (
+                        <button className="px-4 py-1.5 text-sm font-bold text-violet-600 bg-violet-50 border border-violet-200 rounded-full hover:bg-violet-100 transition-colors">
+                          Luyện tập
+                        </button>
+                      ) : (
+                        <span className="text-gray-300">—</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+            </div> {/* Kết thúc Grid 2 cột */}
 
             {/* Legend */}
             <div className="flex gap-4 flex-wrap text-xs text-text-muted">

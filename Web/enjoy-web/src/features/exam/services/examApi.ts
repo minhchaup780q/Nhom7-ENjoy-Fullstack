@@ -5,8 +5,8 @@ const EXAM_BASE = '/api/exams';
 
 export const examApi = {
   /** Lấy danh sách tất cả đề thi */
-  getAllExams: (): Promise<ExamSummary[]> =>
-    apiClient.get<ExamSummary[]>(EXAM_BASE),
+  getAllExams: (userId?: number): Promise<ExamSummary[]> =>
+    apiClient.get<ExamSummary[]>(EXAM_BASE, { params: { userId } }),
 
   /** Lấy chi tiết một đề thi theo ID */
   getExamById: (examId: number): Promise<ExamDetail> =>
