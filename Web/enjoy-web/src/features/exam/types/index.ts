@@ -13,6 +13,7 @@ export interface ExamSummary {
   readingDuration: number;    // phút
   totalListeningQuestions: number;
   totalReadingQuestions: number;
+  isCompleted?: boolean;
 }
 
 // --- Chi tiết đề thi ---
@@ -212,9 +213,16 @@ export interface TopicStat {
   weakWords: string[];
 }
 
+export interface ExamHistoryStat {
+  date: string;
+  listeningScore: number;
+  readingScore: number;
+}
+
 export interface VocabStatsResponse {
   noExamHistory: boolean;
   topics: TopicStat[];
+  examHistories?: ExamHistoryStat[];
 }
 
 export interface TopicWeakWordDetail {

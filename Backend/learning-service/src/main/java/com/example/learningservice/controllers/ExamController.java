@@ -23,8 +23,8 @@ public class ExamController {
      * GET /api/exams
      */
     @GetMapping
-    public ResponseEntity<List<ExamSummaryResponse>> getAllExams() {
-        return ResponseEntity.ok(examService.getAllExams());
+    public ResponseEntity<List<ExamSummaryResponse>> getAllExams(@RequestParam(required = false) Long userId) {
+        return ResponseEntity.ok(examService.getAllExams(userId));
     }
 
     /**

@@ -10,7 +10,7 @@ import java.util.List;
 public interface ExamService {
 
     /** Lấy danh sách tóm tắt tất cả đề thi (không bao gồm payload câu hỏi). */
-    List<ExamSummaryResponse> getAllExams();
+    List<ExamSummaryResponse> getAllExams(Long userId);
 
     /** Lấy chi tiết một đề thi theo ID, bao gồm toàn bộ payload câu hỏi. */
     ExamDetailResponse getExamById(Long examId);
