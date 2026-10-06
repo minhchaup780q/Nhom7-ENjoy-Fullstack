@@ -191,9 +191,29 @@ export interface ExamResult {
   readingShields: number;
   readingPartScores: PartScoreDetail;
   historyId: number;
+  /** Từ vựng làm sai, gom theo topic: { "Animals": ["cat", "dog"], ... } */
+  wrongVocabByTopic?: Record<string, string[]>;
 }
 
 // ================================================================
 // EXAM PHASE - Flow trạng thái bài thi
 // ================================================================
 export type ExamPhase = 'LIST' | 'INTRO' | 'LISTENING' | 'TRANSITION' | 'READING' | 'RESULT';
+
+// ================================================================
+// VOCAB STATISTICS - Thống kê từ vựng
+// ================================================================
+export interface TopicStat {
+  topicName: string;
+  weakCount: number;
+  correctCount: number;
+  /** "Developing" | "Weak" */
+  status: string;
+  weakWords: string[];
+}
+
+export interface VocabStatsResponse {
+  noExamHistory: boolean;
+  topics: TopicStat[];
+}
+

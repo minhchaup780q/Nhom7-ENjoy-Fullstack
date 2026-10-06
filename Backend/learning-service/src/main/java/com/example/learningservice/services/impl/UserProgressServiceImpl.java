@@ -285,7 +285,7 @@ public class UserProgressServiceImpl implements UserProgressService {
                     : Collections.emptyList();
 
             switch (type) {
-                case MATCH_WORD -> {
+                case MATCH_WORD:
                     // Màn 2: Nối từ vựng -> tính vô điểm vocabulary (roundType = 2)
                     if (!partVocabs.isEmpty()) {
                         for (PartVocabulary pv : partVocabs) {
@@ -299,8 +299,8 @@ public class UserProgressServiceImpl implements UserProgressService {
                         vocabScore += 1.0;
                         vocabCount++;
                     }
-                }
-                case SPEAKING -> {
+                    break;
+                case SPEAKING:
                     // Màn 3: Speaking từ đơn -> tính điểm speaking (roundType = 3)
                     if (!partVocabs.isEmpty()) {
                         for (PartVocabulary pv : partVocabs) {
@@ -314,8 +314,8 @@ public class UserProgressServiceImpl implements UserProgressService {
                         speakingScore += 1.0;
                         speakingCount++;
                     }
-                }
-                case RE_ORDER -> {
+                    break;
+                case RE_ORDER:
                     // Màn 4: Sắp xếp chữ cái -> tính vô writing (roundType = 4)
                     if (!partVocabs.isEmpty()) {
                         for (PartVocabulary pv : partVocabs) {
@@ -329,11 +329,11 @@ public class UserProgressServiceImpl implements UserProgressService {
                         writingScore += 1.0;
                         writingCount++;
                     }
-                }
-                case DRAG_DROP -> {
+                    break;
+                case DRAG_DROP:
                     // Màn 5: Nghe và kéo thả chữ vào toạ độ -> tính listening (roundType = 5)
-                    int qCount = getDragDropQuestionCount(s.getPayload(), partVocabs.size());
-                    for (int i = 0; i < qCount; i++) {
+                    int qCount1 = getDragDropQuestionCount(s.getPayload(), partVocabs.size());
+                    for (int i = 0; i < qCount1; i++) {
                         Long vocabId = (i < partVocabs.size() && partVocabs.get(i).getVocabulary() != null)
                                 ? partVocabs.get(i).getVocabulary().getId() : null;
                         String key = (vocabId != null) ? (vocabId + "_5") : ("dragdrop_" + s.getId() + "_" + i);
@@ -341,14 +341,14 @@ public class UserProgressServiceImpl implements UserProgressService {
                         listeningScore += itemScore;
                         listeningCount++;
                     }
-                }
-                case GRAMMAR -> {
+                    break;
+                case GRAMMAR:
                     // Màn 6: Bỏ không tính vào reading
-                }
-                case FILL_IN_BLANK -> {
+                    break;
+                case FILL_IN_BLANK:
                     // Màn 7: Điền từ vào chỗ trống -> tính grammar (roundType = 7)
-                    int qCount = getItemsQuestionCount(s.getPayload(), 6);
-                    for (int i = 0; i < qCount; i++) {
+                    int qCount2 = getItemsQuestionCount(s.getPayload(), 6);
+                    for (int i = 0; i < qCount2; i++) {
                         Long vocabId = (i < partVocabs.size() && partVocabs.get(i).getVocabulary() != null)
                                 ? partVocabs.get(i).getVocabulary().getId()
                                 : (!partVocabs.isEmpty() && partVocabs.get(0).getVocabulary() != null ? partVocabs.get(0).getVocabulary().getId() : null);
@@ -357,11 +357,11 @@ public class UserProgressServiceImpl implements UserProgressService {
                         grammarScore += itemScore;
                         grammarCount++;
                     }
-                }
-                case RE_ORDER_SENTENCE -> {
+                    break;
+                case RE_ORDER_SENTENCE:
                     // Màn 8: Sắp xếp câu ngữ pháp -> tính grammar (roundType = 8)
-                    int qCount = getItemsQuestionCount(s.getPayload(), 5);
-                    for (int i = 0; i < qCount; i++) {
+                    int qCount3 = getItemsQuestionCount(s.getPayload(), 5);
+                    for (int i = 0; i < qCount3; i++) {
                         Long vocabId = (i < partVocabs.size() && partVocabs.get(i).getVocabulary() != null)
                                 ? partVocabs.get(i).getVocabulary().getId()
                                 : (!partVocabs.isEmpty() && partVocabs.get(0).getVocabulary() != null ? partVocabs.get(0).getVocabulary().getId() : null);
@@ -370,11 +370,11 @@ public class UserProgressServiceImpl implements UserProgressService {
                         grammarScore += itemScore;
                         grammarCount++;
                     }
-                }
-                case SPEAKING_SENTENCE -> {
+                    break;
+                case SPEAKING_SENTENCE:
                     // Màn 9: Luyện nói câu -> tính speaking (roundType = 9)
-                    int qCount = getItemsQuestionCount(s.getPayload(), 5);
-                    for (int i = 0; i < qCount; i++) {
+                    int qCount4 = getItemsQuestionCount(s.getPayload(), 5);
+                    for (int i = 0; i < qCount4; i++) {
                         Long vocabId = (i < partVocabs.size() && partVocabs.get(i).getVocabulary() != null)
                                 ? partVocabs.get(i).getVocabulary().getId()
                                 : (!partVocabs.isEmpty() && partVocabs.get(0).getVocabulary() != null ? partVocabs.get(0).getVocabulary().getId() : null);
@@ -383,11 +383,11 @@ public class UserProgressServiceImpl implements UserProgressService {
                         speakingScore += itemScore;
                         speakingCount++;
                     }
-                }
-                case CONVERSATION -> {
+                    break;
+                case CONVERSATION:
                     // Màn 10: Hội thoại đọc hiểu -> tính reading (roundType = 10)
-                    int qCount = getItemsQuestionCount(s.getPayload(), 5);
-                    for (int i = 0; i < qCount; i++) {
+                    int qCount5 = getItemsQuestionCount(s.getPayload(), 5);
+                    for (int i = 0; i < qCount5; i++) {
                         Long vocabId = (i < partVocabs.size() && partVocabs.get(i).getVocabulary() != null)
                                 ? partVocabs.get(i).getVocabulary().getId()
                                 : (!partVocabs.isEmpty() && partVocabs.get(0).getVocabulary() != null ? partVocabs.get(0).getVocabulary().getId() : null);
@@ -396,7 +396,7 @@ public class UserProgressServiceImpl implements UserProgressService {
                         readingScore += itemScore;
                         readingCount++;
                     }
-                }
+                    break;
             }
         }
 

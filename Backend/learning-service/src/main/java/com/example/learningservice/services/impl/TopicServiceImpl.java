@@ -142,15 +142,19 @@ public class TopicServiceImpl implements TopicService {
             // Tính displayTitle
             String displayTitle;
             switch (learningStatus) {
-                case "GRAMMAR_ONLY" -> displayTitle = grammarName != null ? grammarName : topic.getTitle();
-                case "VOCAB_ONLY"   -> displayTitle = topic.getTitle();
-                default             -> {
+                case "GRAMMAR_ONLY":
+                    displayTitle = grammarName != null ? grammarName : topic.getTitle();
+                    break;
+                case "VOCAB_ONLY":
+                    displayTitle = topic.getTitle();
+                    break;
+                default:
                     if (grammarName != null) {
                         displayTitle = topic.getTitle() + " • " + grammarName;
                     } else {
                         displayTitle = topic.getTitle();
                     }
-                }
+                    break;
             }
 
             result.add(TopicWithProgressDto.builder()
