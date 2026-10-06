@@ -131,7 +131,8 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
         userId,
         currentWord.word,
         topicName,
-        forceRegenerate
+        forceRegenerate,
+        aiChallenge?.grammarName
       );
       setAiChallenge(challenge);
     } catch (err) {
@@ -589,64 +590,72 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
           {currentStep === 4 && (
             <div className="w-full flex flex-col items-center gap-6">
               {loadingAi ? (
-                <div className="flex flex-col items-center gap-3 py-10">
-                  <div className="w-9 h-9 border-3 border-violet-500 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-sm font-bold text-text-muted flex items-center gap-1.5">
-                    <SparklesIcon className="w-4 h-4 text-violet-500" /> AI đang chọn cấu trúc ngữ pháp và tạo câu...
+                <div className="flex flex-col items-center gap-3 py-12">
+                  <div className="w-10 h-10 border-3 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-sm font-bold text-text-muted flex items-center gap-2">
+                    <SparklesIcon className="w-4 h-4 text-violet-500 animate-pulse" /> AI đang phân tích và tạo câu ngữ cảnh mới...
                   </p>
                 </div>
               ) : aiChallenge ? (
                 <div className="w-full flex flex-col items-center gap-5">
                   {/* Grammar Badge & Regenerate Button */}
-                  <div className="w-full flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-violet-50 text-violet-700 border border-violet-200">
-                      <SparklesIcon className="w-3.5 h-3.5" /> {aiChallenge.grammarName}
+                  <div className="w-full flex items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-violet-50 text-violet-700 border border-violet-200 shadow-xs">
+                      <SparklesIcon className="w-3.5 h-3.5 text-violet-500" /> Cấu trúc: {aiChallenge.grammarName}
                     </span>
                     <button
                       onClick={() => loadAiChallenge(true)}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-text-muted hover:text-primary transition-colors cursor-pointer"
-                      title="AI sinh ngữ cảnh và câu mới"
+                      disabled={loadingAi}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-text-muted hover:text-primary hover:bg-primary/10 transition-all cursor-pointer border border-border"
+                      title="AI sinh ngữ cảnh và câu ngữ pháp khác"
                     >
-                      <ArrowPathIcon className="w-3.5 h-3.5" /> Đổi câu khác
+                      <ArrowPathIcon className={`w-3.5 h-3.5 ${loadingAi ? 'animate-spin' : ''}`} /> Đổi câu khác
                     </button>
                   </div>
 
                   {/* Sentence Card with Blank */}
-                  <div className="w-full bg-surface rounded-2xl p-5 border border-border text-center shadow-sm">
-                    <p className="text-xl font-bold text-text-main tracking-wide leading-relaxed">
+                  <div className="w-full bg-surface rounded-2xl p-5 border-2 border-primary/20 text-center shadow-sm">
+                    <p className="text-lg sm:text-xl font-bold text-text-main tracking-wide leading-relaxed">
                       {aiChallenge.sentence.split('_____').map((part, i, arr) => (
                         <React.Fragment key={i}>
                           {part}
                           {i < arr.length - 1 && (
-                            <span className="inline-block mx-1.5 px-3 py-0.5 border-b-2 border-primary font-black text-primary bg-primary/10 rounded">
+                            <span className="inline-block mx-1.5 px-3.5 py-1 border-b-2 border-primary font-black text-primary bg-primary/10 rounded-lg shadow-inner">
                               {selectedOption || '_____'}
                             </span>
                           )}
                         </React.Fragment>
                       ))}
                     </p>
-                    <p className="text-xs text-text-muted mt-2">{aiChallenge.translation}</p>
+                    
+                    {/* Bản dịch tiếng Việt đầy đủ, rõ ràng */}
+                    <div className="mt-3.5 pt-3 border-t border-border/60">
+                      <p className="text-xs sm:text-sm text-text-muted font-medium italic">
+                        <span className="font-bold text-text-main not-italic mr-1">Dịch nghĩa:</span>
+                        "{aiChallenge.translation}"
+                      </p>
+                    </div>
                   </div>
 
                   {/* Multiple Choice Options */}
                   <div className="grid grid-cols-2 gap-3 w-full">
                     {aiChallenge.options.map((opt, idx) => {
                       const isSelected = selectedOption === opt;
-                      const isCorrect = aiStatus === 'correct' && opt.toLowerCase() === aiChallenge.correctAnswer.toLowerCase();
+                      const isCorrect = aiStatus === 'correct' && opt.trim().toLowerCase() === aiChallenge.correctAnswer.trim().toLowerCase();
                       const isWrong = isSelected && aiStatus === 'incorrect';
 
                       return (
                         <button
                           key={idx}
                           onClick={() => handleSelectOption(opt)}
-                          className={`py-3 px-4 rounded-xl border-2 font-bold text-sm transition-all cursor-pointer ${
+                          className={`py-3.5 px-4 rounded-xl border-2 font-bold text-sm transition-all cursor-pointer flex items-center justify-center text-center ${
                             isCorrect
-                              ? 'bg-emerald-50 border-emerald-500 text-emerald-800'
+                              ? 'bg-emerald-50 border-emerald-500 text-emerald-800 shadow-sm'
                               : isWrong
-                              ? 'bg-red-50 border-red-400 text-red-700'
+                              ? 'bg-red-50 border-red-400 text-red-700 shadow-sm'
                               : isSelected
                               ? 'bg-primary/10 border-primary text-primary'
-                              : 'bg-white border-border hover:border-primary/50 text-text-main'
+                              : 'bg-white border-border hover:border-primary/50 text-text-main shadow-xs active:scale-98'
                           }`}
                         >
                           {opt}
@@ -659,7 +668,7 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
                   {aiStatus === 'correct' && (
                     <div className="w-full flex flex-col items-center gap-3 animate-fadeIn mt-2">
                       <p className="text-sm font-bold text-emerald-600 flex items-center gap-1.5">
-                        <CheckCircleIcon className="w-5 h-5" /> Chuẩn xác! Bé đã hoàn thành từ vựng này!
+                        <CheckCircleIcon className="w-5 h-5" /> Chuẩn xác! Bé đã hiểu cấu trúc ngữ pháp này!
                       </p>
                       <button
                         onClick={handleWordComplete}
@@ -671,9 +680,11 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
                   )}
 
                   {aiStatus === 'incorrect' && (
-                    <p className="text-xs font-semibold text-red-500 animate-fadeIn">
-                      {aiChallenge.hint || 'Chưa chính xác rồi, bé hãy chọn lại nhé!'}
-                    </p>
+                    <div className="w-full text-center animate-fadeIn">
+                      <p className="text-xs font-semibold text-red-500">
+                        {aiChallenge.hint || 'Chưa chính xác rồi, bé hãy quan sát kỹ câu và chọn lại nhé!'}
+                      </p>
+                    </div>
                   )}
                 </div>
               ) : null}
