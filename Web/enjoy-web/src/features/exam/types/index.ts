@@ -63,8 +63,8 @@ export interface ListeningPart3Data {
   questions: Array<{
     is_example: boolean;
     question: string;
-    img_url: string;
-    answer: 'A' | 'B' | 'C';  // đáp án đúng (A/B/C trong 3 ảnh)
+    img_urls: string[];
+    answer: 'A' | 'B' | 'C';  // đáp án đúng (A/B/C)
   }>;
 }
 
@@ -87,7 +87,7 @@ export interface ListeningPart4Data {
 // ================================================================
 export interface ReadingPayload {
   part1: ReadingPart1Item[];
-  part2: ReadingPart2Item[];
+  part2: ReadingPart2Data;
   part3: ReadingPart3Item[];
   part4: ReadingPart4Data;
   part5: ReadingPart5Group[];
@@ -102,11 +102,13 @@ export interface ReadingPart1Item {
 }
 
 // Part 2: Look and Read - Yes/No
-export interface ReadingPart2Item {
-  is_example: boolean;
-  question: string;
+export interface ReadingPart2Data {
   img_url: string;
-  status: 'yes' | 'no';  // đáp án đúng
+  questions: Array<{
+    is_example: boolean;
+    question: string;
+    status: 'yes' | 'no';  // đáp án đúng
+  }>;
 }
 
 // Part 3: Sắp xếp chữ cái thành từ
@@ -129,7 +131,8 @@ export interface ReadingPart5Group {
   questions: Array<{
     is_example: boolean;
     question: string;
-    answer: string;  // đáp án đúng
+    answer_format?: string;
+    keyword?: string;
   }>;
 }
 

@@ -6,6 +6,7 @@ import { ListeningPart2 } from './ListeningPart2';
 import { ListeningPart3 } from './ListeningPart3';
 import { ListeningPart4 } from './ListeningPart4';
 import type { PartAnswer } from '../../types';
+import { ChevronLeftIcon, ChevronRightIcon, CheckIcon } from '@heroicons/react/24/solid';
 
 interface Props {
   onFinish: () => void;
@@ -39,33 +40,31 @@ export const ListeningSection: React.FC<Props> = ({ onFinish }) => {
     setListeningAnswer(partKey, answers);
   };
 
+  const handlePrev = () => {
+    if (currentPart > 0) {
+      setCurrentPart(currentPart - 1);
+    }
+  };
+
   return (
-    <div className="max-w-5xl mx-auto w-full px-4 pt-6 pb-24">
-      {/* Part Tabs */}
-      <div className="flex gap-2 mb-6">
-        {PARTS.map((label, idx) => (
-          <button
-            key={idx}
-            onClick={() => setCurrentPart(idx)}
-            className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all
-              ${idx === currentPart
-                ? 'bg-primary text-white shadow-sm'
-                : 'bg-surface text-text-muted hover:bg-primary/10'}`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+    <div className="flex flex-col h-full">
+      <div className="max-w-5xl mx-auto w-full px-4 pt-6 pb-6 flex-1">
+        {/* Part Indicator */}
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-text-main">
+            Phần {currentPart + 1} <span className="text-text-muted text-base font-medium">/ 4</span>
+          </h2>
+        </div>
 
-      {/* Audio Player (top) */}
-      <ExamAudioPlayer
-        key={currentPart}
-        src={currentAudio}
-        label={`Listening - Part ${currentPart + 1}`}
-      />
+        {/* Audio Player (top) */}
+        <ExamAudioPlayer
+          key={currentPart}
+          src={currentAudio}
+          label={`Listening - Part ${currentPart + 1}`}
+        />
 
-      {/* Part Content */}
-      <div className="pb-4">
+        {/* Part Content */}
+        <div>
         {currentPart === 0 && (
           <ListeningPart1
             data={lis.part1}
@@ -95,16 +94,28 @@ export const ListeningSection: React.FC<Props> = ({ onFinish }) => {
           />
         )}
       </div>
-
-      {/* Navigation */}
-      <div className="fixed bottom-8 right-6 z-20">
-        <button
-          onClick={handleNext}
-          className="px-6 py-3 rounded-2xl bg-primary text-white font-bold shadow-lg shadow-primary/30 hover:bg-primary/90 active:scale-95 transition-all"
-        >
-          {currentPart < 3 ? 'Part tiếp theo →' : 'Hoàn thành Listening →'}
-        </button>
       </div>
+
+      {/* Nút điều hướng Trái - Phải */}
+      <button
+        onClick={handlePrev}
+        disabled={currentPart === 0}
+        className="fixed top-1/2 left-4 lg:left-[280px] -translate-y-1/2 z-30 w-12 h-12 flex items-center justify-center rounded-full bg-white border-2 border-border-main text-text-muted hover:text-primary hover:border-primary shadow-lg transition-all hover:scale-110 disabled:opacity-0 disabled:pointer-events-none"
+      >
+        <ChevronLeftIcon className="w-6 h-6 pr-0.5" />
+      </button>
+
+      <button
+        onClick={handleNext}
+        className="fixed top-1/2 right-4 lg:right-8 -translate-y-1/2 z-30 w-12 h-12 flex items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/40 hover:bg-primary/90 transition-all hover:scale-110"
+        title={currentPart < 3 ? 'Part tiếp theo' : 'Hoàn thành Listening'}
+      >
+        {currentPart < 3 ? (
+          <ChevronRightIcon className="w-6 h-6 pl-0.5" />
+        ) : (
+          <CheckIcon className="w-6 h-6" />
+        )}
+      </button>
     </div>
   );
 };

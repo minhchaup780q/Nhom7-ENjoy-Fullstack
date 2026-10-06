@@ -80,9 +80,9 @@ export const ExamTakingPage: React.FC = () => {
   const isUrgent = timeLeft > 0 && timeLeft <= 60;
 
   return (
-    <div className="flex flex-col h-full min-h-screen bg-surface">
+    <div className="flex flex-col h-screen bg-surface">
       {/* ── Top Header Bar ── */}
-      <div className="sticky top-0 z-20 bg-white border-b border-border px-4 py-2.5 flex items-center justify-between shadow-sm">
+      <div className="sticky top-0 z-20 bg-white border-b border-border px-4 py-2.5 flex items-center justify-between shadow-sm flex-shrink-0">
         <div className="flex flex-col">
           <span className="text-xs text-text-muted font-medium">{currentExam?.title}</span>
           <span className="text-sm font-bold text-text-main">
@@ -99,7 +99,7 @@ export const ExamTakingPage: React.FC = () => {
       </div>
 
       {/* ── Content ── */}
-      <div className="flex-1 overflow-y-auto pb-32">
+      <div className="flex-1 overflow-y-auto">
         {phase === 'LISTENING' && (
           <ListeningSection onFinish={handleFinishListening} />
         )}

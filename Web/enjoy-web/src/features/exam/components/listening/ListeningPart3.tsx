@@ -37,11 +37,13 @@ export const ListeningPart3: React.FC<Props> = ({ data, answers, onChange }) => 
             <p className="text-xs font-bold text-text-muted mb-3">Example:</p>
             <p className="text-sm font-semibold text-text-main mb-3">{ex.question}</p>
             <div className="grid grid-cols-3 gap-2">
-              {CHOICE_LABELS.map((label) => (
+              {CHOICE_LABELS.map((label, index) => (
                 <div key={label} className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 
                   ${label === ex.answer ? 'border-[#58cc02] bg-[#58cc02]/10' : 'border-transparent'}`}>
-                  <img src={ex.img_url} alt={label}
-                    className="w-full aspect-square object-cover rounded-lg" />
+                  {ex.img_urls && ex.img_urls[index] && (
+                    <img src={ex.img_urls[index]} alt={label}
+                      className="w-full aspect-square object-cover rounded-lg" />
+                  )}
                   <span className={`text-xs font-bold ${label === ex.answer ? 'text-[#58cc02]' : 'text-text-muted'}`}>
                     {label}
                   </span>
@@ -60,7 +62,7 @@ export const ListeningPart3: React.FC<Props> = ({ data, answers, onChange }) => 
               <span className="text-primary font-bold mr-1">{qIdx + 1}.</span> {q.question}
             </p>
             <div className="grid grid-cols-3 gap-3">
-              {CHOICE_LABELS.map((label) => (
+              {CHOICE_LABELS.map((label, index) => (
                 <button
                   key={label}
                   onClick={() => handleSelect(qIdx, label)}
@@ -69,8 +71,10 @@ export const ListeningPart3: React.FC<Props> = ({ data, answers, onChange }) => 
                       ? 'border-primary bg-primary/10 shadow-sm'
                       : 'border-border hover:border-primary/40'}`}
                 >
-                  <img src={q.img_url} alt={label}
-                    className="w-full aspect-square object-cover rounded-lg" />
+                  {q.img_urls && q.img_urls[index] && (
+                    <img src={q.img_urls[index]} alt={label}
+                      className="w-full aspect-square object-cover rounded-lg" />
+                  )}
                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
                     ${selected[qIdx] === label
                       ? 'border-primary bg-primary'

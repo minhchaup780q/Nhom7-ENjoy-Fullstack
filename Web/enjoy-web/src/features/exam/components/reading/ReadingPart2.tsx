@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
-import type { ReadingPart2Item, PartAnswer } from '../../types';
+import type { ReadingPart2Data, PartAnswer } from '../../types';
 
 interface Props {
-  data: ReadingPart2Item[];
+  data: ReadingPart2Data;
   answers: PartAnswer[];
   onChange: (answers: PartAnswer[]) => void;
 }
 
 export const ReadingPart2: React.FC<Props> = ({ data, answers, onChange }) => {
-  const examples = data.filter(q => q.is_example);
-  const actual = data.filter(q => !q.is_example);
+  const examples = data.questions.filter(q => q.is_example);
+  const actual = data.questions.filter(q => !q.is_example);
 
-  // Lấy ảnh chung từ item đầu tiên (hoặc bất kỳ)
-  const sharedImg = data[0]?.img_url || '';
+  // Lấy ảnh chung 
+  const sharedImg = data.img_url;
 
   const [values, setValues] = useState<string[]>(() =>
     actual.map((_, i) => answers[i]?.answer || '')

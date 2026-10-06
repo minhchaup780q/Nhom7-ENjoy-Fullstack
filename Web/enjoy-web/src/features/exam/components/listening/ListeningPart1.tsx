@@ -98,7 +98,7 @@ export const ListeningPart1: React.FC<Props> = ({ data, answers, onChange }) => 
       </div>
 
       {/* Image with Drop Zones */}
-      <div className="relative inline-block max-w-full">
+      <div className="relative inline-block max-w-full md:max-w-[50%] self-center">
         <img
           src={data.img_url}
           alt="Listening Part 1"

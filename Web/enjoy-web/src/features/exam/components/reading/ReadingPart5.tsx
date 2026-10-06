@@ -65,9 +65,20 @@ export const ReadingPart5: React.FC<Props> = ({ data, answers, onChange }) => {
                   <div className="bg-gray-50 border border-border rounded-xl p-3">
                     <p className="text-xs font-bold text-text-muted mb-2">Examples:</p>
                     {examples.map((ex, i) => (
-                      <div key={i} className="text-sm mb-1.5">
-                        <span className="text-text-muted">{ex.question} </span>
-                        <span className="font-bold text-[#58cc02]">{ex.answer}</span>
+                      <div key={i} className="text-sm mb-2">
+                        <div className="text-text-muted mb-1">{ex.question}</div>
+                        {ex.answer_format ? (
+                          <div className="flex items-center gap-1 font-bold text-gray-700 flex-wrap">
+                            {ex.answer_format.split('[keyword]').map((p, j, arr) => (
+                              <React.Fragment key={j}>
+                                <span>{p}</span>
+                                {j < arr.length - 1 && <span className="text-[#58cc02]">{ex.keyword}</span>}
+                              </React.Fragment>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="font-bold text-[#58cc02]">{(ex as any).answer || ex.keyword}</span>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -81,19 +92,37 @@ export const ReadingPart5: React.FC<Props> = ({ data, answers, onChange }) => {
                   questionCounter++;
                   return (
                     <div key={qi} className="bg-white border border-border rounded-2xl p-4 shadow-sm">
-                      <div className="flex items-center gap-3">
-                        <span className="text-primary font-bold text-sm min-w-[24px]">
+                      <div className="flex items-start gap-3">
+                        <span className="text-primary font-bold text-sm min-w-[24px] mt-1">
                           {questionCounter}.
                         </span>
                         <div className="flex-1">
-                          <p className="text-sm text-text-main mb-2">{q.question}</p>
-                          <input
-                            type="text"
-                            value={values[`${gi}-${realQIdx}`] || ''}
-                            onChange={(e) => handleChange(gi, realQIdx, e.target.value.toLowerCase())}
-                            placeholder="Write one word..."
-                            className="w-full border-b-2 border-gray-300 focus:border-primary outline-none bg-transparent text-sm font-bold text-text-main transition-colors placeholder:text-gray-300 pb-1"
-                          />
+                          <p className="text-sm text-text-main mb-3">{q.question}</p>
+                          {q.answer_format ? (
+                            <div className="flex items-end flex-wrap text-sm font-semibold text-gray-700">
+                              {q.answer_format.split('[keyword]').map((part, i, arr) => (
+                                <React.Fragment key={i}>
+                                  <span className="leading-7">{part}</span>
+                                  {i < arr.length - 1 && (
+                                    <input
+                                      type="text"
+                                      value={values[`${gi}-${realQIdx}`] || ''}
+                                      onChange={(e) => handleChange(gi, realQIdx, e.target.value.toLowerCase())}
+                                      className="border-b-2 border-gray-300 focus:border-primary outline-none bg-transparent text-sm font-bold text-center text-primary mx-1 px-2 min-w-[80px] max-w-[150px] transition-colors leading-6"
+                                    />
+                                  )}
+                                </React.Fragment>
+                              ))}
+                            </div>
+                          ) : (
+                            <input
+                              type="text"
+                              value={values[`${gi}-${realQIdx}`] || ''}
+                              onChange={(e) => handleChange(gi, realQIdx, e.target.value.toLowerCase())}
+                              placeholder="Write one word..."
+                              className="w-full border-b-2 border-gray-300 focus:border-primary outline-none bg-transparent text-sm font-bold text-text-main transition-colors placeholder:text-gray-300 pb-1"
+                            />
+                          )}
                         </div>
                       </div>
                     </div>

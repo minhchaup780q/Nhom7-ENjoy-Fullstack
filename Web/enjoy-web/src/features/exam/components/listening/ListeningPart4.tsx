@@ -82,7 +82,7 @@ export const ListeningPart4: React.FC<Props> = ({ data, answers, onChange }) => 
       </div>
 
       {/* Image with color drop zones */}
-      <div className="relative inline-block max-w-full">
+      <div className="relative inline-block max-w-full self-center">
         <img
           src={data.img_url}
           alt="Listening Part 4"

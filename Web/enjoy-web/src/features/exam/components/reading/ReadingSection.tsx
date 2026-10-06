@@ -6,6 +6,7 @@ import { ReadingPart3 } from './ReadingPart3';
 import { ReadingPart4 } from './ReadingPart4';
 import { ReadingPart5 } from './ReadingPart5';
 import type { PartAnswer } from '../../types';
+import { ChevronLeftIcon, ChevronRightIcon, CheckIcon } from '@heroicons/react/24/solid';
 
 interface Props {
   onSubmit: () => void;
@@ -31,26 +32,24 @@ export const ReadingSection: React.FC<Props> = ({ onSubmit, submitting }) => {
     else setShowSubmitConfirm(true);
   };
 
-  return (
-    <div className="max-w-5xl mx-auto w-full px-4 pt-6 pb-10">
-      {/* Part Tabs */}
-      <div className="flex gap-2 mb-6 flex-wrap">
-        {PARTS.map((label, idx) => (
-          <button
-            key={idx}
-            onClick={() => setCurrentPart(idx)}
-            className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all
-              ${idx === currentPart
-                ? 'bg-emerald-600 text-white shadow-sm'
-                : 'bg-surface text-text-muted hover:bg-emerald-100'}`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+  const handlePrev = () => {
+    if (currentPart > 0) {
+      setCurrentPart(currentPart - 1);
+    }
+  };
 
-      {/* Part Content */}
-      <div className="pb-16">
+  return (
+    <div className="flex flex-col h-full">
+      <div className="max-w-5xl mx-auto w-full px-4 pt-6 pb-6 flex-1">
+        {/* Part Indicator */}
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-text-main">
+            Phần {currentPart + 1} <span className="text-text-muted text-base font-medium">/ 5</span>
+          </h2>
+        </div>
+
+        {/* Part Content */}
+        <div>
         {currentPart === 0 && (
           <ReadingPart1
             data={read.part1}
@@ -87,16 +86,31 @@ export const ReadingSection: React.FC<Props> = ({ onSubmit, submitting }) => {
           />
         )}
       </div>
-
-      {/* Navigation */}
-      <div className="fixed bottom-6 right-6 z-20">
-        <button
-          onClick={handleNext}
-          className="px-6 py-3 rounded-2xl bg-emerald-600 text-white font-bold shadow-lg hover:bg-emerald-700 active:scale-95 transition-all"
-        >
-          {currentPart < 4 ? 'Part tiếp theo →' : 'Nộp bài →'}
-        </button>
       </div>
+
+      {/* Nút điều hướng Trái - Phải */}
+      <button
+        onClick={handlePrev}
+        disabled={currentPart === 0}
+        className="fixed top-1/2 left-4 lg:left-[280px] -translate-y-1/2 z-30 w-12 h-12 flex items-center justify-center rounded-full bg-white border-2 border-border-main text-text-muted hover:text-emerald-600 hover:border-emerald-600 shadow-lg transition-all hover:scale-110 disabled:opacity-0 disabled:pointer-events-none"
+      >
+        <ChevronLeftIcon className="w-6 h-6 pr-0.5" />
+      </button>
+
+      <button
+        onClick={() => {
+          if (currentPart < 4) handleNext();
+          else setShowSubmitConfirm(true);
+        }}
+        className="fixed top-1/2 right-4 lg:right-8 -translate-y-1/2 z-30 w-12 h-12 flex items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg shadow-emerald-600/40 hover:bg-emerald-700 transition-all hover:scale-110"
+        title={currentPart < 4 ? 'Part tiếp theo' : 'Nộp bài thi'}
+      >
+        {currentPart < 4 ? (
+          <ChevronRightIcon className="w-6 h-6 pl-0.5" />
+        ) : (
+          <CheckIcon className="w-6 h-6" />
+        )}
+      </button>
 
       {/* Submit Confirmation Modal */}
       {showSubmitConfirm && (
