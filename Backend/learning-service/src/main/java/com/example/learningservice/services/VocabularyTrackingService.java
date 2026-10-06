@@ -1,3 +1,5 @@
+package com.example.learningservice.services;
+
 import com.example.learningservice.dto.SaveAiChallengeRequest;
 import com.example.learningservice.dto.TopicWeakWordDetailDto;
 import com.example.learningservice.dto.VocabAiChallengeDto;
