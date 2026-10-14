@@ -133,7 +133,7 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
       const challenge = await vocabStatsApi.getOrGenerateAiChallenge(
         userId,
         currentWord.word,
-        topicName,
+        currentWord.topic || topicName,
         forceRegenerate,
         aiChallenge?.grammarName
       );
@@ -385,7 +385,9 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs uppercase font-bold tracking-wider text-text-muted">{topicName}</span>
+                <span className="text-xs uppercase font-bold tracking-wider text-text-muted">
+                  {currentWord.topic || topicName}
+                </span>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold">
                   Từ: {currentWord.word}
                 </span>
