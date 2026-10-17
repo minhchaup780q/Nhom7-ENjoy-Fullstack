@@ -22,6 +22,7 @@ public class TopicServiceImpl implements TopicService {
 
     private final TopicRepository topicRepository;
     private final LevelRepository levelRepository;
+    private final PartRepository partRepository;
     private final SessionRepository sessionRepository;
     private final UserProgressRepository userProgressRepository;
     private final ObjectMapper objectMapper;
@@ -82,11 +83,12 @@ public class TopicServiceImpl implements TopicService {
         }
 
         for (Topic topic : topics) {
-            if (topic.getParts() == null || topic.getParts().isEmpty()) continue;
+            List<Part> parts = partRepository.findByTopicIdAndIsDeleteFalseOrderByOrderIndexAsc(topic.getId());
+            if (parts.isEmpty()) continue;
 
             // Lấy tất cả sessions của topic
             List<Session> allSessions = new ArrayList<>();
-            for (Part part : topic.getParts()) {
+            for (Part part : parts) {
                 allSessions.addAll(sessionRepository.findByPartIdAndIsDeleteFalseOrderByOrderIndexAsc(part.getId()));
             }
 

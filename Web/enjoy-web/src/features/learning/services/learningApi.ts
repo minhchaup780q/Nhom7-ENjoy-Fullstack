@@ -52,8 +52,10 @@ export interface SkillComparisonStats {
 
 export const learningApi = {
   // Lấy tiến độ học cá nhân của User hiện tại
-  getUserProgress: () => {
-    return apiClient.get<UserProgress[]>('/api/progress/my-progress');
+  getUserProgress: (userId?: number) => {
+    return apiClient.get<UserProgress[]>('/api/progress/my-progress', {
+      params: userId ? { userId } : {}
+    });
   },
 
   // Lấy thống kê học tập cá nhân của User hiện tại hoặc của con (dành cho phụ huynh)
@@ -173,9 +175,26 @@ export const learningApi = {
   // PLACEMENT TEST APIs
   // ============================================================
 
-  /** Tạo đề bài kiểm tra đầu vào */
-  generatePlacementTest: () => {
-    return apiClient.get<PlacementTestData>('/api/placement-test/generate');
+  /** Tải trực tiếp đề bài kiểm tra đầu vào từ file JSON trên AWS S3 (tự động fallback sang local/Backend nếu S3 chặn CORS) */
+  fetchPlacementTestFromS3: async (): Promise<PlacementTestData> => {
+    const s3Url = 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Exam/placement_test.json';
+    try {
+      const response = await axios.get<PlacementTestData>(s3Url);
+      return response.data;
+    } catch (s3Error) {
+      console.warn("Không thể tải trực tiếp từ S3 (do S3 chưa bật CORS), đang lấy từ local fallback...", s3Error);
+      try {
+        const localRes = await axios.get<PlacementTestData>('/placement_test.json');
+        return localRes.data;
+      } catch {
+        return await apiClient.get<PlacementTestData>('/api/placement-test/content');
+      }
+    }
+  },
+
+  /** Tạo hoặc lấy đề bài kiểm tra đầu vào */
+  generatePlacementTest: async (): Promise<PlacementTestData> => {
+    return await learningApi.fetchPlacementTestFromS3();
   },
 
   /** Nộp bài kiểm tra đầu vào */

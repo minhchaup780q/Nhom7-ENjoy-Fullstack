@@ -1,5 +1,6 @@
 package com.example.learningservice.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,41 +17,85 @@ import java.util.List;
 @AllArgsConstructor
 public class PlacementTestSubmitRequest {
 
-    private List<VocabAnswer> vocabAnswers;       // Kết quả vòng 1
-    private List<GrammarAnswer> grammarAnswers;   // Kết quả vòng 2
-    private List<SpeakingAnswer> speakingAnswers; // Kết quả vòng 3
+    private String testId;
+
+    // Cấu trúc mới 3 vòng từ S3
+    @JsonProperty("round1Answers")
+    private List<Round1Answer> round1Answers;
+
+    @JsonProperty("round2Answers")
+    private List<Round2Answer> round2Answers;
+
+    @JsonProperty("round3Answers")
+    private List<Round3Answer> round3Answers;
+
+    // Backward-compatibility nếu client cũ gửi
+    private List<VocabAnswer> vocabAnswers;
+    private List<GrammarAnswer> grammarAnswers;
+    private List<SpeakingAnswer> speakingAnswers;
 
     // -------------------------------------------------------
-    // Vòng 1: User nối từ - client gửi về từng cặp đã nối
+    // Vòng 1: Nghe chọn ảnh (LISTEN_AND_CHOOSE_IMAGE)
+    // -------------------------------------------------------
+    @Data @Builder @NoArgsConstructor @AllArgsConstructor
+    public static class Round1Answer {
+        @JsonProperty("question_id")
+        private String questionId;
+        private String topic;
+        @JsonProperty("selected_option_id")
+        private String selectedOptionId;
+    }
+
+    // -------------------------------------------------------
+    // Vòng 2: Nối từ với nghĩa (MATCH_PAIR)
+    // -------------------------------------------------------
+    @Data @Builder @NoArgsConstructor @AllArgsConstructor
+    public static class Round2Answer {
+        @JsonProperty("question_id")
+        private String questionId;
+        private String topic;
+        private String word;
+        @JsonProperty("selected_meaning")
+        private String selectedMeaning;
+    }
+
+    // -------------------------------------------------------
+    // Vòng 3: Sắp xếp câu (SENTENCE_BUILDER)
+    // -------------------------------------------------------
+    @Data @Builder @NoArgsConstructor @AllArgsConstructor
+    public static class Round3Answer {
+        @JsonProperty("question_id")
+        private String questionId;
+        private String topic;
+        @JsonProperty("user_sentence")
+        private String userSentence;
+    }
+
+    // -------------------------------------------------------
+    // Legacy DTOs
     // -------------------------------------------------------
     @Data @Builder @NoArgsConstructor @AllArgsConstructor
     public static class VocabAnswer {
         private Long vocabularyId;
         private Long topicId;
         private String word;
-        private String selectedTranslation; // Nghĩa user chọn
-        private String correctTranslation;  // Nghĩa đúng (để backend verify)
+        private String selectedTranslation;
+        private String correctTranslation;
     }
 
-    // -------------------------------------------------------
-    // Vòng 2: User sắp xếp câu
-    // -------------------------------------------------------
     @Data @Builder @NoArgsConstructor @AllArgsConstructor
     public static class GrammarAnswer {
         private Long topicId;
-        private String correctSentence; // Câu đúng gốc
-        private String userSentence;    // Câu user sắp xếp
-        private String grammarName;     // Tên ngữ pháp liên quan
+        private String correctSentence;
+        private String userSentence;
+        private String grammarName;
     }
 
-    // -------------------------------------------------------
-    // Vòng 3: User nói câu
-    // -------------------------------------------------------
     @Data @Builder @NoArgsConstructor @AllArgsConstructor
     public static class SpeakingAnswer {
         private Long topicId;
-        private String sentence;        // Câu cần nói
-        private String recognizedText;  // Văn bản được nhận dạng từ speech service
-        private Float score;            // Điểm speech (0-100), null nếu không nhận được
+        private String sentence;
+        private String recognizedText;
+        private Float score;
     }
 }

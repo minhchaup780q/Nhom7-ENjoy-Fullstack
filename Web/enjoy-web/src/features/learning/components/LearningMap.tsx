@@ -36,6 +36,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
     activeLevel,
     activeTopic,
     fetchLevels,
+    fetchUserProgress,
     selectLevel,
     selectTopic,
     selectSession,
@@ -59,7 +60,11 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
     if (levels.length === 0) {
       fetchLevels();
     }
-  }, [fetchLevels, levels.length]);
+    fetchUserProgress();
+    if (activeLevel) {
+      selectLevel(activeLevel);
+    }
+  }, []);
 
   const getLevelColors = (index: number) => {
     const palettes = [
@@ -243,14 +248,15 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
   // Nhưng vẫn giữ nguyên rawSessionsInTopic đầy đủ để tính toán chain unlock
   const skippedSessionIds = new Set(
     userProgress
-      .filter(p => p.status === SessionStatus.SKIPPED && p.session)
-      .map(p => p.session.id)
+      .filter(p => p.status === SessionStatus.SKIPPED)
+      .map(p => p.session?.id || (p as any).sessionId)
+      .filter(Boolean)
   );
   const visibleSessionsInTopic = rawSessionsInTopic.filter(s => !skippedSessionIds.has(s.id));
 
   // Map trạng thái bài học dựa trên userProgress cá nhân (dùng rawSessionsInTopic đầy đủ để tính chain)
   const allSessionsInTopic = visibleSessionsInTopic.map((session, index) => {
-    const prog = userProgress.find(p => p.session && p.session.id === session.id);
+    const prog = userProgress.find(p => (p.session && p.session.id === session.id) || (p as any).sessionId === session.id);
     let calculatedStatus = SessionStatus.LOCK;
 
     if (prog) {
@@ -262,7 +268,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
       let isPrevFinished = false;
       if (myRawIdx > 0) {
         const prevRaw = rawSessionsInTopic[myRawIdx - 1];
-        const prevProg = userProgress.find(p => p.session && p.session.id === prevRaw.id);
+        const prevProg = userProgress.find(p => (p.session && p.session.id === prevRaw.id) || (p as any).sessionId === prevRaw.id);
         if (prevProg) {
           isPrevFinished = prevProg.status === SessionStatus.FINISH || prevProg.status === SessionStatus.SKIPPED;
         } else {
@@ -286,9 +292,9 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
 
   // Tính toán tiến trình hoàn thành của một Chủ đề (%)
   const getTopicProgress = (topicId: number) => {
-    // Đếm số bài học đã hoàn thành (FINISH) thuộc topic này trong userProgress
+    // Đếm số bài học đã hoàn thành (FINISH) hoặc được miễn (SKIPPED) thuộc topic này trong userProgress
     const finishedCount = userProgress.filter(p => {
-      if (p.status !== SessionStatus.FINISH) return false;
+      if (p.status !== SessionStatus.FINISH && p.status !== SessionStatus.SKIPPED) return false;
       if (p.session?.part?.topic?.id === topicId) return true;
       if (activeTopic?.id === topicId && parts.some(part => part.id === p.session?.part?.id)) return true;
       return false;
@@ -454,6 +460,20 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                           {tpc.title}
                         </h3>
                         <p className="text-xs font-semibold text-text-muted line-clamp-2">{tpc.description}</p>
+                        {(tpc as any).learningStatus === 'GRAMMAR_ONLY' && (
+                          <div className="pt-1">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-700 text-xs font-bold rounded-xl border border-green-200">
+                              ⚡ Đã miễn phần Từ vựng — Chỉ cần học Ngữ pháp
+                            </span>
+                          </div>
+                        )}
+                        {(tpc as any).learningStatus === 'VOCAB_ONLY' && (
+                          <div className="pt-1">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-xl border border-blue-200">
+                              ⚡ Đã miễn phần Ngữ pháp — Chỉ cần học Từ vựng
+                            </span>
+                          </div>
+                        )}
                         {!isUnlocked && (
                           <span className="inline-flex items-center gap-1.5 text-xs font-bold text-text-muted pt-1">
                             <LockClosedIcon className="w-3.5 h-3.5" /> CHƯA MỞ KHÓA
