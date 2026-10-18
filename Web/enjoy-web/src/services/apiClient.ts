@@ -201,3 +201,5 @@ export const apiClient = {
     return response.data;
   },
 };
+
+export default apiClient;

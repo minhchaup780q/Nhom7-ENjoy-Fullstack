@@ -11,7 +11,7 @@ import {
 } from '@heroicons/react/24/solid';
 import { Button3D } from '../components/ui/Button3D';
 import { StreakPopover } from '../components/ui/StreakPopover';
-import apiClient from '../services/apiClient';
+import { apiClient } from '../services/apiClient';
 import type { StreakInfo } from '../features/leaderboard/types';
 
 interface SidebarRightProps {
