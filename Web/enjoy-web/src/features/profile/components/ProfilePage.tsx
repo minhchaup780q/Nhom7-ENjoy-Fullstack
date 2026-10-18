@@ -63,6 +63,7 @@ export const ProfilePage: React.FC = () => {
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [showParentModal, setShowParentModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [rankData, setRankData] = useState<any>(null);
 
   useEffect(() => {
     fetchProfile();
@@ -76,6 +77,19 @@ export const ProfilePage: React.FC = () => {
       setUsername(data.username || '');
       setBirthday(data.birthday || '');
       setAvatarUrl(data.avatarUrl || AVATAR_PRESETS[0]);
+
+      // Tải dữ liệu rank thật từ API
+      try {
+        const lbRes = await apiClient.get<any>('/api/leaderboard/current', {
+          params: {
+            userId: data.id || user?.id,
+            username: data.username || user?.username,
+          }
+        });
+        setRankData(lbRes);
+      } catch (lbErr) {
+        console.warn("Chưa tải được leaderboard trên profile:", lbErr);
+      }
     } catch (err: any) {
       console.warn("Không thể tải profile từ backend, fallback sang local data:", err);
       if (user) {
@@ -306,7 +320,7 @@ export const ProfilePage: React.FC = () => {
             </div>
             <div className="space-y-0.5">
               <div className="text-2xl font-display font-black text-text-main leading-tight">
-                321
+                {rankData?.currentUserEntry?.weeklyXp ?? 0}
               </div>
               <div className="text-xs font-bold text-text-muted">
                 Tổng điểm KN
@@ -325,7 +339,7 @@ export const ProfilePage: React.FC = () => {
             <div className="space-y-0.5 flex-1">
               <div className="flex items-center justify-between">
                 <span className="text-xl font-display font-black text-text-main leading-tight">
-                  Bạc
+                  {rankData?.currentRank?.nameVi || 'Đồng'}
                 </span>
                 <span className="px-2 py-0.5 bg-[#afafaf] text-white text-[10px] font-display font-black rounded-md tracking-wider">
                   TUẦN 1
