@@ -45,4 +45,26 @@ public class TopicWithProgressDto {
      * - HIDDEN: null (không hiển thị)
      */
     private String displayTitle;
+
+    /**
+     * Tổng số bài học của topic
+     */
+    private Integer totalSessions;
+
+    /**
+     * Số bài học thực tế cần học (loại trừ các bài đã SKIPPED)
+     */
+    private Integer totalActiveSessions;
+
+    /**
+     * Số bài học user đã hoàn thành (FINISH) trong các bài active
+     */
+    private Integer completedSessions;
+
+    /**
+     * Tiến trình hoàn thành topic (%): 0 -> 100
+     * Được tính dựa trên số bài học chưa được skip:
+     * progressPercent = (totalActiveSessions == 0) ? 100 : (completedSessions * 100 / totalActiveSessions)
+     */
+    private Integer progressPercent;
 }

@@ -73,12 +73,17 @@ public class TopicServiceImpl implements TopicService {
         List<Topic> topics = topicRepository.findByLevelIdAndIsDeleteFalseOrderByOrderIndexAsc(levelId);
         List<TopicWithProgressDto> result = new ArrayList<>();
 
-        // Lấy toàn bộ UserProgress SKIPPED của user một lần (tránh N+1)
+        // Lấy toàn bộ UserProgress của user một lần (tránh N+1)
         List<UserProgress> allProgress = userProgressRepository.findByUserId(userId);
         Set<Long> skippedSessionIds = new HashSet<>();
+        Set<Long> finishedSessionIds = new HashSet<>();
         for (UserProgress up : allProgress) {
-            if (up.getStatus() == SessionStatus.SKIPPED && up.getSession() != null) {
-                skippedSessionIds.add(up.getSession().getId());
+            if (up.getSession() != null) {
+                if (up.getStatus() == SessionStatus.SKIPPED) {
+                    skippedSessionIds.add(up.getSession().getId());
+                } else if (up.getStatus() == SessionStatus.FINISH) {
+                    finishedSessionIds.add(up.getSession().getId());
+                }
             }
         }
 
@@ -102,21 +107,20 @@ public class TopicServiceImpl implements TopicService {
             String grammarName = null;
 
             for (Session s : allSessions) {
-                int oi = s.getOrderIndex() != null ? s.getOrderIndex() : 0;
-                if (oi >= 1 && oi <= 5) {
+                if (isVocabSession(s)) {
                     hasVocabSessions = true;
                     vocabCount++;
                     if (!skippedSessionIds.contains(s.getId())) {
                         allVocabSkipped = false;
                     }
-                } else if (oi >= 6 && oi <= 10) {
+                } else if (isGrammarSession(s)) {
                     hasGrammarSessions = true;
                     grammarCount++;
                     if (!skippedSessionIds.contains(s.getId())) {
                         allGrammarSkipped = false;
                     }
-                    // Lấy grammar name từ session GRAMMAR
-                    if (s.getSessionType() == SessionType.GRAMMAR && grammarName == null) {
+                    // Lấy grammar name từ session GRAMMAR hoặc session có orderIndex == 6 (vòng 6)
+                    if (((s.getOrderIndex() != null && s.getOrderIndex() == 6) || s.getSessionType() == SessionType.GRAMMAR) && grammarName == null) {
                         grammarName = extractGrammarName(s);
                     }
                 }
@@ -159,6 +163,27 @@ public class TopicServiceImpl implements TopicService {
                     break;
             }
 
+            // Tính tiến trình hoàn thành dựa trên số bài học CHƯA ĐƯỢC SKIP
+            int totalSessions = allSessions.size();
+            int totalActiveSessions = 0;
+            int completedSessions = 0;
+
+            for (Session s : allSessions) {
+                if (!skippedSessionIds.contains(s.getId())) {
+                    totalActiveSessions++;
+                    if (finishedSessionIds.contains(s.getId())) {
+                        completedSessions++;
+                    }
+                }
+            }
+
+            int progressPercent = 0;
+            if (totalActiveSessions == 0) {
+                progressPercent = 100;
+            } else {
+                progressPercent = Math.min(100, Math.round(((float) completedSessions / totalActiveSessions) * 100.0f));
+            }
+
             result.add(TopicWithProgressDto.builder()
                     .id(topic.getId())
                     .levelId(topic.getLevel() != null ? topic.getLevel().getId() : levelId)
@@ -169,6 +194,10 @@ public class TopicServiceImpl implements TopicService {
                     .grammarName(grammarName)
                     .learningStatus(learningStatus)
                     .displayTitle(displayTitle)
+                    .totalSessions(totalSessions)
+                    .totalActiveSessions(totalActiveSessions)
+                    .completedSessions(completedSessions)
+                    .progressPercent(progressPercent)
                     .build());
         }
         return result;
@@ -186,6 +215,22 @@ public class TopicServiceImpl implements TopicService {
             log.debug("Cannot parse grammar payload: {}", e.getMessage());
         }
         return grammarSession.getTitle();
+    }
+
+    private boolean isVocabSession(Session s) {
+        if (s == null) return false;
+        if (s.getOrderIndex() != null && s.getOrderIndex() >= 1 && s.getOrderIndex() <= 5) return true;
+        SessionType type = s.getSessionType();
+        return type == SessionType.FLASHCARD || type == SessionType.MATCH_WORD
+                || type == SessionType.SPEAKING || type == SessionType.RE_ORDER || type == SessionType.DRAG_DROP;
+    }
+
+    private boolean isGrammarSession(Session s) {
+        if (s == null) return false;
+        if (s.getOrderIndex() != null && s.getOrderIndex() >= 6 && s.getOrderIndex() <= 10) return true;
+        SessionType type = s.getSessionType();
+        return type == SessionType.GRAMMAR || type == SessionType.FILL_IN_BLANK
+                || type == SessionType.RE_ORDER_SENTENCE || type == SessionType.SPEAKING_SENTENCE || type == SessionType.CONVERSATION;
     }
 }
 

@@ -20,15 +20,6 @@ function App() {
   const isExamPage = location.pathname.startsWith('/exams');
   const isStatsPage = location.pathname.startsWith('/stats');
 
-  // 2. Trường hợp 1: Người dùng đang học bài -> Ẩn toàn bộ Sidebar để hiển thị màn hình làm bài tập tràn màn hình (Full-screen)
-  if (playingSession) {
-    return (
-      <SessionPlayer
-        session={playingSession}
-        onClose={() => setPlayingSession(null)}
-      />
-    );
-  }
 
   // 3. Trang Welcome / Placement Test => Full-screen không sidebar
   if (isWelcomePage) {
@@ -68,11 +59,21 @@ function App() {
   // 5. Người dùng ở các trang bình thường -> Hiển thị đầy đủ Bố cục 3 cột (Sidebar trái - Nội dung chính AppRoutes - Sidebar phải)
   return (
     <div className="min-h-screen bg-white flex w-full relative">
+      {/* Full-screen Session Player khi đang học bài (overlay che phủ toàn màn hình, không làm unmount AppRoutes) */}
+      {playingSession && (
+        <div className="fixed inset-0 z-50 bg-white overflow-y-auto">
+          <SessionPlayer
+            session={playingSession}
+            onClose={() => setPlayingSession(null)}
+          />
+        </div>
+      )}
+
       {/* Sidebar Left Navigation Menu */}
       <SidebarLeft />
 
       {/* Main Container Content Area */}
-      <main className={`flex-grow min-h-screen pl-64 flex flex-col bg-bg-light ${!hideRightSidebar ? 'pr-0 lg:pr-80' : 'pr-0'}`}>
+      <main className={`flex-grow min-h-screen pl-64 flex flex-col bg-white ${!hideRightSidebar ? 'pr-0 lg:pr-80' : 'pr-0'}`}>
         <AppRoutes onStartSession={(session) => setPlayingSession(session)} />
       </main>
 

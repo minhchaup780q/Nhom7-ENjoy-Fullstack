@@ -176,4 +176,8 @@ export interface TopicWithProgress {
   grammarName: string | null;
   learningStatus: LearningStatus;
   displayTitle: string;
+  totalSessions?: number;
+  totalActiveSessions?: number;
+  completedSessions?: number;
+  progressPercent?: number;
 }

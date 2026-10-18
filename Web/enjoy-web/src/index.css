@@ -724,13 +724,9 @@ body {
   font-family: var(--font-display);
   font-size: 2rem; font-weight: 900;
   color: var(--color-text-main);
-  margin-bottom: 10px;
+  margin-bottom: 32px;
 }
-.welcome-subtitle {
-  color: var(--color-text-muted); font-size: 1rem; font-weight: 500;
-  margin-bottom: 36px; line-height: 1.6;
-}
-.welcome-choices { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
+.welcome-choices { display: flex; flex-direction: column; gap: 16px; margin-bottom: 0; }
 .welcome-choice-btn {
   display: flex; align-items: center; gap: 16px;
   padding: 20px 24px; border-radius: 18px;
@@ -744,6 +740,13 @@ body {
 .choice-content { flex: 1; }
 .choice-title { font-size: 1rem; font-weight: 800; color: var(--color-text-main); margin-bottom: 4px; }
 .choice-desc { font-size: 0.82rem; color: var(--color-text-muted); font-weight: 500; line-height: 1.5; }
+.choice-note {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+  margin-top: 6px;
+  line-height: 1.5;
+}
 .choice-arrow { font-size: 1.4rem; color: var(--color-text-muted); }
 .welcome-note { font-size: 0.82rem; color: var(--color-text-muted); font-style: italic; }
 
