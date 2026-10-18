@@ -10,6 +10,8 @@ public interface LeaderboardService {
 
     void addXp(Long userId, int xpAmount, XpSourceType sourceType, Long sourceId, String description, String username, String avatarUrl);
 
+    LeaderboardResponseDto.StreakDto getUserStreak(Long userId);
+
     Tournament getOrCreateCurrentTournament();
 
     void processWeeklyTournamentReset();

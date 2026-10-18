@@ -8,8 +8,11 @@ import com.example.learningservice.entities.XpTransaction;
 import com.example.learningservice.entities.enums.RankTier;
 import com.example.learningservice.entities.enums.TournamentStatus;
 import com.example.learningservice.entities.enums.XpSourceType;
+import com.example.learningservice.entities.UserProgress;
+import com.example.learningservice.entities.enums.SessionStatus;
 import com.example.learningservice.repositories.LeaderboardEntryRepository;
 import com.example.learningservice.repositories.TournamentRepository;
+import com.example.learningservice.repositories.UserProgressRepository;
 import com.example.learningservice.repositories.UserRankProfileRepository;
 import com.example.learningservice.repositories.XpTransactionRepository;
 import com.example.learningservice.services.LeaderboardService;
@@ -22,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoField;
@@ -29,6 +33,8 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -39,6 +45,7 @@ public class LeaderboardServiceImpl implements LeaderboardService {
     private final UserRankProfileRepository userRankProfileRepository;
     private final LeaderboardEntryRepository leaderboardEntryRepository;
     private final XpTransactionRepository xpTransactionRepository;
+    private final UserProgressRepository userProgressRepository;
 
     @Override
     @Transactional
@@ -167,6 +174,7 @@ public class LeaderboardServiceImpl implements LeaderboardService {
                 .promotionThreshold(12)
                 .topUsers(topUserDtos)
                 .currentUserEntry(currentUserDto)
+                .streak(getUserStreak(userId))
                 .build();
     }
 
@@ -188,6 +196,8 @@ public class LeaderboardServiceImpl implements LeaderboardService {
                             .highestRank(RankTier.BRONZE)
                             .totalXp(0L)
                             .top1Count(0)
+                            .currentStreak(0)
+                            .longestStreak(0)
                             .username(username != null && !username.isBlank() ? username : "Người dùng #" + userId)
                             .avatarUrl(avatarUrl)
                             .build();
@@ -204,6 +214,31 @@ public class LeaderboardServiceImpl implements LeaderboardService {
         }
 
         profile.setTotalXp((profile.getTotalXp() != null ? profile.getTotalXp() : 0L) + xpAmount);
+
+        // Cập nhật chuỗi Streak liên tục thực tế
+        LocalDate today = LocalDate.now();
+        LocalDate lastDate = profile.getLastStudyDate();
+        int currentStreak = (profile.getCurrentStreak() != null) ? profile.getCurrentStreak() : 0;
+        int longestStreak = (profile.getLongestStreak() != null) ? profile.getLongestStreak() : 0;
+
+        if (lastDate == null) {
+            currentStreak = 1;
+            profile.setLastStudyDate(today);
+        } else if (!lastDate.equals(today)) {
+            if (lastDate.equals(today.minusDays(1))) {
+                currentStreak += 1;
+            } else if (lastDate.isBefore(today.minusDays(1))) {
+                currentStreak = 1;
+            }
+            profile.setLastStudyDate(today);
+        }
+
+        if (currentStreak > longestStreak) {
+            longestStreak = currentStreak;
+        }
+        profile.setCurrentStreak(currentStreak);
+        profile.setLongestStreak(longestStreak);
+
         profile.setUpdateAt(LocalDateTime.now());
         userRankProfileRepository.save(profile);
 
@@ -245,7 +280,91 @@ public class LeaderboardServiceImpl implements LeaderboardService {
         }
 
         leaderboardEntryRepository.save(entry);
-        log.info("Đã cộng {} KN cho user #{} ({}) - Tổng KN tuần: {}", xpAmount, userId, profile.getUsername(), entry.getWeeklyXp());
+        log.info("Đã cộng {} KN cho user #{} ({}) - Tổng KN tuần: {} - Streak: {} ngày",
+                xpAmount, userId, profile.getUsername(), entry.getWeeklyXp(), currentStreak);
+    }
+
+    @Override
+    @Transactional
+    public LeaderboardResponseDto.StreakDto getUserStreak(Long userId) {
+        if (userId == null) {
+            userId = 1L;
+        }
+
+        final Long targetUserId = userId;
+        UserRankProfile profile = userRankProfileRepository.findByUserId(targetUserId)
+                .orElseGet(() -> {
+                    UserRankProfile newProfile = UserRankProfile.builder()
+                            .userId(targetUserId)
+                            .currentRank(RankTier.BRONZE)
+                            .highestRank(RankTier.BRONZE)
+                            .totalXp(0L)
+                            .top1Count(0)
+                            .currentStreak(0)
+                            .longestStreak(0)
+                            .username("Người dùng #" + targetUserId)
+                            .build();
+                    newProfile.setCreateAt(LocalDateTime.now());
+                    newProfile.setUpdateAt(LocalDateTime.now());
+                    return userRankProfileRepository.save(newProfile);
+                });
+
+        LocalDate today = LocalDate.now();
+        LocalDate lastDate = profile.getLastStudyDate();
+        int currentStreak = (profile.getCurrentStreak() != null) ? profile.getCurrentStreak() : 0;
+        int longestStreak = (profile.getLongestStreak() != null) ? profile.getLongestStreak() : 0;
+
+        // Nếu ngày học cuối cùng trước hôm qua (bỏ lỡ >= 1 ngày) thì streak trở về 0
+        if (lastDate != null && lastDate.isBefore(today.minusDays(1))) {
+            currentStreak = 0;
+            profile.setCurrentStreak(0);
+            profile.setUpdateAt(LocalDateTime.now());
+            userRankProfileRepository.save(profile);
+        }
+
+        // Lấy ngày đầu tuần (Thứ Hai 00:00:00) và cuối tuần (Chủ Nhật 23:59:59)
+        LocalDate monday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        LocalDate sunday = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+        LocalDateTime startOfWeek = monday.atStartOfDay();
+        LocalDateTime endOfWeek = sunday.atTime(LocalTime.MAX);
+
+        List<UserProgress> progresses = userProgressRepository
+                .findByUserIdAndStatusAndCompletedAtBetween(targetUserId, SessionStatus.FINISH, startOfWeek, endOfWeek);
+
+        Set<LocalDate> studiedDates = progresses.stream()
+                .filter(p -> p.getCompletedAt() != null)
+                .map(p -> p.getCompletedAt().toLocalDate())
+                .collect(Collectors.toSet());
+
+        if (lastDate != null && lastDate.equals(today)) {
+            studiedDates.add(today);
+        }
+
+        // Xây dựng mảng 7 ngày: [T2, T3, T4, T5, T6, T7, CN]
+        List<Boolean> weeklyStatus = new ArrayList<>(7);
+        for (int i = 0; i < 7; i++) {
+            LocalDate checkDate = monday.plusDays(i);
+            weeklyStatus.add(studiedDates.contains(checkDate));
+        }
+
+        // activeDayIndex: 0 = T2, 1 = T3, ..., 6 = CN
+        int activeDayIndex = today.getDayOfWeek().getValue() - 1;
+
+        boolean studiedToday = studiedDates.contains(today);
+        String motivationText;
+        if (studiedToday) {
+            motivationText = "Tuyệt vời! Bạn đã hoàn thành mục tiêu học tập hôm nay và duy trì chuỗi " + currentStreak + " ngày!";
+        } else {
+            motivationText = "Luyện tập mỗi ngày để xây dựng thói quen! Hãy học 1 bài để duy trì chuỗi " + (currentStreak + 1) + " ngày!";
+        }
+
+        return LeaderboardResponseDto.StreakDto.builder()
+                .currentStreak(currentStreak)
+                .longestStreak(longestStreak)
+                .weeklyStatus(weeklyStatus)
+                .activeDayIndex(activeDayIndex)
+                .motivationText(motivationText)
+                .build();
     }
 
     @Override
