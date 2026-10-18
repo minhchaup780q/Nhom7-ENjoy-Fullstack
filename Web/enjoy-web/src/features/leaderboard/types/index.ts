@@ -28,6 +28,14 @@ export interface LeaderboardUser {
   isCurrentUser?: boolean;
 }
 
+export interface StreakInfo {
+  currentStreak: number;
+  longestStreak: number;
+  weeklyStatus: boolean[];
+  activeDayIndex: number;
+  motivationText?: string;
+}
+
 export interface LeaderboardResponse {
   tournament: {
     id: number;
@@ -51,6 +59,7 @@ export interface LeaderboardResponse {
     weeklyXp: number;
     isPromoting: boolean;
   };
+  streak?: StreakInfo;
 }
 
 export const RANK_TIERS_CONFIG: RankInfo[] = [

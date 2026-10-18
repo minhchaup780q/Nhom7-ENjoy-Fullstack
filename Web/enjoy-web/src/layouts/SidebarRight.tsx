@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { 
   FireIcon, 
@@ -11,6 +11,8 @@ import {
 } from '@heroicons/react/24/solid';
 import { Button3D } from '../components/ui/Button3D';
 import { StreakPopover } from '../components/ui/StreakPopover';
+import apiClient from '../services/apiClient';
+import type { StreakInfo } from '../features/leaderboard/types';
 
 interface SidebarRightProps {
   streak?: number;
@@ -20,7 +22,7 @@ interface SidebarRightProps {
 }
 
 export const SidebarRight: React.FC<SidebarRightProps> = ({
-  streak = 1,
+  streak = 0,
   gems = 794,
   hearts = 3,
   courseLevel = 2,
@@ -29,6 +31,23 @@ export const SidebarRight: React.FC<SidebarRightProps> = ({
   const isProfilePage = location.pathname === '/profile';
   const [showStreakPopover, setShowStreakPopover] = useState(false);
   const [activeFriendTab, setActiveFriendTab] = useState<'following' | 'followers'>('following');
+  const [streakInfo, setStreakInfo] = useState<StreakInfo | null>(null);
+
+  useEffect(() => {
+    const fetchStreak = async () => {
+      try {
+        const res = await apiClient.get<StreakInfo>('/api/leaderboard/streak');
+        if (res) {
+          setStreakInfo(res);
+        }
+      } catch (e) {
+        console.warn('Chưa thể lấy thông tin streak cho SidebarRight:', e);
+      }
+    };
+    fetchStreak();
+  }, [location.pathname]);
+
+  const displayStreak = streakInfo ? streakInfo.currentStreak : streak;
 
   return (
     <aside className="w-80 p-5 space-y-6 select-none bg-white min-h-screen">
@@ -56,12 +75,15 @@ export const SidebarRight: React.FC<SidebarRightProps> = ({
             title="Chuỗi ngày streak"
           >
             <FireIcon className="w-5 h-5 text-[#ff9600] animate-bounce-subtle" />
-            <span className="font-extrabold">{streak}</span>
+            <span className="font-extrabold">{displayStreak}</span>
           </button>
 
           {/* Interactive Streak Popover */}
           <StreakPopover 
-            streak={streak} 
+            streak={displayStreak} 
+            weeklyStatus={streakInfo?.weeklyStatus}
+            activeDayIndex={streakInfo?.activeDayIndex}
+            motivationText={streakInfo?.motivationText}
             isOpen={showStreakPopover} 
             onClose={() => setShowStreakPopover(false)} 
           />

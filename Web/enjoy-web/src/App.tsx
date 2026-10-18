@@ -53,8 +53,8 @@ function App() {
     );
   }
 
-  // Luôn ẩn right-sidebar trên tất cả các trang
-  const hideRightSidebar = true;
+  // Ẩn right-sidebar trên các trang làm bài thi hoặc thống kê bài thi
+  const hideRightSidebar = isExamPage || isStatsPage;
 
   // 5. Người dùng ở các trang bình thường -> Hiển thị đầy đủ Bố cục 3 cột (Sidebar trái - Nội dung chính AppRoutes - Sidebar phải)
   return (

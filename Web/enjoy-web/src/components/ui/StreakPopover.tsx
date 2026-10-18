@@ -8,14 +8,16 @@ interface StreakPopoverProps {
   // Mảng 7 ngày trong tuần [T2, T3, T4, T5, T6, T7, CN] với trạng thái hoàn thành
   weeklyStatus?: boolean[]; // Độ dài 7, boolean cho mỗi ngày
   activeDayIndex?: number;  // 0: T2, ..., 6: CN (Chủ Nhật)
+  motivationText?: string;
 }
 
 export const StreakPopover: React.FC<StreakPopoverProps> = ({
-  streak = 1,
+  streak = 0,
   isOpen,
   onClose,
-  weeklyStatus = [false, false, false, false, false, false, true],
-  activeDayIndex = 6, // Mặc định Chủ Nhật
+  weeklyStatus = [false, false, false, false, false, false, false],
+  activeDayIndex = 0,
+  motivationText,
 }) => {
   if (!isOpen) return null;
 
@@ -37,10 +39,12 @@ export const StreakPopover: React.FC<StreakPopoverProps> = ({
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="space-y-1.5 flex-1 text-left">
             <h3 className="text-2xl font-display font-black tracking-tight text-white drop-shadow-sm">
-              {streak} ngày streak
+              {streak > 0 ? `${streak} ngày streak` : 'Bắt đầu streak'}
             </h3>
             <p className="text-xs font-bold text-white/95 leading-relaxed">
-              Bạn đã học và nối dài streak sớm hơn so với 37,58% tổng số người học của hôm qua!
+              {motivationText || (streak > 0 
+                ? 'Bạn đã học và nối dài streak để xây dựng thói quen kiên trì mỗi ngày!' 
+                : 'Hãy hoàn thành 1 bài học ngay hôm nay để thắp sáng ngọn lửa streak đầu tiên!')}
             </p>
           </div>
 

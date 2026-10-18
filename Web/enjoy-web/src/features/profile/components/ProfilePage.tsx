@@ -305,7 +305,7 @@ export const ProfilePage: React.FC = () => {
             </div>
             <div className="space-y-0.5">
               <div className="text-2xl font-display font-black text-text-main leading-tight">
-                1
+                {rankData?.streak?.currentStreak ?? 0}
               </div>
               <div className="text-xs font-bold text-text-muted">
                 Ngày streak
