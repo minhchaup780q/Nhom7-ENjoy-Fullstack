@@ -235,29 +235,64 @@ public class VocabularyTrackingService {
      * Lấy danh sách chi tiết các từ sai của 1 topic kèm metadata hình ảnh, phát âm, nghĩa tiếng Việt.
      */
     public List<TopicWeakWordDetailDto> getTopicWeakWords(Long userId, String topicName) {
-        List<UserVocabularyTracking> weakRecords = trackingRepository.findByUserIdAndStatus(userId, VocabTrackingStatus.WEAK);
+        boolean isAllTopic = topicName == null || topicName.trim().isEmpty()
+                || topicName.equalsIgnoreCase("ALL")
+                || topicName.equalsIgnoreCase("Tất cả")
+                || topicName.equalsIgnoreCase("Tất cả các chủ đề");
 
-        List<UserVocabularyTracking> targetRecords = weakRecords.stream()
-                .filter(r -> r.getTopic() != null && r.getTopic().equalsIgnoreCase(topicName.trim()))
-                .toList();
+        // 1. Lấy tất cả từ trong tracking của user (không phân biệt WEAK hay CORRECT)
+        List<UserVocabularyTracking> allUserRecords = trackingRepository.findByUserId(userId);
+        List<UserVocabularyTracking> targetRecords;
 
-        if (targetRecords.isEmpty()) {
-            return Collections.emptyList();
+        if (isAllTopic) {
+            targetRecords = allUserRecords;
+        } else {
+            targetRecords = allUserRecords.stream()
+                    .filter(r -> r.getTopic() != null && r.getTopic().equalsIgnoreCase(topicName.trim()))
+                    .toList();
         }
 
-        List<String> targetWords = targetRecords.stream()
-                .map(UserVocabularyTracking::getWord)
-                .map(this::normalize)
-                .distinct()
-                .toList();
+        List<String> targetWords = new ArrayList<>();
+        Map<String, String> trackingImageMap = new HashMap<>();
+        Map<String, String> trackingTopicMap = new HashMap<>();
+
+        if (!targetRecords.isEmpty()) {
+            for (UserVocabularyTracking r : targetRecords) {
+                String w = normalize(r.getWord());
+                if (!w.isEmpty() && !targetWords.contains(w)) {
+                    targetWords.add(w);
+                    if (r.getImageUrl() != null && !r.getImageUrl().isBlank()) {
+                        trackingImageMap.put(w, r.getImageUrl());
+                    }
+                    if (r.getTopic() != null && !r.getTopic().isBlank()) {
+                        trackingTopicMap.put(w, r.getTopic());
+                    }
+                }
+            }
+        }
+
+        // 2. Nếu user chưa có bản ghi tracking nào trong DB -> Lấy từ MockVocabularyRepository
+        if (targetWords.isEmpty()) {
+            Map<String, String> allMock = mockVocabularyRepository.findAll();
+            for (Map.Entry<String, String> entry : allMock.entrySet()) {
+                String w = normalize(entry.getKey());
+                String t = entry.getValue();
+                if (isAllTopic || (t != null && t.equalsIgnoreCase(topicName.trim()))) {
+                    if (!targetWords.contains(w)) {
+                        targetWords.add(w);
+                        trackingTopicMap.put(w, t);
+                    }
+                }
+            }
+        }
+
+        if (targetWords.isEmpty()) {
+            return Collections.emptyList();
+        }
 
         List<Vocabulary> vocabEntities = vocabularyRepository.findByWordInIgnoreCase(targetWords);
         Map<String, Vocabulary> vocabMap = vocabEntities.stream()
                 .collect(Collectors.toMap(v -> normalize(v.getWord()), v -> v, (a, b) -> a));
-
-        Map<String, String> trackingImageMap = targetRecords.stream()
-                .filter(r -> r.getImageUrl() != null && !r.getImageUrl().isBlank())
-                .collect(Collectors.toMap(r -> normalize(r.getWord()), UserVocabularyTracking::getImageUrl, (a, b) -> a));
 
         List<TopicWeakWordDetailDto> result = new ArrayList<>();
         long fallbackId = 1000L;
@@ -268,6 +303,7 @@ public class VocabularyTrackingService {
             String translation = (entity != null && entity.getTranslation() != null && !entity.getTranslation().isBlank())
                     ? entity.getTranslation() : w;
             String audioUrl = entity != null ? entity.getAudioUrl() : null;
+            String resolvedTopic = trackingTopicMap.getOrDefault(w, isAllTopic ? "Vocabulary" : topicName);
 
             result.add(TopicWeakWordDetailDto.builder()
                     .id(entity != null ? entity.getId() : fallbackId++)
@@ -275,7 +311,7 @@ public class VocabularyTrackingService {
                     .translation(translation)
                     .imageUrl(finalImg)
                     .audioUrl(audioUrl)
-                    .topic(topicName)
+                    .topic(resolvedTopic)
                     .build());
         }
         return result;

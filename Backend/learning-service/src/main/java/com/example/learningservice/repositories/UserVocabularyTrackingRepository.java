@@ -26,15 +26,13 @@ public interface UserVocabularyTrackingRepository extends JpaRepository<UserVoca
      * Lấy thống kê số từ WEAK và CORRECT theo từng topic của 1 user.
      * Trả về: [topic, weakCount, correctCount]
      */
-    @Query("""
-        SELECT t.topic, 
-               SUM(CASE WHEN t.status = 'WEAK' THEN 1 ELSE 0 END),
-               SUM(CASE WHEN t.status = 'CORRECT' THEN 1 ELSE 0 END)
-        FROM UserVocabularyTracking t
-        WHERE t.userId = :userId
-        GROUP BY t.topic
-        ORDER BY SUM(CASE WHEN t.status = 'WEAK' THEN 1 ELSE 0 END) DESC
-    """)
+    @Query("SELECT t.topic, " +
+           "SUM(CASE WHEN t.status = 'WEAK' THEN 1 ELSE 0 END), " +
+           "SUM(CASE WHEN t.status = 'CORRECT' THEN 1 ELSE 0 END) " +
+           "FROM UserVocabularyTracking t " +
+           "WHERE t.userId = :userId " +
+           "GROUP BY t.topic " +
+           "ORDER BY SUM(CASE WHEN t.status = 'WEAK' THEN 1 ELSE 0 END) DESC")
     List<Object[]> findTopicStatsByUserId(@Param("userId") Long userId);
 
     /** Kiểm tra user đã từng làm bài thi nào chưa (có bản ghi trong bảng tracking không) */

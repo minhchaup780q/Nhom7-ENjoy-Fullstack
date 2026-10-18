@@ -17,22 +17,86 @@ import java.util.List;
 public class PlacementTestResultResponse {
 
     private Long historyId;
+    private int totalQuestions;
+    private int totalCorrect;
+
+    /** Danh sách các Topic được bỏ qua (miễn học) */
+    private List<String> skippedTopics;
 
     // -------------------------------------------------------
-    // Kết quả tổng quan 3 vòng
+    // Kết quả chi tiết 3 vòng mới
     // -------------------------------------------------------
+    private Round1Result round1Result;
+    private Round2Result round2Result;
+    private Round3Result round3Result;
+
+    // Giữ tương thích ngược cho giao diện cũ nếu cần
     private VocabResult vocabResult;
     private GrammarResult grammarResult;
     private SpeakingResult speakingResult;
 
     // -------------------------------------------------------
-    // Vòng 1: Từ vựng
+    // Vòng 1: Nghe chọn ảnh (LISTEN_AND_CHOOSE_IMAGE)
+    // -------------------------------------------------------
+    @Data @Builder @NoArgsConstructor @AllArgsConstructor
+    public static class Round1Result {
+        private int correct;
+        private int total;
+        private List<Round1Mistake> mistakes;
+    }
+
+    @Data @Builder @NoArgsConstructor @AllArgsConstructor
+    public static class Round1Mistake {
+        private String questionId;
+        private String topic;
+        private String selectedOptionId;
+        private String correctOptionId;
+    }
+
+    // -------------------------------------------------------
+    // Vòng 2: Nối từ với nghĩa (MATCH_PAIR)
+    // -------------------------------------------------------
+    @Data @Builder @NoArgsConstructor @AllArgsConstructor
+    public static class Round2Result {
+        private int correct;
+        private int total;
+        private List<Round2Mistake> mistakes;
+    }
+
+    @Data @Builder @NoArgsConstructor @AllArgsConstructor
+    public static class Round2Mistake {
+        private String questionId;
+        private String topic;
+        private String word;
+        private String selectedMeaning;
+        private String correctMeaning;
+    }
+
+    // -------------------------------------------------------
+    // Vòng 3: Ghép câu (SENTENCE_BUILDER)
+    // -------------------------------------------------------
+    @Data @Builder @NoArgsConstructor @AllArgsConstructor
+    public static class Round3Result {
+        private int correct;
+        private int total;
+        private List<Round3Mistake> mistakes;
+    }
+
+    @Data @Builder @NoArgsConstructor @AllArgsConstructor
+    public static class Round3Mistake {
+        private String questionId;
+        private String topic;
+        private String userSentence;
+        private String correctSentence;
+    }
+
+    // -------------------------------------------------------
+    // Legacy DTOs
     // -------------------------------------------------------
     @Data @Builder @NoArgsConstructor @AllArgsConstructor
     public static class VocabResult {
         private int correct;
         private int total;
-        /** Danh sách topic => danh sách từ sai */
         private List<TopicVocabMistake> mistakes;
     }
 
@@ -40,38 +104,29 @@ public class PlacementTestResultResponse {
     public static class TopicVocabMistake {
         private Long topicId;
         private String topicTitle;
-        private List<String> wrongWords; // Danh sách từ tiếng Anh bị sai
+        private List<String> wrongWords;
     }
 
-    // -------------------------------------------------------
-    // Vòng 2: Ngữ pháp
-    // -------------------------------------------------------
     @Data @Builder @NoArgsConstructor @AllArgsConstructor
     public static class GrammarResult {
         private int correct;
         private int total;
-        /** Danh sách grammar chưa vững */
         private List<GrammarMistake> mistakes;
     }
 
     @Data @Builder @NoArgsConstructor @AllArgsConstructor
     public static class GrammarMistake {
         private Long topicId;
-        private String wrongSentence;   // Câu user sắp xếp sai
-        private String correctSentence; // Câu đúng
-        private String grammarName;     // Tên ngữ pháp chưa vững (ví dụ: "Greetings, Names & Age")
+        private String wrongSentence;
+        private String correctSentence;
+        private String grammarName;
     }
 
-    // -------------------------------------------------------
-    // Vòng 3: Speaking
-    // -------------------------------------------------------
     @Data @Builder @NoArgsConstructor @AllArgsConstructor
     public static class SpeakingResult {
         private int correct;
         private int total;
-        /** Tỉ lệ sai (0.0 -> 1.0) */
         private double wrongRate;
-        /** Nhận xét tổng quan: "Tốt" / "Khá" / "Yếu" */
         private String overallComment;
         private List<SpeakingMistake> mistakes;
     }
@@ -79,8 +134,8 @@ public class PlacementTestResultResponse {
     @Data @Builder @NoArgsConstructor @AllArgsConstructor
     public static class SpeakingMistake {
         private Long topicId;
-        private String sentence;       // Câu cần nói
-        private String recognizedText; // Câu user đã nói
-        private Float score;           // Điểm speech
+        private String sentence;
+        private String recognizedText;
+        private Float score;
     }
 }
