@@ -46,4 +46,10 @@ public class LeaderboardEntry extends BaseEntity {
 
     @Column(name = "last_xp_updated_at")
     private LocalDateTime lastXpUpdatedAt;
+
+    @Column(name = "username", length = 100)
+    private String username;
+
+    @Column(name = "avatar_url", length = 500)
+    private String avatarUrl;
 }

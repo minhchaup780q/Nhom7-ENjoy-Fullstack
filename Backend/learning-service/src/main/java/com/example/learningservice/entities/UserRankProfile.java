@@ -34,4 +34,10 @@ public class UserRankProfile extends BaseEntity {
     @Column(name = "top1_count", nullable = false)
     @Builder.Default
     private Integer top1Count = 0;
+
+    @Column(name = "username", length = 100)
+    private String username;
+
+    @Column(name = "avatar_url", length = 500)
+    private String avatarUrl;
 }
