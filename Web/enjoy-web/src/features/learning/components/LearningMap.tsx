@@ -870,40 +870,30 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                           <div
                             ref={popupRef}
                             onClick={(e) => e.stopPropagation()}
-                            className="absolute bottom-full mb-4 bg-white border-2 border-[#e5e5e5] rounded-[2rem] p-5 shadow-2xl z-20 w-72 text-center animate-fade-in-up"
+                            className="absolute bottom-full mb-4 bg-[#b066fe] border-2 border-[#9333ea] rounded-3xl p-5 shadow-2xl z-20 w-72 text-center animate-fade-in-up text-white"
                           >
-                            <span className={`text-[10px] font-extrabold tracking-widest uppercase block mb-1 text-center ${palette.textClass}`}>
-                              Vòng {session.sessionIdx + 1}
-                            </span>
-                            <h4 className="text-sm font-display font-extrabold text-text-main m-0 leading-tight mb-4 text-center">
+                            <h4 className="text-base font-display font-black text-white m-0 leading-tight mb-1 text-center drop-shadow-sm">
                               {session.title}
                             </h4>
-                            <div className="flex gap-2">
-                              <Button3D
-                                variant={palette.btnVariant}
-                                fullWidth
-                                size="sm"
+                            <span className="text-xs font-bold text-white/90 block mb-4 text-center">
+                              Bài học {(session.sessionIdx ?? 0) + 1} / {partSessions.length}
+                            </span>
+                            <div className="flex flex-col gap-2">
+                              <button
+                                type="button"
                                 onClick={(e) => {
                                   e?.stopPropagation();
                                   setSelectedNodeId(null);
                                   onStartSession(session);
                                 }}
+                                className="w-full py-3 bg-white text-[#9333ea] font-display font-black text-sm tracking-wider uppercase rounded-2xl shadow-lg hover:bg-white/95 active:scale-95 transition-all cursor-pointer border-b-4 border-[#e9d5ff]"
                               >
-                                BẮT ĐẦU
-                              </Button3D>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedNodeId(null);
-                                }}
-                                className="px-3 border-2 border-border-main rounded-xl hover:bg-bg-light text-xs font-bold text-text-main cursor-pointer"
-                              >
-                                Đóng
+                                BẮT ĐẦU {session.status === SessionStatus.FINISH ? '+5 KN' : '+20 KN'}
                               </button>
                             </div>
                             {/* Tooltip arrow pointer */}
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-[10px] border-solid border-t-white border-x-transparent border-b-transparent" />
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-[11px] border-solid border-t-[#e5e5e5] border-x-transparent border-b-transparent -z-10" />
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-[10px] border-solid border-t-[#b066fe] border-x-transparent border-b-transparent" />
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-[12px] border-solid border-t-[#9333ea] border-x-transparent border-b-transparent -z-10" />
                           </div>
                         )}
                       </div>

@@ -13,6 +13,7 @@ import { useAuthStore } from '../features/auth/store/useAuthStore';
 import { PronunciationGuidePage } from '../features/pronunciation/components/PronunciationGuidePage';
 import { PlacementTestPage } from '../features/placement-test/components/PlacementTestPage';
 import { ExamPage } from '../features/exam/components/ExamPage';
+import { LeaderboardPage } from '../features/leaderboard/components/LeaderboardPage';
 import type { Session } from '../features/learning/types';
 
 import { AdminDashboard } from '../features/admin/components/AdminDashboard';
@@ -73,6 +74,7 @@ export const AppRoutes: React.FC<AppRoutesProps> = ({ onStartSession }) => {
         <Route path="/exams/:examId" element={<ExamPage />} />
         <Route path="/exam" element={<Navigate to="/exams" replace />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/leaderboard" element={<LeaderboardPage />} />
         <Route path="/stats" element={<ExamStatsPage />} />
         <Route path="/practice/supplementary" element={<SupplementaryPracticePage />} />
         <Route path="/pronunciation" element={<PronunciationGuidePage />} />
