@@ -29,8 +29,40 @@ export const PersonalizedListeningPart: React.FC<Props> = ({
   const [showTranscript, setShowTranscript] = useState<boolean>(true);
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+  const [currentSpeakingIndex, setCurrentSpeakingIndex] = useState<number | null>(null);
 
-  // Text-To-Speech trình duyệt đọc đoạn hội thoại
+  // Text-To-Speech trình duyệt đọc từng lượt đối thoại để không bị gián đoạn và highlight trực tiếp
+  const speakLineAt = (lineIdx: number) => {
+    if (!window.speechSynthesis) return;
+
+    if (lineIdx >= data.dialogue.length) {
+      setIsPlaying(false);
+      setCurrentSpeakingIndex(null);
+      return;
+    }
+
+    setCurrentSpeakingIndex(lineIdx);
+    const line = data.dialogue[lineIdx];
+    // Đọc tên nhân vật + câu thoại để bé nghe rõ ai đang nói
+    const utterance = new SpeechSynthesisUtterance(`${line.speaker} says: ${line.text}`);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.88;
+
+    utterance.onend = () => {
+      // Tạm dừng 350ms giữa 2 lượt đối đáp cho tự nhiên
+      setTimeout(() => {
+        speakLineAt(lineIdx + 1);
+      }, 350);
+    };
+
+    utterance.onerror = () => {
+      setIsPlaying(false);
+      setCurrentSpeakingIndex(null);
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
+
   const handlePlayAudio = () => {
     if (!window.speechSynthesis) {
       alert('Trình duyệt của bạn không hỗ trợ tính năng đọc phát âm tự động.');
@@ -40,24 +72,13 @@ export const PersonalizedListeningPart: React.FC<Props> = ({
     if (isPlaying) {
       window.speechSynthesis.cancel();
       setIsPlaying(false);
+      setCurrentSpeakingIndex(null);
       return;
     }
 
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(data.fullTranscript);
-    utterance.lang = 'en-US';
-    utterance.rate = 0.85; // Tốc độ vừa phải cho học sinh nhỏ tuổi
-
-    utterance.onend = () => {
-      setIsPlaying(false);
-    };
-
-    utterance.onerror = () => {
-      setIsPlaying(false);
-    };
-
     setIsPlaying(true);
-    window.speechSynthesis.speak(utterance);
+    speakLineAt(0);
   };
 
   useEffect(() => {
@@ -160,36 +181,68 @@ export const PersonalizedListeningPart: React.FC<Props> = ({
           </button>
         </div>
 
-        {/* Bong bóng chat hội thoại */}
+        {/* Bong bóng chat hội thoại đối đáp qua lại */}
         {showTranscript && (
-          <div className="bg-white/80 backdrop-blur rounded-2xl p-5 border border-violet-100 flex flex-col gap-3 max-h-80 overflow-y-auto">
+          <div className="bg-white/90 backdrop-blur rounded-2xl p-5 border border-violet-100 flex flex-col gap-3.5 max-h-[440px] overflow-y-auto shadow-inner">
+            <div className="flex items-center justify-between pb-2 border-b border-gray-100 text-[11px] font-bold text-gray-400">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-violet-500 inline-block" />
+                👦 Tom (Xanh tím)
+              </span>
+              <span className="flex items-center gap-1.5">
+                👧 Lucy (Xanh ngọc)
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
+              </span>
+            </div>
+
             {data.dialogue.map((line, idx) => {
-              const isSpeakerA = idx % 2 === 0;
+              const isTom = line.speaker.toLowerCase().includes('tom') || idx % 2 === 0;
+              const isSpeakingNow = currentSpeakingIndex === idx;
+
               return (
                 <div
                   key={idx}
-                  className={`flex items-start gap-3 ${isSpeakerA ? 'justify-start' : 'justify-end'}`}
+                  className={`flex items-start gap-3 transition-all duration-300 ${isTom ? 'justify-start' : 'justify-end'}`}
                 >
-                  {isSpeakerA && (
-                    <div className="w-9 h-9 rounded-full bg-violet-600 text-white font-bold flex items-center justify-center text-xs shrink-0 shadow-sm">
-                      {line.speaker.slice(0, 1)}
+                  {isTom && (
+                    <div
+                      className={`w-9 h-9 rounded-2xl font-bold flex items-center justify-center text-xs shrink-0 shadow-sm transition-all ${
+                        isSpeakingNow ? 'bg-amber-500 text-white scale-110 shadow-md' : 'bg-violet-600 text-white'
+                      }`}
+                    >
+                      👦
                     </div>
                   )}
+
                   <div
-                    className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm md:text-base font-medium shadow-sm ${
-                      isSpeakerA
-                        ? 'bg-violet-100/70 text-violet-950 rounded-tl-sm'
-                        : 'bg-emerald-100/80 text-emerald-950 rounded-tr-sm'
+                    className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm md:text-base font-medium transition-all ${
+                      isSpeakingNow
+                        ? 'bg-amber-100 text-amber-950 ring-2 ring-amber-400 shadow-md scale-[1.01]'
+                        : isTom
+                        ? 'bg-violet-50 text-violet-950 rounded-tl-sm border border-violet-100'
+                        : 'bg-emerald-50 text-emerald-950 rounded-tr-sm border border-emerald-100'
                     }`}
                   >
-                    <span className="block text-[11px] font-extrabold opacity-70 mb-0.5">
-                      {line.speaker}
-                    </span>
-                    <span>{line.text}</span>
+                    <div className="flex items-center justify-between gap-3 mb-1">
+                      <span className="text-[11px] font-extrabold tracking-wide uppercase opacity-75">
+                        {line.speaker}
+                      </span>
+                      {isSpeakingNow && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-200/60 px-2 py-0.5 rounded-full animate-pulse">
+                          <SpeakerWaveIcon className="w-3 h-3" /> Đang nói
+                        </span>
+                      )}
+                    </div>
+                    <span className="leading-relaxed">{line.text}</span>
                   </div>
-                  {!isSpeakerA && (
-                    <div className="w-9 h-9 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-xs shrink-0 shadow-sm">
-                      {line.speaker.slice(0, 1)}
+
+                  {!isTom && (
+                    <div
+                      className={`w-9 h-9 rounded-2xl font-bold flex items-center justify-center text-xs shrink-0 shadow-sm transition-all ${
+                        isSpeakingNow ? 'bg-amber-500 text-white scale-110 shadow-md' : 'bg-emerald-600 text-white'
+                      }`}
+                    >
+                      👧
                     </div>
                   )}
                 </div>

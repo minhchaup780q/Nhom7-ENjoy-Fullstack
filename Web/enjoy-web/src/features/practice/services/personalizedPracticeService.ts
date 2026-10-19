@@ -265,7 +265,8 @@ Return ONLY valid raw JSON with NO markdown formatting:
   },
 
   /**
-   * VÒNG NGHE: Gọi AI chatbot sinh đoạn hội thoại tự nhiên và các câu hỏi trắc nghiệm A, B, C, D
+   * VÒNG NGHE: Gọi AI chatbot sinh đoạn hội thoại tự nhiên dài (8-12 lượt đối đáp qua lại)
+   * và các câu hỏi trắc nghiệm A, B, C, D cho từng từ vựng
    */
   generateListeningExercise: async (
     pageIndex: number,
@@ -275,30 +276,40 @@ Return ONLY valid raw JSON with NO markdown formatting:
     const wordList = words.map((w) => w.word);
     const wordListStr = wordList.join(', ');
 
-    const prompt = `You are a Cambridge Starters English teacher.
-Create a short, natural listening conversation between two children (Tom and Lucy) about topic "${topic}".
-They must mention and discuss these words: [${wordListStr}].
-Example:
-Tom: Hello, Lucy!
-Lucy: Hi, Tom! Do you see all these items?
-Tom: Yes! I really like the ${wordList[0]}!
-Lucy: Me too, and I also have a ${wordList[1] || wordList[0]}.
+    const prompt = `You are an expert Cambridge English: Starters (Pre-A1) test creator.
+Create a lively, natural, and engaging back-and-forth conversation between two children, Tom and Lucy, about the topic "${topic}".
+They MUST talk back and forth (at least 8 to 12 dialogue turns) and naturally discuss ALL of these target words: [${wordListStr}].
 
-Then create 2 to 4 multiple-choice questions (A, B, C, D) directly asking about who likes what, who has what, or details about these items.
+CONVERSATION RULES:
+1. The conversation MUST be detailed and long enough (between 8 and 12 alternating turns: Tom -> Lucy -> Tom -> Lucy...).
+2. They should ask questions, answer, express excitement, describe colors, actions, locations, and feelings.
+3. Each target word from [${wordListStr}] must be clearly mentioned at least once with specific details (e.g. Tom has it, Lucy sees it, what color it is, or what it does).
+4. Language must be Pre-A1 Starters level (simple, clear, cheerful English for 6-8 year olds).
+
+QUESTION RULES:
+1. For EACH word in [${wordListStr}], create EXACTLY 1 multiple-choice question (A, B, C, D) asking about the specific detail discussed in the dialogue.
+2. Each question MUST have 4 clear choices (A, B, C, D) in the "options" array. One choice is the correct answer; the other 3 are plausible distractors.
+3. "correctAnswer" MUST exactly match one of the items in "options".
+4. Provide a clear "explanation" in child-friendly English.
+
 Return ONLY valid raw JSON with NO markdown formatting:
 {
   "dialogue": [
-    {"speaker": "Tom", "text": "Hello, Lucy!"},
-    {"speaker": "Lucy", "text": "Hi, Tom! ..."}
+    {"speaker": "Tom", "text": "Hi, Lucy! What are you doing in the garden today?"},
+    {"speaker": "Lucy", "text": "Hello, Tom! I am playing with my toys and looking around. Come look at this!"},
+    {"speaker": "Tom", "text": "Oh, wow! What is that under the big green tree?"},
+    {"speaker": "Lucy", "text": "That is my favorite ... It is so cute!"},
+    {"speaker": "Tom", "text": "..."},
+    {"speaker": "Lucy", "text": "..."}
   ],
-  "fullTranscript": "Tom: Hello, Lucy! Lucy: Hi, Tom! ...",
+  "fullTranscript": "Tom: Hi, Lucy! What are you doing in the garden today? Lucy: Hello, Tom! ...",
   "questions": [
     {
       "id": 1,
-      "question": "What does Tom like?",
-      "options": ["${wordList[0]}", "Option B", "Option C", "Option D"],
-      "correctAnswer": "${wordList[0]}",
-      "explanation": "Tom says he likes the ${wordList[0]}."
+      "question": "What is Lucy playing with?",
+      "options": ["A doll", "A ball", "A kite", "A robot"],
+      "correctAnswer": "A kite",
+      "explanation": "Lucy says she is playing with her kite in the garden."
     }
   ]
 }`;
@@ -311,42 +322,73 @@ Return ONLY valid raw JSON with NO markdown formatting:
         questions: ListeningQuestion[];
       }>(reply);
 
-      if (parsed && parsed.dialogue && parsed.questions && parsed.questions.length > 0) {
+      if (parsed && Array.isArray(parsed.dialogue) && parsed.dialogue.length >= 6 && Array.isArray(parsed.questions) && parsed.questions.length > 0) {
+        const fullTranscript = parsed.fullTranscript || parsed.dialogue.map((d) => `${d.speaker}: ${d.text}`).join(' ');
         return {
           pageIndex,
           topic,
           words,
           dialogue: parsed.dialogue,
-          fullTranscript: parsed.fullTranscript,
+          fullTranscript,
           questions: parsed.questions,
         };
       }
     } catch (err) {
-      console.warn('[PersonalizedPracticeService] AI generate Listening failed, fallback:', err);
+      console.warn('[PersonalizedPracticeService] AI generate Listening failed, using rich fallback:', err);
     }
 
-    // Fallback template
-    const dialogue: ListeningDialogueLine[] = [
-      { speaker: 'Tom', text: `Hello, Lucy! Today we are learning about ${topic}.` },
-      { speaker: 'Lucy', text: `Hi, Tom! I really like ${words[0]?.word || topic}.` },
-      { speaker: 'Tom', text: `Great! And look at that ${words[1]?.word || words[0]?.word}. It looks wonderful!` },
+    // Fallback template dài và đối đáp qua lại chi tiết
+    const w0 = words[0]?.word || 'book';
+    const w1 = words[1]?.word || 'pencil';
+    const w2 = words[2]?.word || 'ruler';
+    const w3 = words[3]?.word || 'bag';
+
+    const fallbackDialogue: ListeningDialogueLine[] = [
+      { speaker: 'Tom', text: `Hi, Lucy! What a sunny day to explore our ${topic} lesson!` },
+      { speaker: 'Lucy', text: `Hello, Tom! I am so happy to see you. What do you have there?` },
+      { speaker: 'Tom', text: `Look in my hands! I found a wonderful ${w0}. Do you like it?` },
+      { speaker: 'Lucy', text: `Yes, I love this ${w0}! It looks bright and colorful.` },
+      { speaker: 'Tom', text: `And what is that sitting on the table over there, Lucy?` },
+      { speaker: 'Lucy', text: `Oh, that is my brother's ${w1}. He uses it every morning at school.` },
+      ...(words.length > 2
+        ? [
+            { speaker: 'Tom', text: `That is cool! Wait, look near the window! Is that a ${w2}?` },
+            { speaker: 'Lucy', text: `Yes! It is a big ${w2}. My teacher gave it to me yesterday.` },
+          ]
+        : []),
+      ...(words.length > 3
+        ? [
+            { speaker: 'Tom', text: `And what is inside the green box on the floor?` },
+            { speaker: 'Lucy', text: `There is a brand new ${w3} inside the box!` },
+          ]
+        : []),
+      { speaker: 'Tom', text: `We discovered so many exciting things about ${topic} today!` },
+      { speaker: 'Lucy', text: `Yes, we did! That was really fun, Tom. Thank you!` },
     ];
 
-    const questions: ListeningQuestion[] = words.slice(0, 2).map((w, idx) => ({
-      id: idx + 1,
-      question: idx === 0 ? `What does Lucy like?` : `What does Tom see?`,
-      options: [w.word, 'apple', 'book', 'pencil'],
-      correctAnswer: w.word,
-      explanation: `In the conversation, Lucy and Tom talk about ${w.word}.`,
-    }));
+    const fallbackQuestions: ListeningQuestion[] = words.map((w, idx) => {
+      let qText = '';
+      if (idx === 0) qText = `What does Tom have in his hands?`;
+      else if (idx === 1) qText = `What is on the table?`;
+      else if (idx === 2) qText = `What does Lucy have near the window?`;
+      else qText = `What is inside the green box?`;
+
+      return {
+        id: idx + 1,
+        question: qText,
+        options: [w.word, 'car', 'apple', 'ball'],
+        correctAnswer: w.word,
+        explanation: `In the conversation, they talked about the ${w.word}.`,
+      };
+    });
 
     return {
       pageIndex,
       topic,
       words,
-      dialogue,
-      fullTranscript: dialogue.map((d) => `${d.speaker}: ${d.text}`).join(' '),
-      questions,
+      dialogue: fallbackDialogue,
+      fullTranscript: fallbackDialogue.map((d) => `${d.speaker}: ${d.text}`).join(' '),
+      questions: fallbackQuestions,
     };
   },
 };
