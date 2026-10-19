@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { AcademicCapIcon, ClockIcon, SpeakerWaveIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 import { examApi } from '../services/examApi';
 import { useExamStore } from '../store/useExamStore';
 import { ExamTakingPage } from './ExamTakingPage';
@@ -19,9 +18,10 @@ export const ExamPage: React.FC = () => {
 
   const { user } = useAuthStore();
 
-  // Lấy danh sách
+  // Lấy danh sách đề thi
   useEffect(() => {
-    examApi.getAllExams(user?.id)
+    examApi
+      .getAllExams(user?.id)
       .then(setExams)
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -30,13 +30,11 @@ export const ExamPage: React.FC = () => {
   // Đồng bộ URL và state
   useEffect(() => {
     if (examId) {
-      // Nếu url có id, tự động fetch chi tiết đề
       if (!currentExam && phase === 'LIST') {
         const id = parseInt(examId, 10);
         if (!isNaN(id)) handleSelectExam(id);
       }
     } else {
-      // Nếu không có id (đang ở danh sách), reset lại state nếu cần
       if (currentExam || phase !== 'LIST') {
         reset();
       }
@@ -68,37 +66,54 @@ export const ExamPage: React.FC = () => {
     }
   };
 
-  const examTypeLabel = (type: string) => {
+  const getExamTypeBadge = (type: string) => {
     switch (type) {
-      case 'CAMBRIDGE': return 'Cambridge';
-      case 'COLLINS': return 'Collins';
-      default: return type;
+      case 'COLLINS':
+        return (
+          <span className="px-2.5 py-0.5 rounded-md text-[12px] font-semibold bg-[#ccfbf1] text-[#0f766e]">
+            Collins
+          </span>
+        );
+      case 'CAMBRIDGE':
+        return (
+          <span className="px-2.5 py-0.5 rounded-md text-[12px] font-semibold bg-[#e0f2fe] text-[#0369a1]">
+            Cambridge
+          </span>
+        );
+      default:
+        return (
+          <span className="px-2.5 py-0.5 rounded-md text-[12px] font-semibold bg-slate-100 text-slate-700">
+            {type}
+          </span>
+        );
     }
   };
 
-  const examTypeColor = (type: string) => {
-    switch (type) {
-      case 'CAMBRIDGE': return 'bg-blue-100 text-blue-700 border-2 border-blue-200';
-      case 'COLLINS': return 'bg-emerald-100 text-emerald-700 border-2 border-emerald-200';
-      default: return 'bg-gray-100 text-gray-700 border-2 border-gray-200';
-    }
-  };
+  const filteredExams = exams.filter(
+    (exam) => filterType === 'ALL' || exam.examType === filterType
+  );
 
   return (
-    <div className="flex-1 flex flex-col p-6 max-w-5xl mx-auto w-full">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-display font-extrabold text-text-main mb-2 flex items-center gap-3">
-          <AcademicCapIcon className="w-8 h-8 text-primary" />
-          Khu vực Đề Thi
-        </h1>
-        <p className="text-text-muted text-sm">
-          Luyện thi chứng chỉ tiếng Anh Cambridge và Collins. Mỗi bài thi gồm 2 phần: Nghe và Đọc &amp; Viết.
-        </p>
+    <div className="flex-1 px-4 sm:px-8 py-8 max-w-6xl w-full mx-auto select-none">
+      {/* Page Title & Header (Matching IMAGE_23) */}
+      <div className="flex items-start gap-4 mb-8">
+        <div className="w-12 h-12 rounded-2xl bg-[#fee2e2] flex items-center justify-center text-[#ef4444] shrink-0 shadow-sm border border-[#fecaca]/60">
+          <span className="material-symbols-outlined text-[28px] text-[#f43f5e]">
+            school
+          </span>
+        </div>
+        <div className="flex flex-col gap-1 text-left">
+          <h1 className="text-2xl lg:text-3xl font-display font-extrabold text-[#0f172a] tracking-tight">
+            Khu vực Đề Thi
+          </h1>
+          <p className="text-[14px] text-[#64748b] leading-relaxed max-w-3xl">
+            Luyện thi chứng chỉ tiếng Anh Cambridge và Collins. Mỗi bài thi gồm 2 phần: Nghe và Đọc &amp; Viết.
+          </p>
+        </div>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex flex-wrap gap-3 mb-6">
+      {/* Filter Tabs (Matching IMAGE_23) */}
+      <div className="flex items-center gap-2 mb-8 flex-wrap">
         {[
           { id: 'ALL', label: 'Tất cả' },
           { id: 'CAMBRIDGE', label: 'Cambridge' },
@@ -108,10 +123,10 @@ export const ExamPage: React.FC = () => {
           <button
             key={tab.id}
             onClick={() => setFilterType(tab.id)}
-            className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${
+            className={`px-4 py-1.5 rounded-full text-[13px] transition-all cursor-pointer ${
               filterType === tab.id
-                ? 'bg-primary text-white shadow-md'
-                : 'bg-white border-2 border-border text-text-muted hover:border-primary/50 hover:text-primary'
+                ? 'font-semibold bg-[#0284c7] text-white shadow-sm hover:bg-[#0284c7]/90'
+                : 'font-medium bg-white border border-[#e2e8f0] text-[#64748b] hover:text-[#0f172a] hover:bg-[#f1f5f9]'
             }`}
           >
             {tab.label}
@@ -121,73 +136,85 @@ export const ExamPage: React.FC = () => {
 
       {/* Danh sách đề thi */}
       {loading ? (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400 text-xs">
+          <span className="material-symbols-outlined text-[32px] animate-spin text-[#0284c7]">
+            progress_activity
+          </span>
+          <span>Đang tải danh sách đề thi...</span>
         </div>
       ) : exams.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-center gap-4">
-          <AcademicCapIcon className="w-16 h-16 text-text-muted/40" />
-          <p className="text-text-muted font-semibold">Chưa có đề thi nào được thêm vào.</p>
+        <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+          <span className="material-symbols-outlined text-slate-300 text-[48px]">
+            menu_book
+          </span>
+          <p className="text-slate-500 font-semibold text-sm">
+            Chưa có đề thi nào trong danh sách.
+          </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {exams
-            .filter((exam) => filterType === 'ALL' || exam.examType === filterType)
-            .map((exam) => (
-            <button
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-left">
+          {filteredExams.map((exam) => (
+            <div
               key={exam.id}
               onClick={() => handleSelectExam(exam.id)}
-              disabled={loadingExamId === exam.id}
-              className={`group border-2 rounded-3xl p-6 text-left shadow-[0_8px_30px_rgb(99,102,241,0.06)] hover:shadow-[0_8px_30px_rgb(244,114,182,0.15)] hover:border-pink-200 hover:bg-pink-50 transition-all duration-300 active:scale-[0.98] disabled:opacity-60 disabled:cursor-wait relative overflow-hidden ${
-                exam.isCompleted 
-                  ? 'bg-emerald-50 border-emerald-500' 
-                  : 'bg-white border-indigo-50'
+              className={`bg-white rounded-2xl border p-6 shadow-xs hover:shadow-md hover:border-[#cbd5e1] transition-all flex flex-col justify-between group cursor-pointer relative overflow-hidden ${
+                exam.isCompleted
+                  ? 'border-emerald-300 bg-emerald-50/20'
+                  : 'border-[#e2e8f0]'
               }`}
             >
-              {/* Badge loại đề thi */}
-              <div className="flex items-center justify-between mb-4">
-                <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${examTypeColor(exam.examType)}`}>
-                  {examTypeLabel(exam.examType)}
-                </span>
-                <span className="text-xs text-text-muted font-medium bg-surface rounded-full px-3 py-1.5">
-                  {exam.level}
-                </span>
-              </div>
-
-              {/* Tên đề thi */}
-              <h2 className="text-lg font-display font-bold text-text-main mb-2 transition-colors">
-                {exam.title}
-              </h2>
-              <p className="text-sm text-text-muted line-clamp-2 mb-5">
-                {exam.description}
-              </p>
-
-              {/* Thông số */}
-              <div className="flex gap-4 text-xs font-medium text-gray-500">
-                <span className="flex items-center gap-1.5 bg-blue-50 text-blue-700 border-2 border-blue-200 px-2.5 py-1.5 rounded-xl">
-                  <SpeakerWaveIcon className="w-4 h-4" />
-                  Nghe: {exam.totalListeningQuestions} câu
-                </span>
-                <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border-2 border-emerald-200 px-2.5 py-1.5 rounded-xl">
-                  <BookOpenIcon className="w-4 h-4" />
-                  Đọc: {exam.totalReadingQuestions} câu
-                </span>
-              </div>
-
-              {/* Loading indicator */}
-              {loadingExamId === exam.id && (
-                <div className="mt-4 flex items-center gap-2 text-primary text-xs font-semibold">
-                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  Đang tải đề thi...
+              <div className="flex flex-col gap-3">
+                {/* Top Badges */}
+                <div className="flex items-center justify-between">
+                  {getExamTypeBadge(exam.examType)}
+                  <span className="px-2.5 py-0.5 rounded-md text-[12px] font-medium bg-[#f1f5f9] text-[#64748b]">
+                    {exam.level || 'Pre-A1'}
+                  </span>
                 </div>
-              )}
-            </button>
+
+                {/* Title & Description */}
+                <div className="mt-1">
+                  <h2 className="text-[17px] font-display font-bold text-[#0f172a] group-hover:text-[#0284c7] transition-colors leading-snug">
+                    {exam.title}
+                  </h2>
+                  <p className="text-[13px] text-[#64748b] mt-1 leading-relaxed line-clamp-2">
+                    {exam.description || `Bộ đề thi chuẩn Cambridge/Collins xuất bản`}
+                  </p>
+                </div>
+              </div>
+
+              {/* Bottom Action Badges */}
+              <div className="mt-5 pt-4 border-t border-[#f1f5f9] flex items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#f8fafc] border border-[#e2e8f0] text-[12px] text-[#475569] font-medium">
+                    <span>🎧</span> Nghe: {exam.totalListeningQuestions} câu
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#f8fafc] border border-[#e2e8f0] text-[12px] text-[#475569] font-medium">
+                    <span>📖</span> Đọc: {exam.totalReadingQuestions} câu
+                  </span>
+                </div>
+
+                {loadingExamId === exam.id ? (
+                  <span className="material-symbols-outlined text-[20px] text-[#0284c7] animate-spin">
+                    progress_activity
+                  </span>
+                ) : (
+                  <span className="material-symbols-outlined text-[20px] text-slate-300 group-hover:text-[#0284c7] group-hover:translate-x-0.5 transition-all">
+                    arrow_forward
+                  </span>
+                )}
+              </div>
+            </div>
           ))}
-          
-          {exams.filter((exam) => filterType === 'ALL' || exam.examType === filterType).length === 0 && (
-            <div className="col-span-1 md:col-span-2 flex flex-col items-center justify-center py-10 gap-3 text-center">
-              <AcademicCapIcon className="w-12 h-12 text-text-muted/30" />
-              <p className="text-text-muted font-medium">Không tìm thấy đề thi nào thuộc danh mục này.</p>
+
+          {filteredExams.length === 0 && (
+            <div className="col-span-1 md:col-span-2 flex flex-col items-center justify-center py-16 gap-3 text-center">
+              <span className="material-symbols-outlined text-slate-300 text-[40px]">
+                filter_alt_off
+              </span>
+              <p className="text-slate-500 font-medium text-sm">
+                Không tìm thấy đề thi nào thuộc danh mục này.
+              </p>
             </div>
           )}
         </div>
@@ -199,7 +226,7 @@ export const ExamPage: React.FC = () => {
 // ─── Intro Screen ───────────────────────────────────────────────
 const ExamIntroPage: React.FC = () => {
   const navigate = useNavigate();
-  const { currentExam, setPhase, setTimeLeft, reset } = useExamStore();
+  const { currentExam, setPhase, setTimeLeft } = useExamStore();
   if (!currentExam) return null;
 
   const handleStart = () => {
@@ -212,48 +239,65 @@ const ExamIntroPage: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-8 max-w-lg mx-auto text-center gap-6">
-      <div className="w-24 h-24 rounded-full bg-blue-50 border-4 border-blue-100 flex items-center justify-center shadow-[0_8px_30px_rgb(59,130,246,0.15)]">
-        <AcademicCapIcon className="w-12 h-12 text-blue-500" />
+    <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-8 max-w-lg mx-auto text-center gap-6 select-none">
+      <div className="w-20 h-20 rounded-3xl bg-sky-50 border border-sky-200 flex items-center justify-center shadow-md shadow-sky-500/10">
+        <span className="material-symbols-outlined text-[40px] text-sky-600">
+          school
+        </span>
       </div>
 
       <div>
-        <h1 className="text-3xl font-display font-extrabold text-text-main mb-3">
+        <h1 className="text-2xl sm:text-3xl font-display font-extrabold text-[#0f172a] mb-2 tracking-tight">
           {currentExam.title}
         </h1>
-        <p className="text-sm text-gray-500 leading-relaxed px-4">{currentExam.description}</p>
+        <p className="text-xs sm:text-sm text-slate-500 leading-relaxed px-2">
+          {currentExam.description}
+        </p>
       </div>
 
-      <div className="w-full bg-[#f8fafc] rounded-3xl p-5 text-sm grid grid-cols-2 gap-4 border-2 border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-        <div className="text-center p-4 bg-white rounded-2xl border-2 border-blue-50 shadow-sm">
-          <SpeakerWaveIcon className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-          <p className="font-bold text-gray-800 text-base mb-1">Phần Nghe</p>
-          <p className="text-gray-500 font-medium">{currentExam.totalListeningQuestions} câu · {currentExam.listeningDuration} phút</p>
+      <div className="w-full bg-slate-50 rounded-3xl p-5 text-sm grid grid-cols-2 gap-4 border border-slate-200/80 shadow-xs">
+        <div className="text-center p-4 bg-white rounded-2xl border border-slate-200/80 shadow-xs">
+          <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center mx-auto mb-2">
+            <span className="material-symbols-outlined text-[24px]">headphones</span>
+          </div>
+          <p className="font-bold text-slate-800 text-sm mb-0.5">Phần Nghe</p>
+          <p className="text-slate-500 text-xs font-medium">
+            {currentExam.totalListeningQuestions} câu · {currentExam.listeningDuration} phút
+          </p>
         </div>
-        <div className="text-center p-4 bg-white rounded-2xl border-2 border-emerald-50 shadow-sm">
-          <BookOpenIcon className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
-          <p className="font-bold text-gray-800 text-base mb-1">Phần Đọc &amp; Viết</p>
-          <p className="text-gray-500 font-medium">{currentExam.totalReadingQuestions} câu · {currentExam.readingDuration} phút</p>
+        <div className="text-center p-4 bg-white rounded-2xl border border-slate-200/80 shadow-xs">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-2">
+            <span className="material-symbols-outlined text-[24px]">menu_book</span>
+          </div>
+          <p className="font-bold text-slate-800 text-sm mb-0.5">Phần Đọc &amp; Viết</p>
+          <p className="text-slate-500 text-xs font-medium">
+            {currentExam.totalReadingQuestions} câu · {currentExam.readingDuration} phút
+          </p>
         </div>
       </div>
 
-      <div className="bg-amber-50 border-2 border-amber-100 rounded-2xl p-4 text-sm text-amber-800 text-left flex gap-3 shadow-sm">
-        <span className="text-xl mt-0.5">⚠️</span>
-        <p className="font-medium">Sau khi hoàn thành phần Nghe, bạn <strong className="text-amber-900">không thể quay lại</strong> để chỉnh sửa. Hãy kiểm tra kỹ trước khi chuyển sang phần Đọc &amp; Viết.</p>
+      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs sm:text-sm text-amber-900 text-left flex gap-3 shadow-xs">
+        <span className="material-symbols-outlined text-amber-600 text-[20px] shrink-0 mt-0.5">
+          warning
+        </span>
+        <p className="font-medium leading-relaxed">
+          Sau khi hoàn thành phần Nghe, bạn <strong className="text-amber-950 font-bold">không thể quay lại</strong> để chỉnh sửa. Hãy kiểm tra kỹ trước khi chuyển sang phần Đọc &amp; Viết.
+        </p>
       </div>
 
       <div className="flex gap-3 w-full mt-2">
         <button
           onClick={handleBack}
-          className="flex-1 py-3.5 rounded-2xl font-bold border-2 border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-[0.98]"
+          className="flex-1 py-3 rounded-xl font-bold text-xs uppercase border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all cursor-pointer"
         >
           Quay lại
         </button>
         <button
           onClick={handleStart}
-          className="flex-1 py-3.5 rounded-2xl font-bold bg-primary text-white hover:bg-primary/90 shadow-[0_4px_14px_0_rgb(0,118,255,0.39)] hover:shadow-[0_6px_20px_rgba(0,118,255,0.23)] hover:-translate-y-0.5 transition-all active:scale-[0.98]"
+          className="flex-1 py-3 rounded-xl font-bold text-xs uppercase bg-sky-600 hover:bg-sky-700 text-white shadow-md shadow-sky-600/25 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5"
         >
-          Bắt đầu thi
+          <span>Bắt đầu thi</span>
+          <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
         </button>
       </div>
     </div>
