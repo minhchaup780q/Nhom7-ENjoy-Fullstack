@@ -133,18 +133,175 @@ function extractJsonFromAiReply<T>(reply: string): T | null {
   return null;
 }
 
+// ──────────────────────────────────────────────
+// Từ điển dịch nghĩa chuẩn Cambridge Starters sang tiếng Việt
+// ──────────────────────────────────────────────
+export const STARTERS_VIETNAMESE_DICTIONARY: Record<string, string> = {
+  // Animals
+  cat: 'con mèo',
+  dog: 'con chó',
+  fish: 'con cá',
+  duck: 'con vịt',
+  frog: 'con ếch',
+  tiger: 'con hổ',
+  horse: 'con ngựa',
+  bird: 'con chim',
+  elephant: 'con voi',
+  monkey: 'con khỉ',
+  cow: 'con bò',
+  pig: 'con lợn',
+  chicken: 'con gà',
+  tail: 'cái đuôi',
+  hippo: 'hà mã',
+  bear: 'con gấu',
+  bee: 'con ong',
+  jellyfish: 'con sứa',
+  lizard: 'thằn lằn',
+  mouse: 'con chuột',
+  mice: 'những con chuột',
+  sheep: 'con cừu',
+  donkey: 'con lừa',
+  snake: 'con rắn',
+  spider: 'con nhện',
+  zebra: 'ngựa vằn',
+  giraffe: 'hươu cao cổ',
+  goat: 'con dê',
+  crocodile: 'cá sấu',
+  pet: 'thú cưng',
+  zoo: 'vườn thú',
+  // Food & Drink
+  apple: 'quả táo',
+  banana: 'quả chuối',
+  orange: 'quả cam',
+  grape: 'quả nho',
+  mango: 'quả xoài',
+  watermelon: 'dưa hấu',
+  kiwi: 'quả kiwi',
+  lemon: 'quả chanh vàng',
+  lime: 'quả chanh xanh',
+  tomato: 'cà chua',
+  carrot: 'củ cà rốt',
+  onion: 'củ hành',
+  potato: 'củ khoai tây',
+  pea: 'đậu Hà Lan',
+  bean: 'hạt đậu',
+  pear: 'quả lê',
+  coconut: 'quả dừa',
+  pineapple: 'quả dứa',
+  bread: 'bánh mì',
+  rice: 'cơm',
+  egg: 'quả trứng',
+  meat: 'thịt',
+  sausage: 'xúc xích',
+  burger: 'bánh kẹp',
+  cake: 'bánh ngọt',
+  candy: 'kẹo',
+  sweet: 'kẹo ngọt',
+  chocolate: 'sô-cô-la',
+  icecream: 'kem',
+  'ice cream': 'kem',
+  milk: 'sữa',
+  water: 'nước',
+  juice: 'nước ép',
+  lemonade: 'nước chanh',
+  // Toys & Leisure
+  ball: 'quả bóng',
+  kite: 'con diều',
+  doll: 'búp bê',
+  robot: 'người máy',
+  balloon: 'bong bóng',
+  'teddy bear': 'gấu bông',
+  teddy: 'gấu bông',
+  car: 'xe ô tô',
+  train: 'tàu hoả',
+  plane: 'máy bay',
+  boat: 'thuyền',
+  bike: 'xe đạp',
+  motorbike: 'xe máy',
+  helicopter: 'máy bay trực thăng',
+  truck: 'xe tải',
+  lorry: 'xe tải',
+  piano: 'đàn piano',
+  guitar: 'đàn ghi-ta',
+  // School
+  book: 'quyển sách',
+  pen: 'bút mực',
+  pencil: 'bút chì',
+  ruler: 'thước kẻ',
+  eraser: 'cục tẩy',
+  rubber: 'cục tẩy',
+  bag: 'cặp sách',
+  school: 'trường học',
+  classroom: 'lớp học',
+  teacher: 'giáo viên',
+  desk: 'bàn học',
+  chair: 'cái ghế',
+  board: 'bảng lớp',
+  crayon: 'bút sáp màu',
+  picture: 'bức tranh',
+  story: 'câu chuyện',
+  // The home
+  house: 'ngôi nhà',
+  home: 'nhà',
+  door: 'cửa ra vào',
+  window: 'cửa sổ',
+  table: 'cái bàn',
+  bed: 'cái giường',
+  lamp: 'đèn ngủ',
+  clock: 'đồng hồ',
+  box: 'chiếc hộp',
+  tree: 'cái cây',
+  flower: 'bông hoa',
+  sun: 'mặt trời',
+  garden: 'khu vườn',
+  room: 'căn phòng',
+  bedroom: 'phòng ngủ',
+  kitchen: 'nhà bếp',
+  bathroom: 'phòng tắm',
+  // Clothes
+  hat: 'cái mũ',
+  cap: 'mũ lưỡi trai',
+  shirt: 'áo sơ mi',
+  't-shirt': 'áo phông',
+  dress: 'váy đầm',
+  skirt: 'chân váy',
+  jacket: 'áo khoác',
+  trousers: 'quần dài',
+  shorts: 'quần đùi',
+  sock: 'chiếc tất',
+  socks: 'đôi tất',
+  shoe: 'chiếc giày',
+  shoes: 'đôi giày',
+  glasses: 'kính mắt',
+  watch: 'đồng hồ đeo tay',
+};
+
+export const getWordTranslation = (word: string, customTranslation?: string | null): string => {
+  if (
+    customTranslation &&
+    customTranslation.trim().length > 0 &&
+    customTranslation.trim().toLowerCase() !== word.trim().toLowerCase()
+  ) {
+    return customTranslation.trim();
+  }
+  const clean = word.trim().toLowerCase();
+  if (STARTERS_VIETNAMESE_DICTIONARY[clean]) return STARTERS_VIETNAMESE_DICTIONARY[clean];
+  return word;
+};
+
 export const personalizedPracticeService = {
   /**
-   * Lấy danh sách từ vựng cần cải thiện của user theo topic hoặc ALL
+   * Lấy danh sách từ vựng cần cải thiện của user theo topic hoặc ALL (CHỈ DỮ LIỆU THẬT)
    */
   loadWeakWords: async (userId: number, topicName: string): Promise<TopicWeakWordDetail[]> => {
     try {
       const isAll = !topicName || topicName === 'ALL' || topicName === 'Tất cả' || topicName === 'Tất cả các chủ đề';
       const words = await vocabStatsApi.getTopicWeakWords(userId, isAll ? 'ALL' : topicName);
-      // Đảm bảo mỗi từ đều có ảnh hợp lệ
+      // Đảm bảo mỗi từ đều có ảnh hợp lệ và dịch nghĩa tiếng Việt chuẩn
       return (words || []).map((w) => ({
         ...w,
         imageUrl: getWordImageUrl(w.word, w.imageUrl),
+        meaning: getWordTranslation(w.word, w.translation),
       }));
     } catch (err) {
       console.error('[PersonalizedPracticeService] Lỗi khi tải từ yếu của bài thi:', err);
@@ -154,8 +311,6 @@ export const personalizedPracticeService = {
 
   /**
    * Gom từ vựng theo từng topic và chia mỗi topic thành các trang từ 2 đến 4 từ
-   * "đem các lỗi đó theo từng topic gom lại chia làm 2 vòng là vòng nghe và vòng đọc:
-   * dựa theo số câu sẽ chia ra nhiều trang, ít nhất 2 từ và nhiều nhất 4 từ để tạo ra 1 trang trong 1 topic"
    */
   chunkWordsIntoPages: (words: TopicWeakWordDetail[]): TopicWeakWordDetail[][] => {
     if (!words || words.length === 0) return [];
@@ -179,7 +334,6 @@ export const personalizedPracticeService = {
         if (remaining <= 4) {
           chunkSize = remaining;
         } else if (remaining === 5) {
-          // Chia 3 và 2 để tránh trang cuối chỉ có 1 từ
           chunkSize = 3;
         }
         allPages.push(topicWords.slice(i, i + chunkSize));
@@ -192,31 +346,39 @@ export const personalizedPracticeService = {
 
   /**
    * VÒNG ĐỌC: Gọi AI chatbot sinh câu chuyện đục lỗ theo phong cách Cambridge Reading Part 4
+   * RÀNG BUỘC TUYỆT ĐỐI: Số ô đục lỗ (blanks) PHẢI BẰNG CHÍNH XÁC số lượng từ vựng words.length (2 từ = đúng 2 lỗ).
    */
   generateReadingExercise: async (
     pageIndex: number,
     topic: string,
     words: TopicWeakWordDetail[]
   ): Promise<ReadingExerciseData> => {
+    const wordCount = words.length;
     const wordList = words.map((w) => w.word);
     const wordListStr = wordList.join(', ');
 
     const prompt = `You are a Cambridge English: Starters (Pre-A1) test creator.
 Write a simple, charming children's story for topic "${topic}".
-The story MUST naturally use all of these target words: [${wordListStr}].
+The story MUST naturally use ALL of these target words: [${wordListStr}].
 Use simple vocabulary suitable for 6-8 year old learners.
-Format the story like Cambridge Reading & Writing Part 4, with blanks (1), (2), (3)... exactly at the target words.
-Return ONLY valid raw JSON with NO markdown formatting:
+
+CRITICAL RULES:
+1. "fullStory": Complete charming story (3-5 sentences) using ALL target words [${wordListStr}].
+2. "blankStory": Must have EXACTLY ${wordCount} blanks numbered (${words.map((_, i) => `(${i + 1}) [____]`).join(', ')}).
+DO NOT ADD ANY EXTRA BLANKS. If there are ${wordCount} words, there MUST be EXACTLY ${wordCount} blanks!
+3. "vietnameseTranslation": Natural and accurate Vietnamese translation of the entire story.
+
+Return ONLY raw JSON with NO markdown formatting:
 {
   "title": "A short story title",
-  "fullStory": "The complete story with target words in place.",
-  "blankStory": "The story with numbered blanks like (1) [____], (2) [____]...",
-  "blanks": [
-    {"position": 1, "answer": "${wordList[0]}", "hint": "Gợi ý nghĩa tiếng Việt ngắn"},
-    {"position": 2, "answer": "${wordList[1] || ''}", "hint": "Gợi ý nghĩa tiếng Việt ngắn"}
-  ],
-  "vietnameseTranslation": "Bản dịch nghĩa toàn bài sang tiếng Việt cho bé."
+  "fullStory": "The complete story...",
+  "blankStory": "The story with (${words.map((_, i) => `(${i + 1}) [____]`).join(', ')})...",
+  "vietnameseTranslation": "Bản dịch nghĩa toàn bộ câu chuyện sang tiếng Việt chuẩn xác..."
 }`;
+
+    let parsedFullStory = '';
+    let parsedTitle = `Chủ đề: ${topic}`;
+    let parsedTranslation = '';
 
     try {
       const reply = await chatbotApi.ask(prompt);
@@ -224,43 +386,52 @@ Return ONLY valid raw JSON with NO markdown formatting:
         title: string;
         fullStory: string;
         blankStory: string;
-        blanks: ReadingBlank[];
         vietnameseTranslation?: string;
       }>(reply);
 
-      if (parsed && parsed.blanks && parsed.blanks.length > 0) {
-        return {
-          pageIndex,
-          topic,
-          words,
-          title: parsed.title || `Câu chuyện về ${topic}`,
-          fullStory: parsed.fullStory,
-          blankStory: parsed.blankStory,
-          blanks: parsed.blanks,
-          vietnameseTranslation: parsed.vietnameseTranslation,
-        };
+      if (parsed) {
+        parsedTitle = parsed.title || parsedTitle;
+        parsedFullStory = parsed.fullStory || '';
+        parsedTranslation = parsed.vietnameseTranslation || '';
       }
     } catch (err) {
       console.warn('[PersonalizedPracticeService] AI generate Reading failed, fallback:', err);
     }
 
-    // Fallback template nếu AI gặp sự cố
-    const blanks: ReadingBlank[] = words.map((w, idx) => ({
+    // Nếu AI không trả về fullStory hợp lệ, tạo câu chuyện mẫu chuẩn xác
+    if (!parsedFullStory) {
+      parsedFullStory = words.map((w) => `We can see a ${w.word} in our ${topic} lesson today.`).join(' ');
+      parsedTranslation = words.map((w) => `Chúng ta có thể thấy một ${getWordTranslation(w.word)} trong bài học.`).join(' ');
+    }
+
+    // ── RÀNG BUỘC TOÁN HỌC: XÂY DỰNG blankStory VÀ blanks ĐẢM BẢO CHÍNH XÁC words.length LỖ ĐỤC ──
+    const strictBlanks: ReadingBlank[] = words.map((w, idx) => ({
       position: idx + 1,
       answer: w.word,
-      hint: w.meaning || w.word,
+      hint: getWordTranslation(w.word, w.meaning),
     }));
-    const storySentences = words.map((w, idx) => `We can see a (${idx + 1}) [____] in our daily life.`).join(' ');
+
+    // Thay thế chính xác từng target word trong fullStory thành (i + 1) [____]
+    let safeBlankStory = parsedFullStory;
+    for (let i = 0; i < words.length; i++) {
+      const target = words[i].word;
+      const regex = new RegExp(`\\b${target}(?:s|es)?\\b`, 'i');
+      if (regex.test(safeBlankStory)) {
+        safeBlankStory = safeBlankStory.replace(regex, `(${i + 1}) [____]`);
+      } else {
+        safeBlankStory += ` Look at the (${i + 1}) [____]!`;
+      }
+    }
 
     return {
       pageIndex,
       topic,
       words,
-      title: `Chủ đề: ${topic}`,
-      fullStory: words.map((w) => `We can see a ${w.word} in our daily life.`).join(' '),
-      blankStory: storySentences,
-      blanks,
-      vietnameseTranslation: 'Hãy quan sát từ trong Word Bank và điền đúng vị trí nhé!',
+      title: parsedTitle,
+      fullStory: parsedFullStory,
+      blankStory: safeBlankStory,
+      blanks: strictBlanks,
+      vietnameseTranslation: parsedTranslation,
     };
   },
 
@@ -322,22 +493,69 @@ Return ONLY valid raw JSON with NO markdown formatting:
         questions: ListeningQuestion[];
       }>(reply);
 
-      if (parsed && Array.isArray(parsed.dialogue) && parsed.dialogue.length >= 6 && Array.isArray(parsed.questions) && parsed.questions.length > 0) {
-        const fullTranscript = parsed.fullTranscript || parsed.dialogue.map((d) => `${d.speaker}: ${d.text}`).join(' ');
+      if (
+        parsed &&
+        Array.isArray(parsed.dialogue) &&
+        parsed.dialogue.length >= 6 &&
+        Array.isArray(parsed.questions) &&
+        parsed.questions.length > 0
+      ) {
+        const fullTranscript =
+          parsed.fullTranscript || parsed.dialogue.map((d) => `${d.speaker}: ${d.text}`).join(' ');
+
+        // ── CHUẨN HOÁ CÂU HỎI & ĐÁP ÁN: Đảm bảo khớp 100% với danh sách từ vựng và nội dung thoại ──
+        const validatedQuestions: ListeningQuestion[] = words.map((w, idx) => {
+          const rawQ =
+            parsed.questions.find((q) =>
+              q.question?.toLowerCase().includes(w.word.toLowerCase()) ||
+              q.correctAnswer?.toLowerCase().includes(w.word.toLowerCase())
+            ) || parsed.questions[idx] || parsed.questions[0];
+
+          const cleanTarget = w.word.trim();
+          let cleanOptions = (rawQ?.options || []).map((opt) =>
+            opt.replace(/^[a-d]\.\s*/i, '').replace(/^(a|an|the)\s+/i, '').trim()
+          ).filter(Boolean);
+
+          // Đảm bảo từ mục tiêu luôn có mặt trong danh sách lựa chọn
+          if (!cleanOptions.some((o) => o.toLowerCase() === cleanTarget.toLowerCase())) {
+            cleanOptions.unshift(cleanTarget);
+          }
+
+          // Bổ sung các distractors nếu thiếu, tránh trùng lặp
+          const sampleDistractors = ['apple', 'book', 'ball', 'car', 'tree', 'pen', 'dog', 'chair', 'hat', 'cake']
+            .filter((d) => d.toLowerCase() !== cleanTarget.toLowerCase());
+
+          for (const d of sampleDistractors) {
+            if (cleanOptions.length >= 4) break;
+            if (!cleanOptions.some((o) => o.toLowerCase() === d.toLowerCase())) {
+              cleanOptions.push(d);
+            }
+          }
+          cleanOptions = cleanOptions.slice(0, 4);
+
+          return {
+            id: idx + 1,
+            question: rawQ?.question || `What item did Tom and Lucy talk about?`,
+            options: cleanOptions,
+            correctAnswer: cleanTarget,
+            explanation: rawQ?.explanation || `In the conversation, they talked about the ${cleanTarget}.`,
+          };
+        });
+
         return {
           pageIndex,
           topic,
           words,
           dialogue: parsed.dialogue,
           fullTranscript,
-          questions: parsed.questions,
+          questions: validatedQuestions,
         };
       }
     } catch (err) {
       console.warn('[PersonalizedPracticeService] AI generate Listening failed, using rich fallback:', err);
     }
 
-    // Fallback template dài và đối đáp qua lại chi tiết
+    // Fallback template dài và đối đáp qua lại chi tiết khớp hoàn hảo với câu hỏi
     const w0 = words[0]?.word || 'book';
     const w1 = words[1]?.word || 'pencil';
     const w2 = words[2]?.word || 'ruler';
@@ -370,15 +588,21 @@ Return ONLY valid raw JSON with NO markdown formatting:
       let qText = '';
       if (idx === 0) qText = `What does Tom have in his hands?`;
       else if (idx === 1) qText = `What is on the table?`;
-      else if (idx === 2) qText = `What does Lucy have near the window?`;
+      else if (idx === 2) qText = `What is near the window?`;
       else qText = `What is inside the green box?`;
+
+      const pool = ['apple', 'book', 'ball', 'car', 'tree', 'pen', 'dog', 'chair', 'hat', 'cake']
+        .filter((d) => d.toLowerCase() !== w.word.toLowerCase());
+
+      const dist = pool.slice(0, 3);
+      const options = [w.word, ...dist];
 
       return {
         id: idx + 1,
         question: qText,
-        options: [w.word, 'car', 'apple', 'ball'],
+        options,
         correctAnswer: w.word,
-        explanation: `In the conversation, they talked about the ${w.word}.`,
+        explanation: `In the conversation, the characters clearly mentioned the ${w.word}.`,
       };
     });
 

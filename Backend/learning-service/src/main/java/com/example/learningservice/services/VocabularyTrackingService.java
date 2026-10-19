@@ -285,19 +285,9 @@ public class VocabularyTrackingService {
             }
         }
 
-        // 2. Nếu user chưa có bản ghi tracking nào trong DB -> Lấy từ MockVocabularyRepository
+        // Chỉ sử dụng dữ liệu thật từ bảng tracking bài thi của user, không nạp data giả
         if (targetWords.isEmpty()) {
-            Map<String, String> allMock = mockVocabularyRepository.findAll();
-            for (Map.Entry<String, String> entry : allMock.entrySet()) {
-                String w = normalize(entry.getKey());
-                String t = entry.getValue();
-                if (isAllTopic || (t != null && t.equalsIgnoreCase(topicName.trim()))) {
-                    if (!targetWords.contains(w)) {
-                        targetWords.add(w);
-                        trackingTopicMap.put(w, t);
-                    }
-                }
-            }
+            return Collections.emptyList();
         }
 
         if (targetWords.isEmpty()) {

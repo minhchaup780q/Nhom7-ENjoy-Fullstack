@@ -105,8 +105,19 @@ export const PersonalizedListeningPart: React.FC<Props> = ({
 
   const isAllAnswered = data.questions.length > 0 && data.questions.every((q) => !!userAnswers[q.id]);
 
+  // Hàm chuẩn hoá đáp án: bỏ tiền tố A/B/C/D và mạo từ a/an/the để đảm bảo khớp 100%
+  const normalizeAns = (str: string) =>
+    (str || '')
+      .replace(/^[a-d]\.\s*/i, '')
+      .replace(/^(a|an|the)\s+/i, '')
+      .trim()
+      .toLowerCase();
+
+  const isAnswerMatch = (ans1: string, ans2: string) =>
+    normalizeAns(ans1) === normalizeAns(ans2);
+
   const scoreCount = data.questions.filter(
-    (q) => (userAnswers[q.id] || '').trim().toLowerCase() === q.correctAnswer.trim().toLowerCase()
+    (q) => isAnswerMatch(userAnswers[q.id] || '', q.correctAnswer)
   ).length;
 
   return (
@@ -262,7 +273,7 @@ export const PersonalizedListeningPart: React.FC<Props> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {data.questions.map((q, qIdx) => {
             const currentSelected = userAnswers[q.id];
-            const isCorrect = isSubmitted && currentSelected?.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase();
+            const isCorrect = isSubmitted && isAnswerMatch(currentSelected || '', q.correctAnswer);
 
             return (
               <div
@@ -289,7 +300,7 @@ export const PersonalizedListeningPart: React.FC<Props> = ({
                   {q.options.map((opt, optIdx) => {
                     const optPrefix = String.fromCharCode(65 + optIdx); // A, B, C, D
                     const isOptionSelected = currentSelected === opt;
-                    const isOptionAnswer = q.correctAnswer.trim().toLowerCase() === opt.trim().toLowerCase();
+                    const isOptionAnswer = isAnswerMatch(opt, q.correctAnswer);
 
                     let btnStyle = 'border-gray-200 bg-white hover:border-violet-300 hover:bg-violet-50/50 text-gray-700';
 

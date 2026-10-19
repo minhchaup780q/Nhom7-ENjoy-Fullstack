@@ -28,6 +28,7 @@ export const PersonalizedReadingPart: React.FC<Props> = ({
   // Trạng thái đã kiểm tra kết quả chưa
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [isCorrectAll, setIsCorrectAll] = useState<boolean>(false);
+  const [showTranslation, setShowTranslation] = useState<boolean>(false);
 
   const words = data.words;
   const blanks = data.blanks;
@@ -96,6 +97,12 @@ export const PersonalizedReadingPart: React.FC<Props> = ({
       if (match) {
         const position = parseInt(match[1], 10);
         const blankInfo = blanks.find((b) => b.position === position);
+
+        // NẾU KHÔNG CÓ TRONG DANH SÁCH BLANKS (VÍ DỤ VỊ TRÍ 3 TRONG KHI CHỈ CÓ 2 TỪ) -> HIỂN THỊ TEXT BÌNH THƯỜNG
+        if (!blankInfo) {
+          return <span key={index}>{part}</span>;
+        }
+
         const currentAns = filledAnswers[position];
 
         let slotStyle = 'border-dashed border-2 border-primary/60 bg-blue-50/50 text-primary';
@@ -215,13 +222,13 @@ export const PersonalizedReadingPart: React.FC<Props> = ({
                     />
                   </div>
 
-                  {/* Chữ in đậm dưới ảnh */}
+                  {/* Chữ in đậm dưới ảnh + nghĩa tiếng Việt chuẩn */}
                   <span className="font-display font-extrabold text-sm md:text-base text-gray-800 capitalize">
                     {w.word}
                   </span>
                   {w.meaning && (
-                    <span className="text-[11px] text-gray-500 font-medium truncate max-w-full">
-                      {w.meaning}
+                    <span className="text-[11px] text-emerald-700 font-bold truncate max-w-full">
+                      ({w.meaning})
                     </span>
                   )}
 
@@ -257,11 +264,23 @@ export const PersonalizedReadingPart: React.FC<Props> = ({
               {renderStoryWithSlots()}
             </div>
 
-            {/* Bản dịch nghĩa tiếng Việt */}
+            {/* Bản dịch nghĩa tiếng Việt kèm nút bật/tắt tiện lợi */}
             {data.vietnameseTranslation && (
-              <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs md:text-sm text-amber-900 leading-relaxed">
-                <span className="font-bold mr-1">💡 Dịch nghĩa:</span>
-                {data.vietnameseTranslation}
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowTranslation(!showTranslation)}
+                  className="self-start inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-xs font-bold text-amber-900 transition-colors cursor-pointer"
+                >
+                  <span>{showTranslation ? 'Ẩn bản dịch tiếng Việt' : '💡 Xem bản dịch nghĩa tiếng Việt'}</span>
+                </button>
+
+                {showTranslation && (
+                  <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs md:text-sm text-amber-950 leading-relaxed shadow-xs">
+                    <span className="font-bold mr-1">Bản dịch:</span>
+                    {data.vietnameseTranslation}
+                  </div>
+                )}
               </div>
             )}
 
