@@ -77,7 +77,7 @@ public class VocabularyTrackingService {
 
         // 1. Xử lý từ sai
         for (String rawWord : wrongWords) {
-            String word = normalize(rawWord);
+            String word = mockVocabularyRepository.resolveCanonicalWord(normalize(rawWord));
             if (word.isEmpty()) continue;
 
             String topic = mockVocabularyRepository.findTopicByWord(word);
@@ -119,7 +119,7 @@ public class VocabularyTrackingService {
 
         // 2. Xử lý từ đúng: chỉ cập nhật nếu từ đó ĐÃ CÓ bản ghi (từng sai trước)
         for (String rawWord : correctWords) {
-            String word = normalize(rawWord);
+            String word = mockVocabularyRepository.resolveCanonicalWord(normalize(rawWord));
             if (word.isEmpty()) continue;
 
             trackingRepository.findByUserIdAndWord(userId, word).ifPresent(record -> {
@@ -144,65 +144,72 @@ public class VocabularyTrackingService {
     // =========================================================
 
     /**
-     * Lấy thống kê từ vựng của user để hiển thị trên trang thống kê.
+     * Lấy tổng hợp thống kê từ vựng và lịch sử 5 bài thi gần nhất của user.
      */
+    @Transactional(readOnly = true)
     public VocabStatsResponse getVocabStats(Long userId) {
-        boolean hasHistory = trackingRepository.existsByUserId(userId);
-        if (!hasHistory) {
-            return VocabStatsResponse.builder()
-                    .noExamHistory(true)
-                    .topics(List.of())
-                    .build();
-        }
-
-        List<Object[]> rows = trackingRepository.findTopicStatsByUserId(userId);
-
-        // Lấy danh sách các từ WEAK để gắn vào mỗi topic
-        List<UserVocabularyTracking> weakRecords = trackingRepository.findByUserIdAndStatus(userId, VocabTrackingStatus.WEAK);
-        Map<String, List<String>> weakWordsByTopic = weakRecords.stream()
-                .collect(Collectors.groupingBy(
-                        UserVocabularyTracking::getTopic,
-                        Collectors.mapping(UserVocabularyTracking::getWord, Collectors.toList())
-                ));
-
-        List<VocabStatsResponse.TopicStat> stats = rows.stream().map(row -> {
-            String topic = (String) row[0];
-            int weak = ((Number) row[1]).intValue();
-            int correct = ((Number) row[2]).intValue();
-            String status;
-            if (weak == 0) {
-                status = "Mastered";
-            } else if (correct > 0) {
-                status = "Developing";
-            } else {
-                status = "Weak";
+        try {
+            boolean hasHistory = trackingRepository.existsByUserId(userId);
+            if (!hasHistory) {
+                return VocabStatsResponse.builder()
+                        .noExamHistory(true)
+                        .topics(List.of())
+                        .examHistories(List.of())
+                        .build();
             }
-            List<String> weakWords = weakWordsByTopic.getOrDefault(topic, List.of());
-            return VocabStatsResponse.TopicStat.builder()
-                    .topicName(topic)
-                    .weakCount(weak)
-                    .correctCount(correct)
-                    .status(status)
-                    .weakWords(weakWords)
+
+            List<Object[]> rows = trackingRepository.findTopicStatsByUserId(userId);
+
+            // Lấy danh sách các từ WEAK để gắn vào mỗi topic
+            List<UserVocabularyTracking> weakRecords = trackingRepository.findByUserIdAndStatus(userId, VocabTrackingStatus.WEAK);
+            Map<String, List<String>> weakWordsByTopic = weakRecords.stream()
+                    .collect(Collectors.groupingBy(
+                            UserVocabularyTracking::getTopic,
+                            Collectors.mapping(UserVocabularyTracking::getWord, Collectors.toList())
+                    ));
+
+            List<VocabStatsResponse.TopicStat> stats = rows.stream().map(row -> {
+                String topic = (String) row[0];
+                int weak = row[1] != null ? ((Number) row[1]).intValue() : 0;
+                int correct = row[2] != null ? ((Number) row[2]).intValue() : 0;
+                String status;
+                if (weak == 0) {
+                    status = "Mastered";
+                } else if (correct > 0) {
+                    status = "Developing";
+                } else {
+                    status = "Weak";
+                }
+                List<String> weakWords = weakWordsByTopic.getOrDefault(topic, List.of());
+                return VocabStatsResponse.TopicStat.builder()
+                        .topicName(topic)
+                        .weakCount(weak)
+                        .correctCount(correct)
+                        .status(status)
+                        .weakWords(weakWords)
+                        .build();
+            }).collect(Collectors.toList());
+
+            // Lấy tất cả lịch sử bài thi theo thứ tự thời gian từ cũ đến mới để vẽ biểu đồ
+            List<VocabStatsResponse.ExamHistoryStat> historyStats = examHistoryRepository
+                    .findByUserIdOrderByCompletedAtDesc(userId).stream()
+                    .sorted(Comparator.comparing(com.example.learningservice.entities.ExamHistory::getCompletedAt, Comparator.nullsLast(Comparator.naturalOrder())))
+                    .map(h -> VocabStatsResponse.ExamHistoryStat.builder()
+                            .date(h.getCompletedAt() != null ? String.format("%02d/%02d", h.getCompletedAt().getDayOfMonth(), h.getCompletedAt().getMonthValue()) : "")
+                            .listeningScore(h.getPartScoresPayload() != null ? extractScoreFromPayload(h.getPartScoresPayload(), "listening") : 0)
+                            .readingScore(h.getPartScoresPayload() != null ? extractScoreFromPayload(h.getPartScoresPayload(), "reading") : 0)
+                            .build())
+                    .collect(Collectors.toList());
+
+            return VocabStatsResponse.builder()
+                    .noExamHistory(false)
+                    .topics(stats)
+                    .examHistories(historyStats)
                     .build();
-        }).collect(Collectors.toList());
-
-        // Lấy 5 bài thi gần nhất để vẽ biểu đồ
-        List<VocabStatsResponse.ExamHistoryStat> historyStats = examHistoryRepository
-                .findByUserIdOrderByCompletedAtDesc(userId).stream()
-                .sorted(Comparator.comparing(com.example.learningservice.entities.ExamHistory::getCompletedAt)) // Đảo ngược để vẽ timeline từ cũ đến mới
-                .map(h -> VocabStatsResponse.ExamHistoryStat.builder()
-                        .date(h.getCompletedAt() != null ? String.format("%02d/%02d", h.getCompletedAt().getDayOfMonth(), h.getCompletedAt().getMonthValue()) : "")
-                        .listeningScore(h.getPartScoresPayload() != null ? extractScoreFromPayload(h.getPartScoresPayload(), "listening") : 0)
-                        .readingScore(h.getPartScoresPayload() != null ? extractScoreFromPayload(h.getPartScoresPayload(), "reading") : 0)
-                        .build())
-                .collect(Collectors.toList());
-
-        return VocabStatsResponse.builder()
-                .noExamHistory(false)
-                .topics(stats)
-                .examHistories(historyStats)
-                .build();
+        } catch (Exception e) {
+            log.error("Lỗi khi lấy thống kê từ vựng cho userId={}: {}", userId, e.getMessage(), e);
+            throw new RuntimeException("Lỗi khi lấy thống kê từ vựng: " + e.getMessage(), e);
+        }
     }
 
     private int extractScoreFromPayload(String payload, String type) {
