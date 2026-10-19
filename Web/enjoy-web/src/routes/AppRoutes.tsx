@@ -3,10 +3,10 @@ import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { LearningMap } from '../features/learning/components/LearningMap';
 import { ExploreDashboard } from '../features/explore/components/ExploreDashboard';
 import { ProfilePage } from '../features/profile/components/ProfilePage';
-import { PracticeDashboard } from '../features/practice/components/PracticeDashboard';
+import { PracticePage } from '../features/practice/components/PracticePage';
 import { PersonalStatsPage } from '../features/stats/components/PersonalStatsPage';
 import { ExamStatsPage } from '../features/stats/components/ExamStatsPage';
-import { SupplementaryPracticePage } from '../features/stats/components/SupplementaryPracticePage';
+import { PersonalizedPracticePage } from '../features/practice/components/PersonalizedPracticePage';
 import { LoginPage } from '../features/auth/components/LoginPage';
 import { RegisterPage } from '../features/auth/components/RegisterPage';
 import { useAuthStore } from '../features/auth/store/useAuthStore';
@@ -69,14 +69,15 @@ export const AppRoutes: React.FC<AppRoutesProps> = ({ onStartSession }) => {
         <Route path="/welcome" element={<PlacementTestPage />} />
         <Route path="/learn" element={<LearningMap onStartSession={onStartSession} />} />
         <Route path="/explore" element={<ExploreDashboard />} />
-        <Route path="/practice" element={<PracticeDashboard />} />
+        <Route path="/practice" element={<PracticePage />} />
         <Route path="/exams" element={<ExamPage />} />
         <Route path="/exams/:examId" element={<ExamPage />} />
         <Route path="/exam" element={<Navigate to="/exams" replace />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/leaderboard" element={<LeaderboardPage />} />
         <Route path="/stats" element={<ExamStatsPage />} />
-        <Route path="/practice/supplementary" element={<SupplementaryPracticePage />} />
+        <Route path="/practice/personalization" element={<PersonalizedPracticePage />} />
+        <Route path="/practice/supplementary" element={<PersonalizedPracticePage />} />
         <Route path="/pronunciation" element={<PronunciationGuidePage />} />
       </Route>
 

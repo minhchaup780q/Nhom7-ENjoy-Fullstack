@@ -34,4 +34,18 @@ public class LeaderboardController {
         LeaderboardResponseDto response = leaderboardService.getCurrentLeaderboard(userId, displayName, avatarUrl);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/streak")
+    public ResponseEntity<LeaderboardResponseDto.StreakDto> getUserStreak(
+            @RequestHeader(value = "X-User-Id", required = false) Long headerUserId,
+            @RequestParam(value = "userId", required = false) Long queryUserId
+    ) {
+        Long userId = (queryUserId != null) ? queryUserId : headerUserId;
+        if (userId == null) {
+            userId = 1L;
+        }
+
+        LeaderboardResponseDto.StreakDto streakDto = leaderboardService.getUserStreak(userId);
+        return ResponseEntity.ok(streakDto);
+    }
 }

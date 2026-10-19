@@ -19,6 +19,7 @@ function App() {
   const isAdminPage = location.pathname.startsWith('/admin');
   const isExamPage = location.pathname.startsWith('/exams');
   const isStatsPage = location.pathname.startsWith('/stats');
+  const isPracticePage = location.pathname.startsWith('/practice');
 
 
   // 3. Trang Welcome / Placement Test => Full-screen không sidebar
@@ -53,8 +54,8 @@ function App() {
     );
   }
 
-  // Luôn ẩn right-sidebar trên tất cả các trang
-  const hideRightSidebar = true;
+  // Ẩn right-sidebar trên các trang làm bài thi, thống kê bài thi hoặc luyện tập
+  const hideRightSidebar = isExamPage || isStatsPage || isPracticePage;
 
   // 5. Người dùng ở các trang bình thường -> Hiển thị đầy đủ Bố cục 3 cột (Sidebar trái - Nội dung chính AppRoutes - Sidebar phải)
   return (

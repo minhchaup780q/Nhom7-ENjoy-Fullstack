@@ -16,6 +16,19 @@ public class LeaderboardResponseDto {
     private int promotionThreshold = 12;
     private List<LeaderboardUserDto> topUsers;
     private LeaderboardUserDto currentUserEntry;
+    private StreakDto streak;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class StreakDto {
+        private int currentStreak;
+        private int longestStreak;
+        private List<Boolean> weeklyStatus; // 7 ngày: [T2, T3, T4, T5, T6, T7, CN]
+        private int activeDayIndex;         // 0: T2, ..., 6: CN
+        private String motivationText;
+    }
 
     @Data
     @Builder

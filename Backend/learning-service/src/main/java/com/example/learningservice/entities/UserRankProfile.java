@@ -40,4 +40,15 @@ public class UserRankProfile extends BaseEntity {
 
     @Column(name = "avatar_url", length = 500)
     private String avatarUrl;
+
+    @Column(name = "current_streak", nullable = false)
+    @Builder.Default
+    private Integer currentStreak = 0;
+
+    @Column(name = "longest_streak", nullable = false)
+    @Builder.Default
+    private Integer longestStreak = 0;
+
+    @Column(name = "last_study_date")
+    private java.time.LocalDate lastStudyDate;
 }
