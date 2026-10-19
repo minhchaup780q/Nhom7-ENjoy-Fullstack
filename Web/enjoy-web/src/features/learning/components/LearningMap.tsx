@@ -220,12 +220,12 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
 
   const getSessionPalette = (partIdx: number) => {
     const palettes = [
-      { name: 'green', bg: 'bg-[#58cc02]', border: 'border-[#489d02]', ring: 'ring-[#58cc02]/25', shadow: 'shadow-[0_4px_0_0_#489d02]', textClass: 'text-[#58cc02]', borderClass: 'border-[#58cc02]', btnVariant: 'green' as const },
-      { name: 'orange', bg: 'bg-[#ff9600]', border: 'border-[#cc7800]', ring: 'ring-[#ff9600]/25', shadow: 'shadow-[0_4px_0_0_#cc7800]', textClass: 'text-[#ff9600]', borderClass: 'border-[#ff9600]', btnVariant: 'pink' as const },
-      { name: 'blue', bg: 'bg-[#1cb0f6]', border: 'border-[#1899d6]', ring: 'ring-[#1cb0f6]/25', shadow: 'shadow-[0_4px_0_0_#1899d6]', textClass: 'text-[#1cb0f6]', borderClass: 'border-[#1cb0f6]', btnVariant: 'blue' as const },
-      { name: 'pink', bg: 'bg-[#ff71a2]', border: 'border-[#cc5a81]', ring: 'ring-[#ff71a2]/25', shadow: 'shadow-[0_4px_0_0_#cc5a81]', textClass: 'text-[#ff71a2]', borderClass: 'border-[#ff71a2]', btnVariant: 'pink' as const }
+      { name: 'sky', bg: 'bg-sky-500', border: 'border-sky-600', ring: 'ring-sky-200', textClass: 'text-sky-600', borderClass: 'border-sky-500' },
+      { name: 'indigo', bg: 'bg-indigo-500', border: 'border-indigo-600', ring: 'ring-indigo-200', textClass: 'text-indigo-600', borderClass: 'border-indigo-500' },
+      { name: 'emerald', bg: 'bg-emerald-500', border: 'border-emerald-600', ring: 'ring-emerald-200', textClass: 'text-emerald-600', borderClass: 'border-emerald-500' },
+      { name: 'amber', bg: 'bg-amber-500', border: 'border-amber-600', ring: 'ring-amber-200', textClass: 'text-amber-600', borderClass: 'border-amber-500' }
     ];
-    return palettes[partIdx % 4];
+    return palettes[partIdx % palettes.length];
   };
 
   const getSessionIcon = (session: any) => {
@@ -247,28 +247,26 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
     }
 
     if (session.status === SessionStatus.LOCK) {
-      return <Icon className="w-8 h-8 text-[#afafaf] opacity-60" />;
+      return <Icon className="w-7 h-7 text-slate-300" />;
     }
-    return <Icon className="w-8 h-8 text-white drop-shadow-sm" />;
+    return <Icon className="w-7 h-7 text-white drop-shadow-xs" />;
   };
 
   const getNodeBackground = (session: any, isSelected: boolean) => {
-    const base3D = 'border-b-[6px] active:border-b-0 active:translate-y-1.5 shadow-[inset_0_-2px_0_rgba(0,0,0,0.1),_inset_0_4px_0_rgba(255,255,255,0.3)]';
-
     if (session.status === SessionStatus.LOCK) {
-      return 'bg-[#e5e5e5] border-[#c0c0c0] text-[#afafaf] border-b-[6px] shadow-[inset_0_4px_0_rgba(255,255,255,0.5)] cursor-not-allowed hover:brightness-100';
+      return 'bg-slate-100 border-2 border-slate-200 text-slate-300 shadow-2xs cursor-not-allowed opacity-80';
     }
 
     const palette = getSessionPalette(session.partIdx || 0);
 
     if (session.status === SessionStatus.FINISH) {
-      return `${palette.bg} text-white ${palette.border} ${base3D} hover:brightness-110`;
+      return `bg-emerald-500 text-white border-2 border-emerald-600 shadow-md hover:scale-105 active:scale-95 transition-all`;
     }
 
-    // Đang mở khóa (UNLOCK)
+    // Đang mở khóa (UNLOCK) - bài hiện tại
     return isSelected
-      ? `${palette.bg} text-white ${palette.border} ring-8 ${palette.ring} scale-110 ${base3D}`
-      : `${palette.bg} text-white ${palette.border} hover:scale-105 hover:brightness-110 ring-4 ${palette.ring} ${base3D} animate-pulse`;
+      ? `${palette.bg} text-white border-2 ${palette.border} ring-4 ${palette.ring} scale-110 shadow-lg active:scale-100 transition-all`
+      : `${palette.bg} text-white border-2 ${palette.border} ring-4 ${palette.ring} hover:scale-110 shadow-md animate-pulse transition-all`;
   };
 
   const handleNodeClick = (session: Session) => {
@@ -470,61 +468,194 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
   return (
     <div className="flex-1 w-full mx-auto py-6 px-4 select-none pb-24 bg-white min-h-screen">
       
-      {/* 1. MÀN HÌNH CHỌN TRÌNH ĐỘ (LEVELS VIEW) */}
+      {/* 1. MÀN HÌNH CHỌN TRÌNH ĐỘ (LEVEL ROADMAP PROGRESSION) */}
       {currentView === 'levels' && (
-        <div className="max-w-2xl mx-auto space-y-8 animate-fade-in-up">
-          <div className="text-center space-y-2 py-4">
-            <h1 className="text-3xl font-display font-extrabold text-primary tracking-wide">BẢN ĐỒ TRÌNH ĐỘ</h1>
-            <p className="text-sm font-semibold text-text-muted">Bé hãy chọn một trình độ học tập phía dưới nhé!</p>
+        <div className="max-w-4xl mx-auto space-y-8 animate-fade-in-up py-4">
+          <div className="text-center sm:text-left space-y-1">
+            <h1 className="font-display font-black text-2xl sm:text-3xl text-slate-900 tracking-tight uppercase">
+              BẢN ĐỒ TRÌNH ĐỘ
+            </h1>
+            <p className="text-sm sm:text-base text-slate-500 font-medium">
+              Bé hãy chọn một trình độ học tập phía dưới nhé!
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4">
-            {currentLevels.map((lvl, index) => {
-              const colors = getLevelColors(index);
+          <div className="flex flex-col gap-6">
+            {/* Level Card 1: PRE A1 - BEGINNER (Active / Current) */}
+            {(() => {
+              const lvl1 = currentLevels[0] || { id: 1, name: 'Pre A1 - Beginner', code: 'PRE_A1' };
+              const finishedCount = userProgress.filter((p) => p.status === SessionStatus.FINISH).length;
+              const totalCount = Math.max(finishedCount, 8);
+              const percent = Math.min(100, Math.round((finishedCount / Math.max(totalCount, 1)) * 100));
+
               return (
-                <button
-                  key={lvl.id}
-                  onClick={() => handleLevelClick(lvl)}
-                  className={`p-8 text-center rounded-[2.5rem] border-2 transition-all cursor-pointer flex flex-col items-center space-y-4 hover:translate-y-[-2px] ${colors.bg} ${colors.border} ${colors.shadow} ${colors.hoverShadow}`}
-                >
-                  <div className={`w-16 h-16 rounded-3xl border-2 flex items-center justify-center ${colors.iconBg} ${colors.border} ${colors.iconColor}`}>
-                    {getLevelIcon(index)}
+                <div className="relative bg-white rounded-3xl border-2 border-emerald-500 shadow-md p-6 sm:p-7 transition-all hover:shadow-lg text-left">
+                  <div className="flex flex-col sm:flex-row items-start justify-between gap-5">
+                    <div className="flex items-start gap-4">
+                      <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 flex items-center justify-center shrink-0 shadow-xs">
+                        <span
+                          className="material-symbols-outlined text-[36px]"
+                          style={{ fontVariationSettings: "'FILL' 1" }}
+                        >
+                          school
+                        </span>
+                      </div>
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700">
+                            {lvl1.code || 'PRE_A1'}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                            Đang học
+                          </span>
+                        </div>
+                        <h2 className="font-display font-bold text-xl sm:text-2xl text-slate-900">
+                          {lvl1.name || 'Pre A1 - Beginner'}
+                        </h2>
+                        <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed max-w-2xl">
+                          Dành cho người mới bắt đầu làm quen tiếng Anh. Nhận diện từ vựng cơ bản, phát âm âm tiết đầu tiên và chào hỏi tự nhiên.
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleLevelClick(lvl1)}
+                      className="w-full sm:w-auto shrink-0 px-6 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-display font-extrabold text-sm shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+                    >
+                      <span>VÀO HỌC</span>
+                      <span className="material-symbols-outlined text-[18px]">play_arrow</span>
+                    </button>
                   </div>
-                  <div className="space-y-1">
-                    <span className={`text-[10px] font-extrabold tracking-widest uppercase ${colors.codeColor}`}>
-                      {lvl.code || `LVL ${index + 1}`}
-                    </span>
-                    <h3 className={`text-lg font-display font-extrabold ${colors.text}`}>{lvl.name}</h3>
+
+                  {/* Progress Track inside Level 1 */}
+                  <div className="mt-6 pt-5 border-t border-slate-100 flex flex-col gap-2">
+                    <div className="flex items-center justify-between text-xs font-semibold">
+                      <span className="text-slate-500">Tiến độ hoàn thành</span>
+                      <span className="text-emerald-600 font-bold">
+                        {finishedCount}/{totalCount} Bài học ({percent}%)
+                      </span>
+                    </div>
+                    <div className="w-full h-2.5 rounded-full bg-slate-100 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
                   </div>
-                </button>
+                </div>
               );
-            })}
+            })()}
+
+            {/* Level Card 2: A1 - MOVERS (Next in path) */}
+            {(() => {
+              const lvl2 = currentLevels[1] || { id: 2, name: 'A1 - Movers', code: 'A1_MOVERS' };
+              const isLvl1Done = userProgress.filter((p) => p.status === SessionStatus.FINISH).length >= 8;
+
+              return (
+                <div className="relative bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-7 shadow-xs hover:border-slate-300 transition-all text-left">
+                  <div className="flex flex-col sm:flex-row items-start justify-between gap-5">
+                    <div className="flex items-start gap-4">
+                      <div className="w-16 h-16 rounded-2xl bg-sky-50 text-sky-600 border border-sky-100 flex items-center justify-center shrink-0 shadow-xs">
+                        <span className="material-symbols-outlined text-[36px]">auto_stories</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-sky-100 text-sky-700">
+                            {lvl2.code || 'A1_MOVERS'}
+                          </span>
+                          <span className="text-xs text-slate-400 font-medium">Cambridge A1</span>
+                        </div>
+                        <h2 className="font-display font-bold text-xl sm:text-2xl text-slate-900">
+                          {lvl2.name || 'A1 - Movers'}
+                        </h2>
+                        <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed max-w-2xl">
+                          Mở rộng câu giao tiếp thường ngày, ngữ pháp cơ bản, đọc hiểu truyện ngắn và phản xạ tự tin hơn.
+                        </p>
+                      </div>
+                    </div>
+
+                    {isLvl1Done ? (
+                      <button
+                        onClick={() => handleLevelClick(lvl2)}
+                        className="w-full sm:w-auto shrink-0 px-6 py-3 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-display font-extrabold text-sm shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+                      >
+                        <span>VÀO HỌC</span>
+                        <span className="material-symbols-outlined text-[18px]">play_arrow</span>
+                      </button>
+                    ) : (
+                      <div className="shrink-0 flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-100 text-slate-500 text-xs font-bold">
+                        <span className="material-symbols-outlined text-[18px]">lock</span>
+                        <span>MỞ SAU PRE-A1</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Level Card 3: A2 - FLYERS (Locked) */}
+            {(() => {
+              const lvl3 = currentLevels[2] || { id: 3, name: 'A2 - Flyers', code: 'A2_FLYERS' };
+
+              return (
+                <div className="relative bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-7 shadow-xs opacity-75 hover:opacity-90 transition-all text-left">
+                  <div className="flex flex-col sm:flex-row items-start justify-between gap-5">
+                    <div className="flex items-start gap-4">
+                      <div className="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 border border-slate-200 flex items-center justify-center shrink-0">
+                        <span className="material-symbols-outlined text-[36px]">military_tech</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-100 text-slate-600">
+                            {lvl3.code || 'A2_FLYERS'}
+                          </span>
+                          <span className="text-xs text-slate-400 font-medium">Cambridge A2</span>
+                        </div>
+                        <h2 className="font-display font-bold text-xl sm:text-2xl text-slate-900">
+                          {lvl3.name || 'A2 - Flyers'}
+                        </h2>
+                        <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed max-w-2xl">
+                          Làm chủ các tình huống thảo luận, vốn từ 1000+ từ thông dụng và sẵn sàng cho bài thi chứng chỉ Cambridge.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="shrink-0 flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-100 text-slate-400 text-xs font-bold">
+                      <span className="material-symbols-outlined text-[18px]">lock</span>
+                      <span>ĐANG KHÓA</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
 
-      {/* 2. MÀN HÌNH CHỌN CHỦ ĐỀ (TOPICS VIEW - GIỐNG ẢNH 1) */}
+      {/* 2. MÀN HÌNH CHỌN CHỦ ĐỀ (TOPICS VIEW) */}
       {currentView === 'topics' && (
         <div className="max-w-2xl mx-auto space-y-6 animate-fade-in-up">
           <div className="flex items-center justify-between pb-2">
             <button
               onClick={handleBackToLevels}
-              className="flex items-center gap-2 px-4 py-2.5 border-2 border-border-main rounded-xl hover:bg-bg-light font-display font-bold text-xs text-text-muted transition-all cursor-pointer shadow-[0_2px_0_0_#e5e5e5] active:translate-y-[1px]"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-sky-600 font-display font-bold text-xs shadow-2xs transition-all active:scale-95 cursor-pointer"
             >
-              <ArrowLeftIcon className="w-4 h-4" />
-              QUAY LẠI
+              <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+              <span>QUAY LẠI TRÌNH ĐỘ</span>
             </button>
-            <span className="text-xs font-extrabold text-primary tracking-widest uppercase">
-              Trình độ: {currentLevel?.name}
-            </span>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-50 border border-sky-100 text-sky-700 text-xs font-bold font-display">
+              <span className="material-symbols-outlined text-[16px]">school</span>
+              <span>Trình độ: {currentLevel?.name}</span>
+            </div>
           </div>
 
-          {/* Topics List with Duolingo Cards Layout (Image 1 Style) */}
-          <div className="space-y-6 pt-2">
+          {/* Topics List with Modern Sky Blue Cards Layout */}
+          <div className="space-y-4 pt-1">
             {loading && topics.length === 0 ? (
               <div className="flex flex-col items-center justify-center p-12 space-y-4">
-                <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                <span className="text-sm font-bold text-text-muted">Đang tải danh sách chủ đề...</span>
+                <div className="w-10 h-10 border-4 border-sky-600 border-t-transparent rounded-full animate-spin" />
+                <span className="text-sm font-bold text-slate-500">Đang tải danh sách chủ đề...</span>
               </div>
             ) : topics.length > 0 ? (
               topics.map((tpc, index) => {
@@ -536,7 +667,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                   "Hello! Let's learn English!",
                   "I'm starting to learn English.",
                   "I know some words in English.",
-                  "Practice makes perfect! Cùng cố gắng nhé bé!",
+                  "Practice makes perfect! Cùng cố gắng nhé!",
                   "You are doing great! Bé xuất sắc quá!"
                 ];
                 const bubbleText = speechBubbleTexts[index % speechBubbleTexts.length];
@@ -578,8 +709,6 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                 );
 
                 // Điều kiện part Từ vựng đã skip:
-                // - learningStatus là 'GRAMMAR_ONLY' (backend đã skip vocab)
-                // - Hoặc trong userProgress, bài vocab (orderIndex <= 5) là SKIPPED
                 const isVocabSkipped =
                   tWithProg.learningStatus === 'GRAMMAR_ONLY' ||
                   (topicProgList.length > 0 &&
@@ -594,9 +723,6 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                     ));
 
                 // Điều kiện part Ngữ pháp đã skip:
-                // - Topic không có ngữ pháp (grammarTitle null)
-                // - Hoặc learningStatus là 'VOCAB_ONLY'
-                // - Hoặc trong userProgress, bài grammar (orderIndex >= 6 hoặc type GRAMMAR) là SKIPPED
                 const isGrammarSkipped =
                   !grammarTitle ||
                   tWithProg.learningStatus === 'VOCAB_ONLY' ||
@@ -618,182 +744,180 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                 return (
                   <div
                     key={tpc.id}
-                    className={`border-2 rounded-[2rem] p-6 flex flex-col md:flex-row justify-between items-center gap-6 transition-all relative overflow-hidden ${
+                    className={`relative bg-white rounded-3xl border p-6 sm:p-7 transition-all text-left overflow-hidden ${
                       isUnlocked
-                        ? 'border-white text-text-main shadow-md'
-                        : 'border-[#dcdcdc] text-text-muted shadow-sm'
+                        ? 'border-slate-200/90 hover:border-sky-300 shadow-xs hover:shadow-md'
+                        : 'border-slate-200/80 bg-slate-50/50 opacity-80'
                     }`}
                   >
-                    {/* Hình nền topic1 hiển thị cho cả chủ đề mở khóa và chủ đề bị khóa */}
+                    {/* Decorative subtle background pattern */}
                     <div
-                      className={`absolute inset-0 z-0 pointer-events-none transition-all ${
-                        !isUnlocked ? 'grayscale contrast-75 brightness-95' : ''
+                      className={`absolute inset-0 z-0 pointer-events-none opacity-[0.03] transition-all ${
+                        !isUnlocked ? 'grayscale' : ''
                       }`}
                       style={{
                         backgroundImage: `url(${topic1Bg})`,
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
-                        backgroundRepeat: 'no-repeat',
                       }}
                     />
 
-                    {/* Lớp phủ màu xám khi chủ đề bị khóa (giữ background topic1 nhưng phủ màu xám) */}
-                    {!isUnlocked && (
-                      <div className="absolute inset-0 bg-[#e5e7eb]/75 backdrop-grayscale z-0 pointer-events-none" />
-                    )}
-
-                    {/* Left details & progress & action button */}
-                    <div className="flex-grow text-left space-y-4 w-full relative z-10">
-                      <div className="space-y-1.5">
-                        {/* 1. Tên Topic (hiển thị khi part từ vựng chưa skip) */}
-                        {finalShowTopicName && (
-                          <h3 className={`text-xl font-display font-extrabold drop-shadow-sm ${
-                            isUnlocked ? 'text-black' : 'text-gray-700'
-                          }`}>
-                            {tpc.title}
-                          </h3>
-                        )}
-
-                        {/* 2. Tên Grammar (ở title vòng 6, hiển thị khi part ngữ pháp chưa skip) */}
-                        {showGrammarName && (
-                          <div className={`flex items-center gap-1.5 font-display drop-shadow-sm ${
-                            finalShowTopicName
-                              ? (isUnlocked
-                                  ? 'text-sm font-extrabold text-[#7c3aed] bg-purple-100/80 border border-purple-200/80 px-2.5 py-1 rounded-xl w-fit'
-                                  : 'text-sm font-extrabold text-gray-600 bg-white/60 border border-gray-300 px-2.5 py-1 rounded-xl w-fit')
-                              : (isUnlocked
-                                  ? 'text-xl font-extrabold text-black'
-                                  : 'text-xl font-extrabold text-gray-700')
-                          }`}>
-                            <BookOpenIcon className={`w-4 h-4 shrink-0 ${isUnlocked ? 'text-[#7c3aed]' : 'text-gray-500'}`} />
-                            <span>{grammarTitle}</span>
-                          </div>
-                        )}
-
-                        {!isUnlocked && (
-                          <div className="pt-0.5">
-                            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-700 bg-white/70 backdrop-blur-sm px-2.5 py-1 rounded-lg border border-gray-300 shadow-xs">
-                              <LockClosedIcon className="w-3.5 h-3.5 text-gray-500" /> CHƯA MỞ KHÓA
+                    <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                      {/* Left information */}
+                      <div className="flex-1 space-y-3 w-full">
+                        {/* Status badge row */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-100 text-slate-700">
+                            Chủ đề {index + 1}
+                          </span>
+                          {isUnlocked ? (
+                            progress >= 100 ? (
+                              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200/60 px-2.5 py-0.5 rounded-full">
+                                <span className="material-symbols-outlined text-[14px]">check_circle</span>
+                                Đã hoàn thành
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-600 bg-sky-50 border border-sky-200/60 px-2.5 py-0.5 rounded-full">
+                                <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
+                                Đang học
+                              </span>
+                            )
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
+                              <span className="material-symbols-outlined text-[14px]">lock</span>
+                              Chưa mở khóa
                             </span>
+                          )}
+                        </div>
+
+                        {/* Title and grammar tag */}
+                        <div>
+                          {finalShowTopicName && (
+                            <h3 className={`text-xl font-display font-bold ${
+                              isUnlocked ? 'text-slate-900' : 'text-slate-600'
+                            }`}>
+                              {tpc.title}
+                            </h3>
+                          )}
+                          {showGrammarName && (
+                            <div className="mt-1.5">
+                              <span className={`inline-flex items-center gap-1.5 font-display text-xs font-bold px-3 py-1 rounded-xl ${
+                                isUnlocked
+                                  ? 'bg-indigo-50 border border-indigo-100 text-indigo-700'
+                                  : 'bg-slate-100 text-slate-600 border border-slate-200'
+                              }`}>
+                                <span className="material-symbols-outlined text-[16px]">menu_book</span>
+                                <span>{grammarTitle}</span>
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Progress Bar with Trophy */}
+                        {isUnlocked && (
+                          <div className="pt-2 max-w-md space-y-1.5">
+                            <div className="flex items-center justify-between text-xs font-semibold">
+                              <span className="text-slate-500">Tiến độ bài học</span>
+                              <span className="text-sky-600 font-bold">{progress}%</span>
+                            </div>
+                            <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-gradient-to-r from-sky-500 to-sky-600 transition-all duration-500"
+                                style={{ width: `${progress}%` }}
+                              />
+                            </div>
                           </div>
                         )}
+
+                        {/* Action button */}
+                        <div className="pt-2">
+                          {isUnlocked ? (
+                            <button
+                              onClick={() => handleTopicClick(tpc)}
+                              className="px-6 py-2.5 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-display font-extrabold text-xs shadow-sm transition-all inline-flex items-center gap-2 active:scale-95 cursor-pointer"
+                            >
+                              <span>{progress > 0 ? 'TIẾP TỤC HỌC' : 'BẮT ĐẦU CHỦ ĐỀ'}</span>
+                              <span className="material-symbols-outlined text-[16px]">play_arrow</span>
+                            </button>
+                          ) : (
+                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-100 text-slate-400 text-xs font-bold cursor-not-allowed">
+                              <span className="material-symbols-outlined text-[16px]">lock</span>
+                              <span>HOÀN THÀNH CHỦ ĐỀ TRƯỚC ĐỂ MỞ</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Progress Bar with Trophy */}
+                      {/* Right side mascot with cute speech bubble */}
                       {isUnlocked && (
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1 h-5 bg-white border-2 border-[#84d8ff]/30 rounded-full overflow-hidden relative">
-                            <div
-                              className="h-full bg-[#58cc02] rounded-full transition-all duration-300"
-                              style={{ width: `${progress}%` }}
-                            />
-                            <span className="absolute inset-0 flex items-center justify-center text-[10px] font-extrabold text-[#0079b8] leading-none">
-                              {progress}%
-                            </span>
-                          </div>
-                          <span className="text-lg">🏆</span>
-                        </div>
-                      )}
-
-                      {/* Active Continue Button / Skip/Jump Button */}
-                      <div className="pt-1">
-                        {isUnlocked ? (
-                          <Button3D
-                            variant="blue"
-                            onClick={() => handleTopicClick(tpc)}
-                            className="px-8 py-3 text-xs tracking-wider font-display font-extrabold uppercase"
-                          >
-                            TIẾP TỤC
-                          </Button3D>
-                        ) : (
-                          <Button3D
-                            variant="gray"
-                            onClick={() => alert("Bé hãy hoàn thành các chủ đề trước để mở khóa nhé!")}
-                            className="px-8 py-3 text-xs tracking-wider font-display font-extrabold uppercase border-2 border-border-main bg-white text-text-muted"
-                          >
-                            <LockClosedIcon className="w-4 h-4 mr-2 inline" />
-                            NHẢY TỚI BÀI HỌC
-                          </Button3D>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Right side mascot & inline bubble inside flex flow to avoid overlap */}
-                    {isUnlocked && (
-                      <div className="flex flex-col items-center flex-shrink-0 w-full md:w-auto relative z-10">
-                        {/* Inline speech bubble above the mascot */}
-                        <div className="relative bg-white border-2 border-border-main rounded-2xl px-4 py-2 shadow-sm max-w-[200px] mb-3 animate-fade-in-up">
-                          <p className="text-xs font-semibold text-text-main text-center leading-tight">
+                        <div className="shrink-0 flex md:flex-col items-center gap-3 relative">
+                          <div className="bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2 text-xs font-medium text-slate-700 shadow-2xs max-w-[180px] text-center leading-snug">
                             {bubbleText}
-                          </p>
-                          {/* Triangle pointer tail pointing down */}
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-[7px] border-solid border-t-white border-x-transparent border-b-transparent" />
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-[8px] border-solid border-t-border-main border-x-transparent border-b-transparent -z-10" />
-                        </div>
-                        {/* Mascot Image */}
-                        <div className="animate-float">
+                          </div>
                           <img
                             src={mascotImg}
                             alt="ENjoy Mascot"
-                            className="w-16 h-16 object-contain rounded-full select-none pointer-events-none drop-shadow-md"
+                            className="w-16 h-16 object-contain rounded-2xl select-none pointer-events-none drop-shadow-sm animate-float"
                           />
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 );
               })
             ) : (
-              <div className="text-center py-12 text-text-muted font-bold text-sm bg-bg-light border-2 border-dashed border-border-main rounded-2xl animate-pulse">
-                Chưa có chủ đề nào trong trình độ này bé ơi!
+              <div className="text-center py-12 text-slate-500 font-bold text-sm bg-slate-50 border border-dashed border-slate-200 rounded-3xl">
+                Chưa có chủ đề nào trong trình độ này!
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* 3. MÀN HÌNH BẢN ĐỒ BÀI HỌC DÀI CUỐN CHIẾU (SESSIONS MAP VIEW - GIỐNG ẢNH 2) */}
+      {/* 3. MÀN HÌNH BẢN ĐỒ BÀI HỌC DÀI CUỐN CHIẾU (SESSIONS MAP VIEW) */}
       {currentView === 'sessions' && (
         <div className="w-full space-y-6 animate-fade-in-up relative">
           
-          {/* Sticky Header like Image 2 */}
-          <div className="max-w-2xl mx-auto sticky top-0 z-30 bg-[#a55eea] text-white rounded-2xl p-4 shadow-md flex items-center justify-between border-b-4 border-[#8854d0]">
+          {/* Sticky Header with Modern Sky Blue Theme */}
+          <div className="max-w-2xl mx-auto sticky top-2 z-30 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-4 shadow-sm flex items-center justify-between">
             <div className="flex items-center gap-3 text-left">
               <button
                 onClick={handleBackToTopics}
-                className="w-10 h-10 rounded-xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors cursor-pointer text-white"
+                className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors cursor-pointer text-slate-600"
+                title="Quay lại danh sách chủ đề"
               >
-                <ArrowLeftIcon className="w-5 h-5 stroke-[2.5]" />
+                <span className="material-symbols-outlined text-[20px]">arrow_back</span>
               </button>
               <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#f1e6ff] block mb-0.5">
-                  Phần {activeSession ? activeSession.partIdx + 1 : 1}, Cửa {activeSession ? activeSession.sessionIdx + 1 : 1}
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-sky-600 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-100 inline-block mb-1">
+                  Phần {activeSession ? activeSession.partIdx + 1 : 1} • Cửa {activeSession ? activeSession.sessionIdx + 1 : 1}
                 </span>
-                <h2 className="text-base font-display font-extrabold m-0 leading-tight">
+                <h2 className="text-base font-display font-bold text-slate-900 m-0 leading-tight">
                   {currentTopic?.title}
                 </h2>
               </div>
             </div>
             <button
               onClick={() => alert("Mẹo học: Bé hãy ấn nút loa để nghe phát âm, sau đó luyện nói to theo linh vật nhé!")}
-              className="bg-white/25 hover:bg-white/35 text-white font-display font-extrabold text-xs px-4 py-2 rounded-xl transition-all cursor-pointer border-b-2 border-[#8854d0]"
+              className="bg-sky-50 hover:bg-sky-100 text-sky-700 font-display font-bold text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer border border-sky-200 flex items-center gap-1.5"
             >
-              HƯỚNG DẪN
+              <span className="material-symbols-outlined text-[16px]">lightbulb</span>
+              <span>Hướng dẫn</span>
             </button>
           </div>
 
-          {/* Sessions Map Winding Road (Image 2) */}
+          {/* Sessions Map Winding Road */}
           {(loading || (Boolean(activeTopic) && currentParts.length === 0)) ? (
             <div className="flex flex-col items-center justify-center p-16 space-y-4 min-h-[400px]">
-              <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-              <span className="text-sm font-bold text-text-muted">Đang tải bài học của chủ đề...</span>
+              <div className="w-10 h-10 border-4 border-sky-600 border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm font-bold text-slate-500">Đang tải bài học của chủ đề...</span>
             </div>
           ) : allSessionsInTopic.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-16 space-y-4 min-h-[300px] text-center">
-              <span className="text-base font-bold text-text-muted">Chưa có bài học nào trong chủ đề này.</span>
+              <span className="text-base font-bold text-slate-500">Chưa có bài học nào trong chủ đề này.</span>
               <button
                 onClick={handleBackToTopics}
-                className="mt-4 px-4 py-2 border-2 border-border-main rounded-xl hover:bg-bg-light font-display font-bold text-xs text-text-muted transition-all cursor-pointer"
+                className="mt-4 px-4 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 font-display font-bold text-xs text-slate-600 transition-all cursor-pointer"
               >
                 QUAY LẠI DANH SÁCH CHỦ ĐỀ
               </button>
@@ -822,11 +946,10 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                   const isSelected = selectedNodeId === session.id;
                   const isUnlocked = session.status === SessionStatus.UNLOCK;
                   const curveStyle = getCurveMargin(localIdx, isGrammar);
-                  const palette = getSessionPalette((session as any).partIdx || 0);
 
                   // Alternating Mascot placement next to the road
-                  const hasMascotLeft = !isGrammar && localIdx === 2; // Mascot on the left of node 3
-                  const hasMascotRight = isGrammar && localIdx === 1; // Mascot on the right of node 7 (which is index 1 of grammar)
+                  const hasMascotLeft = !isGrammar && localIdx === 2;
+                  const hasMascotRight = isGrammar && localIdx === 1;
 
                   return (
                     <div key={session.id} className={`w-full max-w-2xl flex justify-center items-center relative py-6 ${isSelected ? 'z-20' : ''}`}>
@@ -843,10 +966,9 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                         
                         {/* Floating Start tag */}
                         {isUnlocked && (
-                          <div className={`absolute bottom-full mb-3 bg-white border-2 font-display font-extrabold text-[10px] tracking-wider uppercase px-2.5 py-1 rounded-xl shadow-md animate-bounce-soft whitespace-nowrap z-10 ${palette.textClass} ${palette.borderClass}`}>
-                            BẮT ĐẦU
-                            {/* Little bubble tail */}
-                            <div className={`absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-solid border-x-transparent border-b-transparent border-t-current`} style={{borderTopColor: 'inherit'}} />
+                          <div className="absolute bottom-full mb-3 bg-sky-600 text-white font-display font-extrabold text-[10px] tracking-wider uppercase px-2.5 py-1 rounded-full shadow-md animate-bounce whitespace-nowrap z-10 flex items-center gap-1">
+                            <span>BẮT ĐẦU</span>
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-[4px] border-solid border-x-transparent border-b-transparent border-t-sky-600" />
                           </div>
                         )}
 
@@ -857,7 +979,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                             e.stopPropagation();
                             handleNodeClick(session);
                           }}
-                          className={`w-16 h-16 rounded-full flex items-center justify-center font-display font-extrabold transition-all duration-150 cursor-pointer ${getNodeBackground(
+                          className={`w-16 h-16 rounded-full flex items-center justify-center font-display font-bold transition-all duration-200 cursor-pointer ${getNodeBackground(
                             session,
                             isSelected
                           )}`}
@@ -870,12 +992,15 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                           <div
                             ref={popupRef}
                             onClick={(e) => e.stopPropagation()}
-                            className="absolute bottom-full mb-4 bg-[#b066fe] border-2 border-[#9333ea] rounded-3xl p-5 shadow-2xl z-20 w-72 text-center animate-fade-in-up text-white"
+                            className="absolute bottom-full mb-4 bg-white border border-slate-200/90 rounded-3xl p-5 shadow-2xl z-30 w-72 text-center animate-fade-in-up text-slate-800"
                           >
-                            <h4 className="text-base font-display font-black text-white m-0 leading-tight mb-1 text-center drop-shadow-sm">
+                            <div className="w-10 h-10 rounded-2xl bg-sky-50 text-sky-600 border border-sky-100 mx-auto flex items-center justify-center mb-3">
+                              <span className="material-symbols-outlined text-[24px]">play_circle</span>
+                            </div>
+                            <h4 className="text-base font-display font-bold text-slate-900 m-0 leading-tight mb-1 text-center">
                               {session.title}
                             </h4>
-                            <span className="text-xs font-bold text-white/90 block mb-4 text-center">
+                            <span className="text-xs font-semibold text-slate-500 block mb-4 text-center">
                               Bài học {(session.sessionIdx ?? 0) + 1} / {partSessions.length}
                             </span>
                             <div className="flex flex-col gap-2">
@@ -886,14 +1011,16 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                                   setSelectedNodeId(null);
                                   onStartSession(session);
                                 }}
-                                className="w-full py-3 bg-white text-[#9333ea] font-display font-black text-sm tracking-wider uppercase rounded-2xl shadow-lg hover:bg-white/95 active:scale-95 transition-all cursor-pointer border-b-4 border-[#e9d5ff]"
+                                className="w-full py-3 bg-sky-600 hover:bg-sky-700 active:scale-95 text-white font-display font-bold text-xs tracking-wider uppercase rounded-2xl shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2"
                               >
-                                BẮT ĐẦU {session.status === SessionStatus.FINISH ? '+5 KN' : '+20 KN'}
+                                <span>BẮT ĐẦU</span>
+                                <span className="px-2 py-0.5 rounded-full bg-white/20 text-[11px] font-extrabold">
+                                  {session.status === SessionStatus.FINISH ? '+5 KN' : '+20 KN'}
+                                </span>
                               </button>
                             </div>
                             {/* Tooltip arrow pointer */}
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-[10px] border-solid border-t-[#b066fe] border-x-transparent border-b-transparent" />
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-[12px] border-solid border-t-[#9333ea] border-x-transparent border-b-transparent -z-10" />
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-[8px] border-solid border-t-white border-x-transparent border-b-transparent drop-shadow-xs" />
                           </div>
                         )}
                       </div>
@@ -912,8 +1039,8 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                 return (
                   <React.Fragment key={part.id}>
                     {/* Part Separator Divider line right before the first session of each Part */}
-                    <div className="w-full max-w-2xl text-center my-6 py-2 border-b-2 border-dashed border-border-main/50 relative z-10">
-                      <span className="bg-bg-main px-4 text-xs font-display font-extrabold text-text-muted tracking-widest uppercase">
+                    <div className="w-full max-w-xl text-center my-6 py-2 border-b border-dashed border-slate-200 relative z-10">
+                      <span className="bg-slate-50 px-4 text-xs font-display font-bold text-slate-500 tracking-wider uppercase rounded-full py-1 border border-slate-200">
                         PHẦN {partIdx + 1}: {part.title}
                       </span>
                     </div>
@@ -922,7 +1049,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                     {vocabSessions.length > 0 && (
                       <div className="flex flex-col items-center w-full relative py-4">
                         {/* Đường ray dọc riêng của cụm Từ vựng */}
-                        <div className="absolute top-4 bottom-4 w-2.5 bg-[#e5e5e5] rounded-full -z-10" />
+                        <div className="absolute top-4 bottom-4 w-2 bg-slate-200 rounded-full -z-10" />
                         {vocabSessions.map((session, localIdx) => renderSessionNode(session, localIdx, false))}
                       </div>
                     )}
@@ -930,12 +1057,12 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                     {/* Dải phân cách nhẹ nhàng báo hiệu phần Ngữ pháp */}
                     {grammarSessions.length > 0 && (
                       <div className="w-full max-w-md my-8 flex items-center justify-center gap-3 relative z-10">
-                        <div className="flex-1 h-[1.5px] bg-gradient-to-r from-transparent via-[#d8b4fe] to-transparent" />
-                        <div className="px-4 py-1.5 rounded-full bg-[#faf5ff] border border-[#d8b4fe] text-[#8854d0] text-xs font-display font-extrabold tracking-wider uppercase flex items-center gap-2 shadow-sm">
-                          <span>✨</span>
+                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-indigo-300 to-transparent" />
+                        <div className="px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-display font-bold tracking-wider uppercase flex items-center gap-2 shadow-2xs">
+                          <span className="material-symbols-outlined text-[16px]">magic_button</span>
                           <span>Ngữ pháp & Luyện tập</span>
                         </div>
-                        <div className="flex-1 h-[1.5px] bg-gradient-to-l from-transparent via-[#d8b4fe] to-transparent" />
+                        <div className="flex-1 h-px bg-gradient-to-l from-transparent via-indigo-300 to-transparent" />
                       </div>
                     )}
 
@@ -943,7 +1070,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                     {grammarSessions.length > 0 && (
                       <div className="flex flex-col items-center w-full relative py-4">
                         {/* Đường ray dọc riêng của cụm Ngữ pháp - tone tím nhạt nhẹ nhàng */}
-                        <div className="absolute top-4 bottom-4 w-2.5 bg-[#ede9fe] rounded-full -z-10" />
+                        <div className="absolute top-4 bottom-4 w-2 bg-indigo-100 rounded-full -z-10" />
                         {grammarSessions.map((session, localIdx) => renderSessionNode(session, localIdx, true))}
                       </div>
                     )}

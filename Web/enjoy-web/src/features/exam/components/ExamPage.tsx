@@ -187,10 +187,10 @@ export const ExamPage: React.FC = () => {
               <div className="mt-5 pt-4 border-t border-[#f1f5f9] flex items-center justify-between gap-2.5">
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#f8fafc] border border-[#e2e8f0] text-[12px] text-[#475569] font-medium">
-                    <span>🎧</span> Nghe: {exam.totalListeningQuestions} câu
+                    <span className="material-symbols-outlined text-[15px] text-sky-600">headphones</span> Nghe: {exam.totalListeningQuestions} câu
                   </span>
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#f8fafc] border border-[#e2e8f0] text-[12px] text-[#475569] font-medium">
-                    <span>📖</span> Đọc: {exam.totalReadingQuestions} câu
+                    <span className="material-symbols-outlined text-[15px] text-sky-600">menu_book</span> Đọc: {exam.totalReadingQuestions} câu
                   </span>
                 </div>
 
