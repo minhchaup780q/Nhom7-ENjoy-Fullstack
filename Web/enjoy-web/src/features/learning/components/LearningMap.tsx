@@ -744,46 +744,52 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                 return (
                   <div
                     key={tpc.id}
-                    className={`relative bg-white rounded-3xl border p-6 sm:p-7 transition-all text-left overflow-hidden ${
+                    className={`relative rounded-3xl border-2 p-6 sm:p-7 transition-all text-left overflow-hidden shadow-sm ${
                       isUnlocked
-                        ? 'border-slate-200/90 hover:border-sky-300 shadow-xs hover:shadow-md'
-                        : 'border-slate-200/80 bg-slate-50/50 opacity-80'
+                        ? 'border-white hover:border-sky-300 hover:shadow-md'
+                        : 'border-slate-300 opacity-80'
                     }`}
                   >
-                    {/* Decorative subtle background pattern */}
+                    {/* Hình nền topic1 hiển thị đầy đủ, rõ nét */}
                     <div
-                      className={`absolute inset-0 z-0 pointer-events-none opacity-[0.03] transition-all ${
-                        !isUnlocked ? 'grayscale' : ''
+                      className={`absolute inset-0 z-0 pointer-events-none transition-all ${
+                        !isUnlocked ? 'grayscale contrast-75 brightness-95' : ''
                       }`}
                       style={{
                         backgroundImage: `url(${topic1Bg})`,
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat',
                       }}
                     />
+
+                    {/* Lớp phủ màu xám khi chủ đề bị khóa */}
+                    {!isUnlocked && (
+                      <div className="absolute inset-0 bg-slate-200/75 backdrop-grayscale z-0 pointer-events-none" />
+                    )}
 
                     <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                       {/* Left information */}
                       <div className="flex-1 space-y-3 w-full">
                         {/* Status badge row */}
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-100 text-slate-700">
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-white/85 backdrop-blur-xs text-slate-800 border border-white/60 shadow-2xs">
                             Chủ đề {index + 1}
                           </span>
                           {isUnlocked ? (
                             progress >= 100 ? (
-                              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200/60 px-2.5 py-0.5 rounded-full">
-                                <span className="material-symbols-outlined text-[14px]">check_circle</span>
+                              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-white/90 backdrop-blur-xs border border-emerald-200/80 px-2.5 py-0.5 rounded-full shadow-2xs">
+                                <span className="material-symbols-outlined text-[14px] text-emerald-600">check_circle</span>
                                 Đã hoàn thành
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-600 bg-sky-50 border border-sky-200/60 px-2.5 py-0.5 rounded-full">
+                              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-sky-700 bg-white/90 backdrop-blur-xs border border-sky-200/80 px-2.5 py-0.5 rounded-full shadow-2xs">
                                 <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
                                 Đang học
                               </span>
                             )
                           ) : (
-                            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
+                            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 bg-white/80 backdrop-blur-xs px-2.5 py-0.5 rounded-full border border-slate-200 shadow-2xs">
                               <span className="material-symbols-outlined text-[14px]">lock</span>
                               Chưa mở khóa
                             </span>
@@ -793,20 +799,20 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                         {/* Title and grammar tag */}
                         <div>
                           {finalShowTopicName && (
-                            <h3 className={`text-xl font-display font-bold ${
-                              isUnlocked ? 'text-slate-900' : 'text-slate-600'
+                            <h3 className={`text-xl font-display font-extrabold drop-shadow-sm ${
+                              isUnlocked ? 'text-slate-900' : 'text-slate-700'
                             }`}>
                               {tpc.title}
                             </h3>
                           )}
                           {showGrammarName && (
                             <div className="mt-1.5">
-                              <span className={`inline-flex items-center gap-1.5 font-display text-xs font-bold px-3 py-1 rounded-xl ${
+                              <span className={`inline-flex items-center gap-1.5 font-display text-xs font-extrabold px-3 py-1 rounded-xl shadow-2xs ${
                                 isUnlocked
-                                  ? 'bg-indigo-50 border border-indigo-100 text-indigo-700'
-                                  : 'bg-slate-100 text-slate-600 border border-slate-200'
+                                  ? 'bg-white/90 backdrop-blur-xs border border-indigo-200 text-indigo-700'
+                                  : 'bg-white/80 text-slate-600 border border-slate-200'
                               }`}>
-                                <span className="material-symbols-outlined text-[16px]">menu_book</span>
+                                <span className="material-symbols-outlined text-[16px] text-indigo-600">menu_book</span>
                                 <span>{grammarTitle}</span>
                               </span>
                             </div>
@@ -816,11 +822,13 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                         {/* Progress Bar with Trophy */}
                         {isUnlocked && (
                           <div className="pt-2 max-w-md space-y-1.5">
-                            <div className="flex items-center justify-between text-xs font-semibold">
-                              <span className="text-slate-500">Tiến độ bài học</span>
-                              <span className="text-sky-600 font-bold">{progress}%</span>
+                            <div className="flex items-center justify-between text-xs font-bold">
+                              <span className="text-slate-800 drop-shadow-xs">Tiến độ bài học</span>
+                              <span className="text-sky-700 font-extrabold bg-white/85 backdrop-blur-xs px-2 py-0.5 rounded-md border border-white/60 shadow-2xs">
+                                {progress}%
+                              </span>
                             </div>
-                            <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                            <div className="w-full h-2.5 rounded-full bg-white/90 border border-slate-200/80 overflow-hidden shadow-inner">
                               <div
                                 className="h-full rounded-full bg-gradient-to-r from-sky-500 to-sky-600 transition-all duration-500"
                                 style={{ width: `${progress}%` }}
@@ -834,13 +842,13 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                           {isUnlocked ? (
                             <button
                               onClick={() => handleTopicClick(tpc)}
-                              className="px-6 py-2.5 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-display font-extrabold text-xs shadow-sm transition-all inline-flex items-center gap-2 active:scale-95 cursor-pointer"
+                              className="px-7 py-2.5 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-display font-extrabold text-xs shadow-md transition-all inline-flex items-center gap-2 active:scale-95 cursor-pointer"
                             >
                               <span>{progress > 0 ? 'TIẾP TỤC HỌC' : 'BẮT ĐẦU CHỦ ĐỀ'}</span>
                               <span className="material-symbols-outlined text-[16px]">play_arrow</span>
                             </button>
                           ) : (
-                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-100 text-slate-400 text-xs font-bold cursor-not-allowed">
+                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/80 backdrop-blur-xs text-slate-500 text-xs font-bold border border-slate-200 cursor-not-allowed shadow-2xs">
                               <span className="material-symbols-outlined text-[16px]">lock</span>
                               <span>HOÀN THÀNH CHỦ ĐỀ TRƯỚC ĐỂ MỞ</span>
                             </div>
@@ -851,13 +859,13 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                       {/* Right side mascot with cute speech bubble */}
                       {isUnlocked && (
                         <div className="shrink-0 flex md:flex-col items-center gap-3 relative">
-                          <div className="bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2 text-xs font-medium text-slate-700 shadow-2xs max-w-[180px] text-center leading-snug">
+                          <div className="relative bg-white/95 backdrop-blur-xs border border-slate-200 rounded-2xl px-3.5 py-2 text-xs font-semibold text-slate-800 shadow-sm max-w-[190px] text-center leading-snug">
                             {bubbleText}
                           </div>
                           <img
                             src={mascotImg}
                             alt="ENjoy Mascot"
-                            className="w-16 h-16 object-contain rounded-2xl select-none pointer-events-none drop-shadow-sm animate-float"
+                            className="w-16 h-16 object-contain rounded-2xl select-none pointer-events-none drop-shadow-md animate-float"
                           />
                         </div>
                       )}
