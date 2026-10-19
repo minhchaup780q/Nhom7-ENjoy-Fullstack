@@ -23,6 +23,7 @@ import { Button3D } from '../../../components/ui/Button3D';
 import { useAuthStore } from '../../auth/store/useAuthStore';
 import { profileApi, type UserProfile } from '../services/profileApi';
 import { FamilyManagementModal } from './FamilyManagementModal';
+import { apiClient } from '../../../services/apiClient';
 
 const AVATAR_PRESETS = [
   'https://api.dicebear.com/7.x/bottts/svg?seed=EnjoyPenguin',

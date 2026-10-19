@@ -41,11 +41,23 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class LeaderboardServiceImpl implements LeaderboardService {
 
+    public static final java.time.ZoneId ZONE_VN = java.time.ZoneId.of("Asia/Ho_Chi_Minh");
+
+    private LocalDateTime nowVn() {
+        return LocalDateTime.now(ZONE_VN);
+    }
+
+    private LocalDate todayVn() {
+        return LocalDate.now(ZONE_VN);
+    }
+
     private final TournamentRepository tournamentRepository;
     private final UserRankProfileRepository userRankProfileRepository;
     private final LeaderboardEntryRepository leaderboardEntryRepository;
     private final XpTransactionRepository xpTransactionRepository;
     private final UserProgressRepository userProgressRepository;
+
+
 
     @Override
     @Transactional
@@ -64,8 +76,8 @@ public class LeaderboardServiceImpl implements LeaderboardService {
                             .username(username != null && !username.isBlank() ? username : "Người dùng #" + userId)
                             .avatarUrl(avatarUrl)
                             .build();
-                    newProfile.setCreateAt(LocalDateTime.now());
-                    newProfile.setUpdateAt(LocalDateTime.now());
+                    newProfile.setCreateAt(nowVn());
+                    newProfile.setUpdateAt(nowVn());
                     return userRankProfileRepository.save(newProfile);
                 });
 
@@ -77,25 +89,63 @@ public class LeaderboardServiceImpl implements LeaderboardService {
             profile.setAvatarUrl(avatarUrl);
         }
 
+        RankTier currentTier = profile.getCurrentRank();
+
         // 2. Đảm bảo user có bản ghi trong tuần thi đấu hiện tại (0 XP nếu vừa bắt đầu tuần)
         LeaderboardEntry userEntry = leaderboardEntryRepository.findByTournamentIdAndUserId(tournament.getId(), userId)
                 .orElseGet(() -> {
                     LeaderboardEntry newEntry = LeaderboardEntry.builder()
                             .tournament(tournament)
                             .userId(userId)
-                            .rankTier(profile.getCurrentRank())
+                            .rankTier(currentTier)
                             .weeklyXp(0)
-                            .lastXpUpdatedAt(LocalDateTime.now())
+                            .lastXpUpdatedAt(nowVn())
                             .username(profile.getUsername())
                             .avatarUrl(profile.getAvatarUrl())
                             .build();
-                    newEntry.setCreateAt(LocalDateTime.now());
-                    newEntry.setUpdateAt(LocalDateTime.now());
+                    newEntry.setCreateAt(nowVn());
+                    newEntry.setUpdateAt(nowVn());
                     return leaderboardEntryRepository.save(newEntry);
                 });
 
+        // Nếu rankTier của bản ghi khác rank hiện tại của profile thì cập nhật
+        if (userEntry.getRankTier() != currentTier) {
+            userEntry.setRankTier(currentTier);
+            userEntry.setUpdateAt(nowVn());
+            userEntry = leaderboardEntryRepository.save(userEntry);
+        }
+
+        // Đồng bộ các user thật khác vào tournament nếu chưa có
+        List<UserRankProfile> allProfiles = userRankProfileRepository.findAll();
+        for (UserRankProfile p : allProfiles) {
+            if (p.getUserId().equals(userId)) continue;
+            leaderboardEntryRepository.findByTournamentIdAndUserId(tournament.getId(), p.getUserId())
+                    .ifPresentOrElse(
+                            e -> {
+                                if (e.getRankTier() != p.getCurrentRank()) {
+                                    e.setRankTier(p.getCurrentRank());
+                                    e.setUpdateAt(nowVn());
+                                    leaderboardEntryRepository.save(e);
+                                }
+                            },
+                            () -> {
+                                LeaderboardEntry newE = LeaderboardEntry.builder()
+                                        .tournament(tournament)
+                                        .userId(p.getUserId())
+                                        .rankTier(p.getCurrentRank())
+                                        .weeklyXp(0)
+                                        .lastXpUpdatedAt(nowVn())
+                                        .username(p.getUsername())
+                                        .avatarUrl(p.getAvatarUrl())
+                                        .build();
+                                newE.setCreateAt(nowVn());
+                                newE.setUpdateAt(nowVn());
+                                leaderboardEntryRepository.save(newE);
+                            }
+                    );
+        }
+
         // 3. Query tối đa 15 user điểm cao nhất trong CÙNG rank tier
-        RankTier currentTier = profile.getCurrentRank();
         List<LeaderboardEntry> topEntries = leaderboardEntryRepository
                 .findByTournamentIdAndRankTierOrderByWeeklyXpDescLastXpUpdatedAtAsc(
                         tournament.getId(), currentTier, PageRequest.of(0, 15)
@@ -149,13 +199,10 @@ public class LeaderboardServiceImpl implements LeaderboardService {
         }
 
         // 5. Tính thời gian còn lại của giải đấu tuần
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = nowVn();
         long daysRemaining = 0;
         if (tournament.getEndDate().isAfter(now)) {
-            daysRemaining = Duration.between(now, tournament.getEndDate()).toDays();
-            if (daysRemaining <= 0) {
-                daysRemaining = 1; // Còn trong ngày cuối cùng của tuần
-            }
+            daysRemaining = Math.max(1, Duration.between(now, tournament.getEndDate()).toDays() + 1);
         }
 
         return LeaderboardResponseDto.builder()
@@ -201,8 +248,8 @@ public class LeaderboardServiceImpl implements LeaderboardService {
                             .username(username != null && !username.isBlank() ? username : "Người dùng #" + userId)
                             .avatarUrl(avatarUrl)
                             .build();
-                    newProfile.setCreateAt(LocalDateTime.now());
-                    newProfile.setUpdateAt(LocalDateTime.now());
+                    newProfile.setCreateAt(nowVn());
+                    newProfile.setUpdateAt(nowVn());
                     return newProfile;
                 });
 
@@ -216,7 +263,7 @@ public class LeaderboardServiceImpl implements LeaderboardService {
         profile.setTotalXp((profile.getTotalXp() != null ? profile.getTotalXp() : 0L) + xpAmount);
 
         // Cập nhật chuỗi Streak liên tục thực tế
-        LocalDate today = LocalDate.now();
+        LocalDate today = todayVn();
         LocalDate lastDate = profile.getLastStudyDate();
         int currentStreak = (profile.getCurrentStreak() != null) ? profile.getCurrentStreak() : 0;
         int longestStreak = (profile.getLongestStreak() != null) ? profile.getLongestStreak() : 0;
@@ -239,7 +286,7 @@ public class LeaderboardServiceImpl implements LeaderboardService {
         profile.setCurrentStreak(currentStreak);
         profile.setLongestStreak(longestStreak);
 
-        profile.setUpdateAt(LocalDateTime.now());
+        profile.setUpdateAt(nowVn());
         userRankProfileRepository.save(profile);
 
         // 2. Ghi nhận nhật ký XpTransaction
@@ -250,8 +297,8 @@ public class LeaderboardServiceImpl implements LeaderboardService {
                 .sourceId(sourceId)
                 .description(description != null ? description : "Hoàn thành bài học +" + xpAmount + " KN")
                 .build();
-        tx.setCreateAt(LocalDateTime.now());
-        tx.setUpdateAt(LocalDateTime.now());
+        tx.setCreateAt(nowVn());
+        tx.setUpdateAt(nowVn());
         xpTransactionRepository.save(tx);
 
         // 3. Cập nhật điểm tuần trong LeaderboardEntry
@@ -265,13 +312,13 @@ public class LeaderboardServiceImpl implements LeaderboardService {
                             .username(profile.getUsername())
                             .avatarUrl(profile.getAvatarUrl())
                             .build();
-                    newEntry.setCreateAt(LocalDateTime.now());
+                    newEntry.setCreateAt(nowVn());
                     return newEntry;
                 });
 
         entry.setWeeklyXp((entry.getWeeklyXp() != null ? entry.getWeeklyXp() : 0) + xpAmount);
-        entry.setLastXpUpdatedAt(LocalDateTime.now());
-        entry.setUpdateAt(LocalDateTime.now());
+        entry.setLastXpUpdatedAt(nowVn());
+        entry.setUpdateAt(nowVn());
         if (profile.getUsername() != null) {
             entry.setUsername(profile.getUsername());
         }
@@ -304,12 +351,12 @@ public class LeaderboardServiceImpl implements LeaderboardService {
                             .longestStreak(0)
                             .username("Người dùng #" + targetUserId)
                             .build();
-                    newProfile.setCreateAt(LocalDateTime.now());
-                    newProfile.setUpdateAt(LocalDateTime.now());
+                    newProfile.setCreateAt(nowVn());
+                    newProfile.setUpdateAt(nowVn());
                     return userRankProfileRepository.save(newProfile);
                 });
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = todayVn();
         LocalDate lastDate = profile.getLastStudyDate();
         int currentStreak = (profile.getCurrentStreak() != null) ? profile.getCurrentStreak() : 0;
         int longestStreak = (profile.getLongestStreak() != null) ? profile.getLongestStreak() : 0;
@@ -318,7 +365,7 @@ public class LeaderboardServiceImpl implements LeaderboardService {
         if (lastDate != null && lastDate.isBefore(today.minusDays(1))) {
             currentStreak = 0;
             profile.setCurrentStreak(0);
-            profile.setUpdateAt(LocalDateTime.now());
+            profile.setUpdateAt(nowVn());
             userRankProfileRepository.save(profile);
         }
 
@@ -370,7 +417,7 @@ public class LeaderboardServiceImpl implements LeaderboardService {
     @Override
     @Transactional
     public Tournament getOrCreateCurrentTournament() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = nowVn();
         Optional<Tournament> activeOpt = tournamentRepository
                 .findFirstByStartDateLessThanEqualAndEndDateGreaterThanEqualAndStatus(now, now, TournamentStatus.ACTIVE);
 
@@ -378,17 +425,29 @@ public class LeaderboardServiceImpl implements LeaderboardService {
             return activeOpt.get();
         }
 
-        // Tính ngày đầu tuần (Thứ Hai 00:00:00) và cuối tuần (Chủ Nhật 23:59:59.999)
+        // Đóng các giải đấu cũ đã hết hạn nếu có
+        List<Tournament> expiredActives = tournamentRepository.findAll().stream()
+                .filter(t -> t.getStatus() == TournamentStatus.ACTIVE && t.getEndDate().isBefore(now))
+                .collect(Collectors.toList());
+        for (Tournament exp : expiredActives) {
+            exp.setStatus(TournamentStatus.FINISHED);
+            exp.setUpdateAt(now);
+            tournamentRepository.save(exp);
+        }
+
+        // Tính ngày đầu tuần (Thứ Hai 00:00:00) và cuối tuần (Chủ Nhật 23:59:59.999) theo chuẩn ISO-8601
         LocalDateTime monday = now.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).with(LocalTime.MIN);
         LocalDateTime sunday = now.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).with(LocalTime.MAX);
-        int weekNum = now.get(ChronoField.ALIGNED_WEEK_OF_YEAR);
-        String seasonCode = now.getYear() + "_W" + String.format("%02d", weekNum);
+        int weekNum = now.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+        int weekYear = now.get(java.time.temporal.IsoFields.WEEK_BASED_YEAR);
+        String seasonCode = weekYear + "_W" + String.format("%02d", weekNum);
 
         Optional<Tournament> byCode = tournamentRepository.findBySeasonCode(seasonCode);
         if (byCode.isPresent()) {
             Tournament existing = byCode.get();
             if (existing.getStatus() != TournamentStatus.ACTIVE) {
                 existing.setStatus(TournamentStatus.ACTIVE);
+                existing.setUpdateAt(now);
                 tournamentRepository.save(existing);
             }
             return existing;
@@ -449,7 +508,7 @@ public class LeaderboardServiceImpl implements LeaderboardService {
                             profile.setTop1Count((profile.getTop1Count() != null ? profile.getTop1Count() : 0) + 1);
                         }
 
-                        profile.setUpdateAt(LocalDateTime.now());
+                        profile.setUpdateAt(nowVn());
                         userRankProfileRepository.save(profile);
                         log.info("User #{} được thăng hạng từ {} lên {}", entry.getUserId(), tier.getNameVi(), nextRank.getNameVi());
                     }
@@ -459,7 +518,7 @@ public class LeaderboardServiceImpl implements LeaderboardService {
 
         // Đóng giải đấu cũ
         oldTournament.setStatus(TournamentStatus.FINISHED);
-        oldTournament.setUpdateAt(LocalDateTime.now());
+        oldTournament.setUpdateAt(nowVn());
         tournamentRepository.save(oldTournament);
 
         // Mở giải đấu mới
