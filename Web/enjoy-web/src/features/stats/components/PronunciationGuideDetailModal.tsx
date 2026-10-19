@@ -42,12 +42,12 @@ export const PronunciationGuideDetailModal: React.FC<Props> = ({
 
   return (
     <div className="fixed inset-0 z-70 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in select-none">
-      <div className="bg-white border border-pink-100 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-xl text-slate-800">
+      <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-xl text-slate-800">
         
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-pink-50 pb-3">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div>
-            <h3 className="text-base font-bold text-slate-800">
+            <h3 className="text-base font-bold text-slate-800 font-display">
               Hướng dẫn đọc âm /{cleanSymbol}/
             </h3>
             <p className="text-xs text-slate-400">
@@ -57,22 +57,22 @@ export const PronunciationGuideDetailModal: React.FC<Props> = ({
 
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-xl bg-pink-50/70 hover:bg-pink-100 text-slate-500 transition-colors font-bold text-sm cursor-pointer"
+            className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors font-bold text-sm cursor-pointer"
           >
             ✕
           </button>
         </div>
 
         {/* Khung Trọng Tâm Ký Tự IPA */}
-        <div className="p-4 rounded-2xl bg-pink-50/40 border border-pink-100 flex flex-col items-center justify-center space-y-2 text-center">
-          <span className="text-[10px] font-bold uppercase text-[#ff5e97] bg-pink-100 px-2.5 py-0.5 rounded-full border border-pink-200">
+        <div className="p-4 rounded-2xl bg-sky-50/50 border border-sky-100 flex flex-col items-center justify-center space-y-2 text-center">
+          <span className="text-[10px] font-bold uppercase text-sky-700 bg-sky-100 px-2.5 py-0.5 rounded-full border border-sky-200">
             Ký hiệu IPA
           </span>
-          <div className="text-4xl font-mono font-bold text-[#ff5e97]">
+          <div className="text-4xl font-mono font-bold text-sky-600">
             /{cleanSymbol}/
           </div>
           <p className="text-xs font-semibold text-slate-600">
-            Cách phát âm: <span className="font-mono text-[#ff5e97] font-bold">"{soundTextToPlay}"</span>
+            Cách phát âm: <span className="font-mono text-sky-600 font-bold">"{soundTextToPlay}"</span>
           </p>
 
           <div className="flex items-center gap-2 pt-1">
@@ -81,8 +81,8 @@ export const PronunciationGuideDetailModal: React.FC<Props> = ({
               disabled={isPlaying}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
                 isPlaying
-                  ? 'bg-[#ff5e97] text-white border-[#ff5e97]'
-                  : 'bg-white hover:bg-pink-50 text-[#ff5e97] border-pink-200'
+                  ? 'bg-sky-600 text-white border-sky-600'
+                  : 'bg-white hover:bg-sky-50 text-sky-700 border-sky-200'
               }`}
             >
               {isPlaying ? 'Đang phát...' : `Nghe âm /${cleanSymbol}/`}
@@ -90,7 +90,7 @@ export const PronunciationGuideDetailModal: React.FC<Props> = ({
 
             <button
               onClick={() => playSound(exampleWord, false)}
-              className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white hover:bg-pink-50 text-slate-700 border border-pink-100 transition-all cursor-pointer"
+              className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition-all cursor-pointer"
             >
               Từ mẫu: "{exampleWord}"
             </button>
@@ -99,7 +99,7 @@ export const PronunciationGuideDetailModal: React.FC<Props> = ({
 
         {/* Khẩu hình miệng */}
         <div className="space-y-2.5 text-xs">
-          <div className="p-3.5 rounded-2xl bg-pink-50/30 border border-pink-100 space-y-1">
+          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
             <div className="font-bold text-slate-800">
               Khẩu hình răng - môi - lưỡi:
             </div>
@@ -110,10 +110,10 @@ export const PronunciationGuideDetailModal: React.FC<Props> = ({
         </div>
 
         {/* Footer actions */}
-        <div className="pt-2 flex items-center justify-end border-t border-pink-50">
+        <div className="pt-2 flex items-center justify-end border-t border-slate-100">
           <button
             onClick={onClose}
-            className="w-full py-2.5 rounded-2xl bg-[#ff5e97] hover:bg-[#e84c85] text-white text-xs font-bold transition-all cursor-pointer active:scale-95"
+            className="w-full py-2.5 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-sm"
           >
             Đã hiểu cách đọc
           </button>

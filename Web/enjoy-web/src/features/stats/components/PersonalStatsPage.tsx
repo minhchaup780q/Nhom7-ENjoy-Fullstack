@@ -60,8 +60,8 @@ export const SKILL_DEFINITIONS: SkillDefinition[] = [
     index: 2, 
     nameVi: 'Nói', 
     nameEn: 'Speaking', 
-    color: '#ff5e97', 
-    bgLight: 'bg-pink-50 text-[#ff5e97] border-pink-200',
+    color: '#0284c7', 
+    bgLight: 'bg-sky-50 text-sky-700 border-sky-200',
     icon: MicrophoneIcon,
   },
   { 
@@ -166,10 +166,10 @@ const SpiderChart5D: React.FC<SpiderChart5DProps> = ({
         className="overflow-visible max-w-full"
       >
         <defs>
-          {/* Vùng màu tươi sáng cho Ngày Hiện Tại (Hồng Duolingo) */}
+          {/* Vùng màu tươi sáng cho Ngày Hiện Tại (Sky Blue) */}
           <radialGradient id="currentDateGrad" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#ff5e97" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="#ff5e97" stopOpacity="0.15" />
+            <stop offset="0%" stopColor="#0284c7" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#0284c7" stopOpacity="0.15" />
           </radialGradient>
 
           {/* Vùng màu xanh dương cho Ngày Trước Đó (Xanh Blue/Indigo) */}
@@ -179,7 +179,7 @@ const SpiderChart5D: React.FC<SpiderChart5DProps> = ({
           </radialGradient>
 
           <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#ff5e97" floodOpacity="0.3" />
+            <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#0284c7" floodOpacity="0.3" />
           </filter>
         </defs>
 
@@ -259,12 +259,12 @@ const SpiderChart5D: React.FC<SpiderChart5DProps> = ({
           </g>
         )}
 
-        {/* 4. Lớp Biểu đồ Ngày Hiện Tại (Màu hồng chủ đạo) */}
+        {/* 4. Lớp Biểu đồ Ngày Hiện Tại (Sky Blue chủ đạo) */}
         <g className="transition-all duration-300">
           <polygon
             points={currentPointsStr}
             fill="url(#currentDateGrad)"
-            stroke="#ff5e97"
+            stroke="#0284c7"
             strokeWidth="2.5"
             filter="url(#softGlow)"
           />
@@ -282,7 +282,7 @@ const SpiderChart5D: React.FC<SpiderChart5DProps> = ({
                 cx={pt.x}
                 cy={pt.y}
                 r={isHighlighted ? '6.5' : '4.5'}
-                fill="#ff5e97"
+                fill="#0284c7"
                 stroke="#ffffff"
                 strokeWidth="2.5"
                 className={`transition-all duration-200 ${isSupported ? 'cursor-pointer hover:scale-125' : 'cursor-default'}`}
@@ -374,8 +374,8 @@ const SpiderChart5D: React.FC<SpiderChart5DProps> = ({
 
       {/* Chú giải màu sắc trực quan */}
       <div className="flex items-center justify-center gap-6 mt-3 text-xs font-bold">
-        <div className="flex items-center gap-2 px-3 py-1 bg-pink-50 border border-pink-200 rounded-full text-[#ff5e97]">
-          <span className="w-3 h-3 rounded-full bg-[#ff5e97] shadow-xs" />
+        <div className="flex items-center gap-2 px-3 py-1 bg-sky-50 border border-sky-200 rounded-full text-sky-700">
+          <span className="w-3 h-3 rounded-full bg-sky-600 shadow-xs" />
           <span>{currentLabel}</span>
         </div>
         {showComparison && (
@@ -469,7 +469,7 @@ const SkillBarOverview: React.FC<SkillBarOverviewProps> = ({
                   <span className="text-xs font-bold text-slate-400">%</span>
                 </div>
                 {isSupported && (
-                  <span className="text-[10px] font-bold text-[#ff5e97] block hover:underline">
+                  <span className="text-[10px] font-bold text-sky-600 block hover:underline">
                     Cá nhân hóa →
                   </span>
                 )}
@@ -843,7 +843,7 @@ export const PersonalStatsPage: React.FC = () => {
   if (loading && !stats) {
     return (
       <div className="flex-1 w-full max-w-5xl mx-auto px-4 py-20 flex flex-col items-center justify-center space-y-3">
-        <ArrowPathIcon className="w-8 h-8 text-[#ff5e97] animate-spin" />
+        <ArrowPathIcon className="w-8 h-8 text-sky-600 animate-spin" />
         <p className="text-sm font-bold text-slate-600">Đang tải thống kê học tập...</p>
       </div>
     );
@@ -857,7 +857,7 @@ export const PersonalStatsPage: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-[#ff5e97] uppercase tracking-wider flex items-center gap-1.5">
+              <span className="text-xs font-bold text-sky-600 uppercase tracking-wider flex items-center gap-1.5">
                 {isParent ? (
                   <>
                     Dành cho Phụ Huynh • Giám sát & Đồng hành
@@ -1017,7 +1017,7 @@ export const PersonalStatsPage: React.FC = () => {
             </h3>
             <p className="text-xs text-slate-500">Mục tiêu hàng ngày: 20 phút</p>
           </div>
-          <span className="text-xs font-bold text-[#ff5e97] bg-pink-50 border border-pink-200 px-3 py-1 rounded-xl">
+          <span className="text-xs font-bold text-sky-700 bg-sky-50 border border-sky-200 px-3 py-1 rounded-xl">
             Tổng: {totalWeeklyMinutes} phút
           </span>
         </div>
@@ -1041,7 +1041,7 @@ export const PersonalStatsPage: React.FC = () => {
                       item.minutes === 0
                         ? 'bg-slate-200'
                         : isTargetReached 
-                          ? 'bg-[#ff5e97]' 
+                          ? 'bg-sky-600' 
                           : 'bg-blue-400'
                     }`}
                     style={{ height: `${heightPercent}%` }}
@@ -1116,7 +1116,7 @@ export const PersonalStatsPage: React.FC = () => {
                     onClick={() => setChartDisplayType('bars')}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                       chartDisplayType === 'bars'
-                        ? 'bg-[#ff5e97] text-white shadow-xs'
+                        ? 'bg-sky-600 text-white shadow-xs'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`}
                   >
@@ -1128,7 +1128,7 @@ export const PersonalStatsPage: React.FC = () => {
                     onClick={() => setChartDisplayType('rings')}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                       chartDisplayType === 'rings'
-                        ? 'bg-[#ff5e97] text-white shadow-xs'
+                        ? 'bg-sky-600 text-white shadow-xs'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`}
                   >
@@ -1140,7 +1140,7 @@ export const PersonalStatsPage: React.FC = () => {
                     onClick={() => setChartDisplayType('radar')}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                       chartDisplayType === 'radar'
-                        ? 'bg-[#ff5e97] text-white shadow-xs'
+                        ? 'bg-sky-600 text-white shadow-xs'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`}
                   >
@@ -1151,7 +1151,7 @@ export const PersonalStatsPage: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-2 self-end sm:self-auto">
-                <span className="text-xs font-extrabold text-[#ff5e97] bg-pink-50 border border-pink-200 px-3 py-1 rounded-xl shadow-2xs">
+                <span className="text-xs font-extrabold text-sky-700 bg-sky-50 border border-sky-200 px-3 py-1 rounded-xl shadow-2xs">
                   Điểm TB: {currentAvg} / 100
                 </span>
               </div>
@@ -1202,12 +1202,12 @@ export const PersonalStatsPage: React.FC = () => {
             {/* Render Kiểu 3: Biểu đồ Spider Chart */}
             {chartDisplayType === 'radar' && (
               <div className="space-y-6 animate-fadeIn">
-                <div className="p-6 rounded-3xl bg-gradient-to-b from-pink-50/25 to-slate-50/80 border border-pink-100 flex flex-col items-center">
-                  <div className="w-full flex items-center justify-between border-b border-pink-100 pb-3 mb-2 text-xs">
-                    <span className="font-extrabold text-[#e03a74] uppercase">
+                <div className="p-6 rounded-3xl bg-gradient-to-b from-sky-50/25 to-slate-50/80 border border-slate-200 flex flex-col items-center">
+                  <div className="w-full flex items-center justify-between border-b border-slate-100 pb-3 mb-2 text-xs">
+                    <span className="font-extrabold text-sky-800 uppercase font-display">
                       Năng lực hiện tại (Ngày {formatDateVN(currentDate)})
                     </span>
-                    <span className="text-[#ff5e97] bg-pink-100 px-3 py-1 rounded-xl font-bold">
+                    <span className="text-sky-700 bg-sky-100 px-3 py-1 rounded-xl font-bold">
                       Điểm TB: {currentAvg} / 100
                     </span>
                   </div>
@@ -1301,10 +1301,10 @@ export const PersonalStatsPage: React.FC = () => {
           <div className="space-y-6 animate-fadeIn">
             
             {/* Form chọn 2 ngày so sánh */}
-            <div className="bg-gradient-to-r from-pink-50/40 via-purple-50/20 to-blue-50/40 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4">
+            <div className="bg-gradient-to-r from-sky-50/40 via-indigo-50/20 to-blue-50/40 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wide">
-                  <CalendarDaysIcon className="w-4 h-4 text-[#ff5e97]" />
+                  <CalendarDaysIcon className="w-4 h-4 text-sky-600" />
                   <span>Chọn 2 ngày để so sánh</span>
                 </div>
 
@@ -1313,19 +1313,19 @@ export const PersonalStatsPage: React.FC = () => {
                   <span className="text-slate-400 font-medium">So sánh nhanh:</span>
                   <button
                     onClick={() => handleQuickOffsetDays(7)}
-                    className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:border-[#ff5e97] hover:text-[#ff5e97] font-bold transition-all cursor-pointer"
+                    className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:border-sky-500 hover:text-sky-600 font-bold transition-all cursor-pointer"
                   >
                     7 ngày trước
                   </button>
                   <button
                     onClick={() => handleQuickOffsetDays(14)}
-                    className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:border-[#ff5e97] hover:text-[#ff5e97] font-bold transition-all cursor-pointer"
+                    className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:border-sky-500 hover:text-sky-600 font-bold transition-all cursor-pointer"
                   >
                     14 ngày trước
                   </button>
                   <button
                     onClick={() => handleQuickOffsetDays(30)}
-                    className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:border-[#ff5e97] hover:text-[#ff5e97] font-bold transition-all cursor-pointer"
+                    className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:border-sky-500 hover:text-sky-600 font-bold transition-all cursor-pointer"
                   >
                     30 ngày trước
                   </button>
@@ -1347,14 +1347,14 @@ export const PersonalStatsPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-[#ff5e97] flex items-center gap-1.5">
+                  <label className="text-xs font-bold text-sky-700 flex items-center gap-1.5">
                     <span>Ngày hiện tại</span>
                   </label>
                   <input
                     type="date"
                     value={currentDate}
                     onChange={(e) => setCurrentDate(e.target.value)}
-                    className="w-full bg-white border border-pink-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#ff5e97] shadow-xs"
+                    className="w-full bg-white border border-sky-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-xs"
                   />
                 </div>
 
@@ -1362,7 +1362,7 @@ export const PersonalStatsPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleApplyDates}
-                    className="w-full bg-gradient-to-r from-[#ff5e97] to-[#e03a74] hover:opacity-95 text-white font-bold text-xs py-2.5 px-4 rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    className="w-full bg-gradient-to-r from-sky-600 to-indigo-600 hover:opacity-95 text-white font-bold text-xs py-2.5 px-4 rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <ArrowsRightLeftIcon className="w-4 h-4" />
                     <span>Cập nhật so sánh</span>
@@ -1381,11 +1381,11 @@ export const PersonalStatsPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-pink-50/70 border border-pink-200 flex items-center justify-between">
+              <div className="p-4 rounded-2xl bg-sky-50/70 border border-sky-200 flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-bold text-[#ff5e97] uppercase">Điểm TB Ngày hiện tại</span>
-                  <p className="text-2xl font-black text-[#e03a74]">{currentAvg} <span className="text-sm font-semibold">/100</span></p>
-                  <span className="text-[11px] font-bold text-[#ff5e97]">{formatDateVN(currentDate)}</span>
+                  <span className="text-xs font-bold text-sky-800 uppercase">Điểm TB Ngày hiện tại</span>
+                  <p className="text-2xl font-black text-sky-900">{currentAvg} <span className="text-sm font-semibold">/100</span></p>
+                  <span className="text-[11px] font-bold text-sky-600">{formatDateVN(currentDate)}</span>
                 </div>
               </div>
 
@@ -1433,13 +1433,13 @@ export const PersonalStatsPage: React.FC = () => {
                 />
               </div>
 
-              {/* Biểu đồ 2: Ngày hiện tại (Màu hồng tươi) */}
-              <div className="p-5 rounded-3xl bg-gradient-to-b from-pink-50/30 to-slate-50 border border-pink-200 flex flex-col items-center">
-                <div className="w-full flex items-center justify-between border-b border-pink-100 pb-3 mb-2 text-xs">
-                  <span className="font-extrabold text-[#e03a74] uppercase">
+              {/* Biểu đồ 2: Ngày hiện tại (Sky Blue) */}
+              <div className="p-5 rounded-3xl bg-gradient-to-b from-sky-50/30 to-slate-50 border border-slate-200 flex flex-col items-center">
+                <div className="w-full flex items-center justify-between border-b border-slate-100 pb-3 mb-2 text-xs">
+                  <span className="font-extrabold text-sky-800 uppercase font-display">
                     2. Ngày hiện tại
                   </span>
-                  <span className="text-[#ff5e97] bg-pink-100 px-2.5 py-0.5 rounded-lg font-bold">
+                  <span className="text-sky-700 bg-sky-100 px-2.5 py-0.5 rounded-lg font-bold">
                     {formatDateVN(currentDate)}
                   </span>
                 </div>
@@ -1480,7 +1480,7 @@ export const PersonalStatsPage: React.FC = () => {
                       onMouseLeave={() => setHoveredSkill(null)}
                       className={`p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer ${
                         isHovered
-                          ? 'bg-white shadow-sm ring-2 ring-pink-200 scale-[1.01]'
+                          ? 'bg-white shadow-sm ring-2 ring-sky-200 scale-[1.01]'
                           : 'bg-slate-50/80 hover:bg-white hover:border-slate-300'
                       }`}
                       style={{ borderColor: isHovered ? def.color : undefined }}
@@ -1513,7 +1513,7 @@ export const PersonalStatsPage: React.FC = () => {
                       <div className="space-y-1.5">
                         <div className="flex items-center justify-between text-[11px] font-bold">
                           <span className="text-blue-600">Trước: {prev}%</span>
-                          <span className="text-[#ff5e97]">Hiện tại: {curr}%</span>
+                          <span className="text-sky-600">Hiện tại: {curr}%</span>
                         </div>
 
                         <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden relative">
@@ -1574,7 +1574,7 @@ export const PersonalStatsPage: React.FC = () => {
                   <span className="text-sm font-bold text-slate-800">
                     {session.score} / 100 điểm
                   </span>
-                  <span className="px-2.5 py-0.5 rounded-md bg-pink-100 text-[#ff5e97] text-xs font-bold">
+                  <span className="px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
                     Hoàn thành
                   </span>
                 </div>

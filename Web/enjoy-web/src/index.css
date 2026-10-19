@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 @theme {
-  /* Tông màu hồng tươi sáng chủ đạo (Duolingo Pink Style) */
-  --color-primary: #ff5e97;
-  --color-primary-hover: #ff3e80;
-  --color-primary-dark: #e03a74;
-  --color-primary-light: #ff8ab4;
-  --color-primary-soft: #fff2f6;
+  /* Tông màu xanh dương hiện đại chủ đạo (Sky Blue Modern Style) */
+  --color-primary: #0284c7;
+  --color-primary-hover: #0369a1;
+  --color-primary-dark: #075985;
+  --color-primary-light: #38bdf8;
+  --color-primary-soft: #f0f9ff;
 
   /* Tông màu xanh lá cây tương tự Duolingo nhưng cân bằng với màu hồng */
   --color-success: #58cc02;
@@ -102,15 +102,15 @@ body {
   transform: translateY(4px);
 }
 
-/* Pink 3D Button */
+/* Primary 3D Button (Sky Blue) */
 .btn-3d-pink {
-  background-color: #ff5e97;
+  background-color: #0284c7;
   color: #ffffff;
-  border-color: #ff5e97;
-  box-shadow: 0 4px 0 #d93d74;
+  border-color: #0284c7;
+  box-shadow: 0 4px 0 #0369a1;
 }
 .btn-3d-pink:active {
-  box-shadow: 0 0 0 #d93d74;
+  box-shadow: 0 0 0 #0369a1;
 }
 
 /* Green 3D Button */

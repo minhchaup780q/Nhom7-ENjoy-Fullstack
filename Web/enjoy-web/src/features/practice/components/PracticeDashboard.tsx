@@ -266,7 +266,7 @@ export const PracticeDashboard: React.FC = () => {
         >
           <span>DANH SÁCH BÀI TẬP</span>
           {needsReviewTotal > 0 && (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-pink-100 text-pink-700 border border-pink-200">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-50 text-amber-700 border border-amber-200">
               {needsReviewTotal}
             </span>
           )}
@@ -307,7 +307,7 @@ export const PracticeDashboard: React.FC = () => {
 
             <div className="bg-white border border-slate-200 rounded-2xl p-4.5 shadow-2xs col-span-2 md:col-span-1">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tỷ Lệ Khắc Phục</p>
-              <p className="text-2xl md:text-3xl font-display font-black text-pink-600 mt-1">
+              <p className="text-2xl md:text-3xl font-display font-black text-sky-600 mt-1">
                 {grandTotal > 0 ? `${Math.round((masteredTotal / grandTotal) * 100)}%` : '100%'}
               </p>
             </div>
@@ -380,7 +380,7 @@ export const PracticeDashboard: React.FC = () => {
 
               {statusFilter === 'NEEDS_REVIEW' && (
                 <Button3D
-                  variant="pink"
+                  variant="blue"
                   size="sm"
                   disabled={needsReviewTotal === 0}
                   onClick={startPracticeAllNeedsReview}
@@ -436,7 +436,7 @@ export const PracticeDashboard: React.FC = () => {
                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                 : (item.correctStreakDays ?? 0) > 0
                                   ? 'bg-blue-50 text-blue-700 border-blue-200'
-                                  : 'bg-pink-50 text-pink-700 border-pink-200'
+                                  : 'bg-rose-50 text-rose-700 border-rose-200'
                             }`}
                           >
                             {isMastered
@@ -488,7 +488,7 @@ export const PracticeDashboard: React.FC = () => {
                           <div className="flex items-center justify-between font-semibold text-[11px]">
                             <span className="text-slate-500 font-medium">Lần trước sai:</span>
                             {item.wrongAnswerSubmitted && isImageUrl(item.wrongAnswerSubmitted) ? (
-                              <div className="w-7 h-7 rounded-lg border border-pink-200 overflow-hidden shrink-0 bg-white p-0.5 inline-flex items-center justify-center">
+                              <div className="w-7 h-7 rounded-lg border border-rose-200 overflow-hidden shrink-0 bg-white p-0.5 inline-flex items-center justify-center">
                                 <img
                                   src={getAssetUrl(item.wrongAnswerSubmitted)}
                                   alt="Wrong"
@@ -500,7 +500,7 @@ export const PracticeDashboard: React.FC = () => {
                                 />
                               </div>
                             ) : (
-                              <strong className="line-through text-pink-600 bg-pink-50 px-2 py-0.5 rounded border border-pink-200">
+                              <strong className="line-through text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
                                 {item.wrongAnswerSubmitted || 'chưa đúng'}
                               </strong>
                             )}
@@ -511,7 +511,7 @@ export const PracticeDashboard: React.FC = () => {
                       {/* Card Action Buttons */}
                       <div className="flex items-center gap-2 pt-1">
                         <Button3D
-                          variant="pink"
+                          variant="blue"
                           size="sm"
                           fullWidth
                           onClick={() => startPracticeSingleItem(item)}
@@ -661,7 +661,7 @@ export const PracticeDashboard: React.FC = () => {
                         </h4>
                         <p className="text-[10px] text-slate-400 font-semibold">Chưa ôn lần nào (0% đ)</p>
                       </div>
-                      <span className="px-2 py-0.5 bg-pink-50 text-pink-700 border border-pink-200 rounded-full text-xs font-bold font-mono">
+                      <span className="px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-full text-xs font-bold font-mono">
                         {dueTodayItems.length}
                       </span>
                     </div>
@@ -679,7 +679,7 @@ export const PracticeDashboard: React.FC = () => {
                               <span className="text-[10px] font-bold text-slate-600">
                                 {ROUND_INFO[item.roundType]?.name || `Vòng ${item.roundType}`}
                               </span>
-                              <span className="text-[10px] font-mono font-bold text-pink-700 bg-pink-50 px-1.5 py-0.5 rounded border border-pink-200">
+                              <span className="text-[10px] font-mono font-bold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
                                 0/3 lần
                               </span>
                             </div>
@@ -928,7 +928,7 @@ export const PracticeDashboard: React.FC = () => {
                   <div className="flex-1 space-y-0.5">
                     <p className="font-bold text-slate-800">
                       Từ / Câu chuẩn:{' '}
-                      <strong className="text-pink-600">
+                      <strong className="text-sky-600">
                         {aiModalItem.contentText || aiModalItem.keyword}
                       </strong>
                     </p>
@@ -938,10 +938,10 @@ export const PracticeDashboard: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 text-pink-600 font-semibold pt-2 border-t border-slate-200">
+                <div className="flex items-center gap-2 text-rose-600 font-semibold pt-2 border-t border-slate-200">
                   <span className="shrink-0 text-slate-500 font-medium">Lần trước bé chọn/đọc:</span>
                   {isImageUrl(aiModalItem.wrongAnswerSubmitted) ? (
-                    <div className="w-8 h-8 rounded-lg border border-pink-200 overflow-hidden shrink-0 bg-white p-0.5 inline-flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-lg border border-rose-200 overflow-hidden shrink-0 bg-white p-0.5 inline-flex items-center justify-center">
                       <img
                         src={getAssetUrl(aiModalItem.wrongAnswerSubmitted)}
                         alt="Đã chọn sai"
@@ -953,7 +953,7 @@ export const PracticeDashboard: React.FC = () => {
                       />
                     </div>
                   ) : (
-                    <strong className="line-through bg-pink-50 px-2 py-0.5 rounded border border-pink-200">
+                    <strong className="line-through bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
                       {aiModalItem.wrongAnswerSubmitted || 'Chưa đúng'}
                     </strong>
                   )}
@@ -980,7 +980,7 @@ export const PracticeDashboard: React.FC = () => {
               </div>
             </div>
 
-            <Button3D variant="pink" fullWidth size="md" onClick={() => setAiModalItem(null)}>
+            <Button3D variant="blue" fullWidth size="md" onClick={() => setAiModalItem(null)}>
               ĐÃ HIỂU RỒI!
             </Button3D>
           </div>
