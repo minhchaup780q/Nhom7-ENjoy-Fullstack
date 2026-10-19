@@ -1,6 +1,5 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { SettingsFlyoutMenu } from './SettingsFlyoutMenu';
 
 interface MenuItem {
   id: string;
@@ -67,9 +66,6 @@ export const SidebarLeft: React.FC = () => {
             )}
           </NavLink>
         ))}
-
-        {/* Nút cài đặt và flyout popup */}
-        <SettingsFlyoutMenu />
       </nav>
 
       {/* Footer copyright */}
