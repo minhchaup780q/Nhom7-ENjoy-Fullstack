@@ -235,12 +235,12 @@ export const PracticePage: React.FC = () => {
           {/* Card Header */}
           <div className="p-5 border-b border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <span className="material-symbols-outlined text-indigo-600 text-[20px]">account_tree</span>
+              <span className="material-symbols-outlined text-sky-600 text-[20px]">account_tree</span>
               <h3 className="font-display font-bold text-slate-900 text-base">
                 Grammar ({GRAMMAR_DATA.length} nội dung)
               </h3>
             </div>
-            <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100">
+            <span className="text-xs font-semibold text-sky-700 bg-sky-50 px-2.5 py-1 rounded-full border border-sky-100">
               Cấu trúc ngữ pháp
             </span>
           </div>
@@ -325,18 +325,18 @@ export const PracticePage: React.FC = () => {
       </div>
 
       {/* 3. BOTTOM BANNER - AI PERSONALIZATION (VÒNG ĐỌC & VÒNG NGHE AI) */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-700 via-purple-700 to-indigo-900 p-6 sm:p-8 text-white shadow-xl border border-indigo-500/20">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-sky-800 via-sky-900 to-slate-900 p-6 sm:p-8 text-white shadow-lg border border-sky-600/30">
         {/* Glow accents */}
-        <div className="absolute -right-12 -bottom-12 w-64 h-64 rounded-full bg-purple-400/20 blur-3xl pointer-events-none" />
-        <div className="absolute left-1/2 -top-12 w-72 h-72 rounded-full bg-sky-400/20 blur-3xl pointer-events-none" />
+        <div className="absolute -right-12 -bottom-12 w-64 h-64 rounded-full bg-sky-500/15 blur-3xl pointer-events-none" />
+        <div className="absolute left-1/3 -top-12 w-72 h-72 rounded-full bg-sky-400/15 blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="flex flex-col gap-2 max-w-3xl">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-purple-400/20 border border-purple-300/30 text-purple-200 font-bold text-[10px] tracking-wider uppercase">
+              <span className="px-2.5 py-0.5 rounded-full bg-sky-500/20 border border-sky-400/30 text-sky-200 font-bold text-[10px] tracking-wider uppercase">
                 AI PERSONALIZATION
               </span>
-              <span className="text-xs text-purple-200 font-medium">
+              <span className="text-xs text-sky-200/90 font-medium">
                 Lộ trình thích ứng thông minh
               </span>
             </div>
@@ -344,13 +344,13 @@ export const PracticePage: React.FC = () => {
             <h3 className="font-display font-bold text-xl sm:text-2xl text-white tracking-tight">
               Luyện tập cá nhân hoá theo lỗi sai bài thi
             </h3>
-            <p className="text-xs sm:text-sm text-purple-100/90 leading-relaxed">
+            <p className="text-xs sm:text-sm text-sky-100/80 leading-relaxed">
               Vòng 1: Đọc đục lỗ Cambridge Part 4 • Vòng 2: Nghe hội thoại tương tác AI
             </p>
 
             {/* List of tags to improve */}
             {vocabStats?.topics && vocabStats.topics.filter((t) => t.weakCount > 0).length > 0 && (
-              <div className="mt-2 text-[11px] leading-relaxed text-purple-200/90 bg-indigo-950/40 border border-purple-400/20 rounded-xl p-3">
+              <div className="mt-2 text-[11px] leading-relaxed text-slate-200 bg-slate-950/40 border border-white/10 rounded-xl p-3">
                 <span className="font-semibold text-white mr-1.5">Chủ đề cần cải thiện:</span>
                 <span className="space-x-1.5">
                   {vocabStats.topics
@@ -378,13 +378,13 @@ export const PracticePage: React.FC = () => {
           <div className="w-full lg:w-auto shrink-0 flex flex-col items-stretch lg:items-end">
             <button
               onClick={() => navigate('/practice/personalization?topic=ALL')}
-              className="px-6 py-3.5 rounded-2xl bg-white text-indigo-900 font-display font-extrabold text-sm tracking-wide shadow-md hover:bg-slate-100 active:scale-95 transition-all flex items-center justify-center gap-2.5 cursor-pointer"
+              className="px-6 py-3.5 rounded-2xl bg-white text-sky-900 hover:bg-sky-50 font-display font-extrabold text-sm tracking-wide shadow-md active:scale-95 transition-all flex items-center justify-center gap-2.5 cursor-pointer"
             >
               <div className="flex items-center -space-x-1">
-                <span className="material-symbols-outlined text-[20px] text-indigo-600">
+                <span className="material-symbols-outlined text-[20px] text-sky-600">
                   menu_book
                 </span>
-                <span className="material-symbols-outlined text-[20px] text-purple-600">
+                <span className="material-symbols-outlined text-[20px] text-sky-700">
                   headphones
                 </span>
               </div>

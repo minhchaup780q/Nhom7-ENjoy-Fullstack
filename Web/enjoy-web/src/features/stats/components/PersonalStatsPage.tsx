@@ -51,8 +51,8 @@ export const SKILL_DEFINITIONS: SkillDefinition[] = [
     index: 1, 
     nameVi: 'Nghe', 
     nameEn: 'Listening', 
-    color: '#3b82f6', 
-    bgLight: 'bg-blue-50 text-blue-600 border-blue-200',
+    color: '#0284c7', 
+    bgLight: 'bg-sky-50 text-sky-700 border-sky-200',
     icon: SpeakerWaveIcon,
   },
   { 
@@ -69,8 +69,8 @@ export const SKILL_DEFINITIONS: SkillDefinition[] = [
     index: 3, 
     nameVi: 'Đọc', 
     nameEn: 'Reading', 
-    color: '#10b981', 
-    bgLight: 'bg-emerald-50 text-emerald-600 border-emerald-200',
+    color: '#0284c7', 
+    bgLight: 'bg-sky-50 text-sky-700 border-sky-200',
     icon: BookOpenIcon,
   },
   { 
@@ -78,8 +78,8 @@ export const SKILL_DEFINITIONS: SkillDefinition[] = [
     index: 4, 
     nameVi: 'Viết', 
     nameEn: 'Writing', 
-    color: '#8b5cf6', 
-    bgLight: 'bg-purple-50 text-purple-600 border-purple-200',
+    color: '#0284c7', 
+    bgLight: 'bg-sky-50 text-sky-700 border-sky-200',
     icon: PencilSquareIcon,
   },
   { 
@@ -87,8 +87,8 @@ export const SKILL_DEFINITIONS: SkillDefinition[] = [
     index: 5, 
     nameVi: 'Từ vựng', 
     nameEn: 'Vocabulary', 
-    color: '#f59e0b', 
-    bgLight: 'bg-amber-50 text-amber-600 border-amber-200',
+    color: '#0284c7', 
+    bgLight: 'bg-sky-50 text-sky-700 border-sky-200',
     icon: LanguageIcon,
   },
   { 
@@ -96,8 +96,8 @@ export const SKILL_DEFINITIONS: SkillDefinition[] = [
     index: 6, 
     nameVi: 'Ngữ pháp', 
     nameEn: 'Grammar', 
-    color: '#06b6d4', 
-    bgLight: 'bg-cyan-50 text-cyan-600 border-cyan-200',
+    color: '#0284c7', 
+    bgLight: 'bg-sky-50 text-sky-700 border-sky-200',
     icon: AcademicCapIcon,
   },
 ];
@@ -407,7 +407,7 @@ const SkillBarOverview: React.FC<SkillBarOverviewProps> = ({
 }) => {
   const getSkillEvaluation = (score: number) => {
     if (score >= 80) return { label: 'Xuất sắc', color: 'text-emerald-600 bg-emerald-50 border-emerald-200' };
-    if (score >= 50) return { label: 'Khá tốt', color: 'text-blue-600 bg-blue-50 border-blue-200' };
+    if (score >= 50) return { label: 'Khá tốt', color: 'text-sky-700 bg-sky-50 border-sky-200' };
     if (score > 0) return { label: 'Đang rèn luyện', color: 'text-amber-600 bg-amber-50 border-amber-200' };
     return { label: 'Chưa học bài nào', color: 'text-slate-500 bg-slate-100 border-slate-200' };
   };
@@ -431,9 +431,9 @@ const SkillBarOverview: React.FC<SkillBarOverviewProps> = ({
               isSupported ? 'cursor-pointer' : 'cursor-default'
             } ${
               isHighlighted && isSupported
-                ? 'bg-white shadow-md ring-2 ring-pink-200 scale-[1.01]'
+                ? 'bg-white shadow-md ring-2 ring-sky-200 scale-[1.01]'
                 : isSupported
-                ? 'bg-slate-50/90 hover:bg-white hover:border-pink-200 hover:shadow-xs'
+                ? 'bg-slate-50/90 hover:bg-white hover:border-sky-300 hover:shadow-xs'
                 : 'bg-slate-50/60'
             }`}
             style={{ borderColor: isHighlighted && isSupported ? def.color : undefined }}
@@ -533,9 +533,9 @@ const SkillRingsOverview: React.FC<SkillRingsOverviewProps> = ({
               isSupported ? 'cursor-pointer' : 'cursor-default'
             } ${
               isHighlighted && isSupported
-                ? 'bg-white shadow-lg ring-2 ring-pink-200 scale-105'
+                ? 'bg-white shadow-lg ring-2 ring-sky-200 scale-105'
                 : isSupported
-                ? 'bg-slate-50/90 hover:bg-white hover:border-pink-200 hover:shadow-sm'
+                ? 'bg-slate-50/90 hover:bg-white hover:border-sky-300 hover:shadow-sm'
                 : 'bg-slate-50/70'
             }`}
             style={{ borderColor: isHighlighted && isSupported ? def.color : undefined }}
@@ -876,7 +876,7 @@ export const PersonalStatsPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsFamilyModalOpen(true)}
-              className="self-start sm:self-auto px-4 py-2.5 rounded-2xl bg-white border-2 border-primary/30 hover:border-primary text-primary font-display font-extrabold text-xs tracking-wider flex items-center gap-2 shadow-xs hover:bg-pink-50/50 transition cursor-pointer"
+              className="self-start sm:self-auto px-4 py-2.5 rounded-2xl bg-white border border-sky-300 hover:border-sky-500 text-sky-700 font-display font-extrabold text-xs tracking-wider flex items-center gap-2 shadow-xs hover:bg-sky-50/50 transition cursor-pointer"
             >
               <UserGroupIcon className="w-4 h-4 stroke-[2.5]" />
               QUẢN LÝ GIA ĐÌNH
@@ -886,10 +886,10 @@ export const PersonalStatsPage: React.FC = () => {
 
         {/* Thanh chọn hồ sơ con cái và bản thân */}
         {isParent && (
-          <div className="bg-gradient-to-r from-pink-50/60 via-slate-50 to-pink-50/40 border-2 border-primary/20 rounded-3xl p-4 space-y-3">
+          <div className="bg-slate-50 border border-slate-200 rounded-3xl p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <AcademicCapIcon className="w-5 h-5 text-primary stroke-[2.5]" />
+                <AcademicCapIcon className="w-5 h-5 text-sky-600 stroke-[2.5]" />
                 <span className="text-xs font-display font-black text-slate-800 uppercase tracking-wide">
                   Chọn hồ sơ xem thống kê ({linkedChildren.length} tài khoản đã liên kết):
                 </span>
@@ -904,7 +904,7 @@ export const PersonalStatsPage: React.FC = () => {
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl border-2 transition-all cursor-pointer ${
                   selectedChild === null
                     ? 'bg-slate-800 text-white border-slate-800 shadow-md scale-[1.02]'
-                    : 'bg-white text-slate-700 border-border-main hover:border-slate-400 hover:bg-slate-50'
+                    : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400 hover:bg-slate-50'
                 }`}
               >
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
@@ -935,12 +935,12 @@ export const PersonalStatsPage: React.FC = () => {
                     onClick={() => handleSelectChild(child)}
                     className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl border-2 transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-primary text-white border-primary shadow-md scale-[1.02]'
-                        : 'bg-white text-slate-700 border-border-main hover:border-primary/40 hover:bg-pink-50/30'
+                        ? 'bg-sky-600 text-white border-sky-600 shadow-md scale-[1.02]'
+                        : 'bg-white text-slate-700 border-slate-200 hover:border-sky-400 hover:bg-sky-50/30'
                     }`}
                   >
                     <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                      isSelected ? 'bg-white/20 text-white' : 'bg-primary-soft text-primary'
+                      isSelected ? 'bg-white/20 text-white' : 'bg-sky-100 text-sky-600'
                     }`}>
                       <AcademicCapIcon className="w-4 h-4 stroke-[2.5]" />
                     </div>
@@ -962,7 +962,7 @@ export const PersonalStatsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsFamilyModalOpen(true)}
-                className="px-3.5 py-2.5 rounded-2xl border-2 border-dashed border-primary/40 hover:border-primary text-primary text-xs font-display font-bold flex items-center gap-1.5 bg-white/60 hover:bg-pink-50/50 transition cursor-pointer"
+                className="px-3.5 py-2.5 rounded-2xl border-2 border-dashed border-sky-300 hover:border-sky-500 text-sky-700 text-xs font-display font-bold flex items-center gap-1.5 bg-white/60 hover:bg-sky-50/50 transition cursor-pointer"
               >
                 <PlusIcon className="w-4 h-4 stroke-[2.5]" />
                 Thêm con
@@ -970,10 +970,10 @@ export const PersonalStatsPage: React.FC = () => {
             </div>
 
             {/* Thông báo trạng thái đang xem hồ sơ nào */}
-            <div className="text-[11px] font-bold text-slate-600 bg-white px-3.5 py-2 rounded-xl border border-primary/20 flex items-center gap-2">
+            <div className="text-[11px] font-bold text-slate-600 bg-white px-3.5 py-2 rounded-xl border border-slate-200 flex items-center gap-2">
               {selectedChild ? (
                 <span>
-                  Đang hiển thị kết quả học tập & đánh giá năng lực của bé: <strong className="text-primary">{selectedChild.studentName || selectedChild.studentEmail}</strong>
+                  Đang hiển thị kết quả học tập & đánh giá năng lực của bé: <strong className="text-sky-700">{selectedChild.studentName || selectedChild.studentEmail}</strong>
                 </span>
               ) : (
                 <span>
@@ -987,7 +987,7 @@ export const PersonalStatsPage: React.FC = () => {
 
       {/* 2. Thẻ chỉ số tổng quan */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-gradient-to-br from-white to-pink-50/40 border border-pink-100 rounded-3xl p-5 shadow-xs space-y-1">
+        <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs space-y-1">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Bài hoàn thành</span>
           </div>
@@ -997,7 +997,7 @@ export const PersonalStatsPage: React.FC = () => {
           <p className="text-xs text-slate-400">bài học đã vượt qua</p>
         </div>
 
-        <div className="bg-gradient-to-br from-white to-blue-50/40 border border-blue-100 rounded-3xl p-5 shadow-xs space-y-1">
+        <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs space-y-1">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Thời lượng tuần</span>
           </div>
@@ -1164,7 +1164,7 @@ export const PersonalStatsPage: React.FC = () => {
                   <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">
                     Đánh giá chi tiết từng kỹ năng & Lộ trình can thiệp
                   </span>
-                  <span className="text-[11px] text-purple-600 font-bold bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200">
+                  <span className="text-[11px] text-sky-700 font-bold bg-sky-50 px-2.5 py-1 rounded-lg border border-sky-200">
                     Bấm vào kỹ năng để mở lộ trình khắc phục
                   </span>
                 </div>
@@ -1181,9 +1181,9 @@ export const PersonalStatsPage: React.FC = () => {
             {/* Render Kiểu 2: Vòng Tròn Tiến Độ */}
             {chartDisplayType === 'rings' && (
               <div className="space-y-4 animate-fadeIn">
-                <div className="p-5 rounded-3xl bg-gradient-to-b from-pink-50/25 to-slate-50/80 border border-pink-100">
-                  <div className="flex items-center justify-between border-b border-pink-100 pb-3 mb-2 text-xs">
-                    <span className="font-extrabold text-[#e03a74] uppercase">
+                <div className="p-5 rounded-3xl bg-slate-50/60 border border-slate-200">
+                  <div className="flex items-center justify-between border-b border-slate-200/80 pb-3 mb-2 text-xs">
+                    <span className="font-extrabold text-slate-800 uppercase">
                       Vòng tròn tiến độ các kỹ năng (Ngày {formatDateVN(currentDate)})
                     </span>
                     <span className="text-xs text-slate-400 font-medium">Bấm vào vòng tròn để can thiệp</span>
@@ -1229,7 +1229,7 @@ export const PersonalStatsPage: React.FC = () => {
                     <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">
                       Chi tiết điểm số các kỹ năng
                     </span>
-                    <span className="text-[11px] text-purple-600 font-bold bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200">
+                    <span className="text-[11px] text-sky-700 font-bold bg-sky-50 px-2.5 py-1 rounded-lg border border-sky-200">
                       Bấm vào kỹ năng để mở lộ trình khắc phục
                     </span>
                   </div>
@@ -1248,8 +1248,8 @@ export const PersonalStatsPage: React.FC = () => {
                           onClick={() => setSelectedSkillForRemediation(def.key)}
                           className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer ${
                             isHovered
-                              ? 'bg-white shadow-md ring-2 ring-purple-300 scale-[1.02]'
-                              : 'bg-slate-50/80 hover:bg-white hover:border-purple-300 hover:shadow-xs'
+                              ? 'bg-white shadow-md ring-2 ring-sky-200 scale-[1.02]'
+                              : 'bg-slate-50/80 hover:bg-white hover:border-sky-300 hover:shadow-xs'
                           }`}
                           style={{ borderColor: isHovered ? def.color : undefined }}
                         >
@@ -1283,7 +1283,7 @@ export const PersonalStatsPage: React.FC = () => {
                             />
                           </div>
 
-                          <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-purple-600">
+                          <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-sky-700">
                             <span>Mở lộ trình →</span>
                           </div>
                         </div>
@@ -1301,7 +1301,7 @@ export const PersonalStatsPage: React.FC = () => {
           <div className="space-y-6 animate-fadeIn">
             
             {/* Form chọn 2 ngày so sánh */}
-            <div className="bg-gradient-to-r from-sky-50/40 via-indigo-50/20 to-blue-50/40 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4">
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wide">
                   <CalendarDaysIcon className="w-4 h-4 text-sky-600" />
@@ -1335,26 +1335,26 @@ export const PersonalStatsPage: React.FC = () => {
               {/* Ô nhập ngày */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end pt-1">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-blue-700 flex items-center gap-1.5">
+                  <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                     <span>Ngày trước đó</span>
                   </label>
                   <input
                     type="date"
                     value={previousDate}
                     onChange={(e) => setPreviousDate(e.target.value)}
-                    className="w-full bg-white border border-blue-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-xs"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-xs"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-sky-700 flex items-center gap-1.5">
+                  <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                     <span>Ngày hiện tại</span>
                   </label>
                   <input
                     type="date"
                     value={currentDate}
                     onChange={(e) => setCurrentDate(e.target.value)}
-                    className="w-full bg-white border border-sky-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-xs"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-xs"
                   />
                 </div>
 
@@ -1362,7 +1362,7 @@ export const PersonalStatsPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleApplyDates}
-                    className="w-full bg-gradient-to-r from-sky-600 to-indigo-600 hover:opacity-95 text-white font-bold text-xs py-2.5 px-4 rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    className="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs py-2.5 px-4 rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <ArrowsRightLeftIcon className="w-4 h-4" />
                     <span>Cập nhật so sánh</span>
@@ -1373,25 +1373,25 @@ export const PersonalStatsPage: React.FC = () => {
 
             {/* 3 Thẻ tóm tắt kết quả so sánh */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-200 flex items-center justify-between">
+              <div className="p-4 rounded-2xl bg-white border border-slate-200 flex items-center justify-between shadow-xs">
                 <div>
-                  <span className="text-xs font-bold text-blue-700 uppercase">Điểm TB Ngày trước đó</span>
-                  <p className="text-2xl font-black text-blue-900">{previousAvg} <span className="text-sm font-semibold">/100</span></p>
-                  <span className="text-[11px] font-bold text-blue-600">{formatDateVN(previousDate)}</span>
+                  <span className="text-xs font-bold text-slate-500 uppercase">Điểm TB Ngày trước đó</span>
+                  <p className="text-2xl font-black text-slate-800">{previousAvg} <span className="text-sm font-semibold text-slate-400">/100</span></p>
+                  <span className="text-[11px] font-bold text-slate-400">{formatDateVN(previousDate)}</span>
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-sky-50/70 border border-sky-200 flex items-center justify-between">
+              <div className="p-4 rounded-2xl bg-white border border-slate-200 flex items-center justify-between shadow-xs">
                 <div>
-                  <span className="text-xs font-bold text-sky-800 uppercase">Điểm TB Ngày hiện tại</span>
-                  <p className="text-2xl font-black text-sky-900">{currentAvg} <span className="text-sm font-semibold">/100</span></p>
+                  <span className="text-xs font-bold text-slate-500 uppercase">Điểm TB Ngày hiện tại</span>
+                  <p className="text-2xl font-black text-slate-800">{currentAvg} <span className="text-sm font-semibold text-slate-400">/100</span></p>
                   <span className="text-[11px] font-bold text-sky-600">{formatDateVN(currentDate)}</span>
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 flex items-center justify-between">
+              <div className="p-4 rounded-2xl bg-white border border-slate-200 flex items-center justify-between shadow-xs">
                 <div>
-                  <span className="text-xs font-bold text-emerald-800 uppercase">Mức tăng trưởng</span>
+                  <span className="text-xs font-bold text-slate-500 uppercase">Mức tăng trưởng</span>
                   <div className="flex items-center gap-1.5">
                     <p className={`text-2xl font-black ${avgDelta >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                       {avgDelta >= 0 ? `+${avgDelta}%` : `${avgDelta}%`}
@@ -1402,7 +1402,7 @@ export const PersonalStatsPage: React.FC = () => {
                       <ArrowTrendingDownIcon className="w-5 h-5 text-rose-600" />
                     )}
                   </div>
-                  <span className="text-[11px] font-bold text-emerald-600">
+                  <span className={`text-[11px] font-bold ${avgDelta >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                     {avgDelta >= 0 ? 'Năng lực tiến bộ' : 'Cần rèn luyện thêm'}
                   </span>
                 </div>
@@ -1412,13 +1412,13 @@ export const PersonalStatsPage: React.FC = () => {
             {/* 2 Biểu đồ Spider Chart so sánh trực quan cạnh nhau */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
               
-              {/* Biểu đồ 1: Ngày trước đó (Màu xanh dương) */}
-              <div className="p-5 rounded-3xl bg-gradient-to-b from-blue-50/30 to-slate-50 border border-blue-200 flex flex-col items-center">
-                <div className="w-full flex items-center justify-between border-b border-blue-100 pb-3 mb-2 text-xs">
-                  <span className="font-extrabold text-blue-900 uppercase">
+              {/* Biểu đồ 1: Ngày trước đó */}
+              <div className="p-5 rounded-3xl bg-slate-50/70 border border-slate-200 flex flex-col items-center">
+                <div className="w-full flex items-center justify-between border-b border-slate-100 pb-3 mb-2 text-xs">
+                  <span className="font-extrabold text-slate-800 uppercase">
                     1. Ngày trước đó
                   </span>
-                  <span className="text-blue-700 bg-blue-100 px-2.5 py-0.5 rounded-lg font-bold">
+                  <span className="text-slate-600 bg-slate-200/80 px-2.5 py-0.5 rounded-lg font-bold">
                     {formatDateVN(previousDate)}
                   </span>
                 </div>
@@ -1434,9 +1434,9 @@ export const PersonalStatsPage: React.FC = () => {
               </div>
 
               {/* Biểu đồ 2: Ngày hiện tại (Sky Blue) */}
-              <div className="p-5 rounded-3xl bg-gradient-to-b from-sky-50/30 to-slate-50 border border-slate-200 flex flex-col items-center">
+              <div className="p-5 rounded-3xl bg-slate-50/70 border border-slate-200 flex flex-col items-center">
                 <div className="w-full flex items-center justify-between border-b border-slate-100 pb-3 mb-2 text-xs">
-                  <span className="font-extrabold text-sky-800 uppercase font-display">
+                  <span className="font-extrabold text-slate-800 uppercase font-display">
                     2. Ngày hiện tại
                   </span>
                   <span className="text-sky-700 bg-sky-100 px-2.5 py-0.5 rounded-lg font-bold">
