@@ -25,7 +25,7 @@ export const SidebarLeft: React.FC = () => {
     { id: 'explore', label: 'KHÁM PHÁ', icon: <SparklesIcon className="w-6 h-6 stroke-[2.5]" />, path: '/explore' },
     { id: 'pronunciation', label: 'PHÁT ÂM', icon: <SpeakerWaveIcon className="w-6 h-6 stroke-[2.5]" />, path: '/pronunciation' },
     { id: 'leaderboard', label: 'BẢNG XẾP HẠNG', icon: <TrophyIcon className="w-6 h-6 stroke-[2.5]" />, path: '/leaderboard' },
-    // { id: 'practice', label: 'LUYỆN TẬP', icon: <PuzzlePieceIcon className="w-6 h-6 stroke-[2.5]" />, path: '/practice' },
+    { id: 'practice', label: 'LUYỆN TẬP', icon: <PuzzlePieceIcon className="w-6 h-6 stroke-[2.5]" />, path: '/practice' },
     { id: 'exam', label: 'ĐỀ THI', icon: <AcademicCapIcon className="w-6 h-6 stroke-[2.5]" />, path: '/exams' },
     { id: 'stats', label: 'THỐNG KÊ', icon: <ChartBarIcon className="w-6 h-6 stroke-[2.5]" />, path: '/stats' },
     { id: 'profile', label: 'HỒ SƠ', icon: <UserIcon className="w-6 h-6 stroke-[2.5]" />, path: '/profile' },
