@@ -3,14 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../auth/store/useAuthStore';
 import { vocabStatsApi } from '../../exam/services/vocabStatsApi';
 import type { VocabStatsResponse, TopicStat } from '../../exam/types';
+import { learningApi } from '../../learning/services/learningApi';
+import type { TopicWithProgress } from '../../learning/types/placementTest';
+import { useLearningStore } from '../../learning/store/useLearningStore';
 import {
   AcademicCapIcon,
   BookOpenIcon,
   SpeakerWaveIcon,
   ChartBarIcon,
-  ArrowTrendingUpIcon,
   ExclamationTriangleIcon,
-  CheckIcon,
   Squares2X2Icon,
 } from '@heroicons/react/24/outline';
 import { CheckBadgeIcon, SparklesIcon, ShieldCheckIcon } from '@heroicons/react/24/solid';
@@ -22,7 +23,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
   ReferenceLine
 } from 'recharts';
 
@@ -446,16 +446,103 @@ export const ExamStatsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedPracticeTopic, setSelectedPracticeTopic] = useState<string | null>(null);
 
+  const [topicProgress, setTopicProgress] = useState<{
+    totalTopics: number;
+    completedTopics: number;
+    percentage: number;
+    remainingTopics: number;
+    loading: boolean;
+  }>({
+    totalTopics: 0,
+    completedTopics: 0,
+    percentage: 0,
+    remainingTopics: 0,
+    loading: true,
+  });
+
   const fetchStats = () => {
     if (!user?.id) return;
-    vocabStatsApi.getVocabStats(user.id)
+    vocabStatsApi.getVocabStats(Number(user.id))
       .then(setVocabStats)
       .catch(() => setVocabStats({ noExamHistory: true, topics: [] }))
       .finally(() => setLoading(false));
   };
 
+  const fetchTopicProgress = async () => {
+    const currentUserId = user?.id || (() => {
+      try {
+        const str = localStorage.getItem('enjoy_user');
+        return str ? JSON.parse(str)?.id : null;
+      } catch {
+        return null;
+      }
+    })();
+
+    if (!currentUserId) {
+      setTopicProgress((prev) => ({ ...prev, loading: false }));
+      return;
+    }
+
+    try {
+      setTopicProgress((prev) => ({ ...prev, loading: true }));
+
+      // 1. Xác định Level cần lấy thống kê (ưu tiên activeLevel trong store, fallback Starters hoặc level đầu tiên)
+      let targetLevelId: number | null = null;
+      const storeActiveLevel = useLearningStore.getState().activeLevel;
+      if (storeActiveLevel?.id) {
+        targetLevelId = storeActiveLevel.id;
+      } else {
+        const levelsRes = await learningApi.getLevels();
+        const levels = Array.isArray(levelsRes) ? levelsRes : (levelsRes as any)?.data || [];
+        if (levels.length > 0) {
+          const starterLevel = levels.find((l: any) =>
+            l.code?.toLowerCase().includes('starter') || l.name?.toLowerCase().includes('starter')
+          ) || levels[0];
+          targetLevelId = starterLevel.id;
+        }
+      }
+
+      if (!targetLevelId) {
+        setTopicProgress({
+          totalTopics: 0,
+          completedTopics: 0,
+          percentage: 0,
+          remainingTopics: 0,
+          loading: false,
+        });
+        return;
+      }
+
+      // 2. Lấy topicsWithProgress từ learning-service
+      const topicsRes = await learningApi.getTopicsWithProgress(targetLevelId, Number(currentUserId));
+      const rawTopics: TopicWithProgress[] = Array.isArray(topicsRes) ? topicsRes : (topicsRes as any)?.data || [];
+
+      // 3. Lọc các topic chưa bị ẩn (learningStatus !== 'HIDDEN')
+      // Mỗi topic hợp lệ trong DB chứa vocab và/hoặc grammar, tính chung là 1 topic (1 progress unit)
+      const activeTopics = rawTopics.filter((t) => t.learningStatus !== 'HIDDEN');
+      const totalTopics = activeTopics.length;
+
+      // 4. Topic hoàn thành khi đã hoàn thành 100% các session chưa skip
+      const completedTopics = activeTopics.filter((t) => (t.progressPercent ?? 0) === 100).length;
+      const percentage = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
+      const remainingTopics = Math.max(0, totalTopics - completedTopics);
+
+      setTopicProgress({
+        totalTopics,
+        completedTopics,
+        percentage,
+        remainingTopics,
+        loading: false,
+      });
+    } catch (err) {
+      console.error('Lỗi khi tải tiến độ chủ đề:', err);
+      setTopicProgress((prev) => ({ ...prev, loading: false }));
+    }
+  };
+
   useEffect(() => {
     fetchStats();
+    fetchTopicProgress();
   }, [user?.id]);
 
   const totalWeak = vocabStats?.topics.reduce((s, t) => s + t.weakCount, 0) ?? 0;
@@ -477,7 +564,7 @@ export const ExamStatsPage: React.FC = () => {
         <p className="text-xs text-primary font-bold mb-1 uppercase tracking-widest">PRE-A1 STARTERS · Báo cáo học tập</p>
         <h1 className="text-2xl font-display font-extrabold text-text-main">Mỗi ngày học, một bước tiến</h1>
         <p className="text-sm text-text-muted mt-1">
-          {user?.fullName || user?.username}, cùng nhìn lại tiến bộ và chỉnh phục mục tiêu Pre-A1 nhé!
+          {((user as any)?.fullName || user?.username || 'Bé')}, cùng nhìn lại tiến bộ và chinh phục mục tiêu Pre-A1 nhé!
         </p>
       </div>
 
@@ -553,20 +640,40 @@ export const ExamStatsPage: React.FC = () => {
             <div className="flex items-center justify-between mb-4">
               <p className="font-medium text-lg text-teal-900">Progress</p>
               <span className="text-xs font-bold text-teal-700 flex items-center gap-1">
-                <SparklesIcon className="w-4 h-4" /> Đang tiến bộ
+                <SparklesIcon className="w-4 h-4" />{' '}
+                {topicProgress.loading
+                  ? 'Đang tải...'
+                  : topicProgress.percentage === 100
+                  ? 'Đã hoàn thành'
+                  : topicProgress.percentage > 0
+                  ? 'Đang tiến bộ'
+                  : 'Bắt đầu học'}
               </span>
             </div>
 
             <div className="flex items-baseline gap-2 mb-3">
-              <p className="text-5xl font-display font-bold text-teal-800">68%</p>
-              <p className="text-sm font-medium text-teal-700/80">8/12 bài học đã hoàn thành</p>
+              <p className="text-5xl font-display font-bold text-teal-800">
+                {topicProgress.percentage}%
+              </p>
+              <p className="text-sm font-medium text-teal-700/80">
+                {topicProgress.completedTopics}/{topicProgress.totalTopics} bài học đã hoàn thành
+              </p>
             </div>
 
             <div className="w-full bg-teal-900/10 rounded-full h-3 mb-3">
-              <div className="bg-teal-700 h-3 rounded-full" style={{ width: '68%' }} />
+              <div
+                className="bg-teal-700 h-3 rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${topicProgress.percentage}%` }}
+              />
             </div>
 
-            <p className="text-xs text-teal-700 font-medium">Chỉ còn 4 bài học nữa để hoàn thành lộ trình!</p>
+            <p className="text-xs text-teal-700 font-medium">
+              {topicProgress.totalTopics === 0 && !topicProgress.loading
+                ? 'Chưa có bài học nào trong lộ trình'
+                : topicProgress.remainingTopics === 0 && topicProgress.totalTopics > 0
+                ? 'Chúc mừng! Bé đã hoàn thành toàn bộ lộ trình!'
+                : `Chỉ còn ${topicProgress.remainingTopics} bài học nữa để hoàn thành lộ trình!`}
+            </p>
           </div>
         </div>
 
@@ -1019,7 +1126,7 @@ export const ExamStatsPage: React.FC = () => {
       {/* ── Modal Luyện tập từ vựng sai theo Topic ── */}
       {selectedPracticeTopic && user?.id && (
         <VocabPracticeModal
-          userId={user.id}
+          userId={Number(user.id)}
           topicName={selectedPracticeTopic}
           onClose={() => setSelectedPracticeTopic(null)}
           onTopicUpdated={fetchStats}
