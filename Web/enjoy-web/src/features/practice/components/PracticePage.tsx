@@ -8,7 +8,6 @@ import {
   Squares2X2Icon,
   SparklesIcon,
 } from '@heroicons/react/24/outline';
-import { VocabPracticeModal } from '../../stats/components/VocabPracticeModal';
 
 // ──────────────────────────────────────────────
 // Fake data cho cấu trúc ngữ pháp
@@ -51,7 +50,6 @@ export const PracticePage: React.FC = () => {
   const navigate = useNavigate();
   const [vocabStats, setVocabStats] = useState<VocabStatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedPracticeTopic, setSelectedPracticeTopic] = useState<string | null>(null);
 
   const fetchStats = () => {
     if (!user?.id) return;
@@ -171,8 +169,8 @@ export const PracticePage: React.FC = () => {
                             {topic.status !== 'Mastered' ? (
                               <button
                                 id={`practice-btn-${topic.topicName.replace(/\s+/g, '-').toLowerCase()}`}
-                                onClick={() => setSelectedPracticeTopic(topic.topicName)}
-                                className="px-2.5 py-0.5 text-[11px] font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-full hover:bg-blue-100 transition-colors"
+                                onClick={() => navigate(`/practice/personalization?topic=${encodeURIComponent(topic.topicName)}`)}
+                                className="px-2.5 py-0.5 text-[11px] font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-full hover:bg-blue-100 transition-colors cursor-pointer"
                               >
                                 Luyện tập
                               </button>
@@ -200,7 +198,7 @@ export const PracticePage: React.FC = () => {
                         {totalWeak > 0 ? (
                           <button
                             id="practice-all-topics-btn"
-                            onClick={() => setSelectedPracticeTopic('Tất cả các chủ đề')}
+                            onClick={() => navigate('/practice/personalization?topic=ALL')}
                             className="w-full py-1.5 px-3 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm hover:shadow transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.99]"
                           >
                             <SparklesIcon className="w-3.5 h-3.5 text-amber-300" />
@@ -305,10 +303,10 @@ export const PracticePage: React.FC = () => {
           </div>
         </section>
 
-        {/* ── Luyện tập bổ trợ (Minigames) ── */}
+        {/* ── Luyện tập cá nhân hoá bài thi (Vòng Đọc & Vòng Nghe AI) ── */}
         <div
-          onClick={() => navigate('/practice/supplementary')}
-          className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-purple-600 via-violet-600 to-indigo-700 p-6 cursor-pointer shadow-lg hover:shadow-2xl hover:shadow-violet-500/30 transition-all duration-300 hover:-translate-y-1"
+          onClick={() => navigate('/practice/personalization?topic=ALL')}
+          className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 p-6 cursor-pointer shadow-lg hover:shadow-2xl hover:shadow-indigo-500/30 transition-all duration-300 hover:-translate-y-1"
         >
           {/* Decorative circles */}
           <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-white/10 group-hover:scale-125 transition-transform duration-500" />
@@ -320,32 +318,31 @@ export const PracticePage: React.FC = () => {
                 <SparklesIcon className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h3 className="text-lg font-display font-extrabold text-white">Luyện tập bổ trợ</h3>
-                <p className="text-sm text-white/70 mt-0.5">
-                  Trò chơi nghe &amp; chọn ảnh · Điền chữ cái · Ôn từ vựng mọi chủ đề
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-amber-950 text-[10px] font-black uppercase tracking-wider">
+                    AI Personalization
+                  </span>
+                </div>
+                <h3 className="text-lg md:text-xl font-display font-extrabold text-white">
+                  Luyện tập cá nhân hoá theo lỗi sai bài thi
+                </h3>
+                <p className="text-sm text-white/80 mt-0.5">
+                  Vòng 1: Đọc đục lỗ Cambridge Part 4 · Vòng 2: Nghe hội thoại tương tác AI
                 </p>
               </div>
             </div>
             <div className="flex flex-col items-center gap-1.5 shrink-0">
-              <div className="flex gap-1">
-                <span className="text-xl">🎧</span>
-                <span className="text-xl">🔡</span>
+              <div className="flex gap-1.5 text-2xl">
+                <span>📖</span>
+                <span>🎧</span>
               </div>
-              <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">Bắt đầu</span>
+              <span className="text-[11px] font-extrabold text-white bg-white/20 px-3 py-1 rounded-xl uppercase tracking-wider shadow-sm group-hover:bg-white group-hover:text-indigo-900 transition-colors">
+                Bắt đầu ngay
+              </span>
             </div>
           </div>
         </div>
       </div>
-
-      {/* ── Modal Luyện tập từ vựng sai theo Topic ── */}
-      {selectedPracticeTopic && user?.id && (
-        <VocabPracticeModal
-          userId={user.id}
-          topicName={selectedPracticeTopic}
-          onClose={() => setSelectedPracticeTopic(null)}
-          onTopicUpdated={fetchStats}
-        />
-      )}
     </div>
   );
 };

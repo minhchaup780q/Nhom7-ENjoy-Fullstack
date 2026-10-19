@@ -6,7 +6,7 @@ import { ProfilePage } from '../features/profile/components/ProfilePage';
 import { PracticePage } from '../features/practice/components/PracticePage';
 import { PersonalStatsPage } from '../features/stats/components/PersonalStatsPage';
 import { ExamStatsPage } from '../features/stats/components/ExamStatsPage';
-import { SupplementaryPracticePage } from '../features/stats/components/SupplementaryPracticePage';
+import { PersonalizedPracticePage } from '../features/practice/components/PersonalizedPracticePage';
 import { LoginPage } from '../features/auth/components/LoginPage';
 import { RegisterPage } from '../features/auth/components/RegisterPage';
 import { useAuthStore } from '../features/auth/store/useAuthStore';
@@ -76,7 +76,8 @@ export const AppRoutes: React.FC<AppRoutesProps> = ({ onStartSession }) => {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/leaderboard" element={<LeaderboardPage />} />
         <Route path="/stats" element={<ExamStatsPage />} />
-        <Route path="/practice/supplementary" element={<SupplementaryPracticePage />} />
+        <Route path="/practice/personalization" element={<PersonalizedPracticePage />} />
+        <Route path="/practice/supplementary" element={<PersonalizedPracticePage />} />
         <Route path="/pronunciation" element={<PronunciationGuidePage />} />
       </Route>
 
