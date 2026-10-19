@@ -311,7 +311,7 @@ export const LeaderboardPage: React.FC = () => {
               <span className="material-symbols-outlined text-[16px] font-bold">keyboard_double_arrow_up</span>
             </span>
             <span className="font-display font-black text-emerald-800 text-xs sm:text-sm uppercase tracking-wider">
-              VÙNG THĂNG HẠNG GIẢI {nextRankName.toUpperCase()} (TOP 4 – 12) ⬆️
+              VÙNG THĂNG HẠNG GIẢI {nextRankName.toUpperCase()}
             </span>
           </div>
           <span className="text-xs font-semibold text-emerald-700 bg-emerald-100/90 px-2.5 py-0.5 rounded-full border border-emerald-200 hidden sm:inline-block">
