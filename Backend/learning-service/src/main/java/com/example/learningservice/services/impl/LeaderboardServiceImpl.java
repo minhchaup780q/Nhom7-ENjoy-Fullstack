@@ -108,9 +108,21 @@ public class LeaderboardServiceImpl implements LeaderboardService {
                     return leaderboardEntryRepository.save(newEntry);
                 });
 
-        // Nếu rankTier của bản ghi khác rank hiện tại của profile thì cập nhật
+        // Đồng bộ rankTier, username và avatarUrl nếu có thay đổi
+        boolean entryUpdated = false;
         if (userEntry.getRankTier() != currentTier) {
             userEntry.setRankTier(currentTier);
+            entryUpdated = true;
+        }
+        if (profile.getUsername() != null && !profile.getUsername().equals(userEntry.getUsername())) {
+            userEntry.setUsername(profile.getUsername());
+            entryUpdated = true;
+        }
+        if (profile.getAvatarUrl() != null && !profile.getAvatarUrl().equals(userEntry.getAvatarUrl())) {
+            userEntry.setAvatarUrl(profile.getAvatarUrl());
+            entryUpdated = true;
+        }
+        if (entryUpdated) {
             userEntry.setUpdateAt(nowVn());
             userEntry = leaderboardEntryRepository.save(userEntry);
         }
@@ -122,8 +134,20 @@ public class LeaderboardServiceImpl implements LeaderboardService {
             leaderboardEntryRepository.findByTournamentIdAndUserId(tournament.getId(), p.getUserId())
                     .ifPresentOrElse(
                             e -> {
+                                boolean changed = false;
                                 if (e.getRankTier() != p.getCurrentRank()) {
                                     e.setRankTier(p.getCurrentRank());
+                                    changed = true;
+                                }
+                                if (p.getUsername() != null && !p.getUsername().equals(e.getUsername())) {
+                                    e.setUsername(p.getUsername());
+                                    changed = true;
+                                }
+                                if (p.getAvatarUrl() != null && !p.getAvatarUrl().equals(e.getAvatarUrl())) {
+                                    e.setAvatarUrl(p.getAvatarUrl());
+                                    changed = true;
+                                }
+                                if (changed) {
                                     e.setUpdateAt(nowVn());
                                     leaderboardEntryRepository.save(e);
                                 }

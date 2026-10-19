@@ -1,5 +1,4 @@
 import React from 'react';
-import { LockClosedIcon } from '@heroicons/react/24/solid';
 import { RANK_TIERS_CONFIG, type RankTierType } from '../types';
 
 interface RankShieldBarProps {
@@ -8,68 +7,81 @@ interface RankShieldBarProps {
 
 export const RankShieldBar: React.FC<RankShieldBarProps> = ({ currentTier }) => {
   const currentIdx = RANK_TIERS_CONFIG.findIndex((r) => r.tier === currentTier);
-  const activeIndex = currentIdx >= 0 ? currentIdx : 1; // Mặc định Silver (index 1) nếu chưa có
+  const activeIndex = currentIdx >= 0 ? currentIdx : 1; // Mặc định Silver nếu chưa có
 
-  // Hiển thị 5 rank quanh rank hiện tại để vừa vặn khung hình như Duolingo
-  const startIdx = Math.max(0, activeIndex - 1);
-  const visibleRanks = RANK_TIERS_CONFIG.slice(startIdx, startIdx + 5);
+  // Hiển thị 5 rank: Đồng, Bạc, Vàng, Bạch kim, Kim cương
+  const mainTiers = RANK_TIERS_CONFIG.slice(0, 5);
 
   return (
-    <div className="flex items-center justify-center gap-3 sm:gap-4 py-3 select-none">
-      {visibleRanks.map((rank) => {
+    <div className="flex items-center justify-center gap-2 sm:gap-6 w-full max-w-xl mx-auto mb-6 pb-6 border-b border-slate-100 relative">
+      {mainTiers.map((rank, idx) => {
         const isCurrent = rank.tier === currentTier;
         const isPast = rank.level < (RANK_TIERS_CONFIG[activeIndex]?.level ?? 1);
         const isLocked = rank.level > (RANK_TIERS_CONFIG[activeIndex]?.level ?? 1);
 
-        if (isCurrent) {
-          return (
-            <div
-              key={rank.tier}
-              className="px-4 py-2 bg-[#dbeafe]/80 border-2 border-[#bfdbfe] rounded-2xl shadow-sm flex items-center justify-center relative scale-110"
-              title={`Giải đấu ${rank.nameVi} (Hiện tại)`}
-            >
-              {/* Active Current Shield */}
-              <div className="w-12 h-12 relative flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-full h-full fill-[#93c5fd] stroke-[#3b82f6] stroke-[1.5] drop-shadow-sm">
-                  <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z" />
-                </svg>
-                {/* Center Feather / Wing icon */}
-                <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white absolute drop-shadow">
-                  <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" />
-                  <line x1="16" y1="8" x2="2" y2="22" stroke="white" strokeWidth="2" />
-                  <line x1="17.5" y1="15" x2="9" y2="15" stroke="white" strokeWidth="2" />
-                </svg>
-              </div>
-            </div>
-          );
-        }
-
-        if (isPast) {
-          return (
-            <div
-              key={rank.tier}
-              className="w-11 h-11 flex items-center justify-center rounded-2xl transition-transform hover:scale-105 cursor-pointer opacity-80"
-              title={`Giải đấu ${rank.nameVi} (Đã vượt qua)`}
-            >
-              <svg viewBox="0 0 24 24" className="w-10 h-10 fill-[#cd7f32] stroke-[#8c501e] stroke-[1.5]">
-                <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z" />
-              </svg>
-            </div>
-          );
-        }
-
-        // Locked Future Ranks
         return (
-          <div
-            key={rank.tier}
-            className="w-11 h-11 bg-[#f1f3f5] rounded-2xl border border-dashed border-[#d1d5db] flex items-center justify-center relative opacity-50"
-            title={`Giải đấu ${rank.nameVi} (Đang khóa)`}
-          >
-            <svg viewBox="0 0 24 24" className="w-8 h-8 fill-[#d1d5db]">
-              <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z" />
-            </svg>
-            <LockClosedIcon className="w-3.5 h-3.5 text-[#9ca3af] absolute" />
-          </div>
+          <React.Fragment key={rank.tier}>
+            {/* Shield Item */}
+            {isCurrent ? (
+              <div className="flex flex-col items-center gap-1.5 relative scale-110">
+                <div className="absolute inset-0 bg-sky-400/30 blur-md rounded-full animate-glow pointer-events-none" />
+                <div className="w-14 h-14 sm:w-15 sm:h-15 rounded-2xl bg-gradient-to-b from-sky-50 to-white border-2 border-sky-400/80 shadow-lg shadow-sky-500/20 flex items-center justify-center text-sky-600 relative z-10">
+                  <span
+                    className="material-symbols-outlined text-[34px] sm:text-[38px] drop-shadow-sm text-sky-600"
+                    style={{ fontVariationSettings: "'FILL' 1" }}
+                  >
+                    shield
+                  </span>
+                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-500 rounded-full ring-2 ring-white" />
+                </div>
+                <span className="text-[11px] sm:text-xs font-black tracking-wide text-sky-700 bg-sky-100 px-2.5 py-0.5 rounded-full border border-sky-300 shadow-xs relative z-10 mt-0.5 uppercase">
+                  {rank.nameVi}
+                </span>
+              </div>
+            ) : isPast ? (
+              <div className="flex flex-col items-center gap-1.5 opacity-75 hover:opacity-100 transition-all cursor-pointer group">
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-amber-100/60 flex items-center justify-center text-amber-700 shadow-inner group-hover:scale-105 transition-transform">
+                  <span
+                    className="material-symbols-outlined text-[28px] sm:text-[30px]"
+                    style={{ fontVariationSettings: "'FILL' 1" }}
+                  >
+                    shield
+                  </span>
+                </div>
+                <span className="text-[11px] sm:text-[12px] font-semibold text-slate-500">
+                  {rank.nameVi}
+                </span>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-1.5 opacity-40 hover:opacity-60 transition-opacity">
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-500 relative border border-slate-200">
+                  <span
+                    className="material-symbols-outlined text-[28px] sm:text-[30px]"
+                    style={{ fontVariationSettings: "'FILL' 1" }}
+                  >
+                    shield
+                  </span>
+                  <span className="material-symbols-outlined text-[14px] sm:text-[15px] absolute inset-0 m-auto text-slate-700 font-bold">
+                    lock
+                  </span>
+                </div>
+                <span className="text-[11px] sm:text-[12px] font-medium text-slate-400">
+                  {rank.nameVi}
+                </span>
+              </div>
+            )}
+
+            {/* Connecting progress bar */}
+            {idx < mainTiers.length - 1 && (
+              <div
+                className={`h-1 flex-1 rounded-full max-w-[28px] sm:max-w-[40px] -mt-5 ${
+                  isPast || isCurrent
+                    ? 'bg-gradient-to-r from-amber-200 to-sky-300'
+                    : 'bg-slate-200'
+                }`}
+              />
+            )}
+          </React.Fragment>
         );
       })}
     </div>

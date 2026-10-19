@@ -34,7 +34,7 @@
   --color-bg-light: #f7f7f7;
 
   /* Phông chữ */
-  --font-display: "Outfit", "Inter", system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
   --font-sans: "Inter", system-ui, sans-serif;
 }
 
@@ -60,6 +60,24 @@ body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
+}
+
+@keyframes floatAnim {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-7px) rotate(-1deg); }
+}
+
+@keyframes pulseGlowAnim {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 0.95; transform: scale(1.05); }
+}
+
+.animate-float {
+  animation: floatAnim 3.5s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: pulseGlowAnim 2.8s ease-in-out infinite;
 }
 
 /* Hiệu ứng 3D Duolingo Button */
