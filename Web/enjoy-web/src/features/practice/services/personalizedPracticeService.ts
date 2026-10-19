@@ -140,38 +140,54 @@ export const personalizedPracticeService = {
   loadWeakWords: async (userId: number, topicName: string): Promise<TopicWeakWordDetail[]> => {
     try {
       const isAll = !topicName || topicName === 'ALL' || topicName === 'Tất cả' || topicName === 'Tất cả các chủ đề';
-      const words = await vocabStatsApi.getTopicWords(userId, isAll ? 'ALL' : topicName);
+      const words = await vocabStatsApi.getTopicWeakWords(userId, isAll ? 'ALL' : topicName);
       // Đảm bảo mỗi từ đều có ảnh hợp lệ
-      return words.map((w) => ({
+      return (words || []).map((w) => ({
         ...w,
         imageUrl: getWordImageUrl(w.word, w.imageUrl),
       }));
     } catch (err) {
-      console.error('[PersonalizedPracticeService] Lỗi khi tải từ yếu:', err);
+      console.error('[PersonalizedPracticeService] Lỗi khi tải từ yếu của bài thi:', err);
       return [];
     }
   },
 
   /**
-   * Chia danh sách từ vựng thành các nhóm từ 2 đến 4 từ mỗi trang
+   * Gom từ vựng theo từng topic và chia mỗi topic thành các trang từ 2 đến 4 từ
+   * "đem các lỗi đó theo từng topic gom lại chia làm 2 vòng là vòng nghe và vòng đọc:
+   * dựa theo số câu sẽ chia ra nhiều trang, ít nhất 2 từ và nhiều nhất 4 từ để tạo ra 1 trang trong 1 topic"
    */
   chunkWordsIntoPages: (words: TopicWeakWordDetail[]): TopicWeakWordDetail[][] => {
-    if (words.length === 0) return [];
-    const pages: TopicWeakWordDetail[][] = [];
-    let i = 0;
-    while (i < words.length) {
-      const remaining = words.length - i;
-      let chunkSize = 4;
-      if (remaining <= 4) {
-        chunkSize = remaining;
-      } else if (remaining === 5) {
-        // Chia 3 và 2 để tránh trang cuối chỉ có 1 từ
-        chunkSize = 3;
-      }
-      pages.push(words.slice(i, i + chunkSize));
-      i += chunkSize;
+    if (!words || words.length === 0) return [];
+
+    // 1. Nhóm từ theo topic
+    const topicMap: Record<string, TopicWeakWordDetail[]> = {};
+    for (const w of words) {
+      const t = w.topic || 'Chung';
+      if (!topicMap[t]) topicMap[t] = [];
+      topicMap[t].push(w);
     }
-    return pages;
+
+    const allPages: TopicWeakWordDetail[][] = [];
+
+    // 2. Chia mỗi topic thành các trang từ 2 đến 4 từ
+    for (const [, topicWords] of Object.entries(topicMap)) {
+      let i = 0;
+      while (i < topicWords.length) {
+        const remaining = topicWords.length - i;
+        let chunkSize = 4;
+        if (remaining <= 4) {
+          chunkSize = remaining;
+        } else if (remaining === 5) {
+          // Chia 3 và 2 để tránh trang cuối chỉ có 1 từ
+          chunkSize = 3;
+        }
+        allPages.push(topicWords.slice(i, i + chunkSize));
+        i += chunkSize;
+      }
+    }
+
+    return allPages;
   },
 
   /**

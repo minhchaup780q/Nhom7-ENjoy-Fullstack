@@ -8,6 +8,7 @@ import {
   Squares2X2Icon,
   SparklesIcon,
 } from '@heroicons/react/24/outline';
+import { VocabPracticeModal } from '../../stats/components/VocabPracticeModal';
 
 // ──────────────────────────────────────────────
 // Fake data cho cấu trúc ngữ pháp
@@ -50,6 +51,7 @@ export const PracticePage: React.FC = () => {
   const navigate = useNavigate();
   const [vocabStats, setVocabStats] = useState<VocabStatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedPracticeTopic, setSelectedPracticeTopic] = useState<string | null>(null);
 
   const fetchStats = () => {
     if (!user?.id) return;
@@ -169,7 +171,7 @@ export const PracticePage: React.FC = () => {
                             {topic.status !== 'Mastered' ? (
                               <button
                                 id={`practice-btn-${topic.topicName.replace(/\s+/g, '-').toLowerCase()}`}
-                                onClick={() => navigate(`/practice/personalization?topic=${encodeURIComponent(topic.topicName)}`)}
+                                onClick={() => setSelectedPracticeTopic(topic.topicName)}
                                 className="px-2.5 py-0.5 text-[11px] font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-full hover:bg-blue-100 transition-colors cursor-pointer"
                               >
                                 Luyện tập
@@ -198,7 +200,7 @@ export const PracticePage: React.FC = () => {
                         {totalWeak > 0 ? (
                           <button
                             id="practice-all-topics-btn"
-                            onClick={() => navigate('/practice/personalization?topic=ALL')}
+                            onClick={() => setSelectedPracticeTopic('Tất cả các chủ đề')}
                             className="w-full py-1.5 px-3 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm hover:shadow transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.99]"
                           >
                             <SparklesIcon className="w-3.5 h-3.5 text-amber-300" />
@@ -329,6 +331,27 @@ export const PracticePage: React.FC = () => {
                 <p className="text-sm text-white/80 mt-0.5">
                   Vòng 1: Đọc đục lỗ Cambridge Part 4 · Vòng 2: Nghe hội thoại tương tác AI
                 </p>
+
+                {/* Danh sách chủ đề có từ cần cải thiện để click nhanh */}
+                {vocabStats?.topics && vocabStats.topics.filter((t) => t.weakCount > 0).length > 0 && (
+                  <div className="flex items-center gap-2 mt-3 flex-wrap">
+                    <span className="text-[11px] font-bold text-white/70">Chủ đề cần cải thiện:</span>
+                    {vocabStats.topics
+                      .filter((t) => t.weakCount > 0)
+                      .map((t) => (
+                        <button
+                          key={t.topicName}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/practice/personalization?topic=${encodeURIComponent(t.topicName)}`);
+                          }}
+                          className="px-2.5 py-0.5 bg-white/20 hover:bg-white text-white hover:text-indigo-900 rounded-full text-[11px] font-bold transition-all cursor-pointer backdrop-blur"
+                        >
+                          {t.topicName} ({t.weakCount})
+                        </button>
+                      ))}
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex flex-col items-center gap-1.5 shrink-0">
@@ -343,6 +366,16 @@ export const PracticePage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* ── Modal Luyện tập từ vựng sai theo Topic (Phần luyện tập ở trên) ── */}
+      {selectedPracticeTopic && user?.id && (
+        <VocabPracticeModal
+          userId={user.id}
+          topicName={selectedPracticeTopic}
+          onClose={() => setSelectedPracticeTopic(null)}
+          onTopicUpdated={fetchStats}
+        />
+      )}
     </div>
   );
 };

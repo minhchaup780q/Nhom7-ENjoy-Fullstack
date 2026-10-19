@@ -120,7 +120,8 @@ export const PersonalizedPracticePage: React.FC = () => {
     }
   };
 
-  const currentTopicDisplay = topicParam === 'ALL' ? 'Tất cả các chủ đề' : topicParam;
+  const availableTopics = Array.from(new Set(weakWords.map((w) => w.topic).filter(Boolean)));
+  const currentPageTopic = wordPages[currentPageIndex]?.[0]?.topic || (topicParam === 'ALL' ? 'Tất cả các chủ đề' : topicParam);
 
   if (loading) {
     return (
@@ -169,7 +170,7 @@ export const PersonalizedPracticePage: React.FC = () => {
             </button>
             <div>
               <p className="text-[11px] font-black uppercase text-primary tracking-widest">
-                Luyện tập cá nhân hoá · {currentTopicDisplay}
+                Luyện tập cá nhân hoá · {currentPageTopic}
               </p>
               <h1 className="text-lg md:text-xl font-display font-extrabold text-gray-900">
                 {round === 'READING' && 'Vòng 1: Đọc đục lỗ (Reading Part 4)'}
@@ -214,6 +215,41 @@ export const PersonalizedPracticePage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* ── Topic Filter Chips ── */}
+      {availableTopics.length > 1 && (
+        <div className="bg-white/80 backdrop-blur border-b border-gray-100 px-6 py-2">
+          <div className="max-w-6xl mx-auto flex items-center gap-2 overflow-x-auto py-1">
+            <span className="text-[11px] font-bold text-gray-500 shrink-0">Chủ đề bài thi:</span>
+            <button
+              onClick={() => navigate('/practice/personalization?topic=ALL')}
+              className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                topicParam === 'ALL'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+              }`}
+            >
+              Tất cả ({weakWords.length} từ)
+            </button>
+            {availableTopics.map((top) => {
+              const count = weakWords.filter((w) => w.topic === top).length;
+              return (
+                <button
+                  key={top}
+                  onClick={() => navigate(`/practice/personalization?topic=${encodeURIComponent(top)}`)}
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                    topicParam === top
+                      ? 'bg-primary text-white shadow-xs'
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  }`}
+                >
+                  {top} ({count} từ)
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ── Main Content Container ── */}
       <div className="max-w-6xl mx-auto px-6 py-8">

@@ -247,16 +247,23 @@ public class VocabularyTrackingService {
                 || topicName.equalsIgnoreCase("Tất cả")
                 || topicName.equalsIgnoreCase("Tất cả các chủ đề");
 
-        // 1. Lấy tất cả từ trong tracking của user (không phân biệt WEAK hay CORRECT)
+        // 1. Lấy từ trong tracking của user (ưu tiên từ WEAK phát sinh khi làm bài thi)
         List<UserVocabularyTracking> allUserRecords = trackingRepository.findByUserId(userId);
         List<UserVocabularyTracking> targetRecords;
 
         if (isAllTopic) {
-            targetRecords = allUserRecords;
+            List<UserVocabularyTracking> weaks = allUserRecords.stream()
+                    .filter(r -> r.getStatus() == VocabTrackingStatus.WEAK)
+                    .toList();
+            targetRecords = !weaks.isEmpty() ? weaks : allUserRecords;
         } else {
-            targetRecords = allUserRecords.stream()
+            List<UserVocabularyTracking> topicRecords = allUserRecords.stream()
                     .filter(r -> r.getTopic() != null && r.getTopic().equalsIgnoreCase(topicName.trim()))
                     .toList();
+            List<UserVocabularyTracking> weaks = topicRecords.stream()
+                    .filter(r -> r.getStatus() == VocabTrackingStatus.WEAK)
+                    .toList();
+            targetRecords = !weaks.isEmpty() ? weaks : topicRecords;
         }
 
         List<String> targetWords = new ArrayList<>();
