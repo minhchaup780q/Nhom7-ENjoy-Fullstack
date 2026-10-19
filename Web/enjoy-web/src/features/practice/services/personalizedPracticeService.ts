@@ -47,65 +47,13 @@ export interface TopicPersonalizedBatch {
   listeningExercises: ListeningExerciseData[];
 }
 
-// Fallback curated image map nếu từ vựng chưa có ảnh từ bài thi
-const TOPIC_FALLBACK_IMAGES: Record<string, string> = {
-  // Animals
-  cat: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400',
-  dog: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400',
-  fish: 'https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?w=400',
-  tail: 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=400',
-  duck: 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=400',
-  frog: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=400',
-  tiger: 'https://images.unsplash.com/photo-1561731216-c3a4d99437d5?w=400',
-  horse: 'https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=400',
-  bird: 'https://images.unsplash.com/photo-1444464666168-49d633b86797?w=400',
-  elephant: 'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?w=400',
-  monkey: 'https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=400',
-  cow: 'https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?w=400',
-  pig: 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=400',
-  chicken: 'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=400',
-  // Colours
-  red: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=400',
-  yellow: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=400',
-  pink: 'https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?w=400',
-  brown: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=400',
-  grey: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400',
-  blue: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400',
-  green: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=400',
-  // Transport
-  train: 'https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=400',
-  lorry: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=400',
-  helicopter: 'https://images.unsplash.com/photo-1508614589041-895b88991e3e?w=400',
-  swim: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=400',
-  bike: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=400',
-  car: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=400',
-  // The home
-  sofa: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400',
-  table: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?w=400',
-  bed: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400',
-  door: 'https://images.unsplash.com/photo-1509644851169-2acc08aa25b5?w=400',
-  // Toys
-  robot: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400',
-  doll: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=400',
-  ball: 'https://images.unsplash.com/photo-1516762689617-e1cffcef479d?w=400',
-  // Names & Numbers
-  pat: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400',
-  sam: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400',
-  '1': 'https://images.unsplash.com/photo-1555680202-c86f0e12f086?w=400',
-  '3': 'https://images.unsplash.com/photo-1555680202-c86f0e12f086?w=400',
-  '12': 'https://images.unsplash.com/photo-1555680202-c86f0e12f086?w=400',
-  // Sports & Leisure
-  kite: 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=400',
-  piano: 'https://images.unsplash.com/photo-1520523839898-50712140a7a7?w=400',
-  // The world around us
-  sun: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=400',
-};
-
 export const getWordImageUrl = (word: string, customImage?: string | null): string => {
-  if (customImage && customImage.trim().length > 0) return customImage.trim();
-  const clean = word.trim().toLowerCase();
-  if (TOPIC_FALLBACK_IMAGES[clean]) return TOPIC_FALLBACK_IMAGES[clean];
-  return `https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=400`;
+  const cleanImg = (customImage || '').trim();
+  if (cleanImg && !cleanImg.includes('1516467508483-a7212febe31a')) {
+    return cleanImg;
+  }
+  console.warn(`[PersonalizedPractice] Từ vựng "${word}" chưa có ảnh trong CSDL.`);
+  return '';
 };
 
 /**
@@ -133,149 +81,6 @@ function extractJsonFromAiReply<T>(reply: string): T | null {
   return null;
 }
 
-// ──────────────────────────────────────────────
-// Từ điển dịch nghĩa chuẩn Cambridge Starters sang tiếng Việt
-// ──────────────────────────────────────────────
-export const STARTERS_VIETNAMESE_DICTIONARY: Record<string, string> = {
-  // Animals
-  cat: 'con mèo',
-  dog: 'con chó',
-  fish: 'con cá',
-  duck: 'con vịt',
-  frog: 'con ếch',
-  tiger: 'con hổ',
-  horse: 'con ngựa',
-  bird: 'con chim',
-  elephant: 'con voi',
-  monkey: 'con khỉ',
-  cow: 'con bò',
-  pig: 'con lợn',
-  chicken: 'con gà',
-  tail: 'cái đuôi',
-  hippo: 'hà mã',
-  bear: 'con gấu',
-  bee: 'con ong',
-  jellyfish: 'con sứa',
-  lizard: 'thằn lằn',
-  mouse: 'con chuột',
-  mice: 'những con chuột',
-  sheep: 'con cừu',
-  donkey: 'con lừa',
-  snake: 'con rắn',
-  spider: 'con nhện',
-  zebra: 'ngựa vằn',
-  giraffe: 'hươu cao cổ',
-  goat: 'con dê',
-  crocodile: 'cá sấu',
-  pet: 'thú cưng',
-  zoo: 'vườn thú',
-  // Food & Drink
-  apple: 'quả táo',
-  banana: 'quả chuối',
-  orange: 'quả cam',
-  grape: 'quả nho',
-  mango: 'quả xoài',
-  watermelon: 'dưa hấu',
-  kiwi: 'quả kiwi',
-  lemon: 'quả chanh vàng',
-  lime: 'quả chanh xanh',
-  tomato: 'cà chua',
-  carrot: 'củ cà rốt',
-  onion: 'củ hành',
-  potato: 'củ khoai tây',
-  pea: 'đậu Hà Lan',
-  bean: 'hạt đậu',
-  pear: 'quả lê',
-  coconut: 'quả dừa',
-  pineapple: 'quả dứa',
-  bread: 'bánh mì',
-  rice: 'cơm',
-  egg: 'quả trứng',
-  meat: 'thịt',
-  sausage: 'xúc xích',
-  burger: 'bánh kẹp',
-  cake: 'bánh ngọt',
-  candy: 'kẹo',
-  sweet: 'kẹo ngọt',
-  chocolate: 'sô-cô-la',
-  icecream: 'kem',
-  'ice cream': 'kem',
-  milk: 'sữa',
-  water: 'nước',
-  juice: 'nước ép',
-  lemonade: 'nước chanh',
-  // Toys & Leisure
-  ball: 'quả bóng',
-  kite: 'con diều',
-  doll: 'búp bê',
-  robot: 'người máy',
-  balloon: 'bong bóng',
-  'teddy bear': 'gấu bông',
-  teddy: 'gấu bông',
-  car: 'xe ô tô',
-  train: 'tàu hoả',
-  plane: 'máy bay',
-  boat: 'thuyền',
-  bike: 'xe đạp',
-  motorbike: 'xe máy',
-  helicopter: 'máy bay trực thăng',
-  truck: 'xe tải',
-  lorry: 'xe tải',
-  piano: 'đàn piano',
-  guitar: 'đàn ghi-ta',
-  // School
-  book: 'quyển sách',
-  pen: 'bút mực',
-  pencil: 'bút chì',
-  ruler: 'thước kẻ',
-  eraser: 'cục tẩy',
-  rubber: 'cục tẩy',
-  bag: 'cặp sách',
-  school: 'trường học',
-  classroom: 'lớp học',
-  teacher: 'giáo viên',
-  desk: 'bàn học',
-  chair: 'cái ghế',
-  board: 'bảng lớp',
-  crayon: 'bút sáp màu',
-  picture: 'bức tranh',
-  story: 'câu chuyện',
-  // The home
-  house: 'ngôi nhà',
-  home: 'nhà',
-  door: 'cửa ra vào',
-  window: 'cửa sổ',
-  table: 'cái bàn',
-  bed: 'cái giường',
-  lamp: 'đèn ngủ',
-  clock: 'đồng hồ',
-  box: 'chiếc hộp',
-  tree: 'cái cây',
-  flower: 'bông hoa',
-  sun: 'mặt trời',
-  garden: 'khu vườn',
-  room: 'căn phòng',
-  bedroom: 'phòng ngủ',
-  kitchen: 'nhà bếp',
-  bathroom: 'phòng tắm',
-  // Clothes
-  hat: 'cái mũ',
-  cap: 'mũ lưỡi trai',
-  shirt: 'áo sơ mi',
-  't-shirt': 'áo phông',
-  dress: 'váy đầm',
-  skirt: 'chân váy',
-  jacket: 'áo khoác',
-  trousers: 'quần dài',
-  shorts: 'quần đùi',
-  sock: 'chiếc tất',
-  socks: 'đôi tất',
-  shoe: 'chiếc giày',
-  shoes: 'đôi giày',
-  glasses: 'kính mắt',
-  watch: 'đồng hồ đeo tay',
-};
-
 export const getWordTranslation = (word: string, customTranslation?: string | null): string => {
   if (
     customTranslation &&
@@ -284,20 +89,18 @@ export const getWordTranslation = (word: string, customTranslation?: string | nu
   ) {
     return customTranslation.trim();
   }
-  const clean = word.trim().toLowerCase();
-  if (STARTERS_VIETNAMESE_DICTIONARY[clean]) return STARTERS_VIETNAMESE_DICTIONARY[clean];
   return word;
 };
 
 export const personalizedPracticeService = {
   /**
-   * Lấy danh sách từ vựng cần cải thiện của user theo topic hoặc ALL (CHỈ DỮ LIỆU THẬT)
+   * Lấy danh sách từ vựng cần cải thiện của user theo topic hoặc ALL (CHỈ DỮ LIỆU THẬT TỪ CSDL)
    */
   loadWeakWords: async (userId: number, topicName: string): Promise<TopicWeakWordDetail[]> => {
     try {
       const isAll = !topicName || topicName === 'ALL' || topicName === 'Tất cả' || topicName === 'Tất cả các chủ đề';
       const words = await vocabStatsApi.getTopicWeakWords(userId, isAll ? 'ALL' : topicName);
-      // Đảm bảo mỗi từ đều có ảnh hợp lệ và dịch nghĩa tiếng Việt chuẩn
+      // Sử dụng 100% hình ảnh và nghĩa từ CSDL
       return (words || []).map((w) => ({
         ...w,
         imageUrl: getWordImageUrl(w.word, w.imageUrl),
@@ -357,69 +160,81 @@ export const personalizedPracticeService = {
     const wordList = words.map((w) => w.word);
     const wordListStr = wordList.join(', ');
 
-    const prompt = `You are a Cambridge English: Starters (Pre-A1) test creator.
-Write a simple, charming children's story for topic "${topic}".
-The story MUST naturally use ALL of these target words: [${wordListStr}].
-Use simple vocabulary suitable for 6-8 year old learners.
+    const prompt = `You are an expert Cambridge English: Starters (Pre-A1) test creator.
+Write a simple, charming, and highly logical children's story for the topic "${topic}".
+The story MUST naturally and meaningfully use ALL of these target words: [${wordListStr}].
+Target audience: 6-8 year old young learners (Pre-A1).
 
-CRITICAL RULES:
-1. "fullStory": Complete charming story (3-5 sentences) using ALL target words [${wordListStr}].
-2. "blankStory": Must have EXACTLY ${wordCount} blanks numbered (${words.map((_, i) => `(${i + 1}) [____]`).join(', ')}).
-DO NOT ADD ANY EXTRA BLANKS. If there are ${wordCount} words, there MUST be EXACTLY ${wordCount} blanks!
-3. "vietnameseTranslation": Natural and accurate Vietnamese translation of the entire story.
+CRITICAL CONTEXT & CLUE RULES (MAKE IT 100% CLEAR AND LOGICAL):
+Every target word MUST have a clear, specific, and unambiguous reason for being used in its sentence:
+- If the words are colors (e.g. red, yellow, brown):
+  * State the object being described with that specific color, or explain why that specific color is chosen (e.g., "The sweet apple on the tree was red.", "The warm sun was bright yellow.", "The little puppy had soft brown fur.").
+  * DO NOT leave a color blank floating without the noun it describes!
+- If the words are vehicles or transport (e.g. train, lorry, helicopter, swim):
+  * "train": travels on the long railway tracks with carriages.
+  * "lorry / truck": carries heavy goods and boxes on the road.
+  * "helicopter": flies in the air with rotating blades/propellers.
+  * "swim": jumping into the cool water to splash and swim.
+- If the words are animals, school items, clothes, food, or home items:
+  * Give a vivid, unmistakable sensory or functional detail (what it does, where it lives, what sound it makes, or how it is used).
+
+FORMATTING REQUIREMENTS:
+1. "title": A catchy, simple title for the story.
+2. "fullStory": A complete, natural story of 3-5 sentences containing all target words: [${wordListStr}]. Write plain English without any blanks, brackets, or numbers.
+3. Keep sentences short, fun, grammatically correct, and easy for kids to understand.
 
 Return ONLY raw JSON with NO markdown formatting:
 {
-  "title": "A short story title",
-  "fullStory": "The complete story...",
-  "blankStory": "The story with (${words.map((_, i) => `(${i + 1}) [____]`).join(', ')})...",
-  "vietnameseTranslation": "Bản dịch nghĩa toàn bộ câu chuyện sang tiếng Việt chuẩn xác..."
+  "title": "A Day of Beautiful Colours",
+  "fullStory": "The complete natural story containing all target words with rich context..."
 }`;
 
     let parsedFullStory = '';
     let parsedTitle = `Chủ đề: ${topic}`;
-    let parsedTranslation = '';
 
     try {
       const reply = await chatbotApi.ask(prompt);
       const parsed = extractJsonFromAiReply<{
         title: string;
         fullStory: string;
-        blankStory: string;
-        vietnameseTranslation?: string;
       }>(reply);
 
       if (parsed) {
         parsedTitle = parsed.title || parsedTitle;
         parsedFullStory = parsed.fullStory || '';
-        parsedTranslation = parsed.vietnameseTranslation || '';
       }
     } catch (err) {
       console.warn('[PersonalizedPracticeService] AI generate Reading failed, fallback:', err);
     }
 
-    // Nếu AI không trả về fullStory hợp lệ, tạo câu chuyện mẫu chuẩn xác
+    // Nếu AI không trả về fullStory hợp lệ, tạo câu chuyện mẫu ngữ cảnh chuẩn
     if (!parsedFullStory) {
-      parsedFullStory = words.map((w) => `We can see a ${w.word} in our ${topic} lesson today.`).join(' ');
-      parsedTranslation = words.map((w) => `Chúng ta có thể thấy một ${getWordTranslation(w.word)} trong bài học.`).join(' ');
+      parsedFullStory = words.map((w) => `We can see a clear ${w.word} in our ${topic} lesson today.`).join(' ');
     }
 
-    // ── RÀNG BUỘC TOÁN HỌC: XÂY DỰNG blankStory VÀ blanks ĐẢM BẢO CHÍNH XÁC words.length LỖ ĐỤC ──
+    // ── XÂY DỰNG blankStory VÀ blanks ĐẢM BẢO CHÍNH XÁC words.length LỖ ĐỤC ──
     const strictBlanks: ReadingBlank[] = words.map((w, idx) => ({
       position: idx + 1,
       answer: w.word,
-      hint: getWordTranslation(w.word, w.meaning),
     }));
 
-    // Thay thế chính xác từng target word trong fullStory thành (i + 1) [____]
-    let safeBlankStory = parsedFullStory;
+    // 1. Làm sạch toàn bộ các dấu ngoặc dư thừa, số thứ tự cũ nếu AI vô tình trả về
+    let cleanStory = (parsedFullStory || '')
+      .replace(/\(\d+\)\s*(?:\[[^\]]*\])?/g, ' ')
+      .replace(/\[\s*([\w\s]+?)\s*\]/g, '$1')
+      .replace(/\(\s*\)/g, ' ')
+      .replace(/\[\s*\]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    // 2. Thay thế chính xác từng target word thành token duy nhất __SLOT_1__, __SLOT_2__...
     for (let i = 0; i < words.length; i++) {
-      const target = words[i].word;
+      const target = words[i].word.trim();
       const regex = new RegExp(`\\b${target}(?:s|es)?\\b`, 'i');
-      if (regex.test(safeBlankStory)) {
-        safeBlankStory = safeBlankStory.replace(regex, `(${i + 1}) [____]`);
+      if (regex.test(cleanStory)) {
+        cleanStory = cleanStory.replace(regex, `__SLOT_${i + 1}__`);
       } else {
-        safeBlankStory += ` Look at the (${i + 1}) [____]!`;
+        cleanStory += ` Look at the beautiful __SLOT_${i + 1}__!`;
       }
     }
 
@@ -429,14 +244,13 @@ Return ONLY raw JSON with NO markdown formatting:
       words,
       title: parsedTitle,
       fullStory: parsedFullStory,
-      blankStory: safeBlankStory,
+      blankStory: cleanStory,
       blanks: strictBlanks,
-      vietnameseTranslation: parsedTranslation,
     };
   },
 
   /**
-   * VÒNG NGHE: Gọi AI chatbot sinh đoạn hội thoại tự nhiên dài (8-12 lượt đối đáp qua lại)
+   * VÒNG NGHE: Gọi AI chatbot sinh đoạn hội thoại gồm ĐÚNG 6 CÂU TỔNG CỘNG (3 lượt Tom, 3 lượt Lucy)
    * và các câu hỏi trắc nghiệm A, B, C, D cho từng từ vựng
    */
   generateListeningExercise: async (
@@ -448,39 +262,42 @@ Return ONLY raw JSON with NO markdown formatting:
     const wordListStr = wordList.join(', ');
 
     const prompt = `You are an expert Cambridge English: Starters (Pre-A1) test creator.
-Create a lively, natural, and engaging back-and-forth conversation between two children, Tom and Lucy, about the topic "${topic}".
-They MUST talk back and forth (at least 8 to 12 dialogue turns) and naturally discuss ALL of these target words: [${wordListStr}].
+Create a short, natural listening conversation between two children, Tom and Lucy, about the topic "${topic}".
+They must naturally discuss all of these target words: [${wordListStr}].
 
-CONVERSATION RULES:
-1. The conversation MUST be detailed and long enough (between 8 and 12 alternating turns: Tom -> Lucy -> Tom -> Lucy...).
-2. They should ask questions, answer, express excitement, describe colors, actions, locations, and feelings.
-3. Each target word from [${wordListStr}] must be clearly mentioned at least once with specific details (e.g. Tom has it, Lucy sees it, what color it is, or what it does).
-4. Language must be Pre-A1 Starters level (simple, clear, cheerful English for 6-8 year olds).
+DIALOGUE RULE (STRICT):
+The conversation MUST HAVE EXACTLY 6 LINES IN TOTAL:
+1. Tom: ...
+2. Lucy: ...
+3. Tom: ...
+4. Lucy: ...
+5. Tom: ...
+6. Lucy: ...
+DO NOT write more than 6 lines. Total lines = exactly 6.
 
 QUESTION RULES:
 1. For EACH word in [${wordListStr}], create EXACTLY 1 multiple-choice question (A, B, C, D) asking about the specific detail discussed in the dialogue.
-2. Each question MUST have 4 clear choices (A, B, C, D) in the "options" array. One choice is the correct answer; the other 3 are plausible distractors.
+2. Each question MUST have 4 clear choices in "options" array (no "A." prefix). One choice is the correct answer.
 3. "correctAnswer" MUST exactly match one of the items in "options".
-4. Provide a clear "explanation" in child-friendly English.
 
-Return ONLY valid raw JSON with NO markdown formatting:
+Return ONLY raw JSON with NO markdown formatting:
 {
   "dialogue": [
-    {"speaker": "Tom", "text": "Hi, Lucy! What are you doing in the garden today?"},
-    {"speaker": "Lucy", "text": "Hello, Tom! I am playing with my toys and looking around. Come look at this!"},
-    {"speaker": "Tom", "text": "Oh, wow! What is that under the big green tree?"},
-    {"speaker": "Lucy", "text": "That is my favorite ... It is so cute!"},
+    {"speaker": "Tom", "text": "Hi, Lucy! Look at this cool ..."},
+    {"speaker": "Lucy", "text": "Hello, Tom! I see a ..."},
+    {"speaker": "Tom", "text": "..."},
+    {"speaker": "Lucy", "text": "..."},
     {"speaker": "Tom", "text": "..."},
     {"speaker": "Lucy", "text": "..."}
   ],
-  "fullTranscript": "Tom: Hi, Lucy! What are you doing in the garden today? Lucy: Hello, Tom! ...",
+  "fullTranscript": "Tom: ... Lucy: ...",
   "questions": [
     {
       "id": 1,
-      "question": "What is Lucy playing with?",
-      "options": ["A doll", "A ball", "A kite", "A robot"],
-      "correctAnswer": "A kite",
-      "explanation": "Lucy says she is playing with her kite in the garden."
+      "question": "What does Tom have?",
+      "options": ["${wordList[0]}", "Option B", "Option C", "Option D"],
+      "correctAnswer": "${wordList[0]}",
+      "explanation": "Tom says he has a ${wordList[0]}."
     }
   ]
 }`;
@@ -496,12 +313,19 @@ Return ONLY valid raw JSON with NO markdown formatting:
       if (
         parsed &&
         Array.isArray(parsed.dialogue) &&
-        parsed.dialogue.length >= 6 &&
+        parsed.dialogue.length >= 4 &&
         Array.isArray(parsed.questions) &&
         parsed.questions.length > 0
       ) {
+        // Cắt đúng 6 câu hội thoại (3 Tom, 3 Lucy)
+        const exact6Dialogue = parsed.dialogue.slice(0, 6);
+        while (exact6Dialogue.length < 6) {
+          const spk = exact6Dialogue.length % 2 === 0 ? 'Tom' : 'Lucy';
+          exact6Dialogue.push({ spk: spk, speaker: spk, text: 'We had a wonderful day exploring together!' });
+        }
+
         const fullTranscript =
-          parsed.fullTranscript || parsed.dialogue.map((d) => `${d.speaker}: ${d.text}`).join(' ');
+          exact6Dialogue.map((d) => `${d.speaker}: ${d.text}`).join(' ');
 
         // ── CHUẨN HOÁ CÂU HỎI & ĐÁP ÁN: Đảm bảo khớp 100% với danh sách từ vựng và nội dung thoại ──
         const validatedQuestions: ListeningQuestion[] = words.map((w, idx) => {
@@ -546,7 +370,7 @@ Return ONLY valid raw JSON with NO markdown formatting:
           pageIndex,
           topic,
           words,
-          dialogue: parsed.dialogue,
+          dialogue: exact6Dialogue,
           fullTranscript,
           questions: validatedQuestions,
         };
@@ -555,41 +379,27 @@ Return ONLY valid raw JSON with NO markdown formatting:
       console.warn('[PersonalizedPracticeService] AI generate Listening failed, using rich fallback:', err);
     }
 
-    // Fallback template dài và đối đáp qua lại chi tiết khớp hoàn hảo với câu hỏi
-    const w0 = words[0]?.word || 'book';
-    const w1 = words[1]?.word || 'pencil';
-    const w2 = words[2]?.word || 'ruler';
-    const w3 = words[3]?.word || 'bag';
+    // Fallback template đúng chính xác 6 câu đối đáp qua lại
+    const w0 = words[0]?.word || 'train';
+    const w1 = words[1]?.word || 'lorry';
+    const w2 = words[2]?.word || 'helicopter';
+    const w3 = words[3]?.word || 'swim';
 
     const fallbackDialogue: ListeningDialogueLine[] = [
-      { speaker: 'Tom', text: `Hi, Lucy! What a sunny day to explore our ${topic} lesson!` },
-      { speaker: 'Lucy', text: `Hello, Tom! I am so happy to see you. What do you have there?` },
-      { speaker: 'Tom', text: `Look in my hands! I found a wonderful ${w0}. Do you like it?` },
-      { speaker: 'Lucy', text: `Yes, I love this ${w0}! It looks bright and colorful.` },
-      { speaker: 'Tom', text: `And what is that sitting on the table over there, Lucy?` },
-      { speaker: 'Lucy', text: `Oh, that is my brother's ${w1}. He uses it every morning at school.` },
-      ...(words.length > 2
-        ? [
-            { speaker: 'Tom', text: `That is cool! Wait, look near the window! Is that a ${w2}?` },
-            { speaker: 'Lucy', text: `Yes! It is a big ${w2}. My teacher gave it to me yesterday.` },
-          ]
-        : []),
-      ...(words.length > 3
-        ? [
-            { speaker: 'Tom', text: `And what is inside the green box on the floor?` },
-            { speaker: 'Lucy', text: `There is a brand new ${w3} inside the box!` },
-          ]
-        : []),
-      { speaker: 'Tom', text: `We discovered so many exciting things about ${topic} today!` },
-      { speaker: 'Lucy', text: `Yes, we did! That was really fun, Tom. Thank you!` },
+      { speaker: 'Tom', text: `Hi Lucy, look at this fast ${w0} near the station!` },
+      { speaker: 'Lucy', text: `Wow, I really love that ${w0}! And is that a big ${w1} on the road?` },
+      { speaker: 'Tom', text: `Yes, it is! My brother also saw a ${w2} flying in the sky.` },
+      { speaker: 'Lucy', text: `That is awesome, and this afternoon we can go for a ${w3}.` },
+      { speaker: 'Tom', text: `We learned so many great things about ${topic} today!` },
+      { speaker: 'Lucy', text: `Yes, we did! Learning English with you is always so fun.` },
     ];
 
     const fallbackQuestions: ListeningQuestion[] = words.map((w, idx) => {
       let qText = '';
-      if (idx === 0) qText = `What does Tom have in his hands?`;
-      else if (idx === 1) qText = `What is on the table?`;
-      else if (idx === 2) qText = `What is near the window?`;
-      else qText = `What is inside the green box?`;
+      if (idx === 0) qText = `What did Tom see near the station?`;
+      else if (idx === 1) qText = `What is on the road?`;
+      else if (idx === 2) qText = `What was flying in the sky?`;
+      else qText = `What can they do this afternoon?`;
 
       const pool = ['apple', 'book', 'ball', 'car', 'tree', 'pen', 'dog', 'chair', 'hat', 'cake']
         .filter((d) => d.toLowerCase() !== w.word.toLowerCase());

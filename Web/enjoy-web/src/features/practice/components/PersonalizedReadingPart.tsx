@@ -28,7 +28,6 @@ export const PersonalizedReadingPart: React.FC<Props> = ({
   // Trạng thái đã kiểm tra kết quả chưa
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [isCorrectAll, setIsCorrectAll] = useState<boolean>(false);
-  const [showTranslation, setShowTranslation] = useState<boolean>(false);
 
   const words = data.words;
   const blanks = data.blanks;
@@ -86,21 +85,20 @@ export const PersonalizedReadingPart: React.FC<Props> = ({
   // Kiểm tra xem tất cả các ô trống đã được điền chưa
   const isAllFilled = blanks.length > 0 && blanks.every((b) => !!filledAnswers[b.position]);
 
-  // Render câu chuyện có chèn các slot đục lỗ
-  // format của blankStory: chứa các mẫu (1) [____], (2) [____]...
+  // Render câu chuyện có chèn các slot đục lỗ chuẩn Cambridge Part 4
   const renderStoryWithSlots = () => {
-    // Regex tìm các vị trí dạng (1), (2), (3)... hoặc (1) [____]
-    const parts = data.blankStory.split(/(\(\d+\)\s*(?:\[_{2,}\]|\[____\])?)/g);
+    // Tách bằng token chuẩn __SLOT_1__, __SLOT_2__...
+    const parts = data.blankStory.split(/(__SLOT_\d+__)/g);
 
     return parts.map((part, index) => {
-      const match = part.match(/\((\d+)\)/);
+      const match = part.match(/__SLOT_(\d+)__/);
       if (match) {
         const position = parseInt(match[1], 10);
         const blankInfo = blanks.find((b) => b.position === position);
 
-        // NẾU KHÔNG CÓ TRONG DANH SÁCH BLANKS (VÍ DỤ VỊ TRÍ 3 TRONG KHI CHỈ CÓ 2 TỪ) -> HIỂN THỊ TEXT BÌNH THƯỜNG
+        // NẾU KHÔNG CÓ TRONG DANH SÁCH BLANKS THÌ KHÔNG RENDER
         if (!blankInfo) {
-          return <span key={index}>{part}</span>;
+          return null;
         }
 
         const currentAns = filledAnswers[position];
@@ -135,7 +133,7 @@ export const PersonalizedReadingPart: React.FC<Props> = ({
                 {(currentAns || '').trim().toLowerCase() === blankInfo.answer.trim().toLowerCase() ? (
                   <CheckCircleIcon className="w-4 h-4 text-emerald-600 inline ml-1" />
                 ) : (
-                  <span className="text-xs text-red-600 inline ml-1">
+                  <span className="text-xs text-red-600 inline ml-1 font-bold">
                     <XCircleIcon className="w-4 h-4 text-red-500 inline mr-0.5" />
                     ({blankInfo.answer})
                   </span>
@@ -208,29 +206,30 @@ export const PersonalizedReadingPart: React.FC<Props> = ({
                       : 'border-gray-200 hover:border-primary/50 bg-white hover:shadow-md'
                   }`}
                 >
-                  {/* Ảnh từ vựng chuẩn hình ảnh minh hoạ Cambridge */}
-                  <div className="w-full aspect-square rounded-xl overflow-hidden bg-gray-100 mb-2 border border-gray-100 flex items-center justify-center">
-                    <img
-                      src={w.imageUrl}
-                      alt={w.word}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                      onError={(e) => {
-                        // Fallback icon nếu ảnh lỗi
-                        (e.target as HTMLImageElement).src =
-                          'https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=400';
-                      }}
-                    />
-                  </div>
+                  {/* Ảnh từ vựng từ CSDL (nếu không có thì không hiện ảnh) */}
+                  {w.imageUrl ? (
+                    <div className="w-full aspect-square rounded-xl overflow-hidden bg-gray-100 mb-2 border border-gray-100 flex items-center justify-center">
+                      <img
+                        src={w.imageUrl}
+                        alt={w.word}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                        onError={(e) => {
+                          console.error(`[PersonalizedReading] Lỗi tải ảnh từ CSDL của từ "${w.word}":`, w.imageUrl);
+                          (e.target as HTMLElement).style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-full aspect-square rounded-xl bg-gray-50 border border-dashed border-gray-200 mb-2 flex flex-col items-center justify-center text-gray-400 p-2 text-center">
+                      <span className="text-2xl mb-1">📖</span>
+                      <span className="text-[10px] text-gray-400">Không có ảnh</span>
+                    </div>
+                  )}
 
-                  {/* Chữ in đậm dưới ảnh + nghĩa tiếng Việt chuẩn */}
+                  {/* Chữ in đậm tiếng Anh chuẩn Cambridge Part 4 */}
                   <span className="font-display font-extrabold text-sm md:text-base text-gray-800 capitalize">
                     {w.word}
                   </span>
-                  {w.meaning && (
-                    <span className="text-[11px] text-emerald-700 font-bold truncate max-w-full">
-                      ({w.meaning})
-                    </span>
-                  )}
 
                   {/* Huy hiệu đang chọn */}
                   {isSelected && (
@@ -263,26 +262,6 @@ export const PersonalizedReadingPart: React.FC<Props> = ({
             <div className="text-base md:text-lg text-gray-800 leading-loose font-medium">
               {renderStoryWithSlots()}
             </div>
-
-            {/* Bản dịch nghĩa tiếng Việt kèm nút bật/tắt tiện lợi */}
-            {data.vietnameseTranslation && (
-              <div className="flex flex-col gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowTranslation(!showTranslation)}
-                  className="self-start inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-xs font-bold text-amber-900 transition-colors cursor-pointer"
-                >
-                  <span>{showTranslation ? 'Ẩn bản dịch tiếng Việt' : '💡 Xem bản dịch nghĩa tiếng Việt'}</span>
-                </button>
-
-                {showTranslation && (
-                  <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs md:text-sm text-amber-950 leading-relaxed shadow-xs">
-                    <span className="font-bold mr-1">Bản dịch:</span>
-                    {data.vietnameseTranslation}
-                  </div>
-                )}
-              </div>
-            )}
 
             {/* Bảng điều khiển kiểm tra kết quả */}
             <div className="pt-4 border-t border-gray-100 flex items-center justify-between gap-4 flex-wrap">
