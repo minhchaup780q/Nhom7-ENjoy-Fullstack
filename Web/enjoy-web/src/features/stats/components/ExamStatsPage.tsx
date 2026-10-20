@@ -27,6 +27,8 @@ import {
 } from 'recharts';
 
 import { VocabPracticeModal } from './VocabPracticeModal';
+import { TargetSelectionScreen } from '../../placement-test/components/TargetSelectionScreen';
+import type { UserExamTarget } from '../../learning/services/learningApi';
 
 // ──────────────────────────────────────────────
 // Fake data dùng cho Target, Progress, Grammar, Skill
@@ -326,13 +328,17 @@ export interface ExamAchievementStats {
   percentage: number;
 }
 
-export const calculateAchievementStats = (data: any[]): ExamAchievementStats => {
+export const calculateAchievementStats = (
+  data: any[],
+  targetListening: number = 16,
+  targetReading: number = 19
+): ExamAchievementStats => {
   const totalExams = data?.length || 0;
   if (totalExams === 0) {
     return { totalExams: 0, passedCount: 0, percentage: 0 };
   }
   const passedCount = data.filter(
-    (e) => (e.listeningScore ?? 0) >= 16 && (e.readingScore ?? 0) >= 19
+    (e) => (e.listeningScore ?? 0) >= targetListening && (e.readingScore ?? 0) >= targetReading
   ).length;
   const percentage = Math.round((passedCount / totalExams) * 100);
   return { totalExams, passedCount, percentage };
@@ -348,7 +354,11 @@ export interface ExamConsistencyStats {
   isReadyForRealExam: boolean;
 }
 
-export const calculateConsistencyStats = (data: any[]): ExamConsistencyStats => {
+export const calculateConsistencyStats = (
+  data: any[],
+  targetListening: number = 16,
+  targetReading: number = 19
+): ExamConsistencyStats => {
   if (!data || data.length === 0) {
     return {
       totalRecent: 0,
@@ -365,9 +375,9 @@ export const calculateConsistencyStats = (data: any[]): ExamConsistencyStats => 
   const recentExams = data.slice(-5);
   const n = recentExams.length;
 
-  // Đạt mục tiêu khi: Listening >= 16 câu và Reading >= 19 câu (mục tiêu 4 khiên)
+  // Đạt mục tiêu khi: Listening >= targetListening và Reading >= targetReading
   const targetPassedCount = recentExams.filter(
-    (e) => (e.listeningScore ?? 0) >= 16 && (e.readingScore ?? 0) >= 19
+    (e) => (e.listeningScore ?? 0) >= targetListening && (e.readingScore ?? 0) >= targetReading
   ).length;
 
   const targetPercentage = Math.round((targetPassedCount / n) * 100);
@@ -460,12 +470,39 @@ export const ExamStatsPage: React.FC = () => {
     loading: true,
   });
 
+  const [userTarget, setUserTarget] = useState<UserExamTarget>({
+    listeningShields: 4,
+    readingShields: 4,
+    listeningMinScore: 16,
+    readingMinScore: 19,
+  });
+  const [isEditingTarget, setIsEditingTarget] = useState<boolean>(false);
+
   const fetchStats = () => {
     if (!user?.id) return;
     vocabStatsApi.getVocabStats(Number(user.id))
       .then(setVocabStats)
       .catch(() => setVocabStats({ noExamHistory: true, topics: [] }))
       .finally(() => setLoading(false));
+  };
+
+  const fetchUserTarget = async () => {
+    const currentUserId = user?.id || (() => {
+      try {
+        const str = localStorage.getItem('enjoy_user');
+        return str ? JSON.parse(str)?.id : null;
+      } catch {
+        return null;
+      }
+    })();
+    if (currentUserId) {
+      try {
+        const t = await learningApi.getUserTarget(Number(currentUserId));
+        if (t) setUserTarget(t);
+      } catch (err) {
+        console.warn('Lỗi tải mục tiêu học sinh:', err);
+      }
+    }
   };
 
   const fetchTopicProgress = async () => {
@@ -543,6 +580,17 @@ export const ExamStatsPage: React.FC = () => {
   useEffect(() => {
     fetchStats();
     fetchTopicProgress();
+    fetchUserTarget();
+
+    const handleTargetUpdate = (e: any) => {
+      if (e.detail) {
+        setUserTarget(e.detail);
+      }
+    };
+    window.addEventListener('enjoy_target_updated', handleTargetUpdate);
+    return () => {
+      window.removeEventListener('enjoy_target_updated', handleTargetUpdate);
+    };
   }, [user?.id]);
 
   const totalWeak = vocabStats?.topics.reduce((s, t) => s + t.weakCount, 0) ?? 0;
@@ -554,8 +602,16 @@ export const ExamStatsPage: React.FC = () => {
     ? vocabStats.examHistories
     : FAKE_GROWTH_DATA;
 
-  const achievementStats = calculateAchievementStats(chartData);
-  const consistencyStats = calculateConsistencyStats(chartData);
+  const achievementStats = calculateAchievementStats(
+    chartData,
+    userTarget.listeningMinScore,
+    userTarget.readingMinScore
+  );
+  const consistencyStats = calculateConsistencyStats(
+    chartData,
+    userTarget.listeningMinScore,
+    userTarget.readingMinScore
+  );
 
   return (
     <div className="min-h-screen bg-surface pb-16">
@@ -595,7 +651,18 @@ export const ExamStatsPage: React.FC = () => {
           <div className="bg-amber-50 rounded-3xl border-2 border-amber-300 shadow-[0_8px_30px_rgb(245,158,11,0.08)] p-6">
             <div className="flex items-center justify-between mb-5">
               <p className="font-medium text-lg text-amber-900">Target</p>
-              <span className="text-xs font-medium text-gray-400">Mục tiêu kỳ thi</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-gray-400">Mục tiêu kỳ thi</span>
+                <button
+                  type="button"
+                  id="btn-edit-target"
+                  onClick={() => setIsEditingTarget(true)}
+                  className="text-xs font-bold text-amber-700 hover:text-amber-900 bg-amber-200/80 hover:bg-amber-300 px-2.5 py-1 rounded-xl transition-all cursor-pointer shadow-xs active:scale-95"
+                  title="Thay đổi mục tiêu khiên"
+                >
+                  Thay đổi
+                </button>
+              </div>
             </div>
 
             <div className="flex flex-col gap-4">
@@ -607,11 +674,14 @@ export const ExamStatsPage: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <div className="flex gap-1">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <ShieldCheckIcon key={i} className={`w-6 h-6 ${i < 4 ? 'text-amber-500' : 'text-gray-300'}`} />
+                      <ShieldCheckIcon
+                        key={i}
+                        className={`w-6 h-6 ${i < userTarget.listeningShields ? 'text-amber-500' : 'text-gray-300'}`}
+                      />
                     ))}
                   </div>
                   <span className="text-xs font-semibold text-amber-900 bg-amber-200/70 px-2.5 py-1 rounded-lg">
-                    4 khiên (tối thiểu 16 điểm)
+                    {userTarget.listeningShields} khiên (tối thiểu {userTarget.listeningMinScore} điểm)
                   </span>
                 </div>
               </div>
@@ -624,11 +694,14 @@ export const ExamStatsPage: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <div className="flex gap-1">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <ShieldCheckIcon key={i} className={`w-6 h-6 ${i < 4 ? 'text-amber-500' : 'text-gray-300'}`} />
+                      <ShieldCheckIcon
+                        key={i}
+                        className={`w-6 h-6 ${i < userTarget.readingShields ? 'text-amber-500' : 'text-gray-300'}`}
+                      />
                     ))}
                   </div>
                   <span className="text-xs font-semibold text-amber-900 bg-amber-200/70 px-2.5 py-1 rounded-lg">
-                    4 khiên (tối thiểu 19 điểm)
+                    {userTarget.readingShields} khiên (tối thiểu {userTarget.readingMinScore} điểm)
                   </span>
                 </div>
               </div>
@@ -795,7 +868,19 @@ export const ExamStatsPage: React.FC = () => {
                           tickLine={false}
                         />
                         <Tooltip content={<GrowthTooltip maxScore={20} dataKeyName="listeningScore" data={chartData} skillName="Listening" />} />
-                        <ReferenceLine y={16} stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="5 5" label={{ position: 'insideTopRight', value: 'Mục tiêu: 16 câu (4 khiên)', fill: '#f59e0b', fontSize: 12, fontWeight: 700 }} />
+                        <ReferenceLine
+                          y={userTarget.listeningMinScore}
+                          stroke="#f59e0b"
+                          strokeWidth={1.5}
+                          strokeDasharray="5 5"
+                          label={{
+                            position: 'insideTopRight',
+                            value: `Mục tiêu: ${userTarget.listeningMinScore} câu (${userTarget.listeningShields} khiên)`,
+                            fill: '#f59e0b',
+                            fontSize: 12,
+                            fontWeight: 700
+                          }}
+                        />
                         <Line
                           type="monotone"
                           name="Listening"
@@ -853,7 +938,19 @@ export const ExamStatsPage: React.FC = () => {
                           tickLine={false}
                         />
                         <Tooltip content={<GrowthTooltip maxScore={25} dataKeyName="readingScore" data={chartData} skillName="Reading & Writing" />} />
-                        <ReferenceLine y={19} stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="5 5" label={{ position: 'insideTopRight', value: 'Mục tiêu: 19 câu (4 khiên)', fill: '#f59e0b', fontSize: 12, fontWeight: 700 }} />
+                        <ReferenceLine
+                          y={userTarget.readingMinScore}
+                          stroke="#f59e0b"
+                          strokeWidth={1.5}
+                          strokeDasharray="5 5"
+                          label={{
+                            position: 'insideTopRight',
+                            value: `Mục tiêu: ${userTarget.readingMinScore} câu (${userTarget.readingShields} khiên)`,
+                            fill: '#f59e0b',
+                            fontSize: 12,
+                            fontWeight: 700
+                          }}
+                        />
                         <Line
                           type="monotone"
                           name="Reading & Writing"
@@ -1130,6 +1227,21 @@ export const ExamStatsPage: React.FC = () => {
           topicName={selectedPracticeTopic}
           onClose={() => setSelectedPracticeTopic(null)}
           onTopicUpdated={fetchStats}
+        />
+      )}
+
+      {/* ── Modal Thay đổi mục tiêu khiên ── */}
+      {isEditingTarget && user?.id && (
+        <TargetSelectionScreen
+          userId={Number(user.id)}
+          initialListeningShields={userTarget.listeningShields}
+          initialReadingShields={userTarget.readingShields}
+          isModal={true}
+          onConfirm={(updated) => {
+            setUserTarget(updated);
+            setIsEditingTarget(false);
+          }}
+          onCancel={() => setIsEditingTarget(false)}
         />
       )}
     </div>

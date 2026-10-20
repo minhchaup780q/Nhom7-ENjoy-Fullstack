@@ -23,6 +23,9 @@ import {
   PencilSquareIcon,
   ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/solid';
+import { useAuthStore } from '../../auth/store/useAuthStore';
+import { TargetSelectionScreen } from '../../placement-test/components/TargetSelectionScreen';
+import type { UserExamTarget } from '../services/learningApi';
 
 interface LearningMapProps {
   onStartSession: (session: Session) => void;
@@ -48,6 +51,10 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
 
   const [selectedNodeId, setSelectedNodeId] = useState<number | null>(null);
   const popupRef = useRef<HTMLDivElement | null>(null);
+
+  const { user } = useAuthStore();
+  const [pendingLevel, setPendingLevel] = useState<any>(null);
+  const [showTargetModal, setShowTargetModal] = useState<boolean>(false);
 
   // Tự động đóng popup khi click ra ngoài hoặc bấm phím Escape
   useEffect(() => {
@@ -185,6 +192,23 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
 
   // Hành động khi nhấp vào Trình độ -> Chuyển sang màn hình Chủ đề và tải Topics
   const handleLevelClick = async (lvl: any) => {
+    const currentUserId = user?.id || (() => {
+      try {
+        const str = localStorage.getItem('enjoy_user');
+        return str ? JSON.parse(str)?.id : null;
+      } catch {
+        return null;
+      }
+    })();
+    const targetKey = currentUserId ? `enjoy_target_${currentUserId}` : null;
+    const hasTarget = targetKey ? Boolean(localStorage.getItem(targetKey)) : false;
+
+    if (!hasTarget) {
+      setPendingLevel(lvl);
+      setShowTargetModal(true);
+      return;
+    }
+
     setCurrentView('topics');
     await selectLevel(lvl);
   };
@@ -963,6 +987,23 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
             </div>
           )}
         </div>
+      )}
+
+      {/* Modal chọn target khi lần đầu bấm vào khóa học */}
+      {showTargetModal && (
+        <TargetSelectionScreen
+          userId={Number(user?.id || 1)}
+          isModal={true}
+          onConfirm={async (_target: UserExamTarget) => {
+            setShowTargetModal(false);
+            const lvl = pendingLevel || levels[0];
+            setCurrentView('topics');
+            if (lvl) {
+              await selectLevel(lvl);
+            }
+          }}
+          onCancel={() => setShowTargetModal(false)}
+        />
       )}
     </div>
   );

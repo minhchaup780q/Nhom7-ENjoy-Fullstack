@@ -217,5 +217,127 @@ export const learningApi = {
       params: { levelId, userId }
     });
   },
+
+  // ============================================================
+  // USER EXAM TARGET (MỤC TIÊU KHIÊN PRE-A1 STARTERS)
+  // ============================================================
+
+  /** Lấy mục tiêu khiên của user (kết hợp Backend API & localStorage cache) */
+  getUserTarget: async (userId: number): Promise<UserExamTarget> => {
+    const storageKey = `enjoy_target_${userId}`;
+    // 1. Thử gọi Backend API
+    try {
+      const res = await apiClient.get<UserExamTarget>('/api/placement-test/target', {
+        params: { userId }
+      });
+      const data = (res as any)?.data || res;
+      if (data && data.listeningShields) {
+        localStorage.setItem(storageKey, JSON.stringify(data));
+        return data;
+      }
+    } catch (err) {
+      console.warn('Lỗi khi lấy mục tiêu từ Backend, sử dụng cache cục bộ:', err);
+    }
+
+    // 2. Fallback đọc localStorage
+    try {
+      const cached = localStorage.getItem(storageKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    } catch (e) {
+      console.warn('Lỗi parse target từ localStorage:', e);
+    }
+
+    // 3. Mặc định 4 khiên (16 nghe, 19 đọc viết)
+    return {
+      userId,
+      listeningShields: 0,
+      readingShields: 0,
+      listeningMinScore: 0,
+      readingMinScore: 0,
+    };
+  },
+
+  /** Lưu mục tiêu khiên của user (lưu ngay localStorage + đồng bộ Backend) */
+  saveUserTarget: async (
+    userId: number,
+    listeningShields: number,
+    readingShields: number
+  ): Promise<UserExamTarget> => {
+    const lShields = Math.max(1, Math.min(5, listeningShields));
+    const rShields = Math.max(1, Math.min(5, readingShields));
+    const listeningMinScore = getMinListeningScore(lShields);
+    const readingMinScore = getMinReadingScore(rShields);
+
+    const target: UserExamTarget = {
+      userId,
+      listeningShields: lShields,
+      readingShields: rShields,
+      listeningMinScore,
+      readingMinScore,
+      updatedAt: new Date().toISOString(),
+    };
+
+    // 1. Lưu ngay vào localStorage để UI phản hồi tức thì
+    try {
+      localStorage.setItem(`enjoy_target_${userId}`, JSON.stringify(target));
+      // Dispatch custom event để các component khác (ExamStatsPage) tự động cập nhật
+      window.dispatchEvent(new CustomEvent('enjoy_target_updated', { detail: target }));
+    } catch (e) {
+      console.warn('Lỗi ghi localStorage:', e);
+    }
+
+    // 2. Gửi lên Backend để lưu vào database
+    try {
+      await apiClient.post<UserExamTarget>('/api/placement-test/target', {
+        listeningShields: lShields,
+        readingShields: rShields,
+      }, {
+        params: { userId }
+      });
+    } catch (err) {
+      console.warn('Backend chưa cập nhật target vào CSDL, đã lưu tại localStorage:', err);
+    }
+
+    return target;
+  },
+};
+
+export interface UserExamTarget {
+  id?: number;
+  userId?: number;
+  listeningShields: number;
+  readingShields: number;
+  listeningMinScore: number;
+  readingMinScore: number;
+  updatedAt?: string;
+}
+
+export const SHIELD_TABLE_RULES = [
+  { shields: 2, readingMin: 13, listeningMin: 11 },
+  { shields: 3, readingMin: 16, listeningMin: 13 },
+  { shields: 4, readingMin: 19, listeningMin: 16 },
+  { shields: 5, readingMin: 21, listeningMin: 18 },
+] as const;
+
+export const getMinListeningScore = (shields: number): number => {
+  switch (shields) {
+    case 5: return 18;
+    case 4: return 16;
+    case 3: return 13;
+    case 2: return 11;
+    default: return 1;
+  }
+};
+
+export const getMinReadingScore = (shields: number): number => {
+  switch (shields) {
+    case 5: return 21;
+    case 4: return 19;
+    case 3: return 16;
+    case 2: return 13;
+    default: return 1;
+  }
 };
 
