@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLearningStore } from '../store/useLearningStore';
 import { SessionStatus, SessionType } from '../types';
 import type { Session, Topic } from '../types';
+import type { TopicWithProgress } from '../types/placementTest';
 import { Button3D } from '../../../components/ui/Button3D';
 import { Mascot } from '../../../components/ui/Mascot';
 import mascotImg from '../../../assets/mascot.png';
+import topic1Bg from '../../../assets/topic1.png';
 import { 
   AcademicCapIcon, 
   TrophyIcon, 
@@ -36,6 +38,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
     activeLevel,
     activeTopic,
     fetchLevels,
+    fetchUserProgress,
     selectLevel,
     selectTopic,
     selectSession,
@@ -44,13 +47,51 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
   } = useLearningStore();
 
   const [selectedNodeId, setSelectedNodeId] = useState<number | null>(null);
+  const popupRef = useRef<HTMLDivElement | null>(null);
+
+  // Tự động đóng popup khi click ra ngoài hoặc bấm phím Escape
+  useEffect(() => {
+    if (!selectedNodeId) return;
+
+    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+
+      // Click vào bên trong popup thì không đóng
+      if (popupRef.current && popupRef.current.contains(target)) {
+        return;
+      }
+
+      // Click vào chính nút bài học đang được chọn thì để onClick của nút xử lý toggle
+      if (target.closest(`[data-node-id="${selectedNodeId}"]`)) {
+        return;
+      }
+
+      // Click ra ngoài -> tự động tắt popup
+      setSelectedNodeId(null);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSelectedNodeId(null);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedNodeId]);
 
 
   
   // Trạng thái màn hình: 'levels' (Trình độ) | 'topics' (Chủ đề) | 'sessions' (Bản đồ bài học)
   const [currentView, setCurrentView] = useState<'levels' | 'topics' | 'sessions'>(() => {
     const state = useLearningStore.getState();
-    if (state.activeTopic && state.parts && state.parts.length > 0) return 'sessions';
+    if (state.activeTopic) return 'sessions';
     if (state.activeLevel) return 'topics';
     return 'levels';
   });
@@ -59,7 +100,27 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
     if (levels.length === 0) {
       fetchLevels();
     }
-  }, [fetchLevels, levels.length]);
+    fetchUserProgress();
+    
+    // Nếu đã chọn activeTopic và chưa có parts (ví dụ F5 tải lại trang):
+    if (activeTopic) {
+      if (parts.length === 0) {
+        selectTopic(activeTopic);
+      }
+    } else if (activeLevel) {
+      // Chỉ tải topics nếu danh sách topics đang rỗng
+      if (topics.length === 0) {
+        selectLevel(activeLevel);
+      }
+    }
+  }, []);
+
+  // Tự động tải lại Parts và Sessions nếu đang ở view 'sessions' mà parts bị rỗng
+  useEffect(() => {
+    if (currentView === 'sessions' && activeTopic && parts.length === 0 && !loading) {
+      selectTopic(activeTopic);
+    }
+  }, [currentView, activeTopic?.id, parts.length, loading]);
 
   const getLevelColors = (index: number) => {
     const palettes = [
@@ -136,12 +197,14 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
 
   // Quay lại màn hình Trình độ
   const handleBackToLevels = () => {
+    setSelectedNodeId(null);
     useLearningStore.setState({ activeLevel: null, activeTopic: null });
     setCurrentView('levels');
   };
 
   // Quay lại màn hình Chủ đề
   const handleBackToTopics = () => {
+    setSelectedNodeId(null);
     useLearningStore.setState({ activeTopic: null });
     setCurrentView('topics');
   };
@@ -243,14 +306,15 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
   // Nhưng vẫn giữ nguyên rawSessionsInTopic đầy đủ để tính toán chain unlock
   const skippedSessionIds = new Set(
     userProgress
-      .filter(p => p.status === SessionStatus.SKIPPED && p.session)
-      .map(p => p.session.id)
+      .filter(p => p.status === SessionStatus.SKIPPED)
+      .map(p => p.session?.id || (p as any).sessionId)
+      .filter(Boolean)
   );
   const visibleSessionsInTopic = rawSessionsInTopic.filter(s => !skippedSessionIds.has(s.id));
 
   // Map trạng thái bài học dựa trên userProgress cá nhân (dùng rawSessionsInTopic đầy đủ để tính chain)
   const allSessionsInTopic = visibleSessionsInTopic.map((session, index) => {
-    const prog = userProgress.find(p => p.session && p.session.id === session.id);
+    const prog = userProgress.find(p => (p.session && p.session.id === session.id) || (p as any).sessionId === session.id);
     let calculatedStatus = SessionStatus.LOCK;
 
     if (prog) {
@@ -262,7 +326,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
       let isPrevFinished = false;
       if (myRawIdx > 0) {
         const prevRaw = rawSessionsInTopic[myRawIdx - 1];
-        const prevProg = userProgress.find(p => p.session && p.session.id === prevRaw.id);
+        const prevProg = userProgress.find(p => (p.session && p.session.id === prevRaw.id) || (p as any).sessionId === prevRaw.id);
         if (prevProg) {
           isPrevFinished = prevProg.status === SessionStatus.FINISH || prevProg.status === SessionStatus.SKIPPED;
         } else {
@@ -285,41 +349,81 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
   });
 
   // Tính toán tiến trình hoàn thành của một Chủ đề (%)
+  // % được tính dựa trên số bài học chưa được skip:
+  // - Tổng bài học cần học = tổng bài trong topic - số bài đã SKIPPED
+  // - Số bài đã học = số bài có trạng thái FINISH (không tính các bài SKIPPED)
   const getTopicProgress = (topicId: number) => {
-    // Đếm số bài học đã hoàn thành (FINISH) thuộc topic này trong userProgress
-    const finishedCount = userProgress.filter(p => {
-      if (p.status !== SessionStatus.FINISH) return false;
+    const isProgInTopic = (p: (typeof userProgress)[0]) => {
       if (p.session?.part?.topic?.id === topicId) return true;
       if (activeTopic?.id === topicId && parts.some(part => part.id === p.session?.part?.id)) return true;
       return false;
-    }).length;
+    };
 
-    // Tổng số bài học trong topic
+    const topicProgress = userProgress.filter(isProgInTopic);
+
+    // Tập hợp sessionId đã SKIPPED trong topic này
+    const skippedSessionIds = new Set(
+      topicProgress
+        .filter(p => p.status === SessionStatus.SKIPPED)
+        .map(p => p.session?.id || (p as any).sessionId)
+        .filter(Boolean)
+    );
+
+    // Tập hợp sessionId đã FINISH trong topic này (chỉ tính bài chưa được skip)
+    const finishedSessionIds = new Set(
+      topicProgress
+        .filter(p => p.status === SessionStatus.FINISH)
+        .map(p => p.session?.id || (p as any).sessionId)
+        .filter(id => Boolean(id) && !skippedSessionIds.has(id))
+    );
+
+    const topicObj = topics.find(t => t.id === topicId) as (Topic & Partial<TopicWithProgress>) | undefined;
+
+    // Xác định tổng số bài học gốc của topic
+    let totalSessions = 10;
     if (activeTopic && activeTopic.id === topicId && rawSessionsInTopic.length > 0) {
-      return Math.min(100, Math.round((finishedCount / rawSessionsInTopic.length) * 100));
+      totalSessions = rawSessionsInTopic.length;
+    } else if (topicObj?.totalSessions !== undefined && topicObj.totalSessions > 0) {
+      totalSessions = topicObj.totalSessions;
+    } else if (topicObj?.parts && topicObj.parts.length > 0) {
+      totalSessions = topicObj.parts.reduce((sum, part) => sum + (part.sessions?.length || 5), 0);
+    } else if (topicObj?.learningStatus === 'VOCAB_ONLY' && skippedSessionIds.size === 0) {
+      // Chỉ khi topic thực sự không có bài ngữ pháp nào trong DB (và chưa có bài nào bị skip) thì tổng bài mới là 5
+      totalSessions = 5;
+    } else {
+      totalSessions = 10;
     }
 
-    const topicObj = topics.find(t => t.id === topicId);
-    const totalSessions = (topicObj?.parts && topicObj.parts.length > 0)
-      ? topicObj.parts.reduce((sum, part) => sum + (part.sessions?.length || 5), 0)
-      : 10;
+    // Số bài học thực tế user cần học (loại trừ các bài đã SKIPPED)
+    let totalActiveSessions: number;
+    if (topicObj?.totalActiveSessions !== undefined) {
+      totalActiveSessions = topicObj.totalActiveSessions;
+    } else if (skippedSessionIds.size > 0) {
+      totalActiveSessions = Math.max(0, totalSessions - skippedSessionIds.size);
+    } else {
+      totalActiveSessions = totalSessions;
+    }
 
-    if (totalSessions === 0) return 0;
-    return Math.min(100, Math.round((finishedCount / totalSessions) * 100));
+    // Nếu không còn bài học nào cần học (đã miễn toàn bộ topic) -> 100%
+    if (totalActiveSessions === 0) return 100;
+
+    // Nếu chưa học bài nào (chưa có bài FINISH)
+    if (finishedSessionIds.size === 0) {
+      return topicObj?.progressPercent ?? 0;
+    }
+
+    return Math.min(100, Math.round((finishedSessionIds.size / totalActiveSessions) * 100));
   };
 
   const isTopicUnlocked = (topic: Topic, index: number) => {
     // Chủ đề đầu tiên (Chủ đề 1) luôn luôn được mở khóa mặc định
     if (index === 0) return true;
 
-    // Nếu chủ đề này đã có bài học nào được UNLOCK, FINISH hoặc SKIPPED (từ placement test) -> Đã mở khóa
-    const hasProgressInThisTopic = userProgress.some(
-      p => p.session?.part?.topic?.id === topic.id &&
-        (p.status === SessionStatus.FINISH || p.status === SessionStatus.UNLOCK || p.status === SessionStatus.SKIPPED)
-    );
-    if (hasProgressInThisTopic) return true;
+    // Nếu chủ đề này đã hoàn thành 100% thì luôn mở khóa để có thể ôn tập lại
+    const currentProgress = getTopicProgress(topic.id);
+    if (currentProgress === 100) return true;
 
-    // Hoặc nếu chủ đề liền trước đã hoàn thành (100%)
+    // Các chủ đề tiếp theo chỉ được mở khóa khi chủ đề liền trước đã hoàn thành (100%)
     const prevTopic = topics[index - 1];
     if (prevTopic) {
       const prevTopicProgress = getTopicProgress(prevTopic.id);
@@ -364,7 +468,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
   }
 
   return (
-    <div className="flex-1 w-full mx-auto py-6 px-4 select-none pb-24">
+    <div className="flex-1 w-full mx-auto py-6 px-4 select-none pb-24 bg-white min-h-screen">
       
       {/* 1. MÀN HÌNH CHỌN TRÌNH ĐỘ (LEVELS VIEW) */}
       {currentView === 'levels' && (
@@ -437,27 +541,141 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                 ];
                 const bubbleText = speechBubbleTexts[index % speechBubbleTexts.length];
 
+                // Xác định thông tin tên chủ đề và tên ngữ pháp cho topic
+                const tWithProg = tpc as Topic & Partial<TopicWithProgress>;
+
+                // Lấy tên grammar từ session 6 (ưu tiên grammarName từ backend)
+                let grammarTitle: string | null = tWithProg.grammarName || null;
+                if (!grammarTitle && tWithProg.learningStatus === 'GRAMMAR_ONLY' && tWithProg.displayTitle) {
+                  grammarTitle = tWithProg.displayTitle;
+                }
+                if (!grammarTitle && tpc.parts) {
+                  for (const part of tpc.parts) {
+                    if (part.sessions) {
+                      const s6 = part.sessions.find(s => s.orderIndex === 6 || s.sessionType === SessionType.GRAMMAR);
+                      if (s6) {
+                        const payloadTitle = (s6.payload as any)?.title;
+                        grammarTitle = payloadTitle || s6.title;
+                        break;
+                      }
+                    }
+                  }
+                }
+                if (!grammarTitle && userProgress.length > 0) {
+                  const progS6 = userProgress.find(
+                    p => (p.session?.part?.topic?.id === tpc.id) &&
+                         (p.session?.orderIndex === 6 || p.session?.sessionType === SessionType.GRAMMAR)
+                  );
+                  if (progS6?.session) {
+                    const payloadTitle = (progS6.session.payload as any)?.title;
+                    grammarTitle = payloadTitle || progS6.session.title;
+                  }
+                }
+
+                // Lấy các bản ghi userProgress thuộc topic này
+                const topicProgList = userProgress.filter(
+                  p => p.session?.part?.topic?.id === tpc.id || (activeTopic?.id === tpc.id && parts.some(part => part.id === p.session?.part?.id))
+                );
+
+                // Điều kiện part Từ vựng đã skip:
+                // - learningStatus là 'GRAMMAR_ONLY' (backend đã skip vocab)
+                // - Hoặc trong userProgress, bài vocab (orderIndex <= 5) là SKIPPED
+                const isVocabSkipped =
+                  tWithProg.learningStatus === 'GRAMMAR_ONLY' ||
+                  (topicProgList.length > 0 &&
+                    topicProgList.some(
+                      p => p.status === SessionStatus.SKIPPED &&
+                        (p.session?.orderIndex ? p.session.orderIndex <= 5 : true) &&
+                        p.session?.sessionType !== SessionType.GRAMMAR &&
+                        p.session?.sessionType !== SessionType.FILL_IN_BLANK &&
+                        p.session?.sessionType !== SessionType.RE_ORDER_SENTENCE &&
+                        p.session?.sessionType !== SessionType.SPEAKING_SENTENCE &&
+                        p.session?.sessionType !== SessionType.CONVERSATION
+                    ));
+
+                // Điều kiện part Ngữ pháp đã skip:
+                // - Topic không có ngữ pháp (grammarTitle null)
+                // - Hoặc learningStatus là 'VOCAB_ONLY'
+                // - Hoặc trong userProgress, bài grammar (orderIndex >= 6 hoặc type GRAMMAR) là SKIPPED
+                const isGrammarSkipped =
+                  !grammarTitle ||
+                  tWithProg.learningStatus === 'VOCAB_ONLY' ||
+                  (topicProgList.length > 0 &&
+                    topicProgList.some(
+                      p => p.status === SessionStatus.SKIPPED &&
+                        ((p.session?.orderIndex && p.session.orderIndex >= 6) ||
+                          p.session?.sessionType === SessionType.GRAMMAR ||
+                          p.session?.sessionType === SessionType.FILL_IN_BLANK ||
+                          p.session?.sessionType === SessionType.RE_ORDER_SENTENCE ||
+                          p.session?.sessionType === SessionType.SPEAKING_SENTENCE ||
+                          p.session?.sessionType === SessionType.CONVERSATION)
+                    ));
+
+                const showTopicName = !isVocabSkipped;
+                const showGrammarName = !isGrammarSkipped && Boolean(grammarTitle);
+                const finalShowTopicName = showTopicName || (!showTopicName && !showGrammarName);
+
                 return (
                   <div
                     key={tpc.id}
-                    className={`border-2 rounded-[2rem] p-6 flex flex-col md:flex-row justify-between items-center gap-6 shadow-[0_6px_0_0_#e5e5e5] transition-all relative ${
+                    className={`border-2 rounded-[2rem] p-6 flex flex-col md:flex-row justify-between items-center gap-6 transition-all relative overflow-hidden ${
                       isUnlocked
-                        ? 'bg-[#e5f5ff] border-[#84d8ff] text-text-main shadow-[0_6px_0_0_#84d8ff]'
-                        : 'bg-[#f7f7f7] border-border-main text-text-muted shadow-[0_6px_0_0_#e5e5e5]'
+                        ? 'border-white text-text-main shadow-md'
+                        : 'border-[#dcdcdc] text-text-muted shadow-sm'
                     }`}
                   >
+                    {/* Hình nền topic1 hiển thị cho cả chủ đề mở khóa và chủ đề bị khóa */}
+                    <div
+                      className={`absolute inset-0 z-0 pointer-events-none transition-all ${
+                        !isUnlocked ? 'grayscale contrast-75 brightness-95' : ''
+                      }`}
+                      style={{
+                        backgroundImage: `url(${topic1Bg})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat',
+                      }}
+                    />
+
+                    {/* Lớp phủ màu xám khi chủ đề bị khóa (giữ background topic1 nhưng phủ màu xám) */}
+                    {!isUnlocked && (
+                      <div className="absolute inset-0 bg-[#e5e7eb]/75 backdrop-grayscale z-0 pointer-events-none" />
+                    )}
+
                     {/* Left details & progress & action button */}
-                    <div className="flex-grow text-left space-y-4 w-full">
-                       <div className="space-y-1">
-                        <span className="text-[10px] font-extrabold text-primary/70 tracking-widest uppercase block">Chủ đề {index + 1}</span>
-                        <h3 className={`text-lg font-display font-extrabold ${isUnlocked ? 'text-[#0079b8]' : 'text-text-muted'}`}>
-                          {tpc.title}
-                        </h3>
-                        <p className="text-xs font-semibold text-text-muted line-clamp-2">{tpc.description}</p>
+                    <div className="flex-grow text-left space-y-4 w-full relative z-10">
+                      <div className="space-y-1.5">
+                        {/* 1. Tên Topic (hiển thị khi part từ vựng chưa skip) */}
+                        {finalShowTopicName && (
+                          <h3 className={`text-xl font-display font-extrabold drop-shadow-sm ${
+                            isUnlocked ? 'text-black' : 'text-gray-700'
+                          }`}>
+                            {tpc.title}
+                          </h3>
+                        )}
+
+                        {/* 2. Tên Grammar (ở title vòng 6, hiển thị khi part ngữ pháp chưa skip) */}
+                        {showGrammarName && (
+                          <div className={`flex items-center gap-1.5 font-display drop-shadow-sm ${
+                            finalShowTopicName
+                              ? (isUnlocked
+                                  ? 'text-sm font-extrabold text-[#7c3aed] bg-purple-100/80 border border-purple-200/80 px-2.5 py-1 rounded-xl w-fit'
+                                  : 'text-sm font-extrabold text-gray-600 bg-white/60 border border-gray-300 px-2.5 py-1 rounded-xl w-fit')
+                              : (isUnlocked
+                                  ? 'text-xl font-extrabold text-black'
+                                  : 'text-xl font-extrabold text-gray-700')
+                          }`}>
+                            <BookOpenIcon className={`w-4 h-4 shrink-0 ${isUnlocked ? 'text-[#7c3aed]' : 'text-gray-500'}`} />
+                            <span>{grammarTitle}</span>
+                          </div>
+                        )}
+
                         {!isUnlocked && (
-                          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-text-muted pt-1">
-                            <LockClosedIcon className="w-3.5 h-3.5" /> CHƯA MỞ KHÓA
-                          </span>
+                          <div className="pt-0.5">
+                            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-700 bg-white/70 backdrop-blur-sm px-2.5 py-1 rounded-lg border border-gray-300 shadow-xs">
+                              <LockClosedIcon className="w-3.5 h-3.5 text-gray-500" /> CHƯA MỞ KHÓA
+                            </span>
+                          </div>
                         )}
                       </div>
 
@@ -494,7 +712,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                             className="px-8 py-3 text-xs tracking-wider font-display font-extrabold uppercase border-2 border-border-main bg-white text-text-muted"
                           >
                             <LockClosedIcon className="w-4 h-4 mr-2 inline" />
-                            NHẢY TỚI CHỦ ĐỀ {index + 1}
+                            NHẢY TỚI BÀI HỌC
                           </Button3D>
                         )}
                       </div>
@@ -502,7 +720,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
 
                     {/* Right side mascot & inline bubble inside flex flow to avoid overlap */}
                     {isUnlocked && (
-                      <div className="flex flex-col items-center flex-shrink-0 w-full md:w-auto">
+                      <div className="flex flex-col items-center flex-shrink-0 w-full md:w-auto relative z-10">
                         {/* Inline speech bubble above the mascot */}
                         <div className="relative bg-white border-2 border-border-main rounded-2xl px-4 py-2 shadow-sm max-w-[200px] mb-3 animate-fade-in-up">
                           <p className="text-xs font-semibold text-text-main text-center leading-tight">
@@ -564,11 +782,21 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
             </button>
           </div>
 
-          {/* Sessions Map Winding Road (Image 2) - EXPANSED to fit page, NO borders, NO bg-white, NO shadow */}
-          {loading && allSessionsInTopic.length === 0 ? (
+          {/* Sessions Map Winding Road (Image 2) */}
+          {(loading || (Boolean(activeTopic) && currentParts.length === 0)) ? (
             <div className="flex flex-col items-center justify-center p-16 space-y-4 min-h-[400px]">
               <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
               <span className="text-sm font-bold text-text-muted">Đang tải bài học của chủ đề...</span>
+            </div>
+          ) : allSessionsInTopic.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-16 space-y-4 min-h-[300px] text-center">
+              <span className="text-base font-bold text-text-muted">Chưa có bài học nào trong chủ đề này.</span>
+              <button
+                onClick={handleBackToTopics}
+                className="mt-4 px-4 py-2 border-2 border-border-main rounded-xl hover:bg-bg-light font-display font-bold text-xs text-text-muted transition-all cursor-pointer"
+              >
+                QUAY LẠI DANH SÁCH CHỦ ĐỀ
+              </button>
             </div>
           ) : (
             <div className="flex flex-col items-center py-12 w-full relative min-h-[500px]">
@@ -624,7 +852,11 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
 
                         {/* Circular Node button */}
                         <button
-                          onClick={() => handleNodeClick(session)}
+                          data-node-id={session.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleNodeClick(session);
+                          }}
                           className={`w-16 h-16 rounded-full flex items-center justify-center font-display font-extrabold transition-all duration-150 cursor-pointer ${getNodeBackground(
                             session,
                             isSelected
@@ -635,32 +867,33 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
 
                         {/* Tooltip Dialog for starting session */}
                         {isSelected && (
-                          <div className="absolute bottom-full mb-4 bg-white border-2 border-[#e5e5e5] rounded-[2rem] p-5 shadow-2xl z-20 w-72 text-center animate-fade-in-up">
-                            <span className={`text-[10px] font-extrabold tracking-widest uppercase block mb-1 text-center ${palette.textClass}`}>
-                              Vòng {session.sessionIdx + 1}
-                            </span>
-                            <h4 className="text-sm font-display font-extrabold text-text-main m-0 leading-tight mb-4 text-center">
+                          <div
+                            ref={popupRef}
+                            onClick={(e) => e.stopPropagation()}
+                            className="absolute bottom-full mb-4 bg-[#b066fe] border-2 border-[#9333ea] rounded-3xl p-5 shadow-2xl z-20 w-72 text-center animate-fade-in-up text-white"
+                          >
+                            <h4 className="text-base font-display font-black text-white m-0 leading-tight mb-1 text-center drop-shadow-sm">
                               {session.title}
                             </h4>
-                            <div className="flex gap-2">
-                              <Button3D
-                                variant={palette.btnVariant}
-                                fullWidth
-                                size="sm"
-                                onClick={() => onStartSession(session)}
-                              >
-                                BẮT ĐẦU
-                              </Button3D>
+                            <span className="text-xs font-bold text-white/90 block mb-4 text-center">
+                              Bài học {(session.sessionIdx ?? 0) + 1} / {partSessions.length}
+                            </span>
+                            <div className="flex flex-col gap-2">
                               <button
-                                onClick={() => setSelectedNodeId(null)}
-                                className="px-3 border-2 border-border-main rounded-xl hover:bg-bg-light text-xs font-bold text-text-main cursor-pointer"
+                                type="button"
+                                onClick={(e) => {
+                                  e?.stopPropagation();
+                                  setSelectedNodeId(null);
+                                  onStartSession(session);
+                                }}
+                                className="w-full py-3 bg-white text-[#9333ea] font-display font-black text-sm tracking-wider uppercase rounded-2xl shadow-lg hover:bg-white/95 active:scale-95 transition-all cursor-pointer border-b-4 border-[#e9d5ff]"
                               >
-                                Đóng
+                                BẮT ĐẦU {session.status === SessionStatus.FINISH ? '+5 KN' : '+20 KN'}
                               </button>
                             </div>
                             {/* Tooltip arrow pointer */}
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-[10px] border-solid border-t-white border-x-transparent border-b-transparent" />
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-[11px] border-solid border-t-[#e5e5e5] border-x-transparent border-b-transparent -z-10" />
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-[10px] border-solid border-t-[#b066fe] border-x-transparent border-b-transparent" />
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-[12px] border-solid border-t-[#9333ea] border-x-transparent border-b-transparent -z-10" />
                           </div>
                         )}
                       </div>

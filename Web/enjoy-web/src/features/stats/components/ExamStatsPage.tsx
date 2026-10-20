@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '../../auth/store/useAuthStore';
 import { vocabStatsApi } from '../../exam/services/vocabStatsApi';
-import type { VocabStatsResponse, TopicStat } from '../../exam/types';
+import type { VocabStatsResponse } from '../../exam/types';
 import {
   AcademicCapIcon,
   BookOpenIcon,
@@ -10,8 +10,6 @@ import {
   ArrowTrendingUpIcon,
   ExclamationTriangleIcon,
   CheckIcon,
-  ArrowPathIcon,
-  Squares2X2Icon,
 } from '@heroicons/react/24/outline';
 import { CheckBadgeIcon, SparklesIcon, ShieldCheckIcon } from '@heroicons/react/24/solid';
 import {
@@ -26,110 +24,406 @@ import {
   ReferenceLine
 } from 'recharts';
 
-import { VocabPracticeModal } from './VocabPracticeModal';
-
 // ──────────────────────────────────────────────
-// Fake data dùng cho Target, Progress, Grammar, Skill
+// Fake data dùng cho Target, Progress, Skill
 // ──────────────────────────────────────────────
 const FAKE_GROWTH_DATA = [
-  { date: '01/10', listeningScore: 12, readingScore: 15 },
-  { date: '08/10', listeningScore: 14, readingScore: 18 },
-  { date: '15/10', listeningScore: 18, readingScore: 22 },
-  { date: '22/10', listeningScore: 20, readingScore: 24 },
-  { date: '29/10', listeningScore: 19, readingScore: 25 },
+  { date: '01/10', listeningScore: 11, readingScore: 14 },
+  { date: '08/10', listeningScore: 15, readingScore: 19 }, // +4 (+20% -> Xanh), +5 (+20% -> Xanh)
+  { date: '15/10', listeningScore: 16, readingScore: 20 }, // +1 (+5% -> Cam), +1 (+4% -> Cam)
+  { date: '22/10', listeningScore: 12, readingScore: 15 }, // -4 (-20% -> Đỏ), -5 (-20% -> Đỏ)
+  { date: '29/10', listeningScore: 17, readingScore: 21 }, // +5 (+25% -> Xanh), +6 (+24% -> Xanh)
 ];
 
-const FAKE_GRAMMAR_DATA = [
-  { name: 'Have got', status: 'Mastered' as const },
-  { name: 'To be', status: 'Mastered' as const },
-  { name: 'There is / There are', status: 'Developing' as const },
-  { name: 'Present simple', status: 'Weak' as const },
-  { name: 'Can / Can\'t', status: 'Developing' as const },
-];
+// ──────────────────────────────────────────────
+// Trend Calculation & Chart Helpers
+// Quy định:
+// 1. Ngoại lệ người mới học: Điểm đầu < 25%, chưa từng ≥ 25%, đang tăng → 🟢 Tiến bộ; không tăng → 🔴 Điểm thấp
+// 2. Ngoại lệ giảm sút: Đã từng ≥ 25%, hiện tại < 25%, giữ nguyên thấp/giảm → 🔴 Điểm thấp kéo dài
+// 3. Quy tắc chuẩn:
+//    ≥ +15%: Tiến bộ (Xanh: #10b981)
+//    Trên -15% đến dưới +15%: Ổn định (Cam: #f59e0b)
+//    ≤ -15%: Có dấu hiệu giảm (Đỏ: #ef4444)
+// ──────────────────────────────────────────────
+export interface ScoreTrend {
+  status: 'Tiến bộ' | 'Ổn định' | 'Có dấu hiệu giảm' | 'Điểm thấp kéo dài' | 'Điểm thấp';
+  color: string;
+  diff: number;
+  diffPercent: number;
+}
 
-const renderShields = (shields: number, x: number, y: number) => {
-  if (shields === 0) return null;
+export const getScoreTrendAtIndex = (
+  history: any[],
+  index: number,
+  scoreKey: string,
+  maxScore: number
+): ScoreTrend => {
+  const currScore = history[index]?.[scoreKey] ?? 0;
+  const prevScore = history[index - 1]?.[scoreKey] ?? 0;
+  const diff = currScore - prevScore;
+  const diffPercent = Math.round((diff / maxScore) * 100);
+
+  const threshold25 = maxScore * 0.25;
+
+  const pastScores = history.slice(0, index).map((d) => d[scoreKey] ?? 0);
+  const initialScore = pastScores[0] ?? 0;
+  const hasEverReached25Before = pastScores.some((s) => s >= threshold25);
+
+  const allScoresUpToCurrent = history.slice(0, index + 1).map((d) => d[scoreKey] ?? 0);
+  const neverReached25 = allScoresUpToCurrent.every((s) => s < threshold25);
+
+  const isCurrBelow25 = currScore < threshold25;
+
+  // ── NGOẠI LỆ 1: Người mới học, đang tiến bộ ──
+  // - Điểm ban đầu dưới 25%.
+  // - Chưa từng đạt ≥ 25%.
+  // - Điểm các bài gần đây đang tăng → 🟢 Tiến bộ.
+  if (initialScore < threshold25 && neverReached25) {
+    if (currScore > prevScore) {
+      return {
+        status: 'Tiến bộ',
+        color: '#10b981',
+        diff,
+        diffPercent,
+      };
+    }
+    // Không tăng (ví dụ 0 → 0 → 0) → 🔴 Điểm thấp
+    return {
+      status: 'Điểm thấp',
+      color: '#ef4444',
+      diff,
+      diffPercent,
+    };
+  }
+
+  // ── NGOẠI LỆ 2: Người học bị giảm sút ──
+  // - Đã từng đạt ≥ 25%.
+  // - Hiện tại giảm xuống dưới 25%.
+  // - Dù các bài sau vẫn giữ nguyên điểm thấp → 🔴 Điểm thấp kéo dài.
+  if (hasEverReached25Before && isCurrBelow25) {
+    // Nếu điểm tăng vượt bậc ≥ 15% thì mới tính là Tiến bộ, còn lại giữ nguyên điểm thấp hoặc giảm thì là 🔴 Điểm thấp kéo dài
+    if (diffPercent >= 15) {
+      return {
+        status: 'Tiến bộ',
+        color: '#10b981',
+        diff,
+        diffPercent,
+      };
+    }
+    return {
+      status: 'Điểm thấp kéo dài',
+      color: '#ef4444',
+      diff,
+      diffPercent,
+    };
+  }
+
+  // ── QUY TẮC TIÊU CHUẨN (dải điểm bình thường) ──
+  // ≥ +15%: Tiến bộ
+  // Trên -15% đến dưới +15%: Ổn định
+  // ≤ -15%: Có dấu hiệu giảm
+  if (diffPercent >= 15) {
+    return { status: 'Tiến bộ', color: '#10b981', diff, diffPercent };
+  }
+  if (diffPercent <= -15) {
+    return { status: 'Có dấu hiệu giảm', color: '#ef4444', diff, diffPercent };
+  }
+  return { status: 'Ổn định', color: '#f59e0b', diff, diffPercent };
+};
+
+
+const generateGradientStops = (
+  data: any[],
+  scoreKey: string,
+  maxScore: number,
+  fallbackColor: string
+) => {
+  if (!data || data.length < 2) {
+    return [
+      <stop key="fallback-0" offset="0%" stopColor={fallbackColor} />,
+      <stop key="fallback-1" offset="100%" stopColor={fallbackColor} />,
+    ];
+  }
+
+  const n = data.length;
+  const stops: React.ReactElement[] = [];
+
+  for (let i = 0; i < n - 1; i++) {
+    const trend = getScoreTrendAtIndex(data, i + 1, scoreKey, maxScore);
+
+    const startPct = ((i / (n - 1)) * 100).toFixed(2);
+    const endPct = (((i + 1) / (n - 1)) * 100).toFixed(2);
+
+    stops.push(
+      <stop
+        key={`seg-${scoreKey}-${i}-start`}
+        offset={`${startPct}%`}
+        stopColor={trend.color}
+      />,
+      <stop
+        key={`seg-${scoreKey}-${i}-end`}
+        offset={`${endPct}%`}
+        stopColor={trend.color}
+      />
+    );
+  }
+
+  return stops;
+};
+
+const renderCustomDot = (
+  dotProps: any,
+  data: any[],
+  scoreKey: string,
+  maxScore: number
+) => {
+  const { cx, cy, index } = dotProps;
+  if (cx == null || cy == null || typeof cx !== 'number' || typeof cy !== 'number' || isNaN(cx) || isNaN(cy)) {
+    return null;
+  }
+
+  let dotColor = '#3b82f6';
+  if (index > 0 && data && data[index] && data[index - 1]) {
+    const trend = getScoreTrendAtIndex(data, index, scoreKey, maxScore);
+    dotColor = trend.color;
+  }
+
   return (
-    <g transform={`translate(${x - (shields * 10) - 5},${y - 5})`}>
-      {Array.from({ length: shields }).map((_, i) => (
-        <svg key={i} x={i * 10} y={0} width="10" height="10" viewBox="0 0 24 24" fill="#fbbf24">
-          <path fillRule="evenodd" d="M12.516 2.17a.75.75 0 00-1.032 0 11.209 11.209 0 01-7.877 3.08.75.75 0 00-.722.515A12.74 12.74 0 002.25 9.735c0 5.942 4.064 10.933 9.563 12.348a.749.749 0 00.374 0c5.499-1.415 9.563-6.406 9.563-12.348 0-1.39-.223-2.73-.635-3.97a.75.75 0 00-.722-.516l-.143.001c-2.996 0-5.717-1.17-7.734-3.08zm3.094 8.016a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
-        </svg>
-      ))}
+    <g key={`dot-${scoreKey}-${index}`}>
+      <circle cx={cx} cy={cy} r={6.5} fill={dotColor} fillOpacity={0.25} />
+      <circle cx={cx} cy={cy} r={4.5} fill={dotColor} stroke="#ffffff" strokeWidth={2} />
     </g>
   );
 };
 
-const ListeningTick = (props: any) => {
-  const { x, y, payload } = props;
-  let shields = 0;
-  if (payload.value === 10) shields = 1;
-  else if (payload.value === 11) shields = 2;
-  else if (payload.value === 13) shields = 3;
-  else if (payload.value === 16) shields = 4;
-  else if (payload.value === 18) shields = 5;
-  return renderShields(shields, x, y);
-};
-
-const ReadingTick = (props: any) => {
-  const { x, y, payload } = props;
-  let shields = 0;
-  if (payload.value === 12) shields = 1;
-  else if (payload.value === 13) shields = 2;
-  else if (payload.value === 16) shields = 3;
-  else if (payload.value === 19) shields = 4;
-  else if (payload.value === 21) shields = 5;
-  return renderShields(shields, x, y);
-};
-
-// ──────────────────────────────────────────────
-// Status Badge Component
-// ──────────────────────────────────────────────
-const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
-  if (status === 'Mastered') {
-    return (
-      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full bg-emerald-100 text-emerald-700">
-        <CheckIcon className="w-3.5 h-3.5 stroke-[3]" /> Mastered
-      </span>
-    );
+const renderActiveDot = (
+  dotProps: any,
+  data: any[],
+  scoreKey: string,
+  maxScore: number
+) => {
+  const { cx, cy, index } = dotProps;
+  if (cx == null || cy == null || typeof cx !== 'number' || typeof cy !== 'number' || isNaN(cx) || isNaN(cy)) {
+    return null;
   }
-  if (status === 'Developing') {
-    return (
-      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full bg-amber-100 text-amber-700">
-        <ArrowPathIcon className="w-3.5 h-3.5 stroke-[3]" /> Developing
-      </span>
-    );
+
+  let dotColor = '#3b82f6';
+  if (index > 0 && data && data[index] && data[index - 1]) {
+    const trend = getScoreTrendAtIndex(data, index, scoreKey, maxScore);
+    dotColor = trend.color;
   }
+
   return (
-    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full bg-red-100 text-red-600">
-      <ArrowPathIcon className="w-3.5 h-3.5 stroke-[3]" /> Weak
-    </span>
+    <g key={`activedot-${scoreKey}-${index}`}>
+      <circle cx={cx} cy={cy} r={9} fill={dotColor} fillOpacity={0.3} />
+      <circle cx={cx} cy={cy} r={5.5} fill={dotColor} stroke="#ffffff" strokeWidth={2.5} />
+    </g>
   );
 };
 
+interface GrowthTooltipProps {
+  active?: boolean;
+  payload?: any[];
+  maxScore: number;
+  dataKeyName: string;
+  data: any[];
+  skillName: string;
+}
+
+const GrowthTooltip: React.FC<GrowthTooltipProps> = ({
+  active,
+  payload,
+  maxScore,
+  dataKeyName,
+  data,
+  skillName,
+}) => {
+  if (!active || !payload || !payload.length) return null;
+
+  const currentPoint = payload[0].payload;
+  const currentIndex = data.indexOf(currentPoint);
+  const score = currentPoint ? currentPoint[dataKeyName] : payload[0].value;
+
+  let trendInfo: { label: string; badgeClass: string; diffText: string } | null = null;
+
+  if (currentIndex > 0 && data[currentIndex - 1]) {
+    const trend = getScoreTrendAtIndex(data, currentIndex, dataKeyName, maxScore);
+    const sign = trend.diff > 0 ? `+${trend.diff}` : `${trend.diff}`;
+    const signPct = trend.diffPercent > 0 ? `+${trend.diffPercent}%` : `${trend.diffPercent}%`;
+
+    let badgeClass = 'bg-amber-50 text-amber-800 border-amber-300';
+    if (trend.status === 'Tiến bộ') {
+      badgeClass = 'bg-emerald-50 text-emerald-800 border-emerald-300';
+    } else if (trend.status === 'Có dấu hiệu giảm' || trend.status === 'Điểm thấp kéo dài' || trend.status === 'Điểm thấp') {
+      badgeClass = 'bg-red-50 text-red-800 border-red-300';
+    }
+
+    let diffText = `${sign} câu (${signPct}) so với bài trước`;
+    if (trend.status === 'Điểm thấp kéo dài') {
+      diffText = `Dưới 25% kéo dài (${sign} câu so với bài trước)`;
+    } else if (trend.status === 'Điểm thấp') {
+      diffText = `Duy trì ở mức điểm thấp (${sign} câu so với bài trước)`;
+    } else if (trend.status === 'Tiến bộ' && trend.diffPercent < 15) {
+      diffText = `${sign} câu (${signPct}) · Mới học đang tiến bộ`;
+    }
+
+    trendInfo = {
+      label: trend.status,
+      badgeClass,
+      diffText,
+    };
+  }
+
+  return (
+    <div className="bg-white/95 backdrop-blur-md p-3.5 rounded-2xl shadow-xl border border-gray-100 min-w-[210px]">
+      <div className="flex items-center justify-between mb-1 pb-1 border-b border-gray-100">
+        <span className="text-xs font-bold text-gray-500">{skillName}</span>
+        <span className="text-xs font-medium text-gray-400">{currentPoint?.date}</span>
+      </div>
+      <div className="flex items-baseline gap-1.5 my-1.5">
+        <span className="text-2xl font-display font-extrabold text-gray-800">{score}</span>
+        <span className="text-xs font-semibold text-gray-400">/{maxScore} câu đúng</span>
+        <span className="text-xs font-bold text-indigo-600 ml-auto bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
+          {Math.round((score / maxScore) * 100)}%
+        </span>
+      </div>
+      {trendInfo ? (
+        <div className={`mt-2 text-xs px-2.5 py-1.5 rounded-xl border font-medium ${trendInfo.badgeClass}`}>
+          <div className="font-bold flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-current"></span>
+            {trendInfo.label}
+          </div>
+          <div className="text-[11px] opacity-90 mt-0.5">{trendInfo.diffText}</div>
+        </div>
+      ) : (
+        <div className="mt-2 text-xs px-2.5 py-1.5 rounded-xl bg-blue-50 text-blue-700 font-medium border border-blue-200">
+          Mốc bài thi ban đầu
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ──────────────────────────────────────────────
+// Score Consistency & Target Achievement Helper
+// Công thức độ lệch chuẩn: sigma = sqrt( sum( (x_i - mean)^2 ) / n )
+// ──────────────────────────────────────────────
+export interface ExamAchievementStats {
+  totalExams: number;
+  passedCount: number;
+  percentage: number;
+}
+
+export const calculateAchievementStats = (data: any[]): ExamAchievementStats => {
+  const totalExams = data?.length || 0;
+  if (totalExams === 0) {
+    return { totalExams: 0, passedCount: 0, percentage: 0 };
+  }
+  const passedCount = data.filter(
+    (e) => (e.listeningScore ?? 0) >= 16 && (e.readingScore ?? 0) >= 19
+  ).length;
+  const percentage = Math.round((passedCount / totalExams) * 100);
+  return { totalExams, passedCount, percentage };
+};
+
+export interface ExamConsistencyStats {
+  totalRecent: number;
+  targetPassedCount: number;
+  targetPercentage: number;
+  stdDev: number;
+  stdDevListening: number;
+  stdDevReading: number;
+  isReadyForRealExam: boolean;
+}
+
+export const calculateConsistencyStats = (data: any[]): ExamConsistencyStats => {
+  if (!data || data.length === 0) {
+    return {
+      totalRecent: 0,
+      targetPassedCount: 0,
+      targetPercentage: 0,
+      stdDev: 0,
+      stdDevListening: 0,
+      stdDevReading: 0,
+      isReadyForRealExam: false,
+    };
+  }
+
+  // Lấy tối đa 5 bài gần nhất
+  const recentExams = data.slice(-5);
+  const n = recentExams.length;
+
+  // Đạt mục tiêu khi: Listening >= 16 câu và Reading >= 19 câu (mục tiêu 4 khiên)
+  const targetPassedCount = recentExams.filter(
+    (e) => (e.listeningScore ?? 0) >= 16 && (e.readingScore ?? 0) >= 19
+  ).length;
+
+  const targetPercentage = Math.round((targetPassedCount / n) * 100);
+
+  // Tính độ lệch chuẩn Listening
+  const listeningScores = recentExams.map((e) => Number(e.listeningScore ?? 0));
+  const meanL = listeningScores.reduce((sum, val) => sum + val, 0) / n;
+  const varianceL = listeningScores.reduce((sum, val) => sum + Math.pow(val - meanL, 2), 0) / n;
+  const stdDevL = Math.sqrt(varianceL);
+
+  // Tính độ lệch chuẩn Reading
+  const readingScores = recentExams.map((e) => Number(e.readingScore ?? 0));
+  const meanR = readingScores.reduce((sum, val) => sum + val, 0) / n;
+  const varianceR = readingScores.reduce((sum, val) => sum + Math.pow(val - meanR, 2), 0) / n;
+  const stdDevR = Math.sqrt(varianceR);
+
+  // Độ lệch chuẩn trung bình
+  const stdDevAvg = (stdDevL + stdDevR) / 2;
+
+  const roundedStdDev = Number(stdDevAvg.toFixed(1));
+  const roundedStdDevL = Number(stdDevL.toFixed(1));
+  const roundedStdDevR = Number(stdDevR.toFixed(1));
+
+  // Kết luận:
+  // Nếu 5 bài gần nhất đạt target (5/5 bài) + độ lệch chuẩn thấp (<= 3 câu) -> Đã sẵn sàng để Thử sức thi thật
+  // Các trường hợp khác -> Chưa sẵn sàng, cần luyện tập thêm
+  const isTargetMet = n >= 5 && targetPassedCount === 5;
+  const isConsistencyLow = roundedStdDev <= 3;
+  const isReadyForRealExam = isTargetMet && isConsistencyLow;
+
+  return {
+    totalRecent: n,
+    targetPassedCount,
+    targetPercentage,
+    stdDev: roundedStdDev,
+    stdDevListening: roundedStdDevL,
+    stdDevReading: roundedStdDevR,
+    isReadyForRealExam,
+  };
+};
+
+
+
+// ──────────────────────────────────────────────
 // ──────────────────────────────────────────────
 // Main Component
 // ──────────────────────────────────────────────
 export const ExamStatsPage: React.FC = () => {
   const { user } = useAuthStore();
   const [vocabStats, setVocabStats] = useState<VocabStatsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [selectedPracticeTopic, setSelectedPracticeTopic] = useState<string | null>(null);
 
   const fetchStats = () => {
     if (!user?.id) return;
     vocabStatsApi.getVocabStats(user.id)
       .then(setVocabStats)
-      .catch(() => setVocabStats({ noExamHistory: true, topics: [] }))
-      .finally(() => setLoading(false));
+      .catch(() => setVocabStats({ noExamHistory: true, topics: [] }));
   };
 
   useEffect(() => {
     fetchStats();
   }, [user?.id]);
 
-  const totalWeak = vocabStats?.topics.reduce((s, t) => s + t.weakCount, 0) ?? 0;
-  const totalCorrect = vocabStats?.topics.reduce((s, t) => s + t.correctCount, 0) ?? 0;
+  const chartData = (vocabStats?.examHistories && vocabStats.examHistories.length > 0)
+    ? vocabStats.examHistories
+    : FAKE_GROWTH_DATA;
+
+  const achievementStats = calculateAchievementStats(chartData);
+  const consistencyStats = calculateConsistencyStats(chartData);
 
   return (
     <div className="min-h-screen bg-surface pb-16">
@@ -142,10 +436,28 @@ export const ExamStatsPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="max-w-[1440px] mx-auto px-6 py-8 flex flex-col gap-6">
+      <div className="max-w-[1440px] mx-auto px-6 py-8 flex flex-col gap-10">
 
-        {/* ── Row 1: Target + Progress ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* ══════════════════════════════════════════════════ */}
+        {/* KHU VỰC 1: ĐO LƯỜNG                                */}
+        {/* ══════════════════════════════════════════════════ */}
+        <section className="flex flex-col gap-6">
+          <div className="flex items-center gap-3.5 pb-4 border-b-2 border-gray-200/80">
+            <div className="w-11 h-11 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center shadow-sm shrink-0">
+              <ChartBarIcon className="w-6 h-6 stroke-[2.2]" />
+            </div>
+            <div>
+              <h2 className="text-2xl md:text-3xl font-display font-extrabold text-gray-900 tracking-tight">
+                Đo lường
+              </h2>
+              <p className="text-xs md:text-sm text-text-muted mt-0.5 font-medium">
+                Mục tiêu điểm số, tỉ lệ hoàn thành và xu hướng tăng trưởng
+              </p>
+            </div>
+          </div>
+
+          {/* ── Row 1: Target + Progress ── */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
           {/* Target */}
           <div className="bg-amber-50 rounded-3xl border-2 border-amber-300 shadow-[0_8px_30px_rgb(245,158,11,0.08)] p-6">
@@ -160,10 +472,15 @@ export const ExamStatsPage: React.FC = () => {
                   <SpeakerWaveIcon className="w-5 h-5 text-amber-600" />
                   Listening
                 </div>
-                <div className="flex gap-1">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <ShieldCheckIcon key={i} className={`w-6 h-6 ${i < 4 ? 'text-amber-500' : 'text-gray-400'}`} />
-                  ))}
+                <div className="flex items-center gap-3">
+                  <div className="flex gap-1">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <ShieldCheckIcon key={i} className={`w-6 h-6 ${i < 4 ? 'text-amber-500' : 'text-gray-300'}`} />
+                    ))}
+                  </div>
+                  <span className="text-xs font-semibold text-amber-900 bg-amber-200/70 px-2.5 py-1 rounded-lg">
+                    4 khiên (tối thiểu 16 điểm)
+                  </span>
                 </div>
               </div>
 
@@ -172,10 +489,15 @@ export const ExamStatsPage: React.FC = () => {
                   <BookOpenIcon className="w-5 h-5 text-amber-600" />
                   Reading + Writing
                 </div>
-                <div className="flex gap-1">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <ShieldCheckIcon key={i} className={`w-6 h-6 ${i < 4 ? 'text-amber-500' : 'text-gray-400'}`} />
-                  ))}
+                <div className="flex items-center gap-3">
+                  <div className="flex gap-1">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <ShieldCheckIcon key={i} className={`w-6 h-6 ${i < 4 ? 'text-amber-500' : 'text-gray-300'}`} />
+                    ))}
+                  </div>
+                  <span className="text-xs font-semibold text-amber-900 bg-amber-200/70 px-2.5 py-1 rounded-lg">
+                    4 khiên (tối thiểu 19 điểm)
+                  </span>
                 </div>
               </div>
             </div>
@@ -203,243 +525,202 @@ export const ExamStatsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* ── Row 2 & 3: Biểu đồ & Knowledge Mastery ── */}
-        <div className="flex flex-col gap-6">
+        {/* ── Row 1.5: Target Achievement & Score Consistency (2 div riêng biệt) ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-          {/* Row 2: Biểu đồ Tăng trưởng */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-            {/* Listening Chart */}
-            <div className="bg-white rounded-3xl border-2 border-blue-300 shadow-[0_8px_30px_rgb(59,130,246,0.1)] p-5 relative hover:shadow-[0_8px_30px_rgb(59,130,246,0.15)] transition-shadow duration-300">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-base font-bold text-text-main">Listening Growth</h2>
-                  <p className="text-xs text-text-muted mt-0.5">Tiến độ điểm (mục tiêu 4 khiên)</p>
-                </div>
-                <SpeakerWaveIcon className="w-5 h-5 text-blue-500" />
-              </div>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={vocabStats?.examHistories || []} margin={{ top: 5, right: 10, bottom: 5, left: 55 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" strokeWidth={1.5} />
-                    <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#6b7280' }} tickMargin={10} axisLine={false} tickLine={false} />
-                    <YAxis
-                      domain={[0, 20]}
-                      ticks={[10, 11, 13, 16, 18]}
-                      interval={0}
-                      tick={<ListeningTick />}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <Tooltip
-                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)' }}
-                      itemStyle={{ fontSize: '14px', fontWeight: 600 }}
-                      formatter={(value: number) => [`${value} câu đúng`, 'Điểm số']}
-                    />
-                    <ReferenceLine y={16} stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="5 5" label={{ position: 'insideTopRight', value: 'Mục tiêu', fill: '#f59e0b', fontSize: 12, fontWeight: 700 }} />
-                    <Line type="monotone" name="Listening" dataKey="listeningScore" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* Reading & Writing Chart */}
-            <div className="bg-white rounded-3xl border-2 border-emerald-300 shadow-[0_8px_30px_rgb(16,185,129,0.1)] p-5 relative hover:shadow-[0_8px_30px_rgb(16,185,129,0.15)] transition-shadow duration-300">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-base font-bold text-text-main">Reading & Writing Growth</h2>
-                  <p className="text-xs text-text-muted mt-0.5">Tiến độ điểm (mục tiêu 4 khiên)</p>
-                </div>
-                <BookOpenIcon className="w-5 h-5 text-emerald-500" />
-              </div>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={vocabStats?.examHistories || []} margin={{ top: 5, right: 10, bottom: 5, left: 55 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" strokeWidth={1.5} />
-                    <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#6b7280' }} tickMargin={10} axisLine={false} tickLine={false} />
-                    <YAxis
-                      domain={[0, 25]}
-                      ticks={[12, 13, 16, 19, 21]}
-                      interval={0}
-                      tick={<ReadingTick />}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <Tooltip
-                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)' }}
-                      itemStyle={{ fontSize: '14px', fontWeight: 600 }}
-                      formatter={(value: number) => [`${value} câu đúng`, 'Điểm số']}
-                    />
-                    <ReferenceLine y={19} stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="5 5" label={{ position: 'insideTopRight', value: 'Mục tiêu', fill: '#f59e0b', fontSize: 12, fontWeight: 700 }} />
-                    <Line type="monotone" name="Reading & Writing" dataKey="readingScore" stroke="#10b981" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Knowledge Mastery Section */}
-          <div className="flex flex-col gap-4">
+          {/* Div 1: Target Achievement */}
+          <div className="bg-white rounded-3xl border-2 border-indigo-200/90 shadow-[0_8px_30px_rgb(99,102,241,0.06)] p-6 flex flex-col justify-between">
             <div>
-              <h2 className="text-base font-bold text-text-main">Knowledge mastery</h2>
-              <p className="text-xs text-text-muted mt-0.5">So sánh bài đầu vào và bài thi thử gần nhất.</p>
-            </div>
-
-            {/* Topic & Grammar Side-by-Side */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-
-              {/* Topic Table */}
-              <div className="bg-white rounded-3xl border-2 border-indigo-300 shadow-[0_8px_30px_rgb(99,102,241,0.1)] overflow-x-auto relative hover:shadow-[0_8px_30px_rgb(99,102,241,0.15)] transition-shadow duration-300">
-                <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-                      <Squares2X2Icon className="w-5 h-5 text-emerald-600" />
-                    </div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="font-medium text-lg text-gray-800">Topic</span>
-                      {!loading && !vocabStats?.noExamHistory && (
-                        <span className="text-sm font-medium text-gray-400">{vocabStats?.topics.length || 0} nội dung</span>
-                      )}
-                    </div>
-                  </div>
-                  <span className="text-sm font-medium text-gray-400">Từ vựng theo chủ đề</span>
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                  <CheckBadgeIcon className="w-5 h-5" />
                 </div>
-
-                {loading ? (
-                  <div className="flex items-center justify-center py-10 gap-2 text-text-muted text-sm">
-                    <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                    Đang tải...
-                  </div>
-                ) : vocabStats?.noExamHistory ? (
-                  <div className="flex flex-col items-center justify-center py-10 gap-3 px-6">
-                    <AcademicCapIcon className="w-10 h-10 text-text-muted opacity-40" />
-                    <p className="text-sm text-text-muted text-center">Hãy làm bài kiểm tra để theo dõi sự tiến bộ!</p>
-                  </div>
-                ) : (
-                  <>
-                    {/* Table header */}
-                    <div className="grid grid-cols-[1fr_80px_80px_130px_100px] gap-3 px-5 py-4 bg-gray-50/50 text-sm font-medium text-gray-500 border-b border-gray-100">
-                      <span>Tên</span>
-                      <span className="text-center">Cần cải thiện</span>
-                      <span className="text-center">Đã cải thiện</span>
-                      <span className="text-center">Status</span>
-                      <span className="text-center">Action</span>
-                    </div>
-                    {/* Table rows */}
-                    {vocabStats!.topics.map((topic: TopicStat) => (
-                      <div
-                        key={topic.topicName}
-                        className="grid grid-cols-[1fr_80px_80px_130px_100px] gap-3 px-5 py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors items-center"
-                      >
-                        <span className="font-medium text-base text-gray-700">{topic.topicName}</span>
-                        <span className="text-center text-base font-medium text-gray-500">{topic.weakCount}</span>
-                        <span className="text-center text-base font-bold text-emerald-600">{topic.correctCount}</span>
-                        <div className="flex justify-center">
-                          <StatusBadge status={topic.status} />
-                        </div>
-                        <div className="flex justify-center">
-                          {topic.status !== 'Mastered' ? (
-                            <button
-                              id={`practice-btn-${topic.topicName.replace(/\s+/g, '-').toLowerCase()}`}
-                              onClick={() => setSelectedPracticeTopic(topic.topicName)}
-                              className="px-4 py-1.5 text-sm font-bold text-blue-600 bg-blue-50 border border-blue-200 rounded-full hover:bg-blue-100 transition-colors"
-                            >
-                              Luyện tập
-                            </button>
-                          ) : (
-                            <span className="text-gray-300">—</span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                    {/* Summary row */}
-                    {(totalWeak > 0 || totalCorrect > 0) && (
-                      <div className="px-5 py-3 bg-surface flex items-center gap-3 flex-wrap">
-                        <span className="text-xs text-text-muted">
-                          <span className="inline-block w-2 h-2 rounded-full bg-red-400 mr-1" />
-                          Cần cải thiện: <strong>{totalWeak}</strong> từ
-                        </span>
-                        <span className="text-xs text-text-muted">
-                          <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 mr-1" />
-                          Đã cải thiện: <strong>{totalCorrect}</strong> từ
-                        </span>
-                      </div>
-                    )}
-                  </>
-                )}
+                <h3 className="font-bold text-base text-gray-800">Target Achievement</h3>
               </div>
 
-              {/* Grammar Table (fake data) */}
-              <div className="bg-white rounded-3xl border-2 border-violet-300 shadow-[0_8px_30px_rgb(139,92,246,0.1)] overflow-hidden relative hover:shadow-[0_8px_30px_rgb(139,92,246,0.15)] transition-shadow duration-300">
-                <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center">
-                      <AcademicCapIcon className="w-5 h-5 text-violet-600" />
-                    </div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="font-medium text-lg text-gray-800">Grammar</span>
-                      <span className="text-sm font-medium text-gray-400">{FAKE_GRAMMAR_DATA.length} nội dung</span>
-                    </div>
-                  </div>
-                  <span className="text-sm font-medium text-gray-400">Cấu trúc ngữ pháp</span>
-                </div>
-                {/* Table header */}
-                <div className="grid grid-cols-[1fr_130px_100px] gap-2 px-6 py-4 bg-gray-50/50 text-sm font-medium text-gray-500 border-b border-gray-100">
-                  <span>Tên</span>
-                  <span className="text-center">Status</span>
-                  <span className="text-center">Action</span>
-                </div>
-                {FAKE_GRAMMAR_DATA.map((g) => (
-                  <div
-                    key={g.name}
-                    className="grid grid-cols-[1fr_130px_100px] gap-2 px-6 py-4 border-b border-gray-100 last:border-0 items-center hover:bg-gray-50/50 transition-colors"
-                  >
-                    <span className="font-medium text-base text-gray-700">{g.name}</span>
-                    <div className="flex justify-center">
-                      <StatusBadge status={g.status} />
-                    </div>
-                    <div className="flex justify-center">
-                      {g.status !== 'Mastered' ? (
-                        <button className="px-4 py-1.5 text-sm font-bold text-violet-600 bg-violet-50 border border-violet-200 rounded-full hover:bg-violet-100 transition-colors">
-                          Luyện tập
-                        </button>
-                      ) : (
-                        <span className="text-gray-300">—</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
+              <div className="flex items-baseline gap-2.5 mt-3">
+                <span className="text-5xl font-display font-extrabold text-indigo-700">
+                  {achievementStats.percentage}%
+                </span>
+                <span className="text-sm font-semibold text-gray-500">
+                  {achievementStats.passedCount}/{achievementStats.totalExams} bài đạt mục tiêu
+                </span>
               </div>
-
-            </div> {/* Kết thúc Grid 2 cột */}
-
-            {/* Legend */}
-            <div className="flex gap-4 flex-wrap text-xs text-text-muted">
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" /> Mastered: từ 75 điểm
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-orange-400 inline-block" /> Developing: cần cố thêm
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-red-400 inline-block" /> Weak: cần cải thiện gấp
-              </span>
             </div>
           </div>
+
+          {/* Div 2: Score Consistency */}
+          <div className="bg-white rounded-3xl border-2 border-amber-200/90 shadow-[0_8px_30px_rgb(245,158,11,0.06)] p-6 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2.5 mb-2">
+                <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
+                  <ChartBarIcon className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-gray-800">Score Consistency</h3>
+                  <p className="text-xs text-text-muted">Độ lệch chuẩn của 5 bài gần nhất</p>
+                </div>
+              </div>
+
+              <div className="flex items-baseline gap-2.5 mt-3 mb-4">
+                <span className="text-5xl font-display font-extrabold text-amber-700">
+                  ±{consistencyStats.stdDev.toString().replace('.', ',')}
+                </span>
+              </div>
+            </div>
+
+            {/* Dưới độ lệch chuẩn có kết luận */}
+            <div>
+              {consistencyStats.isReadyForRealExam ? (
+                <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-300">
+                  <CheckBadgeIcon className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-bold text-emerald-800">Đã sẵn sàng để Thử sức thi thật</p>
+                    <p className="text-xs text-emerald-700 mt-0.5">
+                      5 bài gần nhất đạt target và độ lệch chuẩn thấp (≤ 3 câu).
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-amber-50/90 border border-amber-300">
+                  <ExclamationTriangleIcon className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-bold text-amber-800">Chưa sẵn sàng, cần luyện tập thêm</p>
+                    <p className="text-xs text-amber-700 mt-0.5">
+                      Cần đạt target 5 bài gần nhất và giữ độ lệch chuẩn ≤ 3 câu.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
         </div>
 
-      </div>
+          {/* ── Row 2: Biểu đồ Tăng trưởng ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-      {/* ── Modal Luyện tập từ vựng sai theo Topic ── */}
-      {selectedPracticeTopic && user?.id && (
-        <VocabPracticeModal
-          userId={user.id}
-          topicName={selectedPracticeTopic}
-          onClose={() => setSelectedPracticeTopic(null)}
-          onTopicUpdated={fetchStats}
-        />
-      )}
+                {/* Listening Chart */}
+                <div className="bg-white rounded-3xl border-2 border-blue-300 shadow-[0_8px_30px_rgb(59,130,246,0.1)] p-5 relative hover:shadow-[0_8px_30px_rgb(59,130,246,0.15)] transition-shadow duration-300">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-base font-bold text-text-main">Listening Growth</h2>
+                    <SpeakerWaveIcon className="w-5 h-5 text-blue-500 shrink-0" />
+                  </div>
+
+                  {/* Chú thích màu đoạn đơn giản */}
+                  <div className="flex items-center gap-4 text-xs text-text-muted mb-3 pb-2 border-b border-gray-100">
+                    <span className="inline-flex items-center gap-1.5 font-medium text-gray-600">
+                      <span className="w-4 h-1 rounded-full bg-emerald-500 inline-block"></span>
+                      Tiến bộ
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 font-medium text-gray-600">
+                      <span className="w-4 h-1 rounded-full bg-amber-500 inline-block"></span>
+                      Ổn định
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 font-medium text-gray-600">
+                      <span className="w-4 h-1 rounded-full bg-red-500 inline-block"></span>
+                      Giảm
+                    </span>
+                  </div>
+
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={chartData} margin={{ top: 10, right: 15, bottom: 5, left: 10 }}>
+                        <defs>
+                          <linearGradient id="listening-growth-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            {generateGradientStops(chartData, 'listeningScore', 20, '#3b82f6')}
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" strokeWidth={1.5} />
+                        <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#6b7280' }} tickMargin={10} axisLine={false} tickLine={false} />
+                        <YAxis
+                          domain={[0, 20]}
+                          ticks={[0, 5, 10, 15, 20]}
+                          tickFormatter={(val) => `${val} câu`}
+                          tick={{ fontSize: 12, fill: '#6b7280' }}
+                          width={60}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <Tooltip content={<GrowthTooltip maxScore={20} dataKeyName="listeningScore" data={chartData} skillName="Listening" />} />
+                        <ReferenceLine y={16} stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="5 5" label={{ position: 'insideTopRight', value: 'Mục tiêu: 16 câu (4 khiên)', fill: '#f59e0b', fontSize: 12, fontWeight: 700 }} />
+                        <Line
+                          type="monotone"
+                          name="Listening"
+                          dataKey="listeningScore"
+                          stroke="url(#listening-growth-gradient)"
+                          strokeWidth={3.5}
+                          dot={(props: any) => renderCustomDot(props, chartData, 'listeningScore', 20)}
+                          activeDot={(props: any) => renderActiveDot(props, chartData, 'listeningScore', 20)}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Reading & Writing Chart */}
+                <div className="bg-white rounded-3xl border-2 border-emerald-300 shadow-[0_8px_30px_rgb(16,185,129,0.1)] p-5 relative hover:shadow-[0_8px_30px_rgb(16,185,129,0.15)] transition-shadow duration-300">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-base font-bold text-text-main">Reading & Writing Growth</h2>
+                    <BookOpenIcon className="w-5 h-5 text-emerald-500 shrink-0" />
+                  </div>
+
+                  {/* Chú thích màu đoạn đơn giản */}
+                  <div className="flex items-center gap-4 text-xs text-text-muted mb-3 pb-2 border-b border-gray-100">
+                    <span className="inline-flex items-center gap-1.5 font-medium text-gray-600">
+                      <span className="w-4 h-1 rounded-full bg-emerald-500 inline-block"></span>
+                      Tiến bộ
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 font-medium text-gray-600">
+                      <span className="w-4 h-1 rounded-full bg-amber-500 inline-block"></span>
+                      Ổn định
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 font-medium text-gray-600">
+                      <span className="w-4 h-1 rounded-full bg-red-500 inline-block"></span>
+                      Giảm
+                    </span>
+                  </div>
+
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={chartData} margin={{ top: 10, right: 15, bottom: 5, left: 10 }}>
+                        <defs>
+                          <linearGradient id="reading-growth-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            {generateGradientStops(chartData, 'readingScore', 25, '#10b981')}
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" strokeWidth={1.5} />
+                        <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#6b7280' }} tickMargin={10} axisLine={false} tickLine={false} />
+                        <YAxis
+                          domain={[0, 25]}
+                          ticks={[0, 5, 10, 15, 20, 25]}
+                          tickFormatter={(val) => `${val} câu`}
+                          tick={{ fontSize: 12, fill: '#6b7280' }}
+                          width={60}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <Tooltip content={<GrowthTooltip maxScore={25} dataKeyName="readingScore" data={chartData} skillName="Reading & Writing" />} />
+                        <ReferenceLine y={19} stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="5 5" label={{ position: 'insideTopRight', value: 'Mục tiêu: 19 câu (4 khiên)', fill: '#f59e0b', fontSize: 12, fontWeight: 700 }} />
+                        <Line
+                          type="monotone"
+                          name="Reading & Writing"
+                          dataKey="readingScore"
+                          stroke="url(#reading-growth-gradient)"
+                          strokeWidth={3.5}
+                          dot={(props: any) => renderCustomDot(props, chartData, 'readingScore', 25)}
+                          activeDot={(props: any) => renderActiveDot(props, chartData, 'readingScore', 25)}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+          </div>
+        </section>
+      </div>
     </div>
   );
 };
+
+export default ExamStatsPage;

@@ -95,7 +95,7 @@ export const useLearningStore = create<LearningState>((set, get) => ({
         userId
           ? learningApi.getTopicsWithProgress(level.id, Number(userId))
           : learningApi.getTopicsByLevel(level.id),
-        learningApi.getUserProgress().catch(() => [])
+        learningApi.getUserProgress(userId ? Number(userId) : undefined).catch(() => [])
       ]);
 
       // getTopicsWithProgress trả về TopicWithProgress[] - lọc bỏ topic đã ẩn (HIDDEN = pass cả 2 vòng)
@@ -118,9 +118,12 @@ export const useLearningStore = create<LearningState>((set, get) => ({
   selectTopic: async (topic: Topic) => {
     set({ activeTopic: topic, parts: [], sessionsByPart: {}, activePart: null, activeSession: null, loading: true, error: null });
     try {
+      const userStr = localStorage.getItem('enjoy_user');
+      const userId = userStr ? JSON.parse(userStr)?.id : null;
+
       const [partsRes, userProgressRes] = await Promise.all([
         learningApi.getPartsByTopic(topic.id),
-        learningApi.getUserProgress().catch(() => [])
+        learningApi.getUserProgress(userId ? Number(userId) : undefined).catch(() => [])
       ]);
 
       const parts = Array.isArray(partsRes) ? partsRes : (partsRes as any)?.data || [];

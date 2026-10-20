@@ -18,6 +18,15 @@ public class PlacementTestController {
     private final PlacementTestService placementTestService;
 
     /**
+     * Lấy trực tiếp nội dung đề thi từ S3 (đã cache trong RAM).
+     * GET /api/placement-test/content
+     */
+    @GetMapping("/content")
+    public ResponseEntity<com.example.learningservice.dto.S3PlacementTestDto> getTestContent() {
+        return ResponseEntity.ok(placementTestService.getS3PlacementTest());
+    }
+
+    /**
      * Tạo đề bài kiểm tra đầu vào.
      * GET /api/placement-test/generate
      */

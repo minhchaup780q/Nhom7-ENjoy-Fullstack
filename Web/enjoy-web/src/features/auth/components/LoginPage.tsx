@@ -15,14 +15,19 @@ async function redirectAfterLogin(userId: number | string | undefined, role: str
   }
   try {
     const statusRes = await learningApi.getPlacementTestStatus(Number(userId));
-    if (statusRes.data.hasCompleted) {
+    // apiClient.get trả về thẳng payload { hasCompleted: boolean }
+    const hasCompleted = Boolean(
+      (statusRes as any)?.hasCompleted ?? (statusRes as any)?.data?.hasCompleted
+    );
+    if (hasCompleted) {
       navigate('/learn', { replace: true });
     } else {
       navigate('/welcome', { replace: true });
     }
-  } catch {
-    // Fallback: nếu lỗi API thì vào /welcome để an toàn
-    navigate('/welcome', { replace: true });
+  } catch (err) {
+    console.warn("Không thể kiểm tra trạng thái placement test, điều hướng vào /learn:", err);
+    // Fallback: nếu lỗi kiểm tra status của user đã login thành công, cho vào /learn
+    navigate('/learn', { replace: true });
   }
 }
 

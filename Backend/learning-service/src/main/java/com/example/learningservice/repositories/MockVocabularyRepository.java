@@ -86,10 +86,50 @@ public class MockVocabularyRepository {
 
     /**
      * Giả lập câu lệnh: SELECT topic FROM vocab WHERE word = ?
+     * Hỗ trợ tìm kiếm cả dạng số ít khi từ là danh từ số nhiều (s, es, ies).
      */
     public String findTopicByWord(String word) {
         if (word == null) return null;
-        return VOCAB_DB.get(word.trim().toLowerCase());
+        String clean = word.trim().toLowerCase();
+        String topic = VOCAB_DB.get(clean);
+        if (topic != null) return topic;
+
+        if (clean.endsWith("ies") && clean.length() > 3) {
+            String singular = clean.substring(0, clean.length() - 3) + "y";
+            if (VOCAB_DB.containsKey(singular)) return VOCAB_DB.get(singular);
+        }
+        if (clean.endsWith("es") && clean.length() > 3) {
+            String singular = clean.substring(0, clean.length() - 2);
+            if (VOCAB_DB.containsKey(singular)) return VOCAB_DB.get(singular);
+        }
+        if (clean.endsWith("s") && clean.length() > 2) {
+            String singular = clean.substring(0, clean.length() - 1);
+            if (VOCAB_DB.containsKey(singular)) return VOCAB_DB.get(singular);
+        }
+        return null;
+    }
+
+    /**
+     * Chuẩn hoá từ về từ điển (chuyển số nhiều về số ít chuẩn nếu có trong topic).
+     */
+    public String resolveCanonicalWord(String word) {
+        if (word == null) return "";
+        String clean = word.trim().toLowerCase();
+        if (VOCAB_DB.containsKey(clean)) return clean;
+
+        if (clean.endsWith("ies") && clean.length() > 3) {
+            String singular = clean.substring(0, clean.length() - 3) + "y";
+            if (VOCAB_DB.containsKey(singular)) return singular;
+        }
+        if (clean.endsWith("es") && clean.length() > 3) {
+            String singular = clean.substring(0, clean.length() - 2);
+            if (VOCAB_DB.containsKey(singular)) return singular;
+        }
+        if (clean.endsWith("s") && clean.length() > 2) {
+            String singular = clean.substring(0, clean.length() - 1);
+            if (VOCAB_DB.containsKey(singular)) return singular;
+        }
+        return clean;
     }
 
     /**
