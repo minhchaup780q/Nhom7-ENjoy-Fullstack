@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
@@ -6,10 +6,11 @@ import { authApi } from '../api/authApi';
 import { useAuthStore } from '../store/useAuthStore';
 import { learningApi } from '../../learning/services/learningApi';
 import { ApiError } from '../../../services/apiClient';
+import { isAdminRole } from '../types';
 
 // Helper: kiểm tra placement test status và redirect
 async function redirectAfterLogin(userId: number | string | undefined, role: string | undefined, navigate: (path: string, opts?: object) => void) {
-  if (role === 'ROLE_ADMIN') {
+  if (isAdminRole(role)) {
     navigate('/admin/dashboard', { replace: true });
     return;
   }
@@ -33,12 +34,20 @@ async function redirectAfterLogin(userId: number | string | undefined, role: str
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const setAuth = useAuthStore((state) => state.setAuth);
+  const { isAuthenticated, user: currentUser, setAuth } = useAuthStore();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Nếu người dùng đã đăng nhập từ trước, tự động chuyển hướng đến trang tương ứng
+  useEffect(() => {
+    if (isAuthenticated && currentUser) {
+      redirectAfterLogin(currentUser.id, currentUser.role, navigate);
+    }
+  }, [isAuthenticated, currentUser, navigate]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,12 +109,15 @@ export const LoginPage: React.FC = () => {
           googleId: googleId,
         });
 
-        const user = response.user || {
-          email: googleEmail,
-          username: googleName,
-          role: response.role,
+        const rawUser = response.user || (response as any);
+        const user = {
+          id: rawUser.id || (rawUser as any).userId,
+          email: rawUser.email || googleEmail,
+          username: rawUser.username || googleName,
+          role: rawUser.role || response.role,
           hasPassword: response.hasPassword ?? false,
         };
+
 
         // 3. Lưu Access Token và Refresh Token vào Zustand store / localStorage
         setAuth(

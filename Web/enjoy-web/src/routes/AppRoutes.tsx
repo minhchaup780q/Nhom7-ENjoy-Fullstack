@@ -4,7 +4,6 @@ import { LearningMap } from '../features/learning/components/LearningMap';
 import { ExploreDashboard } from '../features/explore/components/ExploreDashboard';
 import { ProfilePage } from '../features/profile/components/ProfilePage';
 import { PracticePage } from '../features/practice/components/PracticePage';
-import { PersonalStatsPage } from '../features/stats/components/PersonalStatsPage';
 import { ExamStatsPage } from '../features/stats/components/ExamStatsPage';
 import { PersonalizedPracticePage } from '../features/practice/components/PersonalizedPracticePage';
 import { LoginPage } from '../features/auth/components/LoginPage';
@@ -21,6 +20,8 @@ import { AdminLessons } from '../features/admin/components/AdminLessons';
 import { AdminUsers } from '../features/admin/components/AdminUsers';
 import { AdminSystem } from '../features/admin/components/AdminSystem';
 import { AdminProfile } from '../features/admin/components/AdminProfile';
+
+import { isAdminRole } from '../features/auth/types';
 
 interface ProtectedRouteProps {
   isAuthenticated: boolean;
@@ -44,11 +45,12 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ isAuthenticated, role }) => {
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-  if (role !== 'ROLE_ADMIN') {
+  if (!isAdminRole(role)) {
     return <Navigate to="/learn" replace />;
   }
   return <Outlet />;
 };
+
 
 interface AppRoutesProps {
   onStartSession: (session: Session) => void;
@@ -94,12 +96,13 @@ export const AppRoutes: React.FC<AppRoutesProps> = ({ onStartSession }) => {
       {/* Redirect Routes */}
       <Route
         path="/"
-        element={<Navigate to={isAuthenticated ? (user?.role === 'ROLE_ADMIN' ? '/admin/dashboard' : '/learn') : "/login"} replace />}
+        element={<Navigate to={isAuthenticated ? (isAdminRole(user?.role) ? '/admin/dashboard' : '/learn') : "/login"} replace />}
       />
       <Route
         path="*"
-        element={<Navigate to={isAuthenticated ? (user?.role === 'ROLE_ADMIN' ? '/admin/dashboard' : '/learn') : "/login"} replace />}
+        element={<Navigate to={isAuthenticated ? (isAdminRole(user?.role) ? '/admin/dashboard' : '/learn') : "/login"} replace />}
       />
+
     </Routes>
   );
 };
