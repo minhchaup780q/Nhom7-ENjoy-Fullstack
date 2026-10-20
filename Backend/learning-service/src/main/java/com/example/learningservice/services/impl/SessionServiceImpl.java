@@ -19,7 +19,7 @@ public class SessionServiceImpl implements SessionService {
 
     @Override
     public List<Session> getSessionsByPart(Long partId) {
-        return sessionRepository.findByPartIdAndIsDeleteFalseOrderByOrderIndexAsc(partId);
+        return sessionRepository.findByPartIdAndIsDeleteFalseAndIsPublishedTrueOrderByOrderIndexAsc(partId);
     }
 
     @Override

@@ -19,9 +19,10 @@ import { XMarkIcon } from '@heroicons/react/24/solid';
 interface SessionPlayerProps {
   session: Session;
   onClose: () => void;
+  isPreview?: boolean;
 }
 
-export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }) => {
+export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose, isPreview = false }) => {
   const {
     activePart,
     selectSession,
@@ -58,6 +59,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   }, [session.id, session.part?.id, activePart?.id]);
 
   const handleMistake = (mistakeData?: MistakeCreatePayload) => {
+    if (isPreview) return; // Không ghi nhận lỗi khi đang Preview
     if (mistakeData && mistakeData.questionId) {
       setRecordedMistakes(prev => {
         const existingIdx = prev.findIndex(
@@ -76,6 +78,11 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   const handleSessionComplete = async () => {
     const durationSeconds = Math.round((Date.now() - sessionStartTime.current) / 1000);
     setSessionFinished(true);
+
+    if (isPreview) {
+      // Trong chế độ Admin Xem trước (Preview): không ghi log lỗi và không ghi đè tiến độ của học sinh
+      return;
+    }
 
     // Gửi toàn bộ danh sách câu làm sai khi hoàn thành bài học (không trùng lặp)
     if (recordedMistakes.length > 0) {
