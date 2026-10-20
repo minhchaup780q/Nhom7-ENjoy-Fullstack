@@ -9,6 +9,7 @@ import {
   SentenceBuilderRound,
 } from './PlacementTestRounds';
 import { PlacementTestResultPage } from './PlacementTestResultPage';
+import { TargetSelectionScreen } from './TargetSelectionScreen';
 import type {
   PlacementTestData,
   PlacementTestResult,
@@ -27,7 +28,8 @@ type Step =
   | 'round-2'
   | 'round-3'
   | 'submitting'
-  | 'result';
+  | 'result'
+  | 'target-selection';
 
 export const PlacementTestPage: React.FC = () => {
   const navigate = useNavigate();
@@ -81,9 +83,9 @@ export const PlacementTestPage: React.FC = () => {
         round3Answers: [],
       });
     } catch {
-      // Ignore: vẫn điều hướng vào trang learn
+      // Ignore: vẫn tiếp tục sang chọn target
     }
-    navigate('/learn', { replace: true });
+    setStep('target-selection');
   };
 
   // ---- Bắt đầu kiểm tra: tải trực tiếp từ S3 ----
@@ -178,6 +180,10 @@ export const PlacementTestPage: React.FC = () => {
   };
 
   const handleStartLearning = () => {
+    setStep('target-selection');
+  };
+
+  const handleTargetConfirm = () => {
     navigate('/learn', { replace: true });
   };
 
@@ -238,6 +244,13 @@ export const PlacementTestPage: React.FC = () => {
         <PlacementTestResultPage
           result={result}
           onStartLearning={handleStartLearning}
+        />
+      )}
+
+      {step === 'target-selection' && (
+        <TargetSelectionScreen
+          userId={userId}
+          onConfirm={handleTargetConfirm}
         />
       )}
     </div>

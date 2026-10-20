@@ -3,6 +3,7 @@ package com.example.learningservice.controllers;
 import com.example.learningservice.dto.PlacementTestDto;
 import com.example.learningservice.dto.PlacementTestResultResponse;
 import com.example.learningservice.dto.PlacementTestSubmitRequest;
+import com.example.learningservice.dto.S3PlacementTestDto;
 import com.example.learningservice.services.PlacementTestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +23,7 @@ public class PlacementTestController {
      * GET /api/placement-test/content
      */
     @GetMapping("/content")
-    public ResponseEntity<com.example.learningservice.dto.S3PlacementTestDto> getTestContent() {
+    public ResponseEntity<S3PlacementTestDto> getTestContent() {
         return ResponseEntity.ok(placementTestService.getS3PlacementTest());
     }
 

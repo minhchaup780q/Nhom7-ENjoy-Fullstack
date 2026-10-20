@@ -2,14 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '../../auth/store/useAuthStore';
 import { vocabStatsApi } from '../../exam/services/vocabStatsApi';
 import type { VocabStatsResponse } from '../../exam/types';
+import { learningApi } from '../../learning/services/learningApi';
+import type { TopicWithProgress } from '../../learning/types/placementTest';
+import { useLearningStore } from '../../learning/store/useLearningStore';
 import {
-  AcademicCapIcon,
   BookOpenIcon,
   SpeakerWaveIcon,
   ChartBarIcon,
-  ArrowTrendingUpIcon,
   ExclamationTriangleIcon,
-  CheckIcon,
 } from '@heroicons/react/24/outline';
 import { CheckBadgeIcon, SparklesIcon, ShieldCheckIcon } from '@heroicons/react/24/solid';
 import {
@@ -20,9 +20,10 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
   ReferenceLine
 } from 'recharts';
+import { TargetSelectionScreen } from '../../placement-test/components/TargetSelectionScreen';
+import type { UserExamTarget } from '../../learning/services/learningApi';
 
 // ──────────────────────────────────────────────
 // Fake data dùng cho Target, Progress, Skill
@@ -314,13 +315,17 @@ export interface ExamAchievementStats {
   percentage: number;
 }
 
-export const calculateAchievementStats = (data: any[]): ExamAchievementStats => {
+export const calculateAchievementStats = (
+  data: any[],
+  targetListening: number = 16,
+  targetReading: number = 19
+): ExamAchievementStats => {
   const totalExams = data?.length || 0;
   if (totalExams === 0) {
     return { totalExams: 0, passedCount: 0, percentage: 0 };
   }
   const passedCount = data.filter(
-    (e) => (e.listeningScore ?? 0) >= 16 && (e.readingScore ?? 0) >= 19
+    (e) => (e.listeningScore ?? 0) >= targetListening && (e.readingScore ?? 0) >= targetReading
   ).length;
   const percentage = Math.round((passedCount / totalExams) * 100);
   return { totalExams, passedCount, percentage };
@@ -336,7 +341,11 @@ export interface ExamConsistencyStats {
   isReadyForRealExam: boolean;
 }
 
-export const calculateConsistencyStats = (data: any[]): ExamConsistencyStats => {
+export const calculateConsistencyStats = (
+  data: any[],
+  targetListening: number = 16,
+  targetReading: number = 19
+): ExamConsistencyStats => {
   if (!data || data.length === 0) {
     return {
       totalRecent: 0,
@@ -353,9 +362,9 @@ export const calculateConsistencyStats = (data: any[]): ExamConsistencyStats => 
   const recentExams = data.slice(-5);
   const n = recentExams.length;
 
-  // Đạt mục tiêu khi: Listening >= 16 câu và Reading >= 19 câu (mục tiêu 4 khiên)
+  // Đạt mục tiêu khi: Listening >= targetListening và Reading >= targetReading
   const targetPassedCount = recentExams.filter(
-    (e) => (e.listeningScore ?? 0) >= 16 && (e.readingScore ?? 0) >= 19
+    (e) => (e.listeningScore ?? 0) >= targetListening && (e.readingScore ?? 0) >= targetReading
   ).length;
 
   const targetPercentage = Math.round((targetPassedCount / n) * 100);
@@ -400,30 +409,162 @@ export const calculateConsistencyStats = (data: any[]): ExamConsistencyStats => 
 
 
 // ──────────────────────────────────────────────
-// ──────────────────────────────────────────────
 // Main Component
 // ──────────────────────────────────────────────
 export const ExamStatsPage: React.FC = () => {
   const { user } = useAuthStore();
   const [vocabStats, setVocabStats] = useState<VocabStatsResponse | null>(null);
 
+  const [topicProgress, setTopicProgress] = useState<{
+    totalTopics: number;
+    completedTopics: number;
+    percentage: number;
+    remainingTopics: number;
+    loading: boolean;
+  }>({
+    totalTopics: 0,
+    completedTopics: 0,
+    percentage: 0,
+    remainingTopics: 0,
+    loading: true,
+  });
+
+  const [userTarget, setUserTarget] = useState<UserExamTarget>({
+    listeningShields: 4,
+    readingShields: 4,
+    listeningMinScore: 16,
+    readingMinScore: 19,
+  });
+  const [isEditingTarget, setIsEditingTarget] = useState<boolean>(false);
+
   const fetchStats = () => {
     if (!user?.id) return;
-    vocabStatsApi.getVocabStats(user.id)
+    vocabStatsApi.getVocabStats(Number(user.id))
       .then(setVocabStats)
       .catch(() => setVocabStats({ noExamHistory: true, topics: [] }));
   };
 
+  const fetchUserTarget = async () => {
+    const currentUserId = user?.id || (() => {
+      try {
+        const str = localStorage.getItem('enjoy_user');
+        return str ? JSON.parse(str)?.id : null;
+      } catch {
+        return null;
+      }
+    })();
+    if (currentUserId) {
+      try {
+        const t = await learningApi.getUserTarget(Number(currentUserId));
+        if (t) setUserTarget(t);
+      } catch (err) {
+        console.warn('Lỗi tải mục tiêu học sinh:', err);
+      }
+    }
+  };
+
+  const fetchTopicProgress = async () => {
+    const currentUserId = user?.id || (() => {
+      try {
+        const str = localStorage.getItem('enjoy_user');
+        return str ? JSON.parse(str)?.id : null;
+      } catch {
+        return null;
+      }
+    })();
+
+    if (!currentUserId) {
+      setTopicProgress((prev) => ({ ...prev, loading: false }));
+      return;
+    }
+
+    try {
+      setTopicProgress((prev) => ({ ...prev, loading: true }));
+
+      // 1. Xác định Level cần lấy thống kê (ưu tiên activeLevel trong store, fallback Starters hoặc level đầu tiên)
+      let targetLevelId: number | null = null;
+      const storeActiveLevel = useLearningStore.getState().activeLevel;
+      if (storeActiveLevel?.id) {
+        targetLevelId = storeActiveLevel.id;
+      } else {
+        const levelsRes = await learningApi.getLevels();
+        const levels = Array.isArray(levelsRes) ? levelsRes : (levelsRes as any)?.data || [];
+        if (levels.length > 0) {
+          const starterLevel = levels.find((l: any) =>
+            l.code?.toLowerCase().includes('starter') || l.name?.toLowerCase().includes('starter')
+          ) || levels[0];
+          targetLevelId = starterLevel.id;
+        }
+      }
+
+      if (!targetLevelId) {
+        setTopicProgress({
+          totalTopics: 0,
+          completedTopics: 0,
+          percentage: 0,
+          remainingTopics: 0,
+          loading: false,
+        });
+        return;
+      }
+
+      // 2. Lấy topicsWithProgress từ learning-service
+      const topicsRes = await learningApi.getTopicsWithProgress(targetLevelId, Number(currentUserId));
+      const rawTopics: TopicWithProgress[] = Array.isArray(topicsRes) ? topicsRes : (topicsRes as any)?.data || [];
+
+      // 3. Lọc các topic chưa bị ẩn (learningStatus !== 'HIDDEN')
+      // Mỗi topic hợp lệ trong DB chứa vocab và/hoặc grammar, tính chung là 1 topic (1 progress unit)
+      const activeTopics = rawTopics.filter((t) => t.learningStatus !== 'HIDDEN');
+      const totalTopics = activeTopics.length;
+
+      // 4. Topic hoàn thành khi đã hoàn thành 100% các session chưa skip
+      const completedTopics = activeTopics.filter((t) => (t.progressPercent ?? 0) === 100).length;
+      const percentage = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
+      const remainingTopics = Math.max(0, totalTopics - completedTopics);
+
+      setTopicProgress({
+        totalTopics,
+        completedTopics,
+        percentage,
+        remainingTopics,
+        loading: false,
+      });
+    } catch (err) {
+      console.error('Lỗi khi tải tiến độ chủ đề:', err);
+      setTopicProgress((prev) => ({ ...prev, loading: false }));
+    }
+  };
+
   useEffect(() => {
     fetchStats();
+    fetchTopicProgress();
+    fetchUserTarget();
+
+    const handleTargetUpdate = (e: any) => {
+      if (e.detail) {
+        setUserTarget(e.detail);
+      }
+    };
+    window.addEventListener('enjoy_target_updated', handleTargetUpdate);
+    return () => {
+      window.removeEventListener('enjoy_target_updated', handleTargetUpdate);
+    };
   }, [user?.id]);
 
   const chartData = (vocabStats?.examHistories && vocabStats.examHistories.length > 0)
     ? vocabStats.examHistories
     : FAKE_GROWTH_DATA;
 
-  const achievementStats = calculateAchievementStats(chartData);
-  const consistencyStats = calculateConsistencyStats(chartData);
+  const achievementStats = calculateAchievementStats(
+    chartData,
+    userTarget.listeningMinScore,
+    userTarget.readingMinScore
+  );
+  const consistencyStats = calculateConsistencyStats(
+    chartData,
+    userTarget.listeningMinScore,
+    userTarget.readingMinScore
+  );
 
   return (
     <div className="min-h-screen bg-surface pb-16">
@@ -432,7 +573,7 @@ export const ExamStatsPage: React.FC = () => {
         <p className="text-xs text-primary font-bold mb-1 uppercase tracking-widest">PRE-A1 STARTERS · Báo cáo học tập</p>
         <h1 className="text-2xl font-display font-extrabold text-text-main">Mỗi ngày học, một bước tiến</h1>
         <p className="text-sm text-text-muted mt-1">
-          {user?.fullName || user?.username}, cùng nhìn lại tiến bộ và chỉnh phục mục tiêu Pre-A1 nhé!
+          {((user as any)?.fullName || user?.username || 'Bé')}, cùng nhìn lại tiến bộ và chinh phục mục tiêu Pre-A1 nhé!
         </p>
       </div>
 
@@ -459,266 +600,343 @@ export const ExamStatsPage: React.FC = () => {
           {/* ── Row 1: Target + Progress ── */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-          {/* Target */}
-          <div className="bg-amber-50 rounded-3xl border-2 border-amber-300 shadow-[0_8px_30px_rgb(245,158,11,0.08)] p-6">
-            <div className="flex items-center justify-between mb-5">
-              <p className="font-medium text-lg text-amber-900">Target</p>
-              <span className="text-xs font-medium text-gray-400">Mục tiêu kỳ thi</span>
+            {/* Target */}
+            <div className="bg-amber-50 rounded-3xl border-2 border-amber-300 shadow-[0_8px_30px_rgb(245,158,11,0.08)] p-6">
+              <div className="flex items-center justify-between mb-5">
+                <p className="font-medium text-lg text-amber-900">Target</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-gray-400">Mục tiêu kỳ thi</span>
+                  <button
+                    type="button"
+                    id="btn-edit-target"
+                    onClick={() => setIsEditingTarget(true)}
+                    className="text-xs font-bold text-amber-700 hover:text-amber-900 bg-amber-200/80 hover:bg-amber-300 px-2.5 py-1 rounded-xl transition-all cursor-pointer shadow-xs active:scale-95"
+                    title="Thay đổi mục tiêu khiên"
+                  >
+                    Thay đổi
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between pb-4 border-b border-amber-200/60">
+                  <div className="flex items-center gap-2 text-sm font-medium text-amber-800">
+                    <SpeakerWaveIcon className="w-5 h-5 text-amber-600" />
+                    Listening
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex gap-1">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <ShieldCheckIcon
+                          key={i}
+                          className={`w-6 h-6 ${i < userTarget.listeningShields ? 'text-amber-500' : 'text-gray-300'}`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs font-semibold text-amber-900 bg-amber-200/70 px-2.5 py-1 rounded-lg">
+                      {userTarget.listeningShields} khiên (tối thiểu {userTarget.listeningMinScore} điểm)
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm font-medium text-amber-800">
+                    <BookOpenIcon className="w-5 h-5 text-amber-600" />
+                    Reading + Writing
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex gap-1">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <ShieldCheckIcon
+                          key={i}
+                          className={`w-6 h-6 ${i < userTarget.readingShields ? 'text-amber-500' : 'text-gray-300'}`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs font-semibold text-amber-900 bg-amber-200/70 px-2.5 py-1 rounded-lg">
+                      {userTarget.readingShields} khiên (tối thiểu {userTarget.readingMinScore} điểm)
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between pb-4 border-b border-amber-200/60">
-                <div className="flex items-center gap-2 text-sm font-medium text-amber-800">
-                  <SpeakerWaveIcon className="w-5 h-5 text-amber-600" />
-                  Listening
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex gap-1">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <ShieldCheckIcon key={i} className={`w-6 h-6 ${i < 4 ? 'text-amber-500' : 'text-gray-300'}`} />
-                    ))}
+            {/* Progress */}
+            <div className="bg-[#f0f9f6] rounded-3xl border-2 border-teal-300 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 relative overflow-hidden">
+              <div className="flex items-center justify-between mb-4">
+                <p className="font-medium text-lg text-teal-900">Progress</p>
+                <span className="text-xs font-bold text-teal-700 flex items-center gap-1">
+                  <SparklesIcon className="w-4 h-4" />{' '}
+                  {topicProgress.loading
+                    ? 'Đang tải...'
+                    : topicProgress.percentage === 100
+                      ? 'Đã hoàn thành'
+                      : topicProgress.percentage > 0
+                        ? 'Đang tiến bộ'
+                        : 'Bắt đầu học'}
+                </span>
+              </div>
+
+              <div className="flex items-baseline gap-2 mb-3">
+                <p className="text-5xl font-display font-bold text-teal-800">
+                  {topicProgress.percentage}%
+                </p>
+                <p className="text-sm font-medium text-teal-700/80">
+                  {topicProgress.completedTopics}/{topicProgress.totalTopics} bài học đã hoàn thành
+                </p>
+              </div>
+
+              <div className="w-full bg-teal-900/10 rounded-full h-3 mb-3">
+                <div
+                  className="bg-teal-700 h-3 rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${topicProgress.percentage}%` }}
+                />
+              </div>
+
+              <p className="text-xs text-teal-700 font-medium">
+                {topicProgress.totalTopics === 0 && !topicProgress.loading
+                  ? 'Chưa có bài học nào trong lộ trình'
+                  : topicProgress.remainingTopics === 0 && topicProgress.totalTopics > 0
+                    ? 'Chúc mừng! Bé đã hoàn thành toàn bộ lộ trình!'
+                    : `Chỉ còn ${topicProgress.remainingTopics} bài học nữa để hoàn thành lộ trình!`}
+              </p>
+            </div>
+          </div>
+
+          {/* ── Row 1.5: Target Achievement & Score Consistency (2 div riêng biệt) ── */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            {/* Div 1: Target Achievement */}
+            <div className="bg-white rounded-3xl border-2 border-indigo-200/90 shadow-[0_8px_30px_rgb(99,102,241,0.06)] p-6 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2.5 mb-3">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                    <CheckBadgeIcon className="w-5 h-5" />
                   </div>
-                  <span className="text-xs font-semibold text-amber-900 bg-amber-200/70 px-2.5 py-1 rounded-lg">
-                    4 khiên (tối thiểu 16 điểm)
+                  <h3 className="font-bold text-base text-gray-800">Target Achievement</h3>
+                </div>
+
+                <div className="flex items-baseline gap-2.5 mt-3">
+                  <span className="text-5xl font-display font-extrabold text-indigo-700">
+                    {achievementStats.percentage}%
+                  </span>
+                  <span className="text-sm font-semibold text-gray-500">
+                    {achievementStats.passedCount}/{achievementStats.totalExams} bài đạt mục tiêu
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Div 2: Score Consistency */}
+            <div className="bg-white rounded-3xl border-2 border-amber-200/90 shadow-[0_8px_30px_rgb(245,158,11,0.06)] p-6 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2.5 mb-2">
+                  <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
+                    <ChartBarIcon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base text-gray-800">Score Consistency</h3>
+                    <p className="text-xs text-text-muted">Độ lệch chuẩn của 5 bài gần nhất</p>
+                  </div>
+                </div>
+
+                <div className="flex items-baseline gap-2.5 mt-3 mb-4">
+                  <span className="text-5xl font-display font-extrabold text-amber-700">
+                    ±{consistencyStats.stdDev.toString().replace('.', ',')}
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm font-medium text-amber-800">
-                  <BookOpenIcon className="w-5 h-5 text-amber-600" />
-                  Reading + Writing
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex gap-1">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <ShieldCheckIcon key={i} className={`w-6 h-6 ${i < 4 ? 'text-amber-500' : 'text-gray-300'}`} />
-                    ))}
+              {/* Dưới độ lệch chuẩn có kết luận */}
+              <div>
+                {consistencyStats.isReadyForRealExam ? (
+                  <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-300">
+                    <CheckBadgeIcon className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-bold text-emerald-800">Đã sẵn sàng để Thử sức thi thật</p>
+                      <p className="text-xs text-emerald-700 mt-0.5">
+                        5 bài gần nhất đạt target và độ lệch chuẩn thấp (≤ 3 câu).
+                      </p>
+                    </div>
                   </div>
-                  <span className="text-xs font-semibold text-amber-900 bg-amber-200/70 px-2.5 py-1 rounded-lg">
-                    4 khiên (tối thiểu 19 điểm)
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Progress */}
-          <div className="bg-[#f0f9f6] rounded-3xl border-2 border-teal-300 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 relative overflow-hidden">
-            <div className="flex items-center justify-between mb-4">
-              <p className="font-medium text-lg text-teal-900">Progress</p>
-              <span className="text-xs font-bold text-teal-700 flex items-center gap-1">
-                <SparklesIcon className="w-4 h-4" /> Đang tiến bộ
-              </span>
-            </div>
-
-            <div className="flex items-baseline gap-2 mb-3">
-              <p className="text-5xl font-display font-bold text-teal-800">68%</p>
-              <p className="text-sm font-medium text-teal-700/80">8/12 bài học đã hoàn thành</p>
-            </div>
-
-            <div className="w-full bg-teal-900/10 rounded-full h-3 mb-3">
-              <div className="bg-teal-700 h-3 rounded-full" style={{ width: '68%' }} />
-            </div>
-
-            <p className="text-xs text-teal-700 font-medium">Chỉ còn 4 bài học nữa để hoàn thành lộ trình!</p>
-          </div>
-        </div>
-
-        {/* ── Row 1.5: Target Achievement & Score Consistency (2 div riêng biệt) ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-          {/* Div 1: Target Achievement */}
-          <div className="bg-white rounded-3xl border-2 border-indigo-200/90 shadow-[0_8px_30px_rgb(99,102,241,0.06)] p-6 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center gap-2.5 mb-3">
-                <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
-                  <CheckBadgeIcon className="w-5 h-5" />
-                </div>
-                <h3 className="font-bold text-base text-gray-800">Target Achievement</h3>
-              </div>
-
-              <div className="flex items-baseline gap-2.5 mt-3">
-                <span className="text-5xl font-display font-extrabold text-indigo-700">
-                  {achievementStats.percentage}%
-                </span>
-                <span className="text-sm font-semibold text-gray-500">
-                  {achievementStats.passedCount}/{achievementStats.totalExams} bài đạt mục tiêu
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Div 2: Score Consistency */}
-          <div className="bg-white rounded-3xl border-2 border-amber-200/90 shadow-[0_8px_30px_rgb(245,158,11,0.06)] p-6 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center gap-2.5 mb-2">
-                <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
-                  <ChartBarIcon className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-base text-gray-800">Score Consistency</h3>
-                  <p className="text-xs text-text-muted">Độ lệch chuẩn của 5 bài gần nhất</p>
-                </div>
-              </div>
-
-              <div className="flex items-baseline gap-2.5 mt-3 mb-4">
-                <span className="text-5xl font-display font-extrabold text-amber-700">
-                  ±{consistencyStats.stdDev.toString().replace('.', ',')}
-                </span>
-              </div>
-            </div>
-
-            {/* Dưới độ lệch chuẩn có kết luận */}
-            <div>
-              {consistencyStats.isReadyForRealExam ? (
-                <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-300">
-                  <CheckBadgeIcon className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-bold text-emerald-800">Đã sẵn sàng để Thử sức thi thật</p>
-                    <p className="text-xs text-emerald-700 mt-0.5">
-                      5 bài gần nhất đạt target và độ lệch chuẩn thấp (≤ 3 câu).
-                    </p>
+                ) : (
+                  <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-amber-50/90 border border-amber-300">
+                    <ExclamationTriangleIcon className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-bold text-amber-800">Chưa sẵn sàng, cần luyện tập thêm</p>
+                      <p className="text-xs text-amber-700 mt-0.5">
+                        Cần đạt target 5 bài gần nhất và giữ độ lệch chuẩn ≤ 3 câu.
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-amber-50/90 border border-amber-300">
-                  <ExclamationTriangleIcon className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-bold text-amber-800">Chưa sẵn sàng, cần luyện tập thêm</p>
-                    <p className="text-xs text-amber-700 mt-0.5">
-                      Cần đạt target 5 bài gần nhất và giữ độ lệch chuẩn ≤ 3 câu.
-                    </p>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
 
-        </div>
+          </div>
 
           {/* ── Row 2: Biểu đồ Tăng trưởng ── */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-                {/* Listening Chart */}
-                <div className="bg-white rounded-3xl border-2 border-blue-300 shadow-[0_8px_30px_rgb(59,130,246,0.1)] p-5 relative hover:shadow-[0_8px_30px_rgb(59,130,246,0.15)] transition-shadow duration-300">
-                  <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-base font-bold text-text-main">Listening Growth</h2>
-                    <SpeakerWaveIcon className="w-5 h-5 text-blue-500 shrink-0" />
-                  </div>
+            {/* Listening Chart */}
+            <div className="bg-white rounded-3xl border-2 border-blue-300 shadow-[0_8px_30px_rgb(59,130,246,0.1)] p-5 relative hover:shadow-[0_8px_30px_rgb(59,130,246,0.15)] transition-shadow duration-300">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-base font-bold text-text-main">Listening Growth</h2>
+                <SpeakerWaveIcon className="w-5 h-5 text-blue-500 shrink-0" />
+              </div>
 
-                  {/* Chú thích màu đoạn đơn giản */}
-                  <div className="flex items-center gap-4 text-xs text-text-muted mb-3 pb-2 border-b border-gray-100">
-                    <span className="inline-flex items-center gap-1.5 font-medium text-gray-600">
-                      <span className="w-4 h-1 rounded-full bg-emerald-500 inline-block"></span>
-                      Tiến bộ
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 font-medium text-gray-600">
-                      <span className="w-4 h-1 rounded-full bg-amber-500 inline-block"></span>
-                      Ổn định
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 font-medium text-gray-600">
-                      <span className="w-4 h-1 rounded-full bg-red-500 inline-block"></span>
-                      Giảm
-                    </span>
-                  </div>
+              {/* Chú thích màu đoạn đơn giản */}
+              <div className="flex items-center gap-4 text-xs text-text-muted mb-3 pb-2 border-b border-gray-100">
+                <span className="inline-flex items-center gap-1.5 font-medium text-gray-600">
+                  <span className="w-4 h-1 rounded-full bg-emerald-500 inline-block"></span>
+                  Tiến bộ
+                </span>
+                <span className="inline-flex items-center gap-1.5 font-medium text-gray-600">
+                  <span className="w-4 h-1 rounded-full bg-amber-500 inline-block"></span>
+                  Ổn định
+                </span>
+                <span className="inline-flex items-center gap-1.5 font-medium text-gray-600">
+                  <span className="w-4 h-1 rounded-full bg-red-500 inline-block"></span>
+                  Giảm
+                </span>
+              </div>
 
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={chartData} margin={{ top: 10, right: 15, bottom: 5, left: 10 }}>
-                        <defs>
-                          <linearGradient id="listening-growth-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                            {generateGradientStops(chartData, 'listeningScore', 20, '#3b82f6')}
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" strokeWidth={1.5} />
-                        <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#6b7280' }} tickMargin={10} axisLine={false} tickLine={false} />
-                        <YAxis
-                          domain={[0, 20]}
-                          ticks={[0, 5, 10, 15, 20]}
-                          tickFormatter={(val) => `${val} câu`}
-                          tick={{ fontSize: 12, fill: '#6b7280' }}
-                          width={60}
-                          axisLine={false}
-                          tickLine={false}
-                        />
-                        <Tooltip content={<GrowthTooltip maxScore={20} dataKeyName="listeningScore" data={chartData} skillName="Listening" />} />
-                        <ReferenceLine y={16} stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="5 5" label={{ position: 'insideTopRight', value: 'Mục tiêu: 16 câu (4 khiên)', fill: '#f59e0b', fontSize: 12, fontWeight: 700 }} />
-                        <Line
-                          type="monotone"
-                          name="Listening"
-                          dataKey="listeningScore"
-                          stroke="url(#listening-growth-gradient)"
-                          strokeWidth={3.5}
-                          dot={(props: any) => renderCustomDot(props, chartData, 'listeningScore', 20)}
-                          activeDot={(props: any) => renderActiveDot(props, chartData, 'listeningScore', 20)}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData} margin={{ top: 10, right: 15, bottom: 5, left: 10 }}>
+                    <defs>
+                      <linearGradient id="listening-growth-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        {generateGradientStops(chartData, 'listeningScore', 20, '#3b82f6')}
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" strokeWidth={1.5} />
+                    <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#6b7280' }} tickMargin={10} axisLine={false} tickLine={false} />
+                    <YAxis
+                      domain={[0, 20]}
+                      ticks={[0, 5, 10, 15, 20]}
+                      tickFormatter={(val) => `${val} câu`}
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                      width={60}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip content={<GrowthTooltip maxScore={20} dataKeyName="listeningScore" data={chartData} skillName="Listening" />} />
+                    <ReferenceLine
+                      y={userTarget.listeningMinScore}
+                      stroke="#f59e0b"
+                      strokeWidth={1.5}
+                      strokeDasharray="5 5"
+                      label={{
+                        position: 'insideTopRight',
+                        value: `Mục tiêu: ${userTarget.listeningMinScore} câu (${userTarget.listeningShields} khiên)`,
+                        fill: '#f59e0b',
+                        fontSize: 12,
+                        fontWeight: 700
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      name="Listening"
+                      dataKey="listeningScore"
+                      stroke="url(#listening-growth-gradient)"
+                      strokeWidth={3.5}
+                      dot={(props: any) => renderCustomDot(props, chartData, 'listeningScore', 20)}
+                      activeDot={(props: any) => renderActiveDot(props, chartData, 'listeningScore', 20)}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
 
-                {/* Reading & Writing Chart */}
-                <div className="bg-white rounded-3xl border-2 border-emerald-300 shadow-[0_8px_30px_rgb(16,185,129,0.1)] p-5 relative hover:shadow-[0_8px_30px_rgb(16,185,129,0.15)] transition-shadow duration-300">
-                  <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-base font-bold text-text-main">Reading & Writing Growth</h2>
-                    <BookOpenIcon className="w-5 h-5 text-emerald-500 shrink-0" />
-                  </div>
+            {/* Reading & Writing Chart */}
+            <div className="bg-white rounded-3xl border-2 border-emerald-300 shadow-[0_8px_30px_rgb(16,185,129,0.1)] p-5 relative hover:shadow-[0_8px_30px_rgb(16,185,129,0.15)] transition-shadow duration-300">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-base font-bold text-text-main">Reading & Writing Growth</h2>
+                <BookOpenIcon className="w-5 h-5 text-emerald-500 shrink-0" />
+              </div>
 
-                  {/* Chú thích màu đoạn đơn giản */}
-                  <div className="flex items-center gap-4 text-xs text-text-muted mb-3 pb-2 border-b border-gray-100">
-                    <span className="inline-flex items-center gap-1.5 font-medium text-gray-600">
-                      <span className="w-4 h-1 rounded-full bg-emerald-500 inline-block"></span>
-                      Tiến bộ
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 font-medium text-gray-600">
-                      <span className="w-4 h-1 rounded-full bg-amber-500 inline-block"></span>
-                      Ổn định
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 font-medium text-gray-600">
-                      <span className="w-4 h-1 rounded-full bg-red-500 inline-block"></span>
-                      Giảm
-                    </span>
-                  </div>
+              {/* Chú thích màu đoạn đơn giản */}
+              <div className="flex items-center gap-4 text-xs text-text-muted mb-3 pb-2 border-b border-gray-100">
+                <span className="inline-flex items-center gap-1.5 font-medium text-gray-600">
+                  <span className="w-4 h-1 rounded-full bg-emerald-500 inline-block"></span>
+                  Tiến bộ
+                </span>
+                <span className="inline-flex items-center gap-1.5 font-medium text-gray-600">
+                  <span className="w-4 h-1 rounded-full bg-amber-500 inline-block"></span>
+                  Ổn định
+                </span>
+                <span className="inline-flex items-center gap-1.5 font-medium text-gray-600">
+                  <span className="w-4 h-1 rounded-full bg-red-500 inline-block"></span>
+                  Giảm
+                </span>
+              </div>
 
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={chartData} margin={{ top: 10, right: 15, bottom: 5, left: 10 }}>
-                        <defs>
-                          <linearGradient id="reading-growth-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                            {generateGradientStops(chartData, 'readingScore', 25, '#10b981')}
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" strokeWidth={1.5} />
-                        <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#6b7280' }} tickMargin={10} axisLine={false} tickLine={false} />
-                        <YAxis
-                          domain={[0, 25]}
-                          ticks={[0, 5, 10, 15, 20, 25]}
-                          tickFormatter={(val) => `${val} câu`}
-                          tick={{ fontSize: 12, fill: '#6b7280' }}
-                          width={60}
-                          axisLine={false}
-                          tickLine={false}
-                        />
-                        <Tooltip content={<GrowthTooltip maxScore={25} dataKeyName="readingScore" data={chartData} skillName="Reading & Writing" />} />
-                        <ReferenceLine y={19} stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="5 5" label={{ position: 'insideTopRight', value: 'Mục tiêu: 19 câu (4 khiên)', fill: '#f59e0b', fontSize: 12, fontWeight: 700 }} />
-                        <Line
-                          type="monotone"
-                          name="Reading & Writing"
-                          dataKey="readingScore"
-                          stroke="url(#reading-growth-gradient)"
-                          strokeWidth={3.5}
-                          dot={(props: any) => renderCustomDot(props, chartData, 'readingScore', 25)}
-                          activeDot={(props: any) => renderActiveDot(props, chartData, 'readingScore', 25)}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData} margin={{ top: 10, right: 15, bottom: 5, left: 10 }}>
+                    <defs>
+                      <linearGradient id="reading-growth-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        {generateGradientStops(chartData, 'readingScore', 25, '#10b981')}
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" strokeWidth={1.5} />
+                    <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#6b7280' }} tickMargin={10} axisLine={false} tickLine={false} />
+                    <YAxis
+                      domain={[0, 25]}
+                      ticks={[0, 5, 10, 15, 20, 25]}
+                      tickFormatter={(val) => `${val} câu`}
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                      width={60}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip content={<GrowthTooltip maxScore={25} dataKeyName="readingScore" data={chartData} skillName="Reading & Writing" />} />
+                    <ReferenceLine
+                      y={userTarget.readingMinScore}
+                      stroke="#f59e0b"
+                      strokeWidth={1.5}
+                      strokeDasharray="5 5"
+                      label={{
+                        position: 'insideTopRight',
+                        value: `Mục tiêu: ${userTarget.readingMinScore} câu (${userTarget.readingShields} khiên)`,
+                        fill: '#f59e0b',
+                        fontSize: 12,
+                        fontWeight: 700
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      name="Reading & Writing"
+                      dataKey="readingScore"
+                      stroke="url(#reading-growth-gradient)"
+                      strokeWidth={3.5}
+                      dot={(props: any) => renderCustomDot(props, chartData, 'readingScore', 25)}
+                      activeDot={(props: any) => renderActiveDot(props, chartData, 'readingScore', 25)}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
 
           </div>
         </section>
+
       </div>
+
+      {/* ── Modal Thay đổi mục tiêu khiên ── */}
+      {isEditingTarget && user?.id && (
+        <TargetSelectionScreen
+          userId={Number(user.id)}
+          initialListeningShields={userTarget.listeningShields}
+          initialReadingShields={userTarget.readingShields}
+          isModal={true}
+          onConfirm={(updated) => {
+            setUserTarget(updated);
+            setIsEditingTarget(false);
+          }}
+          onCancel={() => setIsEditingTarget(false)}
+        />
+      )}
     </div>
   );
 };
