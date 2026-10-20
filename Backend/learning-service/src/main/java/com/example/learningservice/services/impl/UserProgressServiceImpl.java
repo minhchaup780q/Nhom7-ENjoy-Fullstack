@@ -37,6 +37,7 @@ public class UserProgressServiceImpl implements UserProgressService {
     private final MistakeRepository mistakeRepository;
     private final PartVocabularyRepository partVocabularyRepository;
     private final ObjectMapper objectMapper;
+    private final com.example.learningservice.services.LeaderboardService leaderboardService;
 
     @Override
     public List<UserProgress> getUserProgress(Long userId) {
@@ -55,13 +56,18 @@ public class UserProgressServiceImpl implements UserProgressService {
         Session currentSession = sessionRepository.findByIdAndIsDeleteFalse(sessionId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy bài học với ID: " + sessionId));
 
-        // 1. Cập nhật tiến độ của session hiện tại thành FINISH
-        UserProgress currentProgress = userProgressRepository
-                .findByUserIdAndSessionId(userId, sessionId)
-                .orElse(UserProgress.builder()
-                        .userId(userId)
-                        .session(currentSession)
-                        .build());  
+        // 1. Kiểm tra bài học đã từng hoàn thành chưa để phân biệt +20 KN hay +5 KN
+        Optional<UserProgress> existingOpt = userProgressRepository.findByUserIdAndSessionId(userId, sessionId);
+        boolean isRelearn = existingOpt.isPresent() && existingOpt.get().getStatus() == SessionStatus.FINISH;
+        int xpEarned = isRelearn ? 5 : 20;
+        com.example.learningservice.entities.enums.XpSourceType sourceType = isRelearn 
+                ? com.example.learningservice.entities.enums.XpSourceType.LESSON_REVIEW 
+                : com.example.learningservice.entities.enums.XpSourceType.LESSON_FIRST_COMPLETE;
+
+        UserProgress currentProgress = existingOpt.orElse(UserProgress.builder()
+                .userId(userId)
+                .session(currentSession)
+                .build());  
 
         currentProgress.setStatus(SessionStatus.FINISH);
         currentProgress.setCompletedAt(LocalDateTime.now());
@@ -72,6 +78,21 @@ public class UserProgressServiceImpl implements UserProgressService {
         }
 
         UserProgress savedProgress = userProgressRepository.save(currentProgress);
+
+        // Cộng điểm kinh nghiệm vào Leaderboard và UserRankProfile
+        try {
+            leaderboardService.addXp(
+                    userId,
+                    xpEarned,
+                    sourceType,
+                    sessionId,
+                    (isRelearn ? "Ôn tập lại bài học: " : "Hoàn thành bài mới: ") + currentSession.getTitle(),
+                    null,
+                    null
+            );
+        } catch (Exception ex) {
+            log.error("Lỗi khi cộng điểm XP vào leaderboard cho user {}: {}", userId, ex.getMessage());
+        }
 
         // 2. Tìm bài học tiếp theo trong cùng Part để UNLOCK
         List<Session> partSessions = sessionRepository.findByPartIdAndIsDeleteFalseOrderByOrderIndexAsc(currentSession.getPart().getId());
