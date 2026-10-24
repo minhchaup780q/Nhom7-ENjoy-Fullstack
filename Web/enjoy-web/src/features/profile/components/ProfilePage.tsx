@@ -407,19 +407,10 @@ export const ProfilePage: React.FC = () => {
                 Cài đặt & Tài khoản
               </h2>
               <p className="text-xs text-slate-500 mt-0.5 font-medium">
-                Quản lý thông tin đăng nhập, ngày sinh hoặc đăng xuất khỏi hệ thống
+                Quản lý thông tin đăng nhập hoặc đăng xuất khỏi hệ thống
               </p>
             </div>
             <div className="flex items-center gap-3 w-full md:w-auto shrink-0 justify-center">
-              <button
-                type="button"
-                onClick={() => setShowEditModal(true)}
-                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs uppercase shadow-xs active:scale-95 transition-all cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[18px]">edit</span>
-                <span>CHỈNH SỬA</span>
-              </button>
-
               <button
                 type="button"
                 onClick={logout}
