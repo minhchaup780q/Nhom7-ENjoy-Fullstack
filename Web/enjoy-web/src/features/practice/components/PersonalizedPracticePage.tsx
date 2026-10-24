@@ -15,7 +15,6 @@ import {
   BookOpenIcon,
   SpeakerWaveIcon,
   TrophyIcon,
-  SparklesIcon,
   CheckBadgeIcon,
 } from '@heroicons/react/24/solid';
 
@@ -47,7 +46,7 @@ export const PersonalizedPracticePage: React.FC = () => {
     setLoading(true);
 
     personalizedPracticeService
-      .loadWeakWords(user.id, topicParam)
+      .loadWeakWords(Number(user.id), topicParam)
       .then((words) => {
         setWeakWords(words);
         const pages = personalizedPracticeService.chunkWordsIntoPages(words);
@@ -110,7 +109,7 @@ export const PersonalizedPracticePage: React.FC = () => {
       if (user?.id && weakWords.length > 0) {
         for (const w of weakWords) {
           try {
-            await vocabStatsApi.completeWord(user.id, w.word, w.topic);
+            await vocabStatsApi.completeWord(Number(user.id), w.word, w.topic);
           } catch (err) {
             console.warn(`Lỗi khi cập nhật hoàn thành từ ${w.word}:`, err);
           }
@@ -122,6 +121,7 @@ export const PersonalizedPracticePage: React.FC = () => {
 
   const availableTopics = Array.from(new Set(weakWords.map((w) => w.topic).filter(Boolean)));
   const currentPageTopic = wordPages[currentPageIndex]?.[0]?.topic || (topicParam === 'ALL' ? 'Tất cả các chủ đề' : topicParam);
+  const currentTopicDisplay = topicParam === 'ALL' ? 'Tất cả các chủ đề' : topicParam;
 
   if (loading) {
     return (
@@ -317,12 +317,24 @@ export const PersonalizedPracticePage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 w-full">
+                <div className="w-full bg-emerald-50 border border-emerald-200 rounded-2xl p-3 text-xs text-emerald-800 font-semibold flex items-center justify-center gap-2">
+                  <span className="material-symbols-outlined text-[18px] text-emerald-600">lock_open</span>
+                  <span>Đã mở khóa các bài thi! Bạn có thể tiếp tục làm bài thi ngay bây giờ.</span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+                  <button
+                    onClick={() => navigate('/exams')}
+                    className="w-full sm:flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-display font-extrabold rounded-2xl shadow-md transition-all active:scale-95 cursor-pointer uppercase text-xs tracking-wider flex items-center justify-center gap-1.5"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">school</span>
+                    <span>Tiếp tục làm bài thi</span>
+                  </button>
                   <button
                     onClick={() => navigate('/practice')}
-                    className="flex-1 py-3 px-4 bg-sky-600 hover:bg-sky-700 text-white font-display font-extrabold rounded-2xl shadow-md transition-all active:scale-95 cursor-pointer uppercase text-xs tracking-wider"
+                    className="w-full sm:w-auto py-3 px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-display font-extrabold rounded-2xl transition-all active:scale-95 cursor-pointer uppercase text-xs tracking-wider"
                   >
-                    Quay về trang Luyện tập
+                    Trang Luyện tập
                   </button>
                 </div>
               </div>
