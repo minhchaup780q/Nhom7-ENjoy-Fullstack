@@ -219,16 +219,16 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in select-none">
-      <div className="bg-white border border-pink-100 rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-xl overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-xl overflow-hidden">
         
         {/* Header Modal */}
-        <div className="px-6 py-5 border-b border-pink-50 flex items-center justify-between bg-white">
+        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-white">
           <div>
             <div className="flex items-center gap-2.5">
               <h2 className="text-xl font-bold text-slate-800">
                 Phát âm & Nói
               </h2>
-              <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-pink-50 text-[#ff5e97] border border-pink-200">
+              <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
                 {skillScore}%
               </span>
             </div>
@@ -239,19 +239,19 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
 
           <button
             onClick={onClose}
-            className="w-9 h-9 flex items-center justify-center rounded-xl bg-pink-50/70 hover:bg-pink-100 text-slate-500 hover:text-slate-700 transition-colors font-bold text-sm cursor-pointer"
+            className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 transition-colors font-bold text-sm cursor-pointer"
           >
             ✕
           </button>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex border-b border-pink-50 px-6 bg-white">
+        <div className="flex border-b border-slate-100 px-6 bg-white">
           <button
             onClick={() => setActiveTab('completely_wrong')}
             className={`py-3 px-4 font-bold text-xs sm:text-sm border-b-2 transition-all cursor-pointer ${
               activeTab === 'completely_wrong'
-                ? 'border-[#ff5e97] text-[#ff5e97]'
+                ? 'border-sky-600 text-sky-600'
                 : 'border-transparent text-slate-400 hover:text-slate-600'
             }`}
           >
@@ -262,7 +262,7 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
             onClick={() => setActiveTab('near_correct')}
             className={`py-3 px-4 font-bold text-xs sm:text-sm border-b-2 transition-all cursor-pointer ${
               activeTab === 'near_correct'
-                ? 'border-[#ff5e97] text-[#ff5e97]'
+                ? 'border-sky-600 text-sky-600'
                 : 'border-transparent text-slate-400 hover:text-slate-600'
             }`}
           >
@@ -272,7 +272,7 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
 
         {/* Topic Filter */}
         {topics.length > 1 && (
-          <div className="px-6 py-2.5 bg-pink-50/30 border-b border-pink-50 flex items-center gap-2 overflow-x-auto no-scrollbar">
+          <div className="px-6 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center gap-2 overflow-x-auto no-scrollbar">
             <span className="text-xs font-semibold text-slate-400 shrink-0">
               Chủ đề:
             </span>
@@ -287,8 +287,8 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
                   onClick={() => setSelectedTopic(topicName)}
                   className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer ${
                     selectedTopic === topicName
-                      ? 'bg-[#ff5e97] text-white shadow-xs'
-                      : 'bg-white text-slate-600 border border-pink-100 hover:bg-pink-50/60'
+                      ? 'bg-sky-600 text-white shadow-xs'
+                      : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
                   }`}
                 >
                   {topicName}
@@ -305,7 +305,7 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
         <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white">
           {loading ? (
             <div className="py-16 flex flex-col items-center justify-center gap-3">
-              <div className="w-8 h-8 border-2 border-[#ff5e97] border-t-transparent rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-sky-600 border-t-transparent rounded-full animate-spin" />
               <p className="text-xs text-slate-500">Đang chuẩn bị dữ liệu bài học...</p>
             </div>
           ) : (
@@ -313,7 +313,7 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
               {activeTab === 'completely_wrong' && (
                 <div className="space-y-3">
                   {filteredCompletelyWrongList.length === 0 ? (
-                    <div className="text-center py-16 space-y-1.5 bg-pink-50/20 rounded-2xl border border-pink-100">
+                    <div className="text-center py-16 space-y-1.5 bg-slate-50 rounded-2xl border border-slate-200">
                       <p className="text-sm font-bold text-slate-800">
                         {selectedTopic === 'Tất cả'
                           ? 'Bé không có từ nào bị phát âm sai hoàn toàn.'
@@ -326,17 +326,17 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
                       return (
                         <div
                           key={item.id}
-                          className="bg-pink-50/30 border border-pink-100/80 rounded-2xl p-4 sm:p-5 hover:border-pink-200 hover:bg-pink-50/50 transition-all space-y-3"
+                          className="bg-slate-50/70 border border-slate-200 rounded-2xl p-4 sm:p-5 hover:border-sky-300 hover:bg-sky-50/30 transition-all space-y-3"
                         >
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div className="space-y-1">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="text-lg font-bold text-slate-800">{item.word}</span>
-                                <span className="text-xs font-mono font-semibold text-[#ff5e97] px-2 py-0.5 bg-pink-50 rounded-md border border-pink-200">
+                                <span className="text-xs font-mono font-semibold text-sky-700 px-2 py-0.5 bg-sky-50 rounded-md border border-sky-200">
                                   {item.ipa}
                                 </span>
                                 {isSentence && (
-                                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-pink-100/80 text-[#ff5e97] border border-pink-200">
+                                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">
                                     Luyện nói câu
                                   </span>
                                 )}
@@ -345,7 +345,7 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
 
                               <div className="text-xs flex items-center gap-1.5">
                                 <span className="text-slate-500">Đã nhận diện:</span>
-                                <span className="font-semibold text-slate-700 bg-white px-2 py-0.5 rounded-md border border-pink-100">
+                                <span className="font-semibold text-slate-700 bg-white px-2 py-0.5 rounded-md border border-slate-200">
                                   {item.recognizedText}
                                 </span>
                               </div>
@@ -356,8 +356,8 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
                                 onClick={() => playWord(item.word, `comp_${item.id}`)}
                                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold cursor-pointer border transition-colors ${
                                   playingKey === `comp_${item.id}`
-                                    ? 'bg-[#ff5e97] border-[#ff5e97] text-white'
-                                    : 'bg-white hover:bg-pink-50 text-[#ff5e97] border-pink-200'
+                                    ? 'bg-sky-600 border-sky-600 text-white'
+                                    : 'bg-white hover:bg-sky-50 text-sky-700 border-sky-200'
                                 }`}
                               >
                                 {playingKey === `comp_${item.id}` ? 'Đang phát...' : 'Phát âm'}
@@ -365,7 +365,7 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
 
                               <button
                                 onClick={() => startPracticeSingle(item)}
-                                className="px-4 py-2 rounded-xl bg-[#ff5e97] hover:bg-[#e84c85] text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                                className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
                               >
                                 {isSentence ? 'Luyện nói câu' : 'Luyện phát âm'}
                               </button>
@@ -373,7 +373,7 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
                           </div>
 
                           {item.aiAnalysisVi && (
-                            <p className="text-xs text-slate-600 bg-white p-3 rounded-xl border border-pink-100 leading-relaxed">
+                            <p className="text-xs text-slate-600 bg-white p-3 rounded-xl border border-slate-200 leading-relaxed">
                               <strong className="text-slate-800">ENjoy AI:</strong> {renderFormattedAiText(item.aiAnalysisVi)}
                             </p>
                           )}
@@ -387,7 +387,7 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
               {activeTab === 'near_correct' && (
                 <div className="space-y-4">
                   {filteredNearCorrectList.length === 0 ? (
-                    <div className="text-center py-16 space-y-1.5 bg-pink-50/20 rounded-2xl border border-pink-100">
+                    <div className="text-center py-16 space-y-1.5 bg-slate-50 rounded-2xl border border-slate-200">
                       <p className="text-sm font-bold text-slate-800">
                         {selectedTopic === 'Tất cả'
                           ? 'Bé phát âm rất chuẩn các từ vựng.'
@@ -427,13 +427,13 @@ export const PersonalizedSpeakingModal: React.FC<Props> = ({
         )}
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-pink-50 bg-white flex items-center justify-between">
+        <div className="px-6 py-4 border-t border-slate-100 bg-white flex items-center justify-between">
           <span className="text-xs text-slate-400">
             Hệ thống phân tích phát âm ENjoy AI
           </span>
           <button
             onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-pink-50 hover:bg-pink-100 text-slate-700 font-bold text-xs cursor-pointer transition-all"
+            className="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer transition-all"
           >
             Đóng
           </button>

@@ -15,7 +15,6 @@ import {
   BookOpenIcon,
   SpeakerWaveIcon,
   TrophyIcon,
-  SparklesIcon,
   CheckBadgeIcon,
 } from '@heroicons/react/24/solid';
 
@@ -47,7 +46,7 @@ export const PersonalizedPracticePage: React.FC = () => {
     setLoading(true);
 
     personalizedPracticeService
-      .loadWeakWords(user.id, topicParam)
+      .loadWeakWords(Number(user.id), topicParam)
       .then((words) => {
         setWeakWords(words);
         const pages = personalizedPracticeService.chunkWordsIntoPages(words);
@@ -110,7 +109,7 @@ export const PersonalizedPracticePage: React.FC = () => {
       if (user?.id && weakWords.length > 0) {
         for (const w of weakWords) {
           try {
-            await vocabStatsApi.completeWord(user.id, w.word, w.topic);
+            await vocabStatsApi.completeWord(Number(user.id), w.word, w.topic);
           } catch (err) {
             console.warn(`Lỗi khi cập nhật hoàn thành từ ${w.word}:`, err);
           }
@@ -122,12 +121,13 @@ export const PersonalizedPracticePage: React.FC = () => {
 
   const availableTopics = Array.from(new Set(weakWords.map((w) => w.topic).filter(Boolean)));
   const currentPageTopic = wordPages[currentPageIndex]?.[0]?.topic || (topicParam === 'ALL' ? 'Tất cả các chủ đề' : topicParam);
+  const currentTopicDisplay = topicParam === 'ALL' ? 'Tất cả các chủ đề' : topicParam;
 
   if (loading) {
     return (
       <div className="min-h-screen bg-surface flex flex-col items-center justify-center gap-3">
-        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm font-extrabold text-gray-700">Đang chuẩn bị danh sách từ vựng bài thi...</p>
+        <div className="w-10 h-10 border-4 border-sky-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm font-extrabold text-slate-700">Đang chuẩn bị danh sách từ vựng bài thi...</p>
       </div>
     );
   }
@@ -139,15 +139,15 @@ export const PersonalizedPracticePage: React.FC = () => {
         <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-3xl flex items-center justify-center mb-4 shadow-sm">
           <CheckBadgeIcon className="w-12 h-12" />
         </div>
-        <h2 className="text-2xl font-display font-extrabold text-gray-800 mb-2">
+        <h2 className="text-2xl font-display font-extrabold text-slate-800 mb-2">
           Không có từ vựng cần cải thiện!
         </h2>
-        <p className="text-sm text-text-muted max-w-md mx-auto mb-6">
+        <p className="text-sm text-slate-500 max-w-md mx-auto mb-6">
           Bé đã hoàn thành xuất sắc hoặc chưa có lỗi sai nào trong chủ đề <strong>{currentTopicDisplay}</strong>. Hãy thử sức thêm với các bài thi thử nhé!
         </p>
         <button
           onClick={() => navigate('/practice')}
-          className="px-6 py-3 bg-primary hover:bg-primary-dark text-white font-extrabold rounded-2xl shadow-md transition-all cursor-pointer"
+          className="px-6 py-3 bg-sky-600 hover:bg-sky-700 text-white font-extrabold rounded-2xl shadow-md transition-all cursor-pointer"
         >
           Quay lại trang Luyện tập
         </button>
@@ -158,21 +158,21 @@ export const PersonalizedPracticePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-surface pb-20">
       {/* ── Top Header Navigation ── */}
-      <div className="bg-white border-b-2 border-gray-200 sticky top-0 z-30 shadow-xs px-6 py-4">
+      <div className="bg-white border-b-2 border-slate-200 sticky top-0 z-30 shadow-xs px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate('/practice')}
-              className="p-2.5 rounded-2xl border-2 border-gray-200 hover:bg-gray-100 text-gray-600 transition-colors cursor-pointer"
+              className="p-2.5 rounded-2xl border-2 border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
               title="Quay lại danh sách luyện tập"
             >
               <ArrowLeftIcon className="w-5 h-5 stroke-[2.5]" />
             </button>
             <div>
-              <p className="text-[11px] font-black uppercase text-primary tracking-widest">
+              <p className="text-[11px] font-black uppercase text-sky-600 tracking-widest">
                 Luyện tập cá nhân hoá · {currentPageTopic}
               </p>
-              <h1 className="text-lg md:text-xl font-display font-extrabold text-gray-900">
+              <h1 className="text-lg md:text-xl font-display font-extrabold text-slate-900">
                 {round === 'READING' && 'Vòng 1: Đọc đục lỗ (Reading Part 4)'}
                 {round === 'LISTENING' && 'Vòng 2: Nghe hội thoại tương tác (Listening)'}
                 {round === 'SUMMARY' && 'Tổng kết & Chúc mừng'}
@@ -218,15 +218,15 @@ export const PersonalizedPracticePage: React.FC = () => {
 
       {/* ── Topic Filter Chips ── */}
       {availableTopics.length > 1 && (
-        <div className="bg-white/80 backdrop-blur border-b border-gray-100 px-6 py-2">
+        <div className="bg-white/80 backdrop-blur border-b border-slate-100 px-6 py-2">
           <div className="max-w-6xl mx-auto flex items-center gap-2 overflow-x-auto py-1">
-            <span className="text-[11px] font-bold text-gray-500 shrink-0">Chủ đề bài thi:</span>
+            <span className="text-[11px] font-bold text-slate-500 shrink-0">Chủ đề bài thi:</span>
             <button
               onClick={() => navigate('/practice/personalization?topic=ALL')}
               className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
                 topicParam === 'ALL'
-                  ? 'bg-primary text-white shadow-xs'
-                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  ? 'bg-sky-600 text-white shadow-xs'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
               }`}
             >
               Tất cả ({weakWords.length} từ)
@@ -239,8 +239,8 @@ export const PersonalizedPracticePage: React.FC = () => {
                   onClick={() => navigate(`/practice/personalization?topic=${encodeURIComponent(top)}`)}
                   className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
                     topicParam === top
-                      ? 'bg-primary text-white shadow-xs'
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                      ? 'bg-sky-600 text-white shadow-xs'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                   }`}
                 >
                   {top} ({count} từ)
@@ -255,12 +255,12 @@ export const PersonalizedPracticePage: React.FC = () => {
       <div className="max-w-6xl mx-auto px-6 py-8">
         {generatingAi ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            <div className="w-12 h-12 border-4 border-sky-600 border-t-transparent rounded-full animate-spin" />
             <div className="text-center">
-              <p className="font-display font-extrabold text-gray-800 text-lg">
+              <p className="font-display font-extrabold text-slate-800 text-lg">
                 Trợ lý AI đang tạo bài tập đục lỗ cho bé...
               </p>
-              <p className="text-xs text-text-muted mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Đang tạo câu chuyện &amp; ngữ cảnh tiếng Anh tự nhiên phù hợp với độ tuổi Starters
               </p>
             </div>
@@ -297,32 +297,44 @@ export const PersonalizedPracticePage: React.FC = () => {
                   <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-black rounded-full uppercase tracking-wider">
                     Xuất sắc
                   </span>
-                  <h2 className="text-2xl md:text-3xl font-display font-extrabold text-gray-900 mt-2">
+                  <h2 className="text-2xl md:text-3xl font-display font-extrabold text-slate-900 mt-2">
                     Bé đã hoàn thành trọn vẹn 2 Vòng!
                   </h2>
-                  <p className="text-sm text-text-muted mt-2">
+                  <p className="text-sm text-slate-500 mt-2">
                     Các từ vựng lỗi sai của chủ đề <strong>{currentTopicDisplay}</strong> đã được củng cố cả về kỹ năng đọc hiểu và nghe hiểu hội thoại.
                   </p>
                 </div>
 
-                <div className="w-full bg-surface rounded-2xl p-4 border border-gray-200/80 flex items-center justify-around">
+                <div className="w-full bg-slate-50/50 rounded-2xl p-4 border border-slate-200 flex items-center justify-around">
                   <div>
-                    <span className="block text-2xl font-black text-primary">+{weakWords.length * 10}</span>
-                    <span className="text-[11px] font-bold text-gray-500 uppercase">Điểm kinh nghiệm</span>
+                    <span className="block text-2xl font-black text-sky-600">+{weakWords.length * 10}</span>
+                    <span className="text-[11px] font-bold text-slate-500 uppercase">Điểm kinh nghiệm</span>
                   </div>
-                  <div className="h-8 w-[1px] bg-gray-200" />
+                  <div className="h-8 w-[1px] bg-slate-200" />
                   <div>
                     <span className="block text-2xl font-black text-emerald-600">{weakWords.length}</span>
-                    <span className="text-[11px] font-bold text-gray-500 uppercase">Từ vựng đã cải thiện</span>
+                    <span className="text-[11px] font-bold text-slate-500 uppercase">Từ vựng đã cải thiện</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 w-full">
+                <div className="w-full bg-emerald-50 border border-emerald-200 rounded-2xl p-3 text-xs text-emerald-800 font-semibold flex items-center justify-center gap-2">
+                  <span className="material-symbols-outlined text-[18px] text-emerald-600">lock_open</span>
+                  <span>Đã mở khóa các bài thi! Bạn có thể tiếp tục làm bài thi ngay bây giờ.</span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+                  <button
+                    onClick={() => navigate('/exams')}
+                    className="w-full sm:flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-display font-extrabold rounded-2xl shadow-md transition-all active:scale-95 cursor-pointer uppercase text-xs tracking-wider flex items-center justify-center gap-1.5"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">school</span>
+                    <span>Tiếp tục làm bài thi</span>
+                  </button>
                   <button
                     onClick={() => navigate('/practice')}
-                    className="flex-1 py-3 px-4 bg-primary hover:bg-primary-dark text-white font-display font-extrabold rounded-2xl shadow-md transition-all active:scale-95 cursor-pointer uppercase text-xs tracking-wider"
+                    className="w-full sm:w-auto py-3 px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-display font-extrabold rounded-2xl transition-all active:scale-95 cursor-pointer uppercase text-xs tracking-wider"
                   >
-                    Quay về trang Luyện tập
+                    Trang Luyện tập
                   </button>
                 </div>
               </div>

@@ -103,7 +103,7 @@ export const PersonalizedReadingPart: React.FC<Props> = ({
 
         const currentAns = filledAnswers[position];
 
-        let slotStyle = 'border-dashed border-2 border-primary/60 bg-blue-50/50 text-primary';
+        let slotStyle = 'border-dashed border-2 border-sky-400 bg-sky-50/50 text-sky-700';
         if (isSubmitted && blankInfo) {
           const isCorrect = (currentAns || '').trim().toLowerCase() === blankInfo.answer.trim().toLowerCase();
           slotStyle = isCorrect
@@ -118,11 +118,11 @@ export const PersonalizedReadingPart: React.FC<Props> = ({
             key={index}
             onClick={() => handleSlotClick(position)}
             className={`inline-flex items-center gap-1.5 px-3 py-1 my-1 mx-1.5 rounded-xl text-sm md:text-base font-extrabold cursor-pointer transition-all duration-150 select-none ${slotStyle} ${
-              !currentAns && selectedWord ? 'animate-pulse ring-2 ring-primary ring-offset-1' : ''
+              !currentAns && selectedWord ? 'animate-pulse ring-2 ring-sky-500 ring-offset-1' : ''
             }`}
             title={currentAns ? 'Click để gỡ từ này' : 'Click để điền từ đang chọn'}
           >
-            <span className="text-xs text-primary-dark font-black">({position})</span>
+            <span className="text-xs text-sky-700 font-black">({position})</span>
             {currentAns ? (
               <span>{currentAns}</span>
             ) : (
@@ -200,15 +200,15 @@ export const PersonalizedReadingPart: React.FC<Props> = ({
                   onClick={() => handleSelectWord(w.word)}
                   className={`relative flex flex-col items-center p-3 rounded-2xl border-2 transition-all duration-200 cursor-pointer select-none group ${
                     isSelected
-                      ? 'border-primary bg-primary-soft shadow-lg -translate-y-1 ring-2 ring-primary'
+                      ? 'border-sky-500 bg-sky-50 shadow-lg -translate-y-1 ring-2 ring-sky-500'
                       : isUsed
-                      ? 'border-gray-200 bg-gray-50 opacity-60 hover:opacity-100'
-                      : 'border-gray-200 hover:border-primary/50 bg-white hover:shadow-md'
+                      ? 'border-slate-200 bg-slate-50 opacity-60 hover:opacity-100'
+                      : 'border-slate-200 hover:border-sky-400 bg-white hover:shadow-md'
                   }`}
                 >
                   {/* Ảnh từ vựng từ CSDL (nếu không có thì không hiện ảnh) */}
                   {w.imageUrl ? (
-                    <div className="w-full aspect-square rounded-xl overflow-hidden bg-gray-100 mb-2 border border-gray-100 flex items-center justify-center">
+                    <div className="w-full aspect-square rounded-xl overflow-hidden bg-slate-100 mb-2 border border-slate-100 flex items-center justify-center">
                       <img
                         src={w.imageUrl}
                         alt={w.word}
@@ -220,20 +220,20 @@ export const PersonalizedReadingPart: React.FC<Props> = ({
                       />
                     </div>
                   ) : (
-                    <div className="w-full aspect-square rounded-xl bg-gray-50 border border-dashed border-gray-200 mb-2 flex flex-col items-center justify-center text-gray-400 p-2 text-center">
+                    <div className="w-full aspect-square rounded-xl bg-slate-50 border border-dashed border-slate-200 mb-2 flex flex-col items-center justify-center text-slate-400 p-2 text-center">
                       <span className="text-2xl mb-1">📖</span>
-                      <span className="text-[10px] text-gray-400">Không có ảnh</span>
+                      <span className="text-[10px] text-slate-400">Không có ảnh</span>
                     </div>
                   )}
 
                   {/* Chữ in đậm tiếng Anh chuẩn Cambridge Part 4 */}
-                  <span className="font-display font-extrabold text-sm md:text-base text-gray-800 capitalize">
+                  <span className="font-display font-extrabold text-sm md:text-base text-slate-800 capitalize">
                     {w.word}
                   </span>
 
                   {/* Huy hiệu đang chọn */}
                   {isSelected && (
-                    <span className="absolute -top-2 -right-2 px-2 py-0.5 bg-primary text-white text-[10px] font-black rounded-full shadow">
+                    <span className="absolute -top-2 -right-2 px-2 py-0.5 bg-sky-600 text-white text-[10px] font-black rounded-full shadow">
                       Đang chọn
                     </span>
                   )}
@@ -259,20 +259,20 @@ export const PersonalizedReadingPart: React.FC<Props> = ({
             </div>
 
             {/* Nội dung đoạn văn */}
-            <div className="text-base md:text-lg text-gray-800 leading-loose font-medium">
+            <div className="text-base md:text-lg text-slate-800 leading-loose font-medium">
               {renderStoryWithSlots()}
             </div>
 
             {/* Bảng điều khiển kiểm tra kết quả */}
-            <div className="pt-4 border-t border-gray-100 flex items-center justify-between gap-4 flex-wrap">
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-4 flex-wrap">
               {!isSubmitted ? (
                 <button
                   disabled={!isAllFilled}
                   onClick={handleCheckAnswers}
                   className={`px-6 py-3 rounded-2xl font-display font-extrabold text-sm uppercase tracking-wider transition-all cursor-pointer shadow-md ${
                     isAllFilled
-                      ? 'bg-primary text-white hover:bg-primary-dark active:scale-95'
-                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      ? 'bg-sky-600 text-white hover:bg-sky-700 active:scale-95'
+                      : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                   }`}
                 >
                   Kiểm tra đáp án

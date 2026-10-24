@@ -216,16 +216,16 @@ export const PersonalizedVocabModal: React.FC<Props> = ({ skillScore, onClose })
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in select-none">
-      <div className="bg-white border border-pink-100 rounded-3xl max-w-2xl w-full max-h-[88vh] flex flex-col shadow-xl overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-3xl max-w-2xl w-full max-h-[88vh] flex flex-col shadow-xl overflow-hidden">
         
         {/* Header Modal */}
-        <div className="px-6 py-5 border-b border-pink-50 flex items-center justify-between bg-white">
+        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-white">
           <div>
             <div className="flex items-center gap-2.5">
-              <h2 className="text-xl font-bold text-slate-800">
+              <h2 className="text-xl font-bold text-slate-800 font-display">
                 Từ vựng
               </h2>
-              <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-pink-50 text-[#ff5e97] border border-pink-200">
+              <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
                 {skillScore}%
               </span>
             </div>
@@ -238,19 +238,19 @@ export const PersonalizedVocabModal: React.FC<Props> = ({ skillScore, onClose })
 
           <button
             onClick={onClose}
-            className="w-9 h-9 flex items-center justify-center rounded-xl bg-pink-50/70 hover:bg-pink-100 text-slate-500 hover:text-slate-700 transition-colors font-bold text-sm cursor-pointer"
+            className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 transition-colors font-bold text-sm cursor-pointer"
           >
             ✕
           </button>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex border-b border-pink-50 px-6 bg-white">
+        <div className="flex border-b border-slate-100 px-6 bg-white">
           <button
             onClick={() => setActiveTab('mistake_list')}
             className={`py-3 px-4 font-bold text-xs sm:text-sm border-b-2 transition-all cursor-pointer ${
               activeTab === 'mistake_list'
-                ? 'border-[#ff5e97] text-[#ff5e97]'
+                ? 'border-sky-600 text-sky-600'
                 : 'border-transparent text-slate-400 hover:text-slate-600'
             }`}
           >
@@ -260,7 +260,7 @@ export const PersonalizedVocabModal: React.FC<Props> = ({ skillScore, onClose })
             onClick={() => setActiveTab('ai_challenge')}
             className={`py-3 px-4 font-bold text-xs sm:text-sm border-b-2 transition-all cursor-pointer ${
               activeTab === 'ai_challenge'
-                ? 'border-[#ff5e97] text-[#ff5e97]'
+                ? 'border-sky-600 text-sky-600'
                 : 'border-transparent text-slate-400 hover:text-slate-600'
             }`}
           >
@@ -281,8 +281,8 @@ export const PersonalizedVocabModal: React.FC<Props> = ({ skillScore, onClose })
                       onClick={() => setSelectedTopic(t)}
                       className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer ${
                         selectedTopic === t
-                          ? 'bg-[#ff5e97] text-white shadow-xs'
-                          : 'bg-pink-50/60 text-slate-600 hover:bg-pink-100/70'
+                          ? 'bg-sky-600 text-white shadow-xs'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
                     >
                       {t}
@@ -293,7 +293,7 @@ export const PersonalizedVocabModal: React.FC<Props> = ({ skillScore, onClose })
 
               {loading ? (
                 <div className="py-16 flex flex-col items-center justify-center gap-3">
-                  <div className="w-8 h-8 border-2 border-[#ff5e97] border-t-transparent rounded-full animate-spin" />
+                  <div className="w-8 h-8 border-2 border-sky-600 border-t-transparent rounded-full animate-spin" />
                   <span className="text-xs text-slate-500">Đang tải danh sách từ vựng...</span>
                 </div>
               ) : filteredMistakes.length === 0 ? (
@@ -313,15 +313,15 @@ export const PersonalizedVocabModal: React.FC<Props> = ({ skillScore, onClose })
                     return (
                       <div
                         key={m.id}
-                        className="p-4 rounded-2xl bg-pink-50/30 border border-pink-100/80 flex items-center justify-between gap-4 hover:border-pink-200 hover:bg-pink-50/50 transition-all"
+                        className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-4 hover:border-sky-200 hover:bg-sky-50/30 transition-all"
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <button
                             onClick={() => playWord(m.contentText || m.keyword || '', String(m.id), m.audioUrl)}
                             className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
                               isPlaying
-                                ? 'bg-[#ff5e97] border-[#ff5e97] text-white'
-                                : 'bg-white border-pink-200 text-[#ff5e97] hover:border-pink-300'
+                                ? 'bg-sky-600 border-sky-600 text-white'
+                                : 'bg-white border-slate-200 text-sky-700 hover:border-sky-300'
                             }`}
                           >
                             {isPlaying ? 'Đang phát...' : 'Phát âm'}
@@ -333,7 +333,7 @@ export const PersonalizedVocabModal: React.FC<Props> = ({ skillScore, onClose })
                                 {m.contentText || m.keyword}
                               </span>
                               {m.keyword && (
-                                <span className="text-[11px] px-2 py-0.5 rounded-md bg-pink-50 text-[#ff5e97] font-semibold border border-pink-200 shrink-0">
+                                <span className="text-[11px] px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 font-semibold border border-sky-200 shrink-0">
                                   {m.keyword}
                                 </span>
                               )}
@@ -351,9 +351,9 @@ export const PersonalizedVocabModal: React.FC<Props> = ({ skillScore, onClose })
                             <span className="text-[11px] font-semibold text-slate-500 block">
                               {streak >= 3 ? 'Đã nắm vững' : `Cần ôn ${3 - streak} ngày`}
                             </span>
-                            <div className="w-16 bg-pink-100 h-1.5 rounded-full mt-1 overflow-hidden">
+                            <div className="w-16 bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
                               <div
-                                className="bg-[#ff5e97] h-full rounded-full transition-all"
+                                className="bg-sky-600 h-full rounded-full transition-all"
                                 style={{ width: `${Math.round(mastery * 100)}%` }}
                               />
                             </div>
@@ -361,7 +361,7 @@ export const PersonalizedVocabModal: React.FC<Props> = ({ skillScore, onClose })
 
                           <button
                             onClick={() => startPracticeWithFlashcards([m])}
-                            className="px-3.5 py-2 rounded-xl bg-[#ff5e97] hover:bg-[#e84c85] text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                            className="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
                           >
                             Luyện từ này
                           </button>
@@ -376,19 +376,19 @@ export const PersonalizedVocabModal: React.FC<Props> = ({ skillScore, onClose })
             <div className="space-y-4">
               {isAiLoading ? (
                 <div className="py-16 flex flex-col items-center justify-center gap-3">
-                  <div className="w-8 h-8 border-2 border-[#ff5e97] border-t-transparent rounded-full animate-spin" />
+                  <div className="w-8 h-8 border-2 border-sky-600 border-t-transparent rounded-full animate-spin" />
                   <span className="text-xs text-slate-500">ENjoy AI đang tạo câu hỏi tình huống...</span>
                 </div>
               ) : aiChallenge ? (
                 <div className="space-y-4">
-                  <div className="p-4 rounded-2xl bg-white border border-pink-100 space-y-2">
+                  <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-[#ff5e97] uppercase tracking-wider">
+                      <span className="text-xs font-bold text-sky-700 uppercase tracking-wider">
                         {aiChallenge.title || 'Tình huống câu chuyện'}
                       </span>
                       <button
                         onClick={() => loadAiChallenge(true)}
-                        className="text-xs text-[#ff5e97] hover:underline font-semibold cursor-pointer"
+                        className="text-xs text-sky-600 hover:underline font-semibold cursor-pointer"
                       >
                         Đổi bài khác
                       </button>
@@ -404,7 +404,7 @@ export const PersonalizedVocabModal: React.FC<Props> = ({ skillScore, onClose })
                     )}
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-white border border-pink-100 space-y-3">
+                  <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-3">
                     <h4 className="font-bold text-sm text-slate-800">
                       {renderFormattedAiText(aiChallenge.question)}
                     </h4>
@@ -416,12 +416,12 @@ export const PersonalizedVocabModal: React.FC<Props> = ({ skillScore, onClose })
 
                         if (aiAnswerChecked) {
                           if (opt.trim().toLowerCase() === aiChallenge.correctAnswer.trim().toLowerCase()) {
-                            btnStyle = 'border-[#ff5e97] bg-pink-50 text-[#ff5e97] font-bold';
+                            btnStyle = 'border-emerald-500 bg-emerald-50 text-emerald-800 font-bold';
                           } else if (isSelected) {
                             btnStyle = 'border-rose-400 bg-rose-50 text-rose-700';
                           }
                         } else if (isSelected) {
-                          btnStyle = 'border-[#ff5e97] bg-pink-50 text-[#ff5e97] font-bold ring-2 ring-pink-200';
+                          btnStyle = 'border-sky-500 bg-sky-50 text-sky-800 font-bold ring-2 ring-sky-200';
                         }
 
                         return (
@@ -433,7 +433,7 @@ export const PersonalizedVocabModal: React.FC<Props> = ({ skillScore, onClose })
                           >
                             <span>{opt}</span>
                             {aiAnswerChecked && opt.trim().toLowerCase() === aiChallenge.correctAnswer.trim().toLowerCase() && (
-                              <span className="text-[#ff5e97] font-bold">✓</span>
+                              <span className="text-emerald-600 font-bold">✓</span>
                             )}
                           </button>
                         );
@@ -441,7 +441,7 @@ export const PersonalizedVocabModal: React.FC<Props> = ({ skillScore, onClose })
                     </div>
 
                     {aiAnswerChecked && (
-                      <div className={`p-3 rounded-xl text-xs font-medium ${aiAnswerCorrect ? 'bg-pink-50 text-[#ff5e97] border border-pink-200' : 'bg-rose-50 text-rose-800 border border-rose-200'}`}>
+                      <div className={`p-3 rounded-xl text-xs font-medium ${aiAnswerCorrect ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'}`}>
                         {aiAnswerCorrect ? 'Chính xác! Bạn đã vận dụng từ vựng đúng ngữ cảnh.' : `Chưa chính xác. Đáp án đúng là: ${aiChallenge.correctAnswer}`}
                         {aiChallenge.hint && <p className="mt-1 text-slate-600">Gợi ý: {renderFormattedAiText(aiChallenge.hint)}</p>}
                       </div>
@@ -453,7 +453,7 @@ export const PersonalizedVocabModal: React.FC<Props> = ({ skillScore, onClose })
                           disabled={!selectedAiOption}
                           onClick={handleAiCheck}
                           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer ${
-                            selectedAiOption ? 'bg-[#ff5e97] hover:bg-[#e84c85] text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                            selectedAiOption ? 'bg-sky-600 hover:bg-sky-700 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                           }`}
                         >
                           Kiểm tra đáp án
@@ -461,7 +461,7 @@ export const PersonalizedVocabModal: React.FC<Props> = ({ skillScore, onClose })
                       ) : (
                         <button
                           onClick={() => loadAiChallenge(true)}
-                          className="px-4 py-2 rounded-xl bg-pink-50 hover:bg-pink-100 text-slate-700 text-xs font-bold transition-all cursor-pointer"
+                          className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer"
                         >
                           Thử thách tiếp theo
                         </button>
@@ -480,13 +480,13 @@ export const PersonalizedVocabModal: React.FC<Props> = ({ skillScore, onClose })
 
         {/* Footer */}
         {activeTab === 'mistake_list' && filteredMistakes.length > 0 && (
-          <div className="px-6 py-4 border-t border-pink-50 bg-white flex items-center justify-between">
+          <div className="px-6 py-4 border-t border-slate-100 bg-white flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">
               Tổng số: {filteredMistakes.length} từ
             </span>
             <button
               onClick={() => startPracticeWithFlashcards(filteredMistakes)}
-              className="px-5 py-2.5 rounded-2xl bg-[#ff5e97] hover:bg-[#e84c85] text-white text-sm font-bold transition-all shadow-sm cursor-pointer active:scale-95"
+              className="px-5 py-2.5 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-bold transition-all shadow-sm cursor-pointer active:scale-95"
             >
               Luyện tập tất cả
             </button>
