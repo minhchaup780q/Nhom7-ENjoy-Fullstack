@@ -94,16 +94,16 @@ export const PersonalizedListeningModal: React.FC<Props> = ({ skillScore, onClos
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in select-none">
-      <div className="bg-white border border-pink-100 rounded-3xl max-w-2xl w-full max-h-[88vh] flex flex-col shadow-xl overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-3xl max-w-2xl w-full max-h-[88vh] flex flex-col shadow-xl overflow-hidden">
         
         {/* Header Modal */}
-        <div className="px-6 py-5 border-b border-pink-50 flex items-center justify-between bg-white">
+        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-white">
           <div>
             <div className="flex items-center gap-2.5">
-              <h2 className="text-xl font-bold text-slate-800">
+              <h2 className="text-xl font-bold text-slate-800 font-display">
                 Luyện nghe
               </h2>
-              <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-pink-50 text-[#ff5e97] border border-pink-200">
+              <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
                 {skillScore}%
               </span>
             </div>
@@ -116,7 +116,7 @@ export const PersonalizedListeningModal: React.FC<Props> = ({ skillScore, onClos
 
           <button
             onClick={onClose}
-            className="w-9 h-9 flex items-center justify-center rounded-xl bg-pink-50/70 hover:bg-pink-100 text-slate-500 hover:text-slate-700 transition-colors font-bold text-sm cursor-pointer"
+            className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 transition-colors font-bold text-sm cursor-pointer"
           >
             ✕
           </button>
@@ -133,8 +133,8 @@ export const PersonalizedListeningModal: React.FC<Props> = ({ skillScore, onClos
                   onClick={() => setSelectedTopic(t)}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer ${
                     selectedTopic === t
-                      ? 'bg-[#ff5e97] text-white shadow-xs'
-                      : 'bg-pink-50/60 text-slate-600 hover:bg-pink-100/70'
+                      ? 'bg-sky-600 text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
                   {t}
@@ -145,7 +145,7 @@ export const PersonalizedListeningModal: React.FC<Props> = ({ skillScore, onClos
 
           {loading ? (
             <div className="py-16 flex flex-col items-center justify-center gap-3">
-              <div className="w-8 h-8 border-2 border-[#ff5e97] border-t-transparent rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-sky-600 border-t-transparent rounded-full animate-spin" />
               <span className="text-xs text-slate-500">Đang tải danh sách câu nghe...</span>
             </div>
           ) : filteredMistakes.length === 0 ? (
@@ -165,15 +165,15 @@ export const PersonalizedListeningModal: React.FC<Props> = ({ skillScore, onClos
                 return (
                   <div
                     key={m.id}
-                    className="p-4 rounded-2xl bg-pink-50/30 border border-pink-100/80 flex items-center justify-between gap-4 hover:border-pink-200 hover:bg-pink-50/50 transition-all"
+                    className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-4 hover:border-sky-200 hover:bg-sky-50/30 transition-all"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <button
                         onClick={() => playWord(m.contentText || m.keyword || '', String(m.id), m.audioUrl)}
                         className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
                           isPlaying
-                            ? 'bg-[#ff5e97] border-[#ff5e97] text-white'
-                            : 'bg-white border-pink-200 text-[#ff5e97] hover:border-pink-300'
+                            ? 'bg-sky-600 border-sky-600 text-white'
+                            : 'bg-white border-slate-200 text-sky-700 hover:border-sky-300'
                         }`}
                       >
                         {isPlaying ? 'Đang phát...' : 'Nghe lại'}
@@ -184,7 +184,7 @@ export const PersonalizedListeningModal: React.FC<Props> = ({ skillScore, onClos
                           <span className="font-bold text-slate-800 text-sm truncate">
                             {m.contentText || m.keyword}
                           </span>
-                          <span className="text-[11px] px-2 py-0.5 rounded-md bg-pink-50 text-[#ff5e97] font-semibold border border-pink-200 shrink-0">
+                          <span className="text-[11px] px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 font-semibold border border-sky-200 shrink-0">
                             Kéo thả nghe
                           </span>
                         </div>
@@ -201,9 +201,9 @@ export const PersonalizedListeningModal: React.FC<Props> = ({ skillScore, onClos
                         <span className="text-[11px] font-semibold text-slate-500 block">
                           {streak >= 3 ? 'Đã nắm vững' : `Cần ôn ${3 - streak} ngày`}
                         </span>
-                        <div className="w-16 bg-pink-100 h-1.5 rounded-full mt-1 overflow-hidden">
+                        <div className="w-16 bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
                           <div
-                            className="bg-[#ff5e97] h-full rounded-full transition-all"
+                            className="bg-sky-600 h-full rounded-full transition-all"
                             style={{ width: `${Math.round(mastery * 100)}%` }}
                           />
                         </div>
@@ -211,7 +211,7 @@ export const PersonalizedListeningModal: React.FC<Props> = ({ skillScore, onClos
 
                       <button
                         onClick={() => setActivePracticeItems([m])}
-                        className="px-3.5 py-2 rounded-xl bg-[#ff5e97] hover:bg-[#e84c85] text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                        className="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
                       >
                         Luyện tập
                       </button>
@@ -225,13 +225,13 @@ export const PersonalizedListeningModal: React.FC<Props> = ({ skillScore, onClos
 
         {/* Footer */}
         {filteredMistakes.length > 0 && (
-          <div className="px-6 py-4 border-t border-pink-50 bg-white flex items-center justify-between">
+          <div className="px-6 py-4 border-t border-slate-100 bg-white flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">
               Tổng số: {filteredMistakes.length} câu
             </span>
             <button
               onClick={() => setActivePracticeItems(filteredMistakes)}
-              className="px-5 py-2.5 rounded-2xl bg-[#ff5e97] hover:bg-[#e84c85] text-white text-sm font-bold transition-all shadow-sm cursor-pointer active:scale-95"
+              className="px-5 py-2.5 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-bold transition-all shadow-sm cursor-pointer active:scale-95"
             >
               Luyện tập tất cả
             </button>

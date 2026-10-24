@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 @theme {
-  /* Tông màu hồng tươi sáng chủ đạo (Duolingo Pink Style) */
-  --color-primary: #ff5e97;
-  --color-primary-hover: #ff3e80;
-  --color-primary-dark: #e03a74;
-  --color-primary-light: #ff8ab4;
-  --color-primary-soft: #fff2f6;
+  /* Tông màu xanh dương hiện đại chủ đạo (Sky Blue Modern Style) */
+  --color-primary: #0284c7;
+  --color-primary-hover: #0369a1;
+  --color-primary-dark: #075985;
+  --color-primary-light: #38bdf8;
+  --color-primary-soft: #f0f9ff;
 
   /* Tông màu xanh lá cây tương tự Duolingo nhưng cân bằng với màu hồng */
   --color-success: #58cc02;
@@ -34,7 +34,7 @@
   --color-bg-light: #f7f7f7;
 
   /* Phông chữ */
-  --font-display: "Outfit", "Inter", system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
   --font-sans: "Inter", system-ui, sans-serif;
 }
 
@@ -62,6 +62,24 @@ body {
   overflow-x: hidden;
 }
 
+@keyframes floatAnim {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-7px) rotate(-1deg); }
+}
+
+@keyframes pulseGlowAnim {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 0.95; transform: scale(1.05); }
+}
+
+.animate-float {
+  animation: floatAnim 3.5s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: pulseGlowAnim 2.8s ease-in-out infinite;
+}
+
 /* Hiệu ứng 3D Duolingo Button */
 .btn-3d {
   position: relative;
@@ -84,15 +102,15 @@ body {
   transform: translateY(4px);
 }
 
-/* Pink 3D Button */
+/* Primary 3D Button (Sky Blue) */
 .btn-3d-pink {
-  background-color: #ff5e97;
+  background-color: #0284c7;
   color: #ffffff;
-  border-color: #ff5e97;
-  box-shadow: 0 4px 0 #d93d74;
+  border-color: #0284c7;
+  box-shadow: 0 4px 0 #0369a1;
 }
 .btn-3d-pink:active {
-  box-shadow: 0 0 0 #d93d74;
+  box-shadow: 0 0 0 #0369a1;
 }
 
 /* Green 3D Button */

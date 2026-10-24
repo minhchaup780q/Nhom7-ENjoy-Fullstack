@@ -419,7 +419,7 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
 
       <div className="session-progress-bar flex-1 h-3 bg-slate-100 border border-slate-200 rounded-full overflow-hidden">
         <div 
-          className="session-progress-fill h-full bg-[#ff5e97] rounded-full transition-all duration-300" 
+          className="session-progress-fill h-full bg-gradient-to-r from-sky-500 to-indigo-600 rounded-full transition-all duration-300" 
           style={{ width: `${progressPercent}%` }} 
         />
       </div>
@@ -588,7 +588,7 @@ export const MistakePracticePlayer: React.FC<MistakePracticePlayerProps> = ({
           </button>
           <button 
             id="exit-modal-leave-btn" 
-            className="flex-1 px-4 py-2.5 rounded-xl bg-[#ff5e97] hover:bg-[#e84c85] text-white font-bold text-xs cursor-pointer transition-colors shadow-xs" 
+            className="flex-1 px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs cursor-pointer transition-colors shadow-xs" 
             onClick={onClose}
           >
             Thoát

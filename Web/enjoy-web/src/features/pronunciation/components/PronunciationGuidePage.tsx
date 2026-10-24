@@ -143,31 +143,32 @@ export const PronunciationGuidePage: React.FC = () => {
   );
 
   return (
-    <div className="flex-1 p-4 md:p-8 max-w-2xl mx-auto w-full select-none animate-fadeIn pb-24">
+    <div className="flex-1 p-4 md:p-8 max-w-3xl mx-auto w-full select-none animate-fadeIn pb-24">
       
-      {/* Header Duolingo-style với Mascot ENjoy */}
-      <div className="text-center space-y-3 mb-6">
+      {/* Header với Mascot ENjoy */}
+      <div className="text-center space-y-3 mb-8">
         <div className="flex justify-center mb-1">
-          <Mascot expression="happy" size={100} />
+          <Mascot expression="happy" size={90} />
         </div>
         
-        <h1 className="text-2xl sm:text-3xl font-display font-black text-slate-800 tracking-tight flex items-center justify-center gap-2">
-          <span>Cùng học phát âm cùng ENJOY nhé!</span>
+        <h1 className="text-2xl sm:text-3xl font-display font-extrabold text-slate-900 tracking-tight flex items-center justify-center gap-2">
+          <span>Bảng Ký Tự Phát Âm Chuẩn Quốc Tế IPA</span>
         </h1>
         
-        <p className="text-xs sm:text-sm font-semibold text-slate-500 max-w-md mx-auto">
-          Nhấn vào từng âm để nghe cách phát âm chuẩn và từ ví dụ tương ứng
+        <p className="text-xs sm:text-sm font-medium text-slate-500 max-w-md mx-auto leading-relaxed">
+          Nhấn vào từng âm để luyện nghe cách phát âm chuẩn xác theo giọng bản ngữ kèm từ vựng ví dụ trực quan.
         </p>
 
         {/* Bộ chọn người đọc & Nút Cá nhân hóa phát âm */}
-        <div className="pt-2 flex flex-wrap items-center justify-center gap-2.5">
+        <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
           {availableVoices.length > 0 && (
-            <div className="flex items-center gap-1.5 bg-rose-50 px-3 py-1 rounded-xl border border-rose-200/70">
+            <div className="inline-flex items-center gap-2 bg-white px-3.5 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
+              <span className="material-symbols-outlined text-[16px] text-slate-400">record_voice_over</span>
               <span className="text-xs font-bold text-slate-600">Giọng đọc:</span>
               <select
                 value={selectedVoiceURI}
                 onChange={(e) => setSelectedVoiceURI(e.target.value)}
-                className="bg-transparent text-xs font-bold text-primary focus:outline-none cursor-pointer"
+                className="bg-transparent text-xs font-bold text-sky-600 focus:outline-none cursor-pointer"
               >
                 {availableVoices.map((v) => (
                   <option key={v.voiceURI} value={v.voiceURI}>
@@ -181,9 +182,9 @@ export const PronunciationGuidePage: React.FC = () => {
           <button
             type="button"
             onClick={() => setShowPersonalizedModal(true)}
-            className="px-3.5 py-1.5 rounded-xl bg-primary text-white text-xs font-display font-black flex items-center gap-1.5 shadow-xs hover:bg-primary-dark transition-all cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-display font-extrabold flex items-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer"
           >
-            <SparklesIcon className="w-3.5 h-3.5 text-amber-300" />
+            <span className="material-symbols-outlined text-[16px]">magic_button</span>
             <span>Cá nhân hoá Phát âm AI</span>
           </button>
         </div>
@@ -192,11 +193,11 @@ export const PronunciationGuidePage: React.FC = () => {
       {/* KHỐI 1: NGUYÊN ÂM (VOWELS) */}
       <div className="space-y-4 mb-10">
         <div className="flex items-center gap-3">
-          <div className="h-0.5 bg-rose-100 flex-1" />
-          <span className="text-xs font-black text-primary uppercase tracking-widest px-3 py-1 bg-rose-50 border border-rose-200/60 rounded-full">
+          <div className="h-px bg-slate-200 flex-1" />
+          <span className="text-xs font-display font-extrabold text-sky-700 uppercase tracking-wider px-3.5 py-1 bg-sky-50 border border-sky-100 rounded-full shadow-2xs">
             Nguyên âm ({VOWELS_DATA.length})
           </span>
-          <div className="h-0.5 bg-rose-100 flex-1" />
+          <div className="h-px bg-slate-200 flex-1" />
         </div>
 
         <div className="grid grid-cols-3 gap-3">
@@ -207,32 +208,34 @@ export const PronunciationGuidePage: React.FC = () => {
               <button
                 key={key}
                 onClick={() => playPhoneticSound(item)}
-                className={`group bg-white border-2 rounded-2xl p-3.5 sm:p-4 flex flex-col items-center justify-center transition-all cursor-pointer relative shadow-2xs hover:shadow-md active:scale-95 ${
+                className={`group bg-white border rounded-2xl p-4 flex flex-col items-center justify-center transition-all cursor-pointer relative shadow-xs hover:shadow-md active:scale-95 ${
                   isPlaying
-                    ? 'border-primary bg-rose-50/70 ring-2 ring-primary/30 scale-102'
-                    : 'border-slate-200 hover:border-primary/50'
+                    ? 'border-sky-500 bg-sky-50/80 ring-2 ring-sky-200 scale-102'
+                    : 'border-slate-200/90 hover:border-sky-300'
                 }`}
               >
                 {/* Ký hiệu IPA */}
-                <span className={`text-xl sm:text-2xl font-bold font-sans transition-colors ${
-                  isPlaying ? 'text-primary' : 'text-slate-800 group-hover:text-primary'
+                <span className={`text-2xl font-bold font-sans transition-colors ${
+                  isPlaying ? 'text-sky-600' : 'text-slate-900 group-hover:text-sky-600'
                 }`}>
                   {item.symbol}
                 </span>
 
                 {/* Từ ví dụ */}
-                <span className="text-xs font-semibold text-slate-500 mt-0.5 group-hover:text-slate-700">
-                  {item.word}
+                <span className="text-xs font-medium text-slate-500 mt-1 group-hover:text-slate-800">
+                  {item.word} {item.vietnameseMeaning ? `(${item.vietnameseMeaning})` : ''}
                 </span>
 
-                {/* Gạch chân Duolingo style */}
-                <div className={`w-7 h-1 rounded-full mt-2 transition-all ${
-                  isPlaying ? 'bg-primary w-10' : 'bg-slate-200 group-hover:bg-rose-300'
+                {/* Gạch chân trang nhã */}
+                <div className={`h-1 rounded-full mt-2.5 transition-all ${
+                  isPlaying ? 'bg-sky-600 w-10' : 'bg-slate-200 group-hover:bg-sky-300 w-7'
                 }`} />
 
                 {/* Loa mini nhấp nháy khi đang phát */}
                 {isPlaying && (
-                  <SpeakerWaveIcon className="w-4 h-4 text-primary absolute top-2 right-2 animate-bounce" />
+                  <span className="material-symbols-outlined text-[16px] text-sky-600 absolute top-2.5 right-2.5 animate-bounce">
+                    volume_up
+                  </span>
                 )}
               </button>
             );
@@ -243,11 +246,11 @@ export const PronunciationGuidePage: React.FC = () => {
       {/* KHỐI 2: PHỤ ÂM (CONSONANTS) */}
       <div className="space-y-4 mb-8">
         <div className="flex items-center gap-3">
-          <div className="h-0.5 bg-rose-100 flex-1" />
-          <span className="text-xs font-black text-primary uppercase tracking-widest px-3 py-1 bg-rose-50 border border-rose-200/60 rounded-full">
+          <div className="h-px bg-slate-200 flex-1" />
+          <span className="text-xs font-display font-extrabold text-indigo-700 uppercase tracking-wider px-3.5 py-1 bg-indigo-50 border border-indigo-100 rounded-full shadow-2xs">
             Phụ âm ({CONSONANTS_DATA.length})
           </span>
-          <div className="h-0.5 bg-rose-100 flex-1" />
+          <div className="h-px bg-slate-200 flex-1" />
         </div>
 
         <div className="grid grid-cols-3 gap-3">
@@ -258,32 +261,34 @@ export const PronunciationGuidePage: React.FC = () => {
               <button
                 key={key}
                 onClick={() => playPhoneticSound(item)}
-                className={`group bg-white border-2 rounded-2xl p-3.5 sm:p-4 flex flex-col items-center justify-center transition-all cursor-pointer relative shadow-2xs hover:shadow-md active:scale-95 ${
+                className={`group bg-white border rounded-2xl p-4 flex flex-col items-center justify-center transition-all cursor-pointer relative shadow-xs hover:shadow-md active:scale-95 ${
                   isPlaying
-                    ? 'border-primary bg-rose-50/70 ring-2 ring-primary/30 scale-102'
-                    : 'border-slate-200 hover:border-primary/50'
+                    ? 'border-indigo-500 bg-indigo-50/80 ring-2 ring-indigo-200 scale-102'
+                    : 'border-slate-200/90 hover:border-indigo-300'
                 }`}
               >
                 {/* Ký hiệu IPA */}
-                <span className={`text-xl sm:text-2xl font-bold font-sans transition-colors ${
-                  isPlaying ? 'text-primary' : 'text-slate-800 group-hover:text-primary'
+                <span className={`text-2xl font-bold font-sans transition-colors ${
+                  isPlaying ? 'text-indigo-600' : 'text-slate-900 group-hover:text-indigo-600'
                 }`}>
                   {item.symbol}
                 </span>
 
                 {/* Từ ví dụ */}
-                <span className="text-xs font-semibold text-slate-500 mt-0.5 group-hover:text-slate-700">
-                  {item.word}
+                <span className="text-xs font-medium text-slate-500 mt-1 group-hover:text-slate-800">
+                  {item.word} {item.vietnameseMeaning ? `(${item.vietnameseMeaning})` : ''}
                 </span>
 
-                {/* Gạch chân Duolingo style */}
-                <div className={`w-7 h-1 rounded-full mt-2 transition-all ${
-                  isPlaying ? 'bg-primary w-10' : 'bg-slate-200 group-hover:bg-rose-300'
+                {/* Gạch chân trang nhã */}
+                <div className={`h-1 rounded-full mt-2.5 transition-all ${
+                  isPlaying ? 'bg-indigo-600 w-10' : 'bg-slate-200 group-hover:bg-indigo-300 w-7'
                 }`} />
 
                 {/* Loa mini nhấp nháy khi đang phát */}
                 {isPlaying && (
-                  <SpeakerWaveIcon className="w-4 h-4 text-primary absolute top-2 right-2 animate-bounce" />
+                  <span className="material-symbols-outlined text-[16px] text-indigo-600 absolute top-2.5 right-2.5 animate-bounce">
+                    volume_up
+                  </span>
                 )}
               </button>
             );

@@ -8,7 +8,7 @@ interface FormattedAiTextProps {
 
 export const renderFormattedAiText = (
   text?: string | null,
-  badgeClassName: string = 'inline-flex items-center px-2 py-0.5 mx-0.5 font-bold text-[#ff5e97] bg-pink-50 border border-pink-200 rounded-lg shadow-2xs align-baseline'
+  badgeClassName: string = 'inline-flex items-center px-2 py-0.5 mx-0.5 font-bold text-sky-700 bg-sky-50 border border-sky-200 rounded-lg shadow-2xs align-baseline'
 ): React.ReactNode => {
   if (!text) return null;
 
@@ -28,7 +28,7 @@ export const renderFormattedAiText = (
     if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
       const content = part.slice(1, -1);
       return (
-        <span key={index} className="font-bold text-[#ff5e97] mx-0.5">
+        <span key={index} className="font-bold text-sky-600 mx-0.5">
           {content}
         </span>
       );

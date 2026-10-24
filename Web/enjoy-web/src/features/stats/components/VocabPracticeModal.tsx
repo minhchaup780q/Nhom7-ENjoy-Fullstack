@@ -336,8 +336,8 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
         <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-base font-bold text-text-main">Đang chuẩn bị lộ trình ôn tập...</p>
+          <div className="w-10 h-10 border-4 border-sky-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-base font-bold text-slate-800">Đang chuẩn bị lộ trình ôn tập...</p>
         </div>
       </div>
     );
@@ -349,13 +349,13 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
   if (allFinished) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
-        <div className="bg-white rounded-3xl max-w-md w-full p-8 text-center shadow-2xl flex flex-col items-center gap-5 border border-border">
+        <div className="bg-white rounded-3xl max-w-md w-full p-8 text-center shadow-2xl flex flex-col items-center gap-5 border border-slate-200">
           <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shadow-inner">
             <CheckCircleIcon className="w-12 h-12" />
           </div>
           <div>
-            <h3 className="text-2xl font-display font-extrabold text-text-main">Tuyệt vời quá!</h3>
-            <p className="text-sm text-text-muted mt-2">
+            <h3 className="text-2xl font-display font-extrabold text-slate-800">Tuyệt vời quá!</h3>
+            <p className="text-sm text-slate-500 mt-2">
               Bé đã hoàn thành xuất sắc tất cả các từ cần cải thiện trong chủ đề <strong>{topicName}</strong>!
             </p>
           </div>
@@ -364,7 +364,7 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
               onTopicUpdated();
               onClose();
             }}
-            className="w-full py-3.5 bg-primary text-white font-bold rounded-2xl shadow-lg shadow-primary/25 hover:bg-primary/90 transition-all cursor-pointer"
+            className="w-full py-3.5 bg-sky-600 text-white font-bold rounded-2xl shadow-lg shadow-sky-600/25 hover:bg-sky-700 transition-all cursor-pointer"
           >
             Quay lại bảng Thống kê
           </button>
@@ -375,24 +375,24 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-6 overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-border overflow-hidden flex flex-col my-auto animate-scaleUp">
+      <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col my-auto animate-scaleUp">
         
         {/* ── Modal Header ── */}
-        <div className="px-6 py-4 bg-surface border-b border-border flex items-center justify-between">
+        <div className="px-6 py-4 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black text-sm">
+            <div className="w-9 h-9 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-600 font-black text-sm">
               {currentWordIndex + 1}/{words.length}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs uppercase font-bold tracking-wider text-text-muted">
+                <span className="text-xs uppercase font-bold tracking-wider text-slate-500">
                   {currentWord.topic || topicName}
                 </span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold">
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-sky-50 text-sky-700 font-bold border border-sky-100">
                   Từ: {currentWord.word}
                 </span>
               </div>
-              <p className="text-sm font-bold text-text-main">
+              <p className="text-sm font-bold text-slate-800">
                 {currentStep === 1 && 'Vòng 1: Xem Flashcard'}
                 {currentStep === 2 && 'Vòng 2: Ghép đúng chữ cái'}
                 {currentStep === 3 && 'Vòng 3: Luyện phát âm chuẩn'}
@@ -403,7 +403,7 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
 
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full hover:bg-gray-200/70 text-text-muted flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded-full hover:bg-slate-200/70 text-slate-500 flex items-center justify-center transition-colors cursor-pointer"
             aria-label="Đóng"
           >
             <XMarkIcon className="w-5 h-5" />
@@ -411,7 +411,7 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
         </div>
 
         {/* ── Stepper Indicator ── */}
-        <div className="grid grid-cols-4 gap-1 p-2 bg-gray-50 border-b border-border text-center text-xs font-semibold">
+        <div className="grid grid-cols-4 gap-1 p-2 bg-slate-50 border-b border-slate-200 text-center text-xs font-semibold">
           {[
             { step: 1, label: '1. Flashcard' },
             { step: 2, label: '2. Gõ từ' },
@@ -425,10 +425,10 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
                 key={s.step}
                 className={`py-1.5 rounded-lg transition-all ${
                   isActive
-                    ? 'bg-primary text-white font-bold shadow-sm'
+                    ? 'bg-sky-600 text-white font-bold shadow-sm'
                     : isDone
                     ? 'bg-emerald-100 text-emerald-700'
-                    : 'text-text-muted'
+                    : 'text-slate-400'
                 }`}
               >
                 {s.label}
@@ -445,7 +445,7 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
           {/* ══════════════════════════════════════════════════════════════ */}
           {currentStep === 1 && (
             <div className="w-full flex flex-col items-center gap-6">
-              <div className="w-full max-w-sm bg-surface rounded-2xl p-6 border-2 border-primary/20 shadow-sm flex flex-col items-center text-center">
+              <div className="w-full max-w-sm bg-slate-50/50 rounded-2xl p-6 border-2 border-sky-100 shadow-sm flex flex-col items-center text-center">
                 {currentWord.imageUrl ? (
                   <img
                     src={currentWord.imageUrl}
@@ -453,21 +453,21 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
                     className="w-36 h-36 object-contain rounded-xl mb-4 bg-white p-2 shadow-inner"
                   />
                 ) : (
-                  <div className="w-36 h-36 rounded-xl bg-primary/5 flex items-center justify-center text-primary font-black text-4xl mb-4">
+                  <div className="w-36 h-36 rounded-xl bg-sky-50 flex items-center justify-center text-sky-600 font-black text-4xl mb-4 border border-sky-100">
                     {currentWord.word.charAt(0).toUpperCase()}
                   </div>
                 )}
 
-                <h2 className="text-3xl font-display font-extrabold text-text-main mb-1">
+                <h2 className="text-3xl font-display font-extrabold text-slate-800 mb-1">
                   {currentWord.word}
                 </h2>
-                <p className="text-base text-primary font-semibold">
+                <p className="text-base text-sky-600 font-semibold">
                   {currentWord.translation || currentWord.word}
                 </p>
 
                 <button
                   onClick={() => playWordAudio(currentWord.word)}
-                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary font-bold text-sm transition-colors cursor-pointer"
+                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold text-sm border border-sky-200/60 transition-colors cursor-pointer"
                 >
                   <SpeakerWaveIcon className="w-4 h-4" /> Nghe phát âm
                 </button>
@@ -477,7 +477,7 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
                 onClick={() => {
                   setCurrentStep(2);
                 }}
-                className="w-full max-w-sm py-3.5 bg-primary text-white font-bold rounded-2xl shadow-lg shadow-primary/20 hover:bg-primary/90 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                className="w-full max-w-sm py-3.5 bg-sky-600 text-white font-bold rounded-2xl shadow-lg shadow-sky-600/20 hover:bg-sky-700 flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 Đã nhớ từ này <ArrowRightIcon className="w-4 h-4" />
               </button>
@@ -493,12 +493,12 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
                 <img
                   src={currentWord.imageUrl}
                   alt={currentWord.word}
-                  className="w-20 h-20 object-contain rounded-2xl bg-white p-1.5 shadow-sm border border-border"
+                  className="w-20 h-20 object-contain rounded-2xl bg-white p-1.5 shadow-sm border border-slate-200"
                 />
               )}
               <div className="text-center">
-                <p className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Hãy ghép thành từ đúng</p>
-                <p className="text-lg font-bold text-primary">Nghĩa: {currentWord.translation || currentWord.word}</p>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Hãy ghép thành từ đúng</p>
+                <p className="text-lg font-bold text-sky-600">Nghĩa: {currentWord.translation || currentWord.word}</p>
               </div>
 
               {/* Input Boxes */}
@@ -521,7 +521,7 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
                         ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
                         : spellingStatus === 'incorrect'
                         ? 'border-red-400 bg-red-50 text-red-600'
-                        : 'border-border focus:border-primary bg-surface'
+                        : 'border-slate-200 focus:border-sky-500 bg-slate-50/50'
                     }`}
                   />
                 ))}
@@ -533,7 +533,7 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
                   <button
                     key={idx}
                     onClick={() => handleTileClick(letter)}
-                    className="w-11 h-11 bg-white border-2 border-border hover:border-primary rounded-xl font-extrabold text-lg text-text-main shadow-sm hover:shadow active:scale-95 transition-all cursor-pointer"
+                    className="w-11 h-11 bg-white border-2 border-slate-200 hover:border-sky-500 hover:text-sky-600 rounded-xl font-extrabold text-lg text-slate-800 shadow-sm hover:shadow active:scale-95 transition-all cursor-pointer"
                   >
                     {letter.toUpperCase()}
                   </button>
@@ -564,7 +564,7 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
                       setSpellingStatus('idle');
                       inputRefs.current[0]?.focus();
                     }}
-                    className="text-xs font-bold text-primary hover:underline"
+                    className="text-xs font-bold text-sky-600 hover:underline"
                   >
                     Xóa làm lại
                   </button>
@@ -582,19 +582,19 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
                 <img
                   src={currentWord.imageUrl}
                   alt={currentWord.word}
-                  className="w-24 h-24 object-contain rounded-2xl bg-white p-2 shadow-sm border border-border"
+                  className="w-24 h-24 object-contain rounded-2xl bg-white p-2 shadow-sm border border-slate-200"
                 />
               )}
               <div>
-                <p className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Bé hãy nói to từ sau</p>
-                <h2 className="text-3xl font-display font-extrabold text-text-main">{currentWord.word}</h2>
-                <p className="text-sm text-text-muted mt-1">({currentWord.translation || currentWord.word})</p>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Bé hãy nói to từ sau</p>
+                <h2 className="text-3xl font-display font-extrabold text-slate-800">{currentWord.word}</h2>
+                <p className="text-sm text-slate-500 mt-1">({currentWord.translation || currentWord.word})</p>
               </div>
 
               {/* Nút nghe mẫu */}
               <button
                 onClick={() => playWordAudio(currentWord.word)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary font-bold text-sm transition-colors cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold text-sm border border-sky-200/60 transition-colors cursor-pointer"
               >
                 <SpeakerWaveIcon className="w-4 h-4" /> Nghe phát âm mẫu
               </button>
@@ -609,12 +609,12 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
                       ? 'bg-red-500 animate-pulse scale-105'
                       : assessing
                       ? 'bg-gray-400'
-                      : 'bg-primary hover:bg-primary/90 hover:scale-105'
+                      : 'bg-sky-600 hover:bg-sky-700 hover:scale-105 shadow-sky-600/30'
                   }`}
                 >
                   {isRecording ? <StopIcon className="w-8 h-8" /> : <MicrophoneIcon className="w-8 h-8" />}
                 </button>
-                <p className="text-xs font-bold text-text-muted">
+                <p className="text-xs font-bold text-slate-500">
                   {assessing ? 'AI đang chấm điểm phát âm...' : isRecording ? 'Bấm để dừng ghi âm' : 'Bấm vào Micro để đọc'}
                 </p>
               </div>
@@ -651,22 +651,22 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
             <div className="w-full flex flex-col items-center gap-5">
               {loadingAi ? (
                 <div className="flex flex-col items-center gap-3 py-12">
-                  <div className="w-10 h-10 border-3 border-violet-500 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-sm font-bold text-text-muted flex items-center gap-2">
-                    <SparklesIcon className="w-4 h-4 text-violet-500 animate-pulse" /> AI đang phân tích và tạo câu đục lỗ ngữ pháp...
+                  <div className="w-10 h-10 border-3 border-sky-500 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-sm font-bold text-slate-500 flex items-center gap-2">
+                    <SparklesIcon className="w-4 h-4 text-sky-500 animate-pulse" /> AI đang phân tích và tạo câu đục lỗ ngữ pháp...
                   </p>
                 </div>
               ) : aiChallenge ? (
                 <div className="w-full flex flex-col items-center gap-5">
                   {/* Grammar Badge & Regenerate Button */}
                   <div className="w-full flex items-center justify-between gap-2">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-violet-50 text-violet-700 border border-violet-200 shadow-xs">
-                      <SparklesIcon className="w-3.5 h-3.5 text-violet-500" /> Ngữ pháp: {aiChallenge.grammarName}
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-xs">
+                      <SparklesIcon className="w-3.5 h-3.5 text-indigo-500" /> Ngữ pháp: {aiChallenge.grammarName}
                     </span>
                     <button
                       onClick={() => loadAiChallenge(true)}
                       disabled={loadingAi}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-text-muted hover:text-primary hover:bg-primary/10 transition-all cursor-pointer border border-border"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-slate-500 hover:text-sky-600 hover:bg-sky-50 transition-all cursor-pointer border border-slate-200"
                       title="AI sinh ngữ cảnh và câu ngữ pháp khác"
                     >
                       <ArrowPathIcon className={`w-3.5 h-3.5 ${loadingAi ? 'animate-spin' : ''}`} /> Đổi câu khác
@@ -674,11 +674,11 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
                   </div>
 
                   {/* Sentence Card with Multi-Blank Slots */}
-                  <div className="w-full bg-surface rounded-2xl p-5 border-2 border-primary/20 text-center shadow-sm">
-                    <div className="text-base sm:text-lg font-bold text-text-main tracking-wide leading-relaxed flex flex-wrap items-center justify-center gap-1.5">
+                  <div className="w-full bg-slate-50/50 rounded-2xl p-5 border-2 border-sky-100 text-center shadow-sm">
+                    <div className="text-base sm:text-lg font-bold text-slate-800 tracking-wide leading-relaxed flex flex-wrap items-center justify-center gap-1.5">
                       {aiChallenge.blanks && aiChallenge.blanks.length > 0 ? (
                         aiChallenge.sentence
-                          .split(/(\[____\s*\d+\s*____\])/g)
+                           .split(/(\[____\s*\d+\s*____\])/g)
                           .map((segment, segIdx) => {
                             const match = segment.match(/\[____\s*(\d+)\s*____\]/);
                             if (match) {
@@ -703,8 +703,8 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
                                       ? 'bg-red-100 border-red-500 text-red-700'
                                       : isFilled
                                       ? bInfo?.type === 'grammar'
-                                        ? 'bg-violet-100 border-violet-400 text-violet-800'
-                                        : 'bg-primary/15 border-primary text-primary'
+                                        ? 'bg-indigo-100 border-indigo-400 text-indigo-800'
+                                        : 'bg-sky-100 border-sky-400 text-sky-800'
                                       : 'bg-white border-dashed border-gray-400 text-gray-400'
                                   }`}
                                 >
@@ -723,9 +723,9 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
                     </div>
 
                     {/* Bản dịch tiếng Việt đầy đủ và tự nhiên */}
-                    <div className="mt-4 pt-3 border-t border-border/70 text-left bg-white/80 rounded-xl p-3 shadow-xs">
-                      <p className="text-xs sm:text-sm text-text-main font-medium leading-normal">
-                        <span className="font-bold text-primary mr-1.5 uppercase text-[11px] tracking-wide">Dịch nghĩa:</span>
+                    <div className="mt-4 pt-3 border-t border-slate-200/70 text-left bg-white/80 rounded-xl p-3 shadow-xs">
+                      <p className="text-xs sm:text-sm text-slate-800 font-medium leading-normal">
+                        <span className="font-bold text-sky-600 mr-1.5 uppercase text-[11px] tracking-wide">Dịch nghĩa:</span>
                         "{aiChallenge.translation}"
                       </p>
                     </div>
@@ -737,16 +737,16 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
                       {aiChallenge.blanks.map((b) => {
                         const currentVal = selectedBlanks[b.blankIndex];
                         return (
-                          <div key={b.blankIndex} className="bg-gray-50/80 rounded-2xl p-3.5 border border-border">
+                          <div key={b.blankIndex} className="bg-slate-50/80 rounded-2xl p-3.5 border border-slate-200">
                             <div className="flex items-center justify-between mb-2.5">
-                              <span className="text-xs font-extrabold text-text-main flex items-center gap-1.5">
-                                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-white text-[11px] font-bold ${b.type === 'grammar' ? 'bg-violet-600' : 'bg-primary'}`}>
+                              <span className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+                                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-white text-[11px] font-bold ${b.type === 'grammar' ? 'bg-indigo-600' : 'bg-sky-600'}`}>
                                   {b.blankIndex}
                                 </span>
                                 {b.label}
                               </span>
                               {currentVal && (
-                                <span className="text-xs font-bold text-primary">
+                                <span className="text-xs font-bold text-sky-600">
                                   Đã chọn: <span className="underline">{currentVal}</span>
                                 </span>
                               )}
@@ -770,9 +770,9 @@ export const VocabPracticeModal: React.FC<VocabPracticeModalProps> = ({
                                         ? 'bg-red-50 border-red-400 text-red-700 shadow-sm'
                                         : isSelected
                                         ? b.type === 'grammar'
-                                          ? 'bg-violet-100 border-violet-500 text-violet-900'
-                                          : 'bg-primary/15 border-primary text-primary'
-                                        : 'bg-white border-border hover:border-primary/50 text-text-main shadow-xs active:scale-95'
+                                          ? 'bg-indigo-100 border-indigo-500 text-indigo-900'
+                                          : 'bg-sky-100 border-sky-500 text-sky-800'
+                                        : 'bg-white border-slate-200 hover:border-sky-400 text-slate-800 shadow-xs active:scale-95'
                                     }`}
                                   >
                                     {opt}
