@@ -24,7 +24,7 @@ npm start
 
 ## 3. Cấu hình (.env)
 ```env
-PORT=9092
+PORT=5001
 NODE_ENV=development
 CLIENT_ORIGIN=*
 

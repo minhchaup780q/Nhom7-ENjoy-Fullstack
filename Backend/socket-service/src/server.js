@@ -9,7 +9,7 @@ import { initChatHandler } from './handlers/chatHandler.js';
 
 dotenv.config();
 
-const PORT = parseInt(process.env.PORT || '9092', 10);
+const DEFAULT_PORT = parseInt(process.env.PORT || '5001', 10);
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || '*';
 
 const app = express();
@@ -75,15 +75,30 @@ io.on('connection', (socket) => {
 initLeaderboardHandler(io);
 initChatHandler(io);
 
-// Khởi chạy HTTP & WebSocket Server
-httpServer.listen(PORT, '0.0.0.0', () => {
-  console.log('====================================================');
-  console.log(`🚀 [Socket.IO Server] Đang chạy tại http://0.0.0.0:${PORT}`);
-  console.log(`📡 [CORS Origin]: ${CLIENT_ORIGIN}`);
-  console.log(`🏆 [Leaderboard Realtime]: Bật tự động broadcast mỗi ${process.env.LEADERBOARD_INTERVAL_MS || 1000}ms`);
-  console.log(`💬 [Chat Realtime Module]: Sẵn sàng hoạt động`);
-  console.log('====================================================');
-});
+// Khởi chạy HTTP & WebSocket Server với cơ chế tự động chuyển cổng nếu bị chiếm dụng
+function startServer(port) {
+  httpServer.removeAllListeners('error');
+
+  httpServer.on('error', (err) => {
+    if (err.code === 'EADDRINUSE' || err.code === 'EACCES') {
+      console.warn(`⚠️ [Cảnh báo] Cổng ${port} đang bận hoặc bị giới hạn quyền truy cập (${err.code}). Đang thử cổng ${port + 1}...`);
+      setTimeout(() => startServer(port + 1), 300);
+    } else {
+      console.error('❌ [Lỗi khởi động Server]:', err);
+    }
+  });
+
+  httpServer.listen(port, '0.0.0.0', () => {
+    console.log('====================================================');
+    console.log(`🚀 [Socket.IO Server] Đang chạy tại http://localhost:${port}`);
+    console.log(`📡 [CORS Origin]: ${CLIENT_ORIGIN}`);
+    console.log(`🏆 [Leaderboard Realtime]: Broadcast tự động mỗi ${process.env.LEADERBOARD_INTERVAL_MS || 1000}ms`);
+    console.log(`💬 [Chat Realtime Module]: Sẵn sàng hoạt động`);
+    console.log('====================================================');
+  });
+}
+
+startServer(DEFAULT_PORT);
 
 // Graceful Shutdown
 function handleShutdown(signal) {
