@@ -30,7 +30,7 @@ const formatJoinDate = (dateStr?: string) => {
 };
 
 export const ProfilePage: React.FC = () => {
-  const { user, logout, setAuth, accessToken } = useAuthStore();
+  const { user, setAuth, accessToken } = useAuthStore();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -397,37 +397,6 @@ export const ProfilePage: React.FC = () => {
                   </span>
                 </div>
               </div>
-            </div>
-          </section>
-
-          {/* 4. Account Settings & Sign Out Card */}
-          <section className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-xs flex flex-col md:flex-row items-center justify-between gap-5 transition-all text-left">
-            <div className="flex flex-col text-center md:text-left">
-              <h2 className="font-display text-base font-extrabold text-slate-900">
-                Cài đặt & Tài khoản
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5 font-medium">
-                Quản lý thông tin đăng nhập, ngày sinh hoặc đăng xuất khỏi hệ thống
-              </p>
-            </div>
-            <div className="flex items-center gap-3 w-full md:w-auto shrink-0 justify-center">
-              <button
-                type="button"
-                onClick={() => setShowEditModal(true)}
-                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs uppercase shadow-xs active:scale-95 transition-all cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[18px]">edit</span>
-                <span>CHỈNH SỬA</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={logout}
-                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 font-bold text-xs uppercase shadow-xs active:scale-95 transition-all cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[18px]">logout</span>
-                <span>ĐĂNG XUẤT</span>
-              </button>
             </div>
           </section>
         </div>
