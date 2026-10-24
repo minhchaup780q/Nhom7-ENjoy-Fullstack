@@ -1,6 +1,7 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useExamStore } from '../store/useExamStore';
-import { ShieldCheckIcon, ArrowPathIcon, BookmarkIcon } from '@heroicons/react/24/solid';
+import { ShieldCheckIcon, ArrowPathIcon, BookmarkIcon, SparklesIcon } from '@heroicons/react/24/solid';
 import { SpeakerWaveIcon, BookOpenIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 
 const Shield: React.FC<{ filled: boolean }> = ({ filled }) => (
@@ -16,6 +17,7 @@ const ShieldRow: React.FC<{ count: number; max?: number }> = ({ count, max = 5 }
 );
 
 export const ExamResultPage: React.FC = () => {
+  const navigate = useNavigate();
   const { result, currentExam, reset } = useExamStore();
   if (!result) return null;
 
@@ -154,17 +156,52 @@ export const ExamResultPage: React.FC = () => {
       )}
 
       {/* Actions */}
-      <div className="flex gap-4 w-full mt-2">
-        <button
-          onClick={() => {
-            reset();
-            window.history.replaceState(null, '', '/exams');
-          }}
-          className="flex-1 py-4 rounded-2xl border-2 border-border text-text-main font-bold hover:bg-surface transition-colors flex items-center justify-center gap-2"
-        >
-          <ArrowPathIcon className="w-5 h-5" />
-          Xem đề thi khác
-        </button>
+      <div className="flex flex-col gap-3 w-full mt-2">
+        {hasWrongVocab ? (
+          <>
+            <div className="p-3 bg-amber-100/70 border border-amber-300 rounded-2xl flex items-center gap-2.5 text-xs text-amber-900 font-semibold">
+              <span className="material-symbols-outlined text-[20px] text-amber-600 shrink-0">lock_clock</span>
+              <span>
+                Cần hoàn thành bài luyện tập cá nhân hoá để mở khóa các bài thi và tránh làm loãng biểu đồ.
+              </span>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
+              <button
+                onClick={() => {
+                  reset();
+                  navigate('/practice/personalization?topic=ALL');
+                }}
+                className="flex-1 py-4 px-6 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+              >
+                <SparklesIcon className="w-5 h-5 text-amber-300" />
+                <span>Luyện tập cá nhân hoá ngay</span>
+              </button>
+              <button
+                onClick={() => {
+                  reset();
+                  navigate('/exams');
+                }}
+                className="py-4 px-6 rounded-2xl border-2 border-slate-200 text-slate-700 font-bold hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <ArrowPathIcon className="w-5 h-5" />
+                <span>Danh sách đề thi</span>
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="flex gap-4 w-full">
+            <button
+              onClick={() => {
+                reset();
+                navigate('/exams');
+              }}
+              className="flex-1 py-4 rounded-2xl border-2 border-slate-200 text-slate-800 font-bold hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <ArrowPathIcon className="w-5 h-5" />
+              <span>Xem đề thi khác</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

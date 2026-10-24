@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../../auth/store/useAuthStore';
 import { vocabStatsApi } from '../../exam/services/vocabStatsApi';
 import type { VocabStatsResponse, TopicStat } from '../../exam/types';
 import { VocabPracticeModal } from '../../stats/components/VocabPracticeModal';
+import { analyzeChartDropOver15 } from '../utils/chartDropHelper';
 
 // ──────────────────────────────────────────────
 // Cấu trúc ngữ pháp mẫu
@@ -19,6 +20,9 @@ const GRAMMAR_DATA = [
 export const PracticePage: React.FC = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const simulateDrop = searchParams.get('simulateDrop') === 'true';
+
   const [vocabStats, setVocabStats] = useState<VocabStatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPracticeTopic, setSelectedPracticeTopic] = useState<string | null>(null);
@@ -29,7 +33,7 @@ export const PracticePage: React.FC = () => {
       return;
     }
     vocabStatsApi
-      .getVocabStats(user.id)
+      .getVocabStats(Number(user.id))
       .then(setVocabStats)
       .catch(() => setVocabStats({ noExamHistory: true, topics: [] }))
       .finally(() => setLoading(false));
@@ -39,6 +43,7 @@ export const PracticePage: React.FC = () => {
     fetchStats();
   }, [user?.id]);
 
+  const chartDropInfo = analyzeChartDropOver15(vocabStats?.examHistories, simulateDrop);
   const totalWeak = vocabStats?.topics.reduce((s, t) => s + t.weakCount, 0) ?? 0;
   const totalCorrect = vocabStats?.topics.reduce((s, t) => s + t.correctCount, 0) ?? 0;
   const grammarWeak = GRAMMAR_DATA.filter((g) => g.status !== 'Mastered').length;
@@ -46,52 +51,77 @@ export const PracticePage: React.FC = () => {
 
   return (
     <div className="w-full flex-1 max-w-[1360px] mx-auto p-4 sm:p-8 flex flex-col gap-7 select-none">
-      {/* 1. KNOWLEDGE MASTERY BANNER & LEGEND */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex flex-col">
-          <div className="flex items-center gap-2">
-            <span
-              className="material-symbols-outlined text-sky-600 text-[22px]"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-            >
-              verified
-            </span>
-            <h2 className="font-display font-bold text-lg text-slate-900">
-              Knowledge mastery
-            </h2>
-          </div>
-          <p className="text-xs text-slate-500 mt-0.5">
-            So sánh bài kiểm tra đầu vào và bài thi thử gần nhất của bạn.
-          </p>
-        </div>
+      {/* KHU VỰC LUYỆN TẬP CHUYÊN SÂU TOPIC & GRAMMAR (CHỈ TÍNH TOÁN & HIỂN THỊ KHI BIỂU ĐỒ GIẢM TRÊN 15%) */}
+      {chartDropInfo.hasDroppedOver15 && (
+        <div className="flex flex-col gap-7 animate-fadeIn">
+          {/* 1. KNOWLEDGE MASTERY BANNER & LEGEND */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <span
+                  className="material-symbols-outlined text-sky-600 text-[22px]"
+                  style={{ fontVariationSettings: "'FILL' 1" }}
+                >
+                  verified
+                </span>
+                <h2 className="font-display font-bold text-lg text-slate-900">
+                  Knowledge mastery
+                </h2>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                So sánh bài kiểm tra đầu vào và bài thi thử gần nhất của bạn.
+              </p>
+            </div>
 
-        {/* Status Legend */}
-        <div className="flex flex-wrap items-center gap-5 text-xs text-slate-600 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200/80">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-200" />
-            <span>
-              <strong className="font-semibold text-slate-800">Mastered:</strong> từ 75 điểm
-            </span>
+            {/* Status Legend */}
+            <div className="flex flex-wrap items-center gap-5 text-xs text-slate-600 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200/80">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-200" />
+                <span>
+                  <strong className="font-semibold text-slate-800">Mastered:</strong> từ 75 điểm
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-amber-200" />
+                <span>
+                  <strong className="font-semibold text-slate-800">Developing:</strong> cần cố thêm
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-rose-200" />
+                <span>
+                  <strong className="font-semibold text-slate-800">Weak:</strong> cần cải thiện gấp
+                </span>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-amber-200" />
-            <span>
-              <strong className="font-semibold text-slate-800">Developing:</strong> cần cố thêm
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-rose-200" />
-            <span>
-              <strong className="font-semibold text-slate-800">Weak:</strong> cần cải thiện gấp
-            </span>
-          </div>
-        </div>
-      </div>
 
-      {/* 2. TWO-COLUMN INTERACTIVE TABLE / CARD LAYOUT */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 items-start">
-        {/* COLUMN 1: TOPIC (TỪ VỰNG THEO CHỦ ĐỀ) */}
-        <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/90 shadow-xs flex flex-col overflow-hidden">
+          {/* Cảnh báo suy giảm năng lực > 15% */}
+          <div className="bg-gradient-to-r from-rose-50 to-amber-50 border border-rose-200 rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-[24px]">trending_down</span>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 font-bold text-[11px] uppercase tracking-wider">
+                    Biểu đồ giảm {Math.abs(chartDropInfo.maxDropPercent)}%
+                  </span>
+                  <span className="text-xs text-rose-800 font-semibold">
+                    Đã kích hoạt Luyện tập chuyên sâu Topic & Grammar
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 mt-1">
+                  {chartDropInfo.detailMessage} Hệ thống đã mở khu vực đi sâu vào từng từ vựng và cấu trúc ngữ pháp để giúp bạn cải thiện triệt để điểm yếu!
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* 2. TWO-COLUMN INTERACTIVE TABLE / CARD LAYOUT */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 items-start">
+            {/* COLUMN 1: TOPIC (TỪ VỰNG THEO CHỦ ĐỀ) */}
+            <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/90 shadow-xs flex flex-col overflow-hidden">
           {/* Card Header */}
           <div className="p-5 border-b border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
@@ -323,6 +353,8 @@ export const PracticePage: React.FC = () => {
           </div>
         </div>
       </div>
+    </div>
+  )}
 
       {/* 3. BOTTOM BANNER - AI PERSONALIZATION (VÒNG ĐỌC & VÒNG NGHE AI) */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-sky-800 via-sky-900 to-slate-900 p-6 sm:p-8 text-white shadow-lg border border-sky-600/30">
@@ -397,7 +429,7 @@ export const PracticePage: React.FC = () => {
       {/* Modal Luyện tập từ vựng */}
       {selectedPracticeTopic && user?.id && (
         <VocabPracticeModal
-          userId={user.id}
+          userId={Number(user.id)}
           topicName={selectedPracticeTopic}
           onClose={() => setSelectedPracticeTopic(null)}
           onTopicUpdated={fetchStats}
