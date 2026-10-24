@@ -21,6 +21,10 @@ public interface LeaderboardEntryRepository extends JpaRepository<LeaderboardEnt
             Long tournamentId, RankTier rankTier, Pageable pageable
     );
 
+    List<LeaderboardEntry> findByTournamentIdOrderByWeeklyXpDescLastXpUpdatedAtAsc(
+            Long tournamentId, Pageable pageable
+    );
+
     List<LeaderboardEntry> findByTournamentIdAndRankTierOrderByWeeklyXpDescLastXpUpdatedAtAsc(
             Long tournamentId, RankTier rankTier
     );
