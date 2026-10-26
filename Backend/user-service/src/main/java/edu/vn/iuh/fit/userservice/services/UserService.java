@@ -6,6 +6,7 @@ import edu.vn.iuh.fit.userservice.dto.response.UserAuthResponse;
 import edu.vn.iuh.fit.userservice.dto.response.UserCreateResponse;
 import edu.vn.iuh.fit.userservice.dto.response.UserProfileResponse;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 public interface UserService {
@@ -18,6 +19,8 @@ public interface UserService {
     UserProfileResponse updateProfile(Long userId, String email, UserUpdateRequest request);
 
     long countTotalUsers();
+
+    long countUsersCreatedBefore(LocalDateTime time);
 
     void updateUserActivity(Long userId);
 

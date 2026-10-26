@@ -75,6 +75,7 @@ public class Session extends BaseEntity {
      *               mà không wrap thêm dấu nháy - tức là trả về object JSON thay vì string.
      */
     @JsonRawValue
+    @JsonDeserialize(using = RawJsonDeserializer.class)
     @Column(columnDefinition = "json", name = "payload")
     private String payload;
 
@@ -91,6 +92,7 @@ public class Session extends BaseEntity {
      * draftPayload: Lưu trữ bản nháp nội dung khi admin sửa đổi bài học đang live
      */
     @JsonRawValue
+    @JsonDeserialize(using = RawJsonDeserializer.class)
     @Column(columnDefinition = "json", name = "draft_payload")
     private String draftPayload;
 

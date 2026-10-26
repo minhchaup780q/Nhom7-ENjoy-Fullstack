@@ -2,6 +2,8 @@ package com.example.learningservice.dto.admin;
 
 import com.example.learningservice.entities.enums.SessionType;
 import com.fasterxml.jackson.annotation.JsonRawValue;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.example.learningservice.entities.RawJsonDeserializer;
 import jakarta.validation.constraints.NotBlank;
@@ -33,10 +35,22 @@ public class AdminSessionRequest {
      * Payload bài tập dạng JSON string hoặc raw JSON object
      */
     @JsonRawValue
+    @JsonDeserialize(using = RawJsonDeserializer.class)
     private String payload;
 
-    @JsonDeserialize(using = RawJsonDeserializer.class)
+    @JsonSetter("payload")
+    public void setPayloadFromJsonNode(JsonNode node) {
+        if (node == null || node.isNull()) {
+            this.payload = null;
+        } else if (node.isTextual()) {
+            this.payload = node.asText();
+        } else {
+            this.payload = node.toString();
+        }
+    }
+
     public void setPayload(String payload) {
         this.payload = payload;
     }
 }
+
