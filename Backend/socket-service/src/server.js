@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import redis from './config/redis.js';
+import { initRabbitMQ } from './config/rabbitmq.js';
 import { initLeaderboardHandler, getTop10FromRedis } from './handlers/leaderboardHandler.js';
 import { initChatHandler } from './handlers/chatHandler.js';
 
@@ -72,6 +73,7 @@ io.on('connection', (socket) => {
 });
 
 // Đăng ký các module xử lý Real-time
+initRabbitMQ();
 initLeaderboardHandler(io);
 initChatHandler(io);
 
