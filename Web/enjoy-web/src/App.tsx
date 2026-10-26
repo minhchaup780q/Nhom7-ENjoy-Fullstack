@@ -5,6 +5,7 @@ import { TopHeader } from './layouts/TopHeader';
 import { SidebarAdmin } from './layouts/SidebarAdmin';
 import { AppRoutes } from './routes/AppRoutes';
 import { SessionPlayer } from './features/learning/components/SessionPlayer';
+import { CommunityChatWidget } from './features/chat/components/CommunityChatWidget';
 import type { Session } from './features/learning/types';
 import './App.css';
 
@@ -76,6 +77,9 @@ function App() {
           <AppRoutes onStartSession={(session) => setPlayingSession(session)} />
         </main>
       </div>
+
+      {/* Widget Chat Cộng Đồng luôn nổi cố định ở góc dưới bên phải */}
+      <CommunityChatWidget />
     </div>
   );
 }

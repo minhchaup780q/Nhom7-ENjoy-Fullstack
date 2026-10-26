@@ -1,0 +1,29 @@
+{
+  "name": "enjoy-socket-service",
+  "version": "1.0.0",
+  "description": "Microservice Real-time Socket.IO cho Leaderboard và Chat thời gian thực (ENjoy)",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "amqplib": "^2.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "ioredis": "^5.5.0",
+    "socket.io": "^4.8.1"
+  },
+  "keywords": [
+    "socket.io",
+    "realtime",
+    "leaderboard",
+    "chat",
+    "redis",
+    "zset"
+  ],
+  "author": "Nhom7-ENjoy",
+  "license": "ISC"
+}

@@ -36,6 +36,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.example.learningservice.config.RabbitMQConfig;
+import com.example.learningservice.dto.AddXpEvent;
+import com.example.learningservice.dto.AddXpRequestDto;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -56,6 +61,7 @@ public class LeaderboardServiceImpl implements LeaderboardService {
     private final LeaderboardEntryRepository leaderboardEntryRepository;
     private final XpTransactionRepository xpTransactionRepository;
     private final UserProgressRepository userProgressRepository;
+    private final RabbitTemplate rabbitTemplate;
 
 
 
@@ -250,11 +256,64 @@ public class LeaderboardServiceImpl implements LeaderboardService {
     }
 
     @Override
-    @Transactional
+    public void enqueueAddXp(AddXpRequestDto request) {
+        if (request == null || request.getUserId() == null || request.getXpAmount() <= 0) {
+            log.warn("Bỏ qua yêu cầu addXp không hợp lệ: {}", request);
+            return;
+        }
+
+        AddXpEvent event = AddXpEvent.builder()
+                .userId(request.getUserId())
+                .xpAmount(request.getXpAmount())
+                .sourceType(request.getSourceType() != null ? request.getSourceType() : XpSourceType.LESSON_FIRST_COMPLETE)
+                .sourceId(request.getSourceId())
+                .description(request.getDescription())
+                .username(request.getUsername())
+                .avatarUrl(request.getAvatarUrl())
+                .timestamp(nowVn())
+                .build();
+
+        rabbitTemplate.convertAndSend(RabbitMQConfig.XP_EXCHANGE, RabbitMQConfig.XP_ROUTING_KEY, event);
+        log.info("[Producer] Đã đóng gói và đẩy AddXpEvent cho User #{} (+{} XP) vào RabbitMQ",
+                event.getUserId(), event.getXpAmount());
+    }
+
+    @Override
     public void addXp(Long userId, int xpAmount, XpSourceType sourceType, Long sourceId, String description, String username, String avatarUrl) {
         if (userId == null || xpAmount <= 0) {
             return;
         }
+
+        AddXpEvent event = AddXpEvent.builder()
+                .userId(userId)
+                .xpAmount(xpAmount)
+                .sourceType(sourceType != null ? sourceType : XpSourceType.LESSON_FIRST_COMPLETE)
+                .sourceId(sourceId)
+                .description(description)
+                .username(username)
+                .avatarUrl(avatarUrl)
+                .timestamp(nowVn())
+                .build();
+
+        rabbitTemplate.convertAndSend(RabbitMQConfig.XP_EXCHANGE, RabbitMQConfig.XP_ROUTING_KEY, event);
+        log.info("[Producer] Đã đóng gói và đẩy AddXpEvent cho User #{} (+{} XP) vào RabbitMQ và trả kết quả ngay",
+                userId, xpAmount);
+    }
+
+    @Override
+    @Transactional
+    public void saveXpToDatabase(AddXpEvent event) {
+        if (event == null || event.getUserId() == null || event.getXpAmount() <= 0) {
+            return;
+        }
+
+        Long userId = event.getUserId();
+        int xpAmount = event.getXpAmount();
+        String username = event.getUsername();
+        String avatarUrl = event.getAvatarUrl();
+        XpSourceType sourceType = event.getSourceType();
+        Long sourceId = event.getSourceId();
+        String description = event.getDescription();
 
         Tournament tournament = getOrCreateCurrentTournament();
 
@@ -317,7 +376,7 @@ public class LeaderboardServiceImpl implements LeaderboardService {
         XpTransaction tx = XpTransaction.builder()
                 .userId(userId)
                 .xpAmount(xpAmount)
-                .sourceType(sourceType)
+                .sourceType(sourceType != null ? sourceType : XpSourceType.LESSON_FIRST_COMPLETE)
                 .sourceId(sourceId)
                 .description(description != null ? description : "Hoàn thành bài học +" + xpAmount + " KN")
                 .build();
@@ -351,7 +410,7 @@ public class LeaderboardServiceImpl implements LeaderboardService {
         }
 
         leaderboardEntryRepository.save(entry);
-        log.info("Đã cộng {} KN cho user #{} ({}) - Tổng KN tuần: {} - Streak: {} ngày",
+        log.info("[DB Persistence] Đã lưu {} KN cho user #{} ({}) vào MariaDB - Tổng KN tuần: {} - Streak: {} ngày",
                 xpAmount, userId, profile.getUsername(), entry.getWeeklyXp(), currentStreak);
     }
 
