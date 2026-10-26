@@ -74,11 +74,20 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
       setSessionType(session.sessionType || 'FLASHCARD');
       setOrderIndex(session.orderIndex || 1);
 
+      // Parse payload nếu là string (do @JsonRawValue serialization)
+      const parseRaw = (raw: any): any => {
+        if (raw == null) return null;
+        if (typeof raw === 'string') {
+          try { return JSON.parse(raw); } catch { return raw; }
+        }
+        return raw;
+      };
+
       // Nếu đang có bản nháp, ưu tiên nạp draftPayload
       if (session.hasDraft && session.draftPayload) {
-        setPayload(session.draftPayload);
+        setPayload(parseRaw(session.draftPayload) || {});
       } else if (session.payload) {
-        setPayload(session.payload);
+        setPayload(parseRaw(session.payload) || {});
       } else {
         setPayload({});
       }
@@ -148,13 +157,16 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
     setSubmitAction(publishNow ? 'publish' : 'draft');
 
     try {
+      const serializedPayload =
+        typeof payload === 'string' ? payload : JSON.stringify(payload ?? {});
+
       const requestData: AdminSessionRequest = {
         partId: session?.partId || partId,
         title: title.trim(),
         description: description.trim() || undefined,
         sessionType,
         orderIndex,
-        payload: payload || {},
+        payload: serializedPayload,
       };
 
       await onSave(requestData, publishNow);
@@ -182,6 +194,7 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
             payload={payload}
             onChange={setPayload}
             partId={session?.partId || partId}
+            isEdit={isEdit}
           />
         );
 

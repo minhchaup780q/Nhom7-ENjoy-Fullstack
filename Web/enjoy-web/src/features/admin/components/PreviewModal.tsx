@@ -34,29 +34,32 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
     setLoading(true);
     setError(null);
 
+    const parsePayload = (raw: any): any => {
+      if (raw == null) return null;
+      if (typeof raw === 'string') {
+        try { return JSON.parse(raw); } catch { return raw; }
+      }
+      return raw;
+    };
+
     const fetchPreviewData = async () => {
       try {
-        // Ưu tiên gọi API getSessionPreview (Backend tự ưu tiên draft_payload nếu có)
-        const data = await adminCourseApi.getSessionPreview(session.id);
-        if (isMounted) {
-          let parsedData = data;
-          if (typeof data === 'string') {
-            try {
-              parsedData = JSON.parse(data);
-            } catch {
-              parsedData = data;
-            }
-          }
-          setPreviewPayload(parsedData);
+        // Ưu tiên dùng draftPayload local nếu session có bản nháp (tránh phụ thuộc API proxy)
+        if (session.hasDraft && session.draftPayload) {
+          if (isMounted) setPreviewPayload(parsePayload(session.draftPayload));
+          return;
         }
+
+        // Gọi API getSessionPreview (Backend ưu tiên draft_payload nếu có)
+        const data = await adminCourseApi.getSessionPreview(session.id);
+        if (isMounted) setPreviewPayload(parsePayload(data));
       } catch (err: any) {
         console.warn('API getSessionPreview failed, falling back to local session payload:', err);
-        // Fallback: Lấy trực tiếp từ session response object
         if (isMounted) {
           const fallbackData = session.hasDraft && session.draftPayload
             ? session.draftPayload
             : session.payload;
-          setPreviewPayload(fallbackData || {});
+          setPreviewPayload(parsePayload(fallbackData) || {});
         }
       } finally {
         if (isMounted) {

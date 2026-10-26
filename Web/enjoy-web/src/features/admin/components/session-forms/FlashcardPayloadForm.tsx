@@ -13,19 +13,21 @@ interface FlashcardPayloadFormProps {
   payload: any;
   onChange: (newPayload: any) => void;
   partId?: number;
+  isEdit?: boolean;
 }
 
 export const FlashcardPayloadForm: React.FC<FlashcardPayloadFormProps> = ({
   payload,
   onChange,
   partId,
+  isEdit = false,
 }) => {
   const vocabs: VocabItem[] = payload?.vocabularies || payload?.items || [];
   const [loading, setLoading] = useState(false);
 
-  // Tự động nạp danh sách từ vựng từ Part nếu session payload đang rỗng
+  // Tự động nạp danh sách từ vựng từ Part nếu tạo mới và payload đang rỗng
   useEffect(() => {
-    if (vocabs.length === 0 && partId) {
+    if (vocabs.length === 0 && partId && !isEdit) {
       let isMounted = true;
       setLoading(true);
 
@@ -119,7 +121,7 @@ export const FlashcardPayloadForm: React.FC<FlashcardPayloadFormProps> = ({
           <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
             Danh sách Từ vựng ({vocabs.length})
           </h4>
-          {partId && (
+          {partId && !isEdit && (
             <button
               type="button"
               onClick={handleResetFromPart}

@@ -14,6 +14,8 @@ import {
   ExclamationCircleIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
+  FunnelIcon,
+  DocumentMagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 import {
   adminCourseApi,
@@ -59,6 +61,11 @@ export const AdminLessons: React.FC = () => {
   const [loadingParts, setLoadingParts] = useState<Record<number, boolean>>({});
   const [loadingSessions, setLoadingSessions] = useState<Record<number, boolean>>({});
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Bộ lọc
+  type FilterMode = 'all' | 'draft-topics' | 'draft-sessions';
+  const [filterMode, setFilterMode] = useState<FilterMode>('all');
+  const [loadingFilter, setLoadingFilter] = useState(false);
 
   // Thông báo Notification
   const [notification, setNotification] = useState<NotificationState | null>(null);
@@ -144,6 +151,7 @@ export const AdminLessons: React.FC = () => {
       loadTopics(selectedLevelId);
       setExpandedTopicIds(new Set());
       setExpandedPartIds(new Set());
+      setFilterMode('all');
     }
   }, [selectedLevelId, loadTopics]);
 
@@ -202,6 +210,100 @@ export const AdminLessons: React.FC = () => {
     }
     setExpandedPartIds(next);
   };
+
+  // ==========================================
+  // BỘ LỌC: Tải hết data khi bật chế độ lọc nháp
+  // ==========================================
+
+  const loadAllPartsAndSessions = async () => {
+    setLoadingFilter(true);
+    try {
+      // Tải tất cả parts cho mọi topic
+      const partPromises = topics.map(async (t) => {
+        if (!partsMap[t.id]) {
+          const data = await adminCourseApi.getPartsByTopic(t.id);
+          return { topicId: t.id, parts: data };
+        }
+        return { topicId: t.id, parts: partsMap[t.id] };
+      });
+      const partResults = await Promise.all(partPromises);
+      const newPartsMap = { ...partsMap };
+      partResults.forEach((r) => { newPartsMap[r.topicId] = r.parts; });
+      setPartsMap(newPartsMap);
+
+      // Tải tất cả sessions cho mọi part
+      const allParts = partResults.flatMap((r) => r.parts);
+      const sessionPromises = allParts.map(async (p) => {
+        if (!sessionsMap[p.id]) {
+          const data = await adminCourseApi.getSessionsByPart(p.id);
+          return { partId: p.id, sessions: data };
+        }
+        return { partId: p.id, sessions: sessionsMap[p.id] };
+      });
+      const sessionResults = await Promise.all(sessionPromises);
+      const newSessionsMap = { ...sessionsMap };
+      sessionResults.forEach((r) => { newSessionsMap[r.partId] = r.sessions; });
+      setSessionsMap(newSessionsMap);
+    } catch (err: any) {
+      console.error('Lỗi khi tải dữ liệu cho bộ lọc:', err);
+      showNotify('error', 'Không thể tải đủ dữ liệu cho bộ lọc');
+    } finally {
+      setLoadingFilter(false);
+    }
+  };
+
+  const handleFilterChange = async (mode: FilterMode) => {
+    setFilterMode(mode);
+    if (mode === 'draft-topics' || mode === 'draft-sessions') {
+      await loadAllPartsAndSessions();
+    }
+  };
+
+  // Kiểm tra topic có chứa nháp nào không (topic nháp, hoặc part nháp, hoặc session nháp/HAS_DRAFT)
+  const topicHasDraft = (topic: AdminTopicResponse): boolean => {
+    if (topic.badge === 'DRAFT') return true;
+    const parts = partsMap[topic.id] || [];
+    for (const p of parts) {
+      if (p.badge === 'DRAFT') return true;
+      const sessions = sessionsMap[p.id] || [];
+      if (sessions.some((s) => s.badge === 'DRAFT' || s.badge === 'HAS_DRAFT')) return true;
+    }
+    return false;
+  };
+
+  // Lọc topics theo bộ lọc đang chọn
+  const filteredTopics = filterMode === 'draft-topics'
+    ? topics.filter((t) => topicHasDraft(t))
+    : topics;
+
+  // Danh sách phẳng các session nháp (cho chế độ lọc draft-sessions)
+  const allDraftSessions: Array<{
+    session: AdminSessionResponse;
+    topicTitle: string;
+    topicId: number;
+    partTitle: string;
+    partId: number;
+  }> = [];
+
+  if (filterMode === 'draft-sessions') {
+    for (const topic of topics) {
+      const parts = partsMap[topic.id] || [];
+      for (const part of parts) {
+        const sessions = sessionsMap[part.id] || [];
+        for (const session of sessions) {
+          if (session.badge === 'DRAFT' || session.badge === 'HAS_DRAFT') {
+            allDraftSessions.push({
+              session,
+              topicTitle: topic.title,
+              topicId: topic.id,
+              partTitle: part.title,
+              partId: part.id,
+            });
+          }
+        }
+      }
+    }
+  }
 
   // ==========================================
   // XỬ LÝ NGHIỆP VỤ TOPIC
@@ -322,10 +424,14 @@ export const AdminLessons: React.FC = () => {
   const handleSaveSession = async (data: AdminSessionRequest, publishNow: boolean) => {
     if (editingSession) {
       const id = editingSession.id;
+      // Tách payload ra khỏi metadata request — endpoint /metadata không dùng payload
+      // và việc gửi payload object gây lỗi deserialization ở backend
+      const { payload: _stripPayload, ...metadataOnly } = data;
+
       if (publishNow) {
-        // Cập nhật metadata + lưu nháp + publish
-        await adminCourseApi.updateSessionMetadata(id, data);
+        // Lưu nháp trước, cập nhật metadata, rồi publish
         await adminCourseApi.saveSessionDraft(id, data);
+        await adminCourseApi.updateSessionMetadata(id, metadataOnly as AdminSessionRequest);
         const result = await adminCourseApi.publishSession(id);
         if (result.valid) {
           showNotify('success', `Đã phát hành bài học "${data.title}" trực tuyến!`);
@@ -333,9 +439,9 @@ export const AdminLessons: React.FC = () => {
           showNotify('warning', result.message || 'Lưu thành công nhưng phát hành thất bại');
         }
       } else {
-        // Lưu nháp an toàn
-        await adminCourseApi.updateSessionMetadata(id, data);
+        // Lưu nháp trước (thao tác cốt lõi), rồi cập nhật metadata
         await adminCourseApi.saveSessionDraft(id, data);
+        await adminCourseApi.updateSessionMetadata(id, metadataOnly as AdminSessionRequest);
         showNotify('success', `Đã lưu bản nháp cho bài học "${data.title}" an toàn`);
       }
       loadSessions(editingSession.partId);
@@ -546,51 +652,179 @@ export const AdminLessons: React.FC = () => {
         </div>
       )}
 
-      {/* 2. CẤP 1: BỘ CHỌN TRÌNH ĐỘ (LEVEL TABS) */}
-      <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs space-y-3">
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
-          <AcademicCapIcon className="w-4 h-4 text-indigo-600" />
-          <span>Chọn Trình độ học (Level)</span>
-        </div>
-
-        {loadingLevels ? (
-          <div className="flex items-center gap-2 text-xs text-slate-400 py-2">
-            <ArrowPathIcon className="w-4 h-4 animate-spin" /> Đang tải danh sách trình độ...
+      {/* 2. BỘ LỌC TỔNG HỢP (Level + Chế độ xem) */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs divide-y divide-slate-100">
+        {/* Hàng 1: Chọn trình độ */}
+        <div className="flex items-center gap-3 px-4 py-3 flex-wrap">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0">
+            <AcademicCapIcon className="w-3.5 h-3.5 text-indigo-500" />
+            Trình độ
           </div>
-        ) : (
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
-            {levels.map((lvl) => (
-              <button
-                key={lvl.id}
-                type="button"
-                onClick={() => setSelectedLevelId(lvl.id)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 shrink-0 ${
-                  selectedLevelId === lvl.id
-                    ? 'bg-indigo-600 text-white shadow-sm ring-2 ring-indigo-500/20'
-                    : 'bg-slate-100 hover:bg-slate-200/80 text-slate-700'
-                }`}
-              >
-                <span>{lvl.name}</span>
-                <span
-                  className={`px-1.5 py-0.5 rounded-full text-[10px] ${
-                    selectedLevelId === lvl.id ? 'bg-indigo-700 text-white' : 'bg-slate-200 text-slate-600'
+          {loadingLevels ? (
+            <div className="flex items-center gap-1.5 text-xs text-slate-400">
+              <ArrowPathIcon className="w-3.5 h-3.5 animate-spin" /> Đang tải...
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 overflow-x-auto">
+              {levels.map((lvl) => (
+                <button
+                  key={lvl.id}
+                  type="button"
+                  onClick={() => setSelectedLevelId(lvl.id)}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shrink-0 ${
+                    selectedLevelId === lvl.id
+                      ? 'bg-indigo-600 text-white shadow-sm ring-2 ring-indigo-500/20'
+                      : 'bg-slate-100 hover:bg-slate-200/80 text-slate-600'
                   }`}
                 >
-                  {lvl.code}
-                </span>
+                  {lvl.name}
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] ${
+                      selectedLevelId === lvl.id ? 'bg-indigo-700 text-white' : 'bg-slate-200 text-slate-500'
+                    }`}
+                  >
+                    {lvl.code}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Hàng 2: Chế độ xem */}
+        <div className="flex items-center gap-3 px-4 py-3 flex-wrap">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0">
+            <FunnelIcon className="w-3.5 h-3.5 text-indigo-500" />
+            Chế độ xem
+          </div>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {([
+              { key: 'all' as FilterMode, label: 'Tất cả', icon: FolderIcon },
+              { key: 'draft-topics' as FilterMode, label: 'Chủ đề có nháp', icon: ExclamationCircleIcon },
+              { key: 'draft-sessions' as FilterMode, label: 'Bài học nháp', icon: DocumentMagnifyingGlassIcon },
+            ] as const).map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => handleFilterChange(key)}
+                disabled={loadingFilter}
+                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition active:scale-95 disabled:opacity-50 ${
+                  filterMode === key
+                    ? 'bg-indigo-600 text-white shadow-sm ring-2 ring-indigo-500/20'
+                    : 'bg-slate-100 hover:bg-slate-200/80 text-slate-600'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                {label}
+                {key === 'draft-topics' && filterMode === 'draft-topics' && (
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-indigo-700 text-white">
+                    {filteredTopics.length}
+                  </span>
+                )}
+                {key === 'draft-sessions' && filterMode === 'draft-sessions' && (
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-indigo-700 text-white">
+                    {allDraftSessions.length}
+                  </span>
+                )}
               </button>
             ))}
+            {loadingFilter && (
+              <span className="inline-flex items-center gap-1.5 text-xs text-slate-400">
+                <ArrowPathIcon className="w-3.5 h-3.5 animate-spin" /> Đang tải...
+              </span>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
-      {/* 3. CẤP 2: DANH SÁCH CHỦ ĐỀ (TOPIC LIST) */}
+      {/* 3. CẤP 2: DANH SÁCH CHỦ ĐỀ (TOPIC LIST) hoặc DANH SÁCH BÀI HỌC NHÁP */}
+      {filterMode === 'draft-sessions' ? (
+        /* ── Chế độ lọc: Danh sách phẳng các Session nháp ── */
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <DocumentMagnifyingGlassIcon className="w-5 h-5 text-amber-600" />
+              <h3 className="text-base font-bold text-slate-800">
+                Tất cả Bài học nháp ({allDraftSessions.length})
+              </h3>
+            </div>
+          </div>
+
+          {loadingFilter ? (
+            <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 space-y-3">
+              <ArrowPathIcon className="w-8 h-8 animate-spin text-indigo-600 mx-auto" />
+              <p className="text-xs font-semibold text-slate-500">Đang quét tất cả bài học...</p>
+            </div>
+          ) : allDraftSessions.length === 0 ? (
+            <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 space-y-3">
+              <CheckCircleIcon className="w-12 h-12 text-emerald-400 mx-auto" />
+              <h4 className="text-sm font-bold text-slate-700">Không có bài học nháp nào</h4>
+              <p className="text-xs text-slate-500">
+                Tất cả bài học ở trình độ này đều đã được phát hành.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {allDraftSessions.map(({ session, topicTitle, topicId, partTitle, partId }) => (
+                <div
+                  key={session.id}
+                  className="p-3.5 sm:p-4 bg-white rounded-xl border border-slate-200 shadow-xs hover:border-slate-300 hover:shadow-sm transition flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap"
+                >
+                  {/* Cột trái: Breadcrumb + Tên bài */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium mb-1">
+                      <span className="truncate max-w-[140px]" title={topicTitle}>{topicTitle}</span>
+                      <ChevronRightIcon className="w-3 h-3 shrink-0" />
+                      <span className="truncate max-w-[120px]" title={partTitle}>{partTitle}</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <span className="text-[11px] font-mono font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                        #{session.orderIndex}
+                      </span>
+                      <h6 className="text-xs sm:text-sm font-bold text-slate-800 truncate">
+                        {session.title}
+                      </h6>
+                      {renderSessionTypeBadge(session.sessionType)}
+                      <StatusBadge status={session.badge} size="sm" />
+                      <span className="text-[10px] text-slate-400 font-mono bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">
+                        v{session.version}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Cột phải: Nút hành động */}
+                  <div className="shrink-0">
+                    <SessionActionButtons
+                      session={session}
+                      onEdit={handleOpenEditSession}
+                      onPreview={handleOpenPreviewSession}
+                      onPublish={handlePublishSessionQuick}
+                      onDiscardDraft={handleDiscardSessionDraft}
+                      onDelete={() =>
+                        handlePromptDelete(
+                          session.id,
+                          session.title,
+                          'Session',
+                          topicId,
+                          partId
+                        )
+                      }
+                      isLoading={actionLoading}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+      /* ── Chế độ bình thường / lọc topic có nháp ── */
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <FolderIcon className="w-5 h-5 text-indigo-600" />
             <h3 className="text-base font-bold text-slate-800">
-              Danh sách Chủ đề ({topics.length})
+              Danh sách Chủ đề ({filteredTopics.length}{filterMode === 'draft-topics' ? ` / ${topics.length}` : ''})
             </h3>
           </div>
 
@@ -609,17 +843,29 @@ export const AdminLessons: React.FC = () => {
             <ArrowPathIcon className="w-8 h-8 animate-spin text-indigo-600 mx-auto" />
             <p className="text-xs font-semibold text-slate-500">Đang nạp các chủ đề...</p>
           </div>
-        ) : topics.length === 0 ? (
+        ) : filteredTopics.length === 0 ? (
           <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 space-y-3">
-            <BookOpenIcon className="w-12 h-12 text-slate-300 mx-auto" />
-            <h4 className="text-sm font-bold text-slate-700">Chưa có chủ đề nào ở trình độ này</h4>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              Hãy bấm "Thêm Chủ đề" để bắt đầu thiết lập lộ trình học tập cho học sinh.
-            </p>
+            {filterMode === 'draft-topics' ? (
+              <>
+                <CheckCircleIcon className="w-12 h-12 text-emerald-400 mx-auto" />
+                <h4 className="text-sm font-bold text-slate-700">Không có chủ đề nào chứa nháp</h4>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  Tất cả chủ đề, phần học và bài học ở trình độ này đều đã được phát hành.
+                </p>
+              </>
+            ) : (
+              <>
+                <BookOpenIcon className="w-12 h-12 text-slate-300 mx-auto" />
+                <h4 className="text-sm font-bold text-slate-700">Chưa có chủ đề nào ở trình độ này</h4>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  Hãy bấm "Thêm Chủ đề" để bắt đầu thiết lập lộ trình học tập cho học sinh.
+                </p>
+              </>
+            )}
           </div>
         ) : (
           <div className="space-y-4">
-            {topics.map((topic) => {
+            {filteredTopics.map((topic) => {
               const isTopicExpanded = expandedTopicIds.has(topic.id);
               const parts = partsMap[topic.id] || [];
               const isLoadingParts = loadingParts[topic.id];
@@ -923,6 +1169,7 @@ export const AdminLessons: React.FC = () => {
           </div>
         )}
       </div>
+      )}
 
       {/* ========================================== */}
       {/* CÁC MODALS QUẢN TRỊ                        */}
