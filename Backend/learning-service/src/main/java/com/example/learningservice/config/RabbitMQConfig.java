@@ -21,6 +21,11 @@ public class RabbitMQConfig {
     public static final String XP_EXCHANGE = "xp.exchange";
     public static final String XP_ROUTING_KEY = "xp.add.routingKey";
 
+    // Cấu hình hàng đợi cho Chat Cộng Đồng
+    public static final String CHAT_QUEUE = "chat.community.queue";
+    public static final String CHAT_EXCHANGE = "chat.exchange";
+    public static final String CHAT_ROUTING_KEY = "chat.community.routingKey";
+
     @Bean
     public Queue xpQueue() {
         return QueueBuilder.durable(XP_QUEUE).build();
@@ -34,6 +39,21 @@ public class RabbitMQConfig {
     @Bean
     public Binding xpBinding(Queue xpQueue, DirectExchange xpExchange) {
         return BindingBuilder.bind(xpQueue).to(xpExchange).with(XP_ROUTING_KEY);
+    }
+
+    @Bean
+    public Queue chatQueue() {
+        return QueueBuilder.durable(CHAT_QUEUE).build();
+    }
+
+    @Bean
+    public DirectExchange chatExchange() {
+        return new DirectExchange(CHAT_EXCHANGE);
+    }
+
+    @Bean
+    public Binding chatBinding(Queue chatQueue, DirectExchange chatExchange) {
+        return BindingBuilder.bind(chatQueue).to(chatExchange).with(CHAT_ROUTING_KEY);
     }
 
     @Bean
