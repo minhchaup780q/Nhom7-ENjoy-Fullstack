@@ -24,7 +24,7 @@ export const SidebarAdmin: React.FC = () => {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   const menuItems: MenuItem[] = [
-    { id: 'dashboard', label: 'DASHBOARD', icon: <ChartPieIcon className="w-6 h-6 stroke-[2.5]" />, path: '/admin/dashboard' },
+    { id: 'dashboard', label: 'OVERVIEW', icon: <ChartPieIcon className="w-6 h-6 stroke-[2.5]" />, path: '/admin/dashboard' },
     { id: 'lessons', label: 'QL BÀI HỌC', icon: <BookOpenIcon className="w-6 h-6 stroke-[2.5]" />, path: '/admin/lessons' },
     { id: 'users', label: 'QL NGƯỜI DÙNG', icon: <UsersIcon className="w-6 h-6 stroke-[2.5]" />, path: '/admin/users' },
     { id: 'system', label: 'QL HỆ THỐNG', icon: <Cog6ToothIcon className="w-6 h-6 stroke-[2.5]" />, path: '/admin/system' },

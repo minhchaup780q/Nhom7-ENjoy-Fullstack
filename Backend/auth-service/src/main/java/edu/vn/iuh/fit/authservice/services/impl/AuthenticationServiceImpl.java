@@ -10,6 +10,7 @@ import edu.vn.iuh.fit.authservice.entities.Account;
 import edu.vn.iuh.fit.authservice.entities.enums.AuthProvider;
 import edu.vn.iuh.fit.authservice.entities.enums.UserRole;
 import edu.vn.iuh.fit.authservice.repositories.AccountRepository;
+import edu.vn.iuh.fit.authservice.services.ActiveUserService;
 import edu.vn.iuh.fit.authservice.services.AuthenticationService;
 import edu.vn.iuh.fit.authservice.services.EmailService;
 import edu.vn.iuh.fit.authservice.services.JWTService;
@@ -36,6 +37,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final JWTService jwtService;
     private final OtpService otpService;
     private final EmailService emailService;
+    private final ActiveUserService activeUserService;
 
     @Override
     public LoginResponse login(LoginRequest request) {
@@ -71,6 +73,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .role(account.getRole().name())
                 .username(username)
                 .build();
+
+        // Ghi nhận active cho DAU/MAU
+        activeUserService.trackActive(account.getId(), account.getRole().name());
 
         return LoginResponse.builder()
                 .accessToken(accessToken)
@@ -272,6 +277,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .username(username)
                 .build();
 
+        activeUserService.trackActive(account.getId(), roleStr);
+
         return LoginResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
@@ -342,6 +349,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
 
         String newAccessToken = jwtService.generateAccessToken(userId, email, role);
+
+        // Refresh token thành công cũng tính là active (người dùng giữ phiên nhiều ngày không cần đăng nhập lại)
+        activeUserService.trackActive(userId, role);
+
         return LoginResponse.builder()
                 .accessToken(newAccessToken)
                 .refreshToken(refreshToken)
