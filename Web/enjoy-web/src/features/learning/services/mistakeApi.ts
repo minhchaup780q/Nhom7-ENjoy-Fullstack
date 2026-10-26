@@ -11,13 +11,16 @@ export interface MistakeItem {
   imageUrl?: string;
   audioUrl?: string;
   keyword?: string;
-  roundType: number; // 1: Từ vựng/Nhận diện, 2: Nghe, 3: Đọc hiểu, 4: Phát âm, 5: Chính tả/Viết
+  roundType: number; // 1: Flashcard, 2: Match, 3: Speaking, 4: Reorder, 5: DragDrop, 6: Grammar, 7: FillInBlank
   wrongAnswerSubmitted: string;
+  phonemeErrorType?: string | null;
+  recognizedAudioTranscript?: string | null;
   durationSeconds?: number;
   aiExplanationCache?: string | null;
   status: MistakeStatus;
   correctStreakDays?: number; // 0, 1, 2, 3
-  masteryScore?: number; // 0.0 -> 0.33 -> 0.67 -> 1.0
+  partId?: number;
+  sessionPayload?: any;
   lastPracticedAt?: string | null;
   nextReviewAt?: string | null;
   createdAt: string;
@@ -37,6 +40,8 @@ export interface MistakeCreatePayload {
   questionId: number;
   roundType: number;
   wrongAnswerSubmitted: string;
+  phonemeErrorType?: string;
+  recognizedAudioTranscript?: string;
   durationSeconds?: number;
 }
 
@@ -55,6 +60,9 @@ export const mistakeApi = {
   logMistake: (payload: MistakeCreatePayload) => {
     return apiClient.post<MistakeItem>('/api/mistakes', payload);
   },
+  recordMistake: (payload: MistakeCreatePayload) => {
+    return apiClient.post<MistakeItem>('/api/mistakes', payload);
+  },
 
   // Ghi nhận nhiều lỗi sai cùng lúc
   logBatchMistakes: (payloads: MistakeCreatePayload[]) => {
@@ -63,16 +71,18 @@ export const mistakeApi = {
 
   // Lấy danh sách lỗi sai phân trang của User (load theo trang)
   getUserMistakesPaged: (params?: {
-    status?: MistakeStatus;
+    status?: MistakeStatus | 'ALL';
     roundType?: number;
     page?: number;
     size?: number;
   }) => {
     const queryParams: Record<string, string | number> = {
-      status: params?.status || 'NEEDS_REVIEW',
       page: params?.page ?? 0,
-      size: params?.size ?? 6,
+      size: params?.size ?? 30,
     };
+    if (params?.status && params.status !== 'ALL') {
+      queryParams.status = params.status;
+    }
     if (params?.roundType !== undefined) {
       queryParams.roundType = params.roundType;
     }
@@ -122,6 +132,56 @@ export const mistakeApi = {
   // Xóa lỗi sai khỏi danh sách
   deleteMistake: (id: number) => {
     return apiClient.delete<void>(`/api/mistakes/${id}`);
+  },
+
+  // Lấy thử thách ngữ cảnh AI đã lưu từ Database
+  getAiChallenge: async (skillKey: string, topicId: string) => {
+    try {
+      const res = await apiClient.get<{
+        id?: number;
+        skillKey: string;
+        topicId: string;
+        topicName?: string;
+        title: string;
+        story: string;
+        storyVi?: string;
+        question: string;
+        options: string[];
+        correctAnswer: string;
+        hint?: string;
+      }>('/api/mistakes/ai-challenge', {
+        params: { skillKey, topicId },
+      });
+      return res || null;
+    } catch {
+      return null;
+    }
+  },
+
+  // Lưu thử thách ngữ cảnh AI mới vào Database
+  saveAiChallenge: async (payload: {
+    skillKey: string;
+    topicId: string;
+    topicName?: string;
+    title: string;
+    story: string;
+    storyVi?: string;
+    question: string;
+    options: string[];
+    correctAnswer: string;
+    hint?: string;
+  }) => {
+    try {
+      const res = await apiClient.post<{
+        id?: number;
+        skillKey: string;
+        topicId: string;
+      }>('/api/mistakes/ai-challenge', payload);
+      return res;
+    } catch (err) {
+      console.warn('Lỗi khi lưu AI Challenge vào DB:', err);
+      return null;
+    }
   },
 };
 

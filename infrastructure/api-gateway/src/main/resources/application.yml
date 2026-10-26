@@ -26,7 +26,7 @@ spring:
         - id: learning-service
           uri: lb://learning-service
           predicates:
-            - Path=/api/topics/**, /api/sessions/**, /api/session-items/**, /api/parts/**, /api/levels/**, /api/progress/**, /api/progress, /api/mistakes/**, /api/mistakes
+            - Path=/api/admin/topics/**, /api/admin/topics, /api/admin/parts/**, /api/admin/parts, /api/admin/sessions/**, /api/admin/sessions, /api/topics/**, /api/sessions/**, /api/session-items/**, /api/parts/**, /api/levels/**, /api/progress/**, /api/progress, /api/mistakes/**, /api/mistakes, /api/placement-test/**, /api/exams/**, /api/exams, /api/vocab-stats/**, /api/vocab-stats, /api/leaderboard/**, /api/leaderboard
         - id: chatbot-service
           uri: lb://chatbot-service
           predicates:
@@ -34,7 +34,7 @@ spring:
         - id: admin-service
           uri: lb://admin-service
           predicates:
-            - Path=/api/admin/**
+            - Path=/api/admin/users/**, /api/admin/users, /api/admin/**
 
 eureka:
   instance:

@@ -118,10 +118,42 @@ export const SpeakingExercise: React.FC<SpeakingExerciseProps> = ({ vocabularies
       } else {
         setFooterStatus('incorrect');
         if (onMistake && currentVocab) {
+          const targetWord = (currentVocab.word || '').toLowerCase().trim();
+          const recognized = (res.recognizedText || '').toLowerCase().trim();
+          
+          let phonemeType = 'GENERAL_MISPRONUNCIATION';
+          if (targetWord && recognized) {
+            if (
+              (targetWord.endsWith('s') && !recognized.endsWith('s')) ||
+              (targetWord.endsWith('ed') && !recognized.endsWith('ed')) ||
+              (targetWord.endsWith('t') && !recognized.endsWith('t')) ||
+              (targetWord.endsWith('d') && !recognized.endsWith('d'))
+            ) {
+              phonemeType = 'ENDING_SOUND';
+            } else if (
+              targetWord.includes('th') ||
+              targetWord.includes('sh') ||
+              targetWord.includes('ch') ||
+              targetWord.includes('str') ||
+              targetWord.includes('pl')
+            ) {
+              phonemeType = 'CONSONANT_CLUSTER';
+            } else if (
+              targetWord.length === recognized.length &&
+              targetWord.slice(0, 1) === recognized.slice(0, 1)
+            ) {
+              phonemeType = 'VOWEL_CONFUSION';
+            } else {
+              phonemeType = 'STRESS_INTONATION';
+            }
+          }
+
           onMistake({
             questionId: currentVocab.id,
             roundType: 3,
             wrongAnswerSubmitted: res.recognizedText || 'Phát âm chưa chuẩn',
+            recognizedAudioTranscript: res.recognizedText || '',
+            phonemeErrorType: phonemeType,
           });
         }
       }

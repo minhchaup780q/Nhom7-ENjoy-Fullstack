@@ -16,4 +16,9 @@ public interface UserProgressRepository extends JpaRepository<UserProgress, Long
     List<UserProgress> findByUserIdAndStatus(Long userId, SessionStatus status);
     List<UserProgress> findByUserIdAndStatusAndCompletedAtBetween(Long userId, SessionStatus status, LocalDateTime start, LocalDateTime end);
     List<UserProgress> findByUserIdAndStatusOrderByCompletedAtDesc(Long userId, SessionStatus status);
+
+    // Phục vụ kiểm tra tiến độ học sinh khi Admin xóa hoặc thao tác bài học
+    boolean existsBySessionId(Long sessionId);
+    long countBySessionId(Long sessionId);
+    List<UserProgress> findBySessionIdAndStatus(Long sessionId, SessionStatus status);
 }

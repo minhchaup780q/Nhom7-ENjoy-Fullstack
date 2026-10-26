@@ -37,6 +37,7 @@ public class UserProgressServiceImpl implements UserProgressService {
     private final MistakeRepository mistakeRepository;
     private final PartVocabularyRepository partVocabularyRepository;
     private final ObjectMapper objectMapper;
+    private final com.example.learningservice.services.LeaderboardService leaderboardService;
 
     @Override
     public List<UserProgress> getUserProgress(Long userId) {
@@ -55,13 +56,18 @@ public class UserProgressServiceImpl implements UserProgressService {
         Session currentSession = sessionRepository.findByIdAndIsDeleteFalse(sessionId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy bài học với ID: " + sessionId));
 
-        // 1. Cập nhật tiến độ của session hiện tại thành FINISH
-        UserProgress currentProgress = userProgressRepository
-                .findByUserIdAndSessionId(userId, sessionId)
-                .orElse(UserProgress.builder()
-                        .userId(userId)
-                        .session(currentSession)
-                        .build());  
+        // 1. Kiểm tra bài học đã từng hoàn thành chưa để phân biệt +20 KN hay +5 KN
+        Optional<UserProgress> existingOpt = userProgressRepository.findByUserIdAndSessionId(userId, sessionId);
+        boolean isRelearn = existingOpt.isPresent() && existingOpt.get().getStatus() == SessionStatus.FINISH;
+        int xpEarned = isRelearn ? 5 : 20;
+        com.example.learningservice.entities.enums.XpSourceType sourceType = isRelearn 
+                ? com.example.learningservice.entities.enums.XpSourceType.LESSON_REVIEW 
+                : com.example.learningservice.entities.enums.XpSourceType.LESSON_FIRST_COMPLETE;
+
+        UserProgress currentProgress = existingOpt.orElse(UserProgress.builder()
+                .userId(userId)
+                .session(currentSession)
+                .build());  
 
         currentProgress.setStatus(SessionStatus.FINISH);
         currentProgress.setCompletedAt(LocalDateTime.now());
@@ -73,8 +79,23 @@ public class UserProgressServiceImpl implements UserProgressService {
 
         UserProgress savedProgress = userProgressRepository.save(currentProgress);
 
-        // 2. Tìm bài học tiếp theo trong cùng Part để UNLOCK
-        List<Session> partSessions = sessionRepository.findByPartIdAndIsDeleteFalseOrderByOrderIndexAsc(currentSession.getPart().getId());
+        // Cộng điểm kinh nghiệm vào Leaderboard và UserRankProfile
+        try {
+            leaderboardService.addXp(
+                    userId,
+                    xpEarned,
+                    sourceType,
+                    sessionId,
+                    (isRelearn ? "Ôn tập lại bài học: " : "Hoàn thành bài mới: ") + currentSession.getTitle(),
+                    null,
+                    null
+            );
+        } catch (Exception ex) {
+            log.error("Lỗi khi cộng điểm XP vào leaderboard cho user {}: {}", userId, ex.getMessage());
+        }
+
+        // 2. Tìm bài học tiếp theo trong cùng Part để UNLOCK (chỉ unlock bài đã phát hành)
+        List<Session> partSessions = sessionRepository.findByPartIdAndIsDeleteFalseAndIsPublishedTrueOrderByOrderIndexAsc(currentSession.getPart().getId());
         int currentIndex = -1;
         for (int i = 0; i < partSessions.size(); i++) {
             if (partSessions.get(i).getId().equals(sessionId)) {
@@ -230,28 +251,34 @@ public class UserProgressServiceImpl implements UserProgressService {
                 })
                 .collect(Collectors.toList());
 
-        if (finishedByDate.isEmpty()) {
+        if (finishedByDate.isEmpty() && allMistakes.isEmpty()) {
             return SkillComparisonResponse.SkillScoresDto.builder()
                     .listening(0)
                     .speaking(0)
                     .reading(0)
                     .writing(0)
                     .vocabGrammar(0)
+                    .grammar(0)
                     .build();
         }
 
+        // Lọc danh sách mistakes trước hoặc trong targetDate
+        List<Mistake> mistakesByDate = allMistakes.stream()
+                .filter(m -> {
+                    LocalDateTime mCreated = m.getCreatedAt() != null ? m.getCreatedAt() : m.getCreateAt();
+                    return mCreated != null && !mCreated.toLocalDate().isAfter(targetDate);
+                })
+                .collect(Collectors.toList());
+
         // Gom nhóm lỗi sai của user trước hoặc trong targetDate theo key: vocabularyId_roundType hoặc wrongText_roundType
         Map<String, Mistake> mistakeMap = new HashMap<>();
-        for (Mistake m : allMistakes) {
-            LocalDateTime mCreated = m.getCreatedAt() != null ? m.getCreatedAt() : m.getCreateAt();
-            if (mCreated != null && !mCreated.toLocalDate().isAfter(targetDate)) {
-                if (m.getVocabulary() != null && m.getVocabulary().getId() != null) {
-                    String key = m.getVocabulary().getId() + "_" + m.getRoundType();
-                    mistakeMap.put(key, m);
-                } else if (m.getWrongAnswerSubmitted() != null) {
-                    String key = m.getWrongAnswerSubmitted().trim().toLowerCase() + "_" + m.getRoundType();
-                    mistakeMap.put(key, m);
-                }
+        for (Mistake m : mistakesByDate) {
+            if (m.getVocabulary() != null && m.getVocabulary().getId() != null) {
+                String key = m.getVocabulary().getId() + "_" + m.getRoundType();
+                mistakeMap.put(key, m);
+            } else if (m.getWrongAnswerSubmitted() != null) {
+                String key = m.getWrongAnswerSubmitted().trim().toLowerCase() + "_" + m.getRoundType();
+                mistakeMap.put(key, m);
             }
         }
 
@@ -260,6 +287,7 @@ public class UserProgressServiceImpl implements UserProgressService {
         double readingScore = 0; int readingCount = 0;
         double writingScore = 0; int writingCount = 0;
         double vocabScore = 0; int vocabCount = 0;
+        double grammarScore = 0; int grammarCount = 0;
 
         for (UserProgress up : finishedByDate) {
             Session s = up.getSession();
@@ -278,7 +306,7 @@ public class UserProgressServiceImpl implements UserProgressService {
                     : Collections.emptyList();
 
             switch (type) {
-                case MATCH_WORD -> {
+                case MATCH_WORD:
                     // Màn 2: Nối từ vựng -> tính vô điểm vocabulary (roundType = 2)
                     if (!partVocabs.isEmpty()) {
                         for (PartVocabulary pv : partVocabs) {
@@ -292,9 +320,9 @@ public class UserProgressServiceImpl implements UserProgressService {
                         vocabScore += 1.0;
                         vocabCount++;
                     }
-                }
-                case SPEAKING -> {
-                    // Màn 3: Speaking -> tính điểm speaking (roundType = 3)
+                    break;
+                case SPEAKING:
+                    // Màn 3: Speaking từ đơn -> tính điểm speaking (roundType = 3)
                     if (!partVocabs.isEmpty()) {
                         for (PartVocabulary pv : partVocabs) {
                             if (pv.getVocabulary() == null) continue;
@@ -307,8 +335,8 @@ public class UserProgressServiceImpl implements UserProgressService {
                         speakingScore += 1.0;
                         speakingCount++;
                     }
-                }
-                case RE_ORDER -> {
+                    break;
+                case RE_ORDER:
                     // Màn 4: Sắp xếp chữ cái -> tính vô writing (roundType = 4)
                     if (!partVocabs.isEmpty()) {
                         for (PartVocabulary pv : partVocabs) {
@@ -322,11 +350,11 @@ public class UserProgressServiceImpl implements UserProgressService {
                         writingScore += 1.0;
                         writingCount++;
                     }
-                }
-                case DRAG_DROP -> {
+                    break;
+                case DRAG_DROP:
                     // Màn 5: Nghe và kéo thả chữ vào toạ độ -> tính listening (roundType = 5)
-                    int qCount = getDragDropQuestionCount(s.getPayload(), partVocabs.size());
-                    for (int i = 0; i < qCount; i++) {
+                    int qCount1 = getDragDropQuestionCount(s.getPayload(), partVocabs.size());
+                    for (int i = 0; i < qCount1; i++) {
                         Long vocabId = (i < partVocabs.size() && partVocabs.get(i).getVocabulary() != null)
                                 ? partVocabs.get(i).getVocabulary().getId() : null;
                         String key = (vocabId != null) ? (vocabId + "_5") : ("dragdrop_" + s.getId() + "_" + i);
@@ -334,27 +362,107 @@ public class UserProgressServiceImpl implements UserProgressService {
                         listeningScore += itemScore;
                         listeningCount++;
                     }
-                }
-                case GRAMMAR -> {
-                    // 2 màn ngữ pháp: GRAMMAR (roundType = 6) -> tính reading
-                    int qCount = getGrammarQuestionCount(s.getPayload());
-                    for (int i = 0; i < qCount; i++) {
-                        String key = "grammar_" + s.getId() + "_" + i;
+                    break;
+                case GRAMMAR:
+                    // Màn 6: Bỏ không tính vào reading
+                    break;
+                case FILL_IN_BLANK:
+                    // Màn 7: Điền từ vào chỗ trống -> tính grammar (roundType = 7)
+                    int qCount2 = getItemsQuestionCount(s.getPayload(), 6);
+                    for (int i = 0; i < qCount2; i++) {
+                        Long vocabId = (i < partVocabs.size() && partVocabs.get(i).getVocabulary() != null)
+                                ? partVocabs.get(i).getVocabulary().getId()
+                                : (!partVocabs.isEmpty() && partVocabs.get(0).getVocabulary() != null ? partVocabs.get(0).getVocabulary().getId() : null);
+                        String key = (vocabId != null) ? (vocabId + "_7") : ("fill_blank_" + s.getId() + "_" + i);
+                        double itemScore = calculateItemScore(key, mistakeMap, targetDate);
+                        grammarScore += itemScore;
+                        grammarCount++;
+                    }
+                    break;
+                case RE_ORDER_SENTENCE:
+                    // Màn 8: Sắp xếp câu ngữ pháp -> tính grammar (roundType = 8)
+                    int qCount3 = getItemsQuestionCount(s.getPayload(), 5);
+                    for (int i = 0; i < qCount3; i++) {
+                        Long vocabId = (i < partVocabs.size() && partVocabs.get(i).getVocabulary() != null)
+                                ? partVocabs.get(i).getVocabulary().getId()
+                                : (!partVocabs.isEmpty() && partVocabs.get(0).getVocabulary() != null ? partVocabs.get(0).getVocabulary().getId() : null);
+                        String key = (vocabId != null) ? (vocabId + "_8") : ("reorder_sentence_" + s.getId() + "_" + i);
+                        double itemScore = calculateItemScore(key, mistakeMap, targetDate);
+                        grammarScore += itemScore;
+                        grammarCount++;
+                    }
+                    break;
+                case SPEAKING_SENTENCE:
+                    // Màn 9: Luyện nói câu -> tính speaking (roundType = 9)
+                    int qCount4 = getItemsQuestionCount(s.getPayload(), 5);
+                    for (int i = 0; i < qCount4; i++) {
+                        Long vocabId = (i < partVocabs.size() && partVocabs.get(i).getVocabulary() != null)
+                                ? partVocabs.get(i).getVocabulary().getId()
+                                : (!partVocabs.isEmpty() && partVocabs.get(0).getVocabulary() != null ? partVocabs.get(0).getVocabulary().getId() : null);
+                        String key = (vocabId != null) ? (vocabId + "_9") : ("speaking_sentence_" + s.getId() + "_" + i);
+                        double itemScore = calculateItemScore(key, mistakeMap, targetDate);
+                        speakingScore += itemScore;
+                        speakingCount++;
+                    }
+                    break;
+                case CONVERSATION:
+                    // Màn 10: Hội thoại đọc hiểu -> tính reading (roundType = 10)
+                    int qCount5 = getItemsQuestionCount(s.getPayload(), 5);
+                    for (int i = 0; i < qCount5; i++) {
+                        Long vocabId = (i < partVocabs.size() && partVocabs.get(i).getVocabulary() != null)
+                                ? partVocabs.get(i).getVocabulary().getId()
+                                : (!partVocabs.isEmpty() && partVocabs.get(0).getVocabulary() != null ? partVocabs.get(0).getVocabulary().getId() : null);
+                        String key = (vocabId != null) ? (vocabId + "_10") : ("conversation_" + s.getId() + "_" + i);
                         double itemScore = calculateItemScore(key, mistakeMap, targetDate);
                         readingScore += itemScore;
                         readingCount++;
                     }
-                }
-                case FILL_IN_BLANK -> {
-                    // 2 màn ngữ pháp: FILL_IN_BLANK (roundType = 7) -> tính reading
-                    int qCount = getFillInBlankQuestionCount(s.getPayload());
-                    for (int i = 0; i < qCount; i++) {
-                        String key = "fill_blank_" + s.getId() + "_" + i;
-                        double itemScore = calculateItemScore(key, mistakeMap, targetDate);
-                        readingScore += itemScore;
-                        readingCount++;
-                    }
-                }
+                    break;
+            }
+        }
+
+        // Bổ sung: Nếu kỹ năng chưa có bài học FINISH từ lộ trình nhưng user có các câu sai trong bảng Mistake của vòng đó,
+        // tính điểm kỹ năng đó dựa trên độ thành thạo masteryScore trung bình của các câu sai đó:
+        if (vocabCount == 0) {
+            List<Mistake> r2 = mistakesByDate.stream().filter(m -> m.getRoundType() != null && m.getRoundType() == 2).collect(Collectors.toList());
+            if (!r2.isEmpty()) {
+                vocabScore = r2.stream().mapToDouble(m -> m.getMasteryScore() != null ? m.getMasteryScore() : 0.0).sum();
+                vocabCount = r2.size();
+            }
+        }
+        if (speakingCount == 0) {
+            List<Mistake> rSpeaking = mistakesByDate.stream().filter(m -> m.getRoundType() != null && (m.getRoundType() == 3 || m.getRoundType() == 9)).collect(Collectors.toList());
+            if (!rSpeaking.isEmpty()) {
+                speakingScore = rSpeaking.stream().mapToDouble(m -> m.getMasteryScore() != null ? m.getMasteryScore() : 0.0).sum();
+                speakingCount = rSpeaking.size();
+            }
+        }
+        if (writingCount == 0) {
+            List<Mistake> r4 = mistakesByDate.stream().filter(m -> m.getRoundType() != null && m.getRoundType() == 4).collect(Collectors.toList());
+            if (!r4.isEmpty()) {
+                writingScore = r4.stream().mapToDouble(m -> m.getMasteryScore() != null ? m.getMasteryScore() : 0.0).sum();
+                writingCount = r4.size();
+            }
+        }
+        if (listeningCount == 0) {
+            List<Mistake> r5 = mistakesByDate.stream().filter(m -> m.getRoundType() != null && m.getRoundType() == 5).collect(Collectors.toList());
+            if (!r5.isEmpty()) {
+                listeningScore = r5.stream().mapToDouble(m -> m.getMasteryScore() != null ? m.getMasteryScore() : 0.0).sum();
+                listeningCount = r5.size();
+            }
+        }
+        if (readingCount == 0) {
+            List<Mistake> rReading = mistakesByDate.stream().filter(m -> m.getRoundType() != null && m.getRoundType() == 10).collect(Collectors.toList());
+            if (!rReading.isEmpty()) {
+                readingScore = rReading.stream().mapToDouble(m -> m.getMasteryScore() != null ? m.getMasteryScore() : 0.0).sum();
+                readingCount = rReading.size();
+            }
+        }
+        if (grammarCount == 0) {
+            List<Mistake> rGrammar = mistakesByDate.stream().filter(m -> m.getRoundType() != null && (m.getRoundType() == 7 || m.getRoundType() == 8)).collect(Collectors.toList());
+            if (!rGrammar.isEmpty()) {
+                grammarScore = rGrammar.stream().mapToDouble(m -> m.getMasteryScore() != null ? m.getMasteryScore() : 0.0).sum();
+                grammarCount = rGrammar.size();
             }
         }
 
@@ -364,18 +472,21 @@ public class UserProgressServiceImpl implements UserProgressService {
                 .reading(readingCount > 0 ? Math.min(100, (int) Math.round((readingScore / readingCount) * 100.0)) : 0)
                 .writing(writingCount > 0 ? Math.min(100, (int) Math.round((writingScore / writingCount) * 100.0)) : 0)
                 .vocabGrammar(vocabCount > 0 ? Math.min(100, (int) Math.round((vocabScore / vocabCount) * 100.0)) : 0)
+                .grammar(grammarCount > 0 ? Math.min(100, (int) Math.round((grammarScore / grammarCount) * 100.0)) : 0)
                 .build();
     }
 
     private double calculateItemScore(String key, Map<String, Mistake> mistakeMap, LocalDate targetDate) {
         if (mistakeMap.containsKey(key)) {
             Mistake m = mistakeMap.get(key);
-            if (m.getLastPracticedAt() != null && !m.getLastPracticedAt().toLocalDate().isAfter(targetDate)) {
-                return (m.getMasteryScore() != null) ? m.getMasteryScore() : 0.0;
-            } else {
-                return 0.0;
-            }
+            // Luôn trả masteryScore hiện tại của câu sai:
+            // - Mới sai (chưa ôn): masteryScore=0.0 → điểm = 0%
+            // - Đã ôn 1 ngày: masteryScore=0.33 → điểm = 33%
+            // - Đã ôn 2 ngày: masteryScore=0.67 → điểm = 67%
+            // - Đã ôn 3 ngày (MASTERED): masteryScore=1.0 → điểm = 100%
+            return (m.getMasteryScore() != null) ? m.getMasteryScore() : 0.0;
         }
+        // Không có trong mistakeMap = chưa sai bao giờ → điểm tuyệt đối
         return 1.0;
     }
 
@@ -415,7 +526,7 @@ public class UserProgressServiceImpl implements UserProgressService {
         return 4;
     }
 
-    private int getFillInBlankQuestionCount(String payload) {
+    private int getItemsQuestionCount(String payload, int fallbackCount) {
         if (payload != null && !payload.isBlank()) {
             try {
                 JsonNode root = objectMapper.readTree(payload);
@@ -424,10 +535,14 @@ public class UserProgressServiceImpl implements UserProgressService {
                     return items.size();
                 }
             } catch (Exception e) {
-                log.debug("Error parsing FILL_IN_BLANK payload: {}", e.getMessage());
+                log.debug("Error parsing items payload: {}", e.getMessage());
             }
         }
-        return 6;
+        return fallbackCount;
+    }
+
+    private int getFillInBlankQuestionCount(String payload) {
+        return getItemsQuestionCount(payload, 6);
     }
 
 }

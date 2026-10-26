@@ -1,33 +1,33 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { SidebarLeft } from './layouts/SidebarLeft';
-import { SidebarRight } from './layouts/SidebarRight';
+import { TopHeader } from './layouts/TopHeader';
 import { SidebarAdmin } from './layouts/SidebarAdmin';
 import { AppRoutes } from './routes/AppRoutes';
 import { SessionPlayer } from './features/learning/components/SessionPlayer';
 import type { Session } from './features/learning/types';
 import './App.css';
 
-// Bộ điều phối Giao diện chính (khi nào nên hiện/ẩn Sidebar )
+// Bộ điều phối Giao diện chính (TopHeader trên đỉnh + SidebarLeft bên trái + Main content)
 function App() {
   const [playingSession, setPlayingSession] = useState<Session | null>(null);
   const location = useLocation();
 
-  // 1. Kiểm tra xem người dùng có đang ở trang Login hoặc Register hay không
   const isAuthPage = ['/login', '/register'].includes(location.pathname);
+  // Trang Welcome / Placement Test: ẩn toàn bộ sidebar, hiện full-screen
+  const isWelcomePage = location.pathname === '/welcome';
   const isAdminPage = location.pathname.startsWith('/admin');
 
-  // 2. Trường hợp 1: Người dùng đang học bài -> Ẩn toàn bộ Sidebar để hiển thị màn hình làm bài tập tràn màn hình (Full-screen)
-  if (playingSession) {
+  // 1. Trang Welcome / Placement Test => Full-screen không sidebar
+  if (isWelcomePage) {
     return (
-      <SessionPlayer
-        session={playingSession}
-        onClose={() => setPlayingSession(null)}
-      />
+      <div className="min-h-screen bg-white w-full">
+        <AppRoutes onStartSession={(session) => setPlayingSession(session)} />
+      </div>
     );
   }
 
-  // 3. Người dùng đang ở trang Đăng nhập / Đăng ký => Ẩn 2 Sidebar bên trái & bên phải để hiển thị Form Đăng nhập căn giữa
+  // 2. Trang Đăng nhập / Đăng ký => Căn giữa không sidebar
   if (isAuthPage) {
     return (
       <div className="min-h-screen bg-white w-full">
@@ -36,7 +36,7 @@ function App() {
     );
   }
 
-  // 4. Người dùng đang ở trang Admin => Hiển thị Sidebar Admin
+  // 3. Trang Admin => Hiển thị Sidebar Admin
   if (isAdminPage) {
     return (
       <div className="min-h-screen bg-[#f8fafc] flex w-full relative">
@@ -50,20 +50,31 @@ function App() {
     );
   }
 
-  // 5. Người dùng ở các trang bình thường -> Hiển thị đầy đủ Bố cục 3 cột (Sidebar trái - Nội dung chính AppRoutes - Sidebar phải)
+  // 4. Các trang người dùng: SidebarLeft bên trái + TopHeader trên đỉnh + Main content
   return (
-    <div className="min-h-screen bg-white flex w-full relative">
+    <div className="min-h-screen bg-[#f8fafc] flex w-full relative">
+      {/* Full-screen Session Player khi đang học bài */}
+      {playingSession && (
+        <div className="fixed inset-0 z-50 bg-white overflow-y-auto">
+          <SessionPlayer
+            session={playingSession}
+            onClose={() => setPlayingSession(null)}
+          />
+        </div>
+      )}
+
       {/* Sidebar Left Navigation Menu */}
       <SidebarLeft />
 
-      {/* Main Container Content Area */}
-      <main className="flex-grow min-h-screen pl-64 pr-0 lg:pr-80 flex flex-col bg-bg-light">
-        <AppRoutes onStartSession={(session) => setPlayingSession(session)} />
-      </main>
+      {/* Main Container Content Area with Top Header */}
+      <div className="flex-grow min-h-screen pl-64 flex flex-col bg-[#f8fafc]">
+        {/* Thanh Top Header chứa Streak, Gems, Hearts, Khóa học, Avatar */}
+        <TopHeader />
 
-      {/* Sidebar Right Info Stats Widgets */}
-      <div className="w-80 fixed right-0 top-0 bottom-0 border-l-2 border-border-main overflow-y-auto hidden lg:block bg-white">
-        <SidebarRight />
+        {/* Nội dung trang */}
+        <main className="flex-grow flex flex-col w-full">
+          <AppRoutes onStartSession={(session) => setPlayingSession(session)} />
+        </main>
       </div>
     </div>
   );

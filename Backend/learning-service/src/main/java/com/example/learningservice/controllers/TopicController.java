@@ -1,5 +1,6 @@
 package com.example.learningservice.controllers;
 
+import com.example.learningservice.dto.TopicWithProgressDto;
 import com.example.learningservice.entities.Topic;
 import com.example.learningservice.services.TopicService;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,17 @@ public class TopicController {
     @GetMapping("/by-level/{levelId}")
     public ResponseEntity<List<Topic>> getTopicsByLevel(@PathVariable Long levelId) {
         return ResponseEntity.ok(topicService.getTopicsByLevel(levelId));
+    }
+
+    /**
+     * Lấy danh sách topic kèm grammar name và trạng thái học của user.
+     * GET /api/topics/with-progress?levelId={levelId}&userId={userId}
+     */
+    @GetMapping("/with-progress")
+    public ResponseEntity<List<TopicWithProgressDto>> getTopicsWithProgress(
+            @RequestParam Long levelId,
+            @RequestParam Long userId) {
+        return ResponseEntity.ok(topicService.getTopicsWithProgress(levelId, userId));
     }
 
     @GetMapping("/{id}")
@@ -41,3 +53,4 @@ public class TopicController {
         return ResponseEntity.noContent().build();
     }
 }
+
