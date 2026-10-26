@@ -3,6 +3,7 @@ package edu.vn.iuh.fit.admin.services.impl;
 import edu.vn.iuh.fit.admin.client.ActiveStatsClient;
 import edu.vn.iuh.fit.admin.client.UserClient;
 import edu.vn.iuh.fit.admin.client.dto.ActiveStatsResponse;
+import edu.vn.iuh.fit.admin.dto.response.CohortRetentionRowResponse;
 import edu.vn.iuh.fit.admin.dto.response.OverviewResponse;
 import edu.vn.iuh.fit.admin.dto.response.UserCountResponse;
 import edu.vn.iuh.fit.admin.services.AdminUserService;
@@ -13,6 +14,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -98,6 +100,17 @@ public class AdminUserServiceImpl implements AdminUserService {
                 .mau(activeStats.getMau())
                 .stickinessRatio(activeStats.getStickinessRatio())
                 .build();
+    }
+
+    @Override
+    public List<CohortRetentionRowResponse> getCohortRetention(int days) {
+        try {
+            List<CohortRetentionRowResponse> result = activeStatsClient.getCohortRetention(days);
+            return result != null ? result : List.of();
+        } catch (Exception e) {
+            System.err.println("⚠️ Error calling auth-service via OpenFeign for cohort retention: " + e.getMessage());
+            return List.of();
+        }
     }
 
     private static Double growthPercent(long current, long previous) {

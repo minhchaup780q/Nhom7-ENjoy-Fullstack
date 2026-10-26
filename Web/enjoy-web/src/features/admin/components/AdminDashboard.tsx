@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { adminApi, type OverviewResponse } from '../api/adminApi';
+import { CohortRetentionTable } from './CohortRetentionTable';
+import { InfoPopover } from './InfoPopover';
 import {
   UsersIcon,
   ArrowPathIcon,
@@ -35,6 +37,8 @@ const getStickinessLevel = (ratio: number, mau: number): StickinessLevel => {
 
 interface StatCardProps {
   title: string;
+  // Thành phần bổ sung cạnh tiêu đề (vd. icon ⓘ với popover chú thích)
+  titleAdornment?: React.ReactNode;
   icon: React.ReactNode;
   iconClass: string;
   value: React.ReactNode;
@@ -44,13 +48,16 @@ interface StatCardProps {
   tooltip?: string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ title, icon, iconClass, value, footer, loading, error, tooltip }) => (
+const StatCard: React.FC<StatCardProps> = ({ title, titleAdornment, icon, iconClass, value, footer, loading, error, tooltip }) => (
   <div
     title={tooltip}
-    className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm relative overflow-hidden flex flex-col justify-between"
+    className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm relative overflow-visible flex flex-col justify-between"
   >
     <div className="flex items-center justify-between mb-2">
-      <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{title}</span>
+      <span className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-400">
+        {title}
+        {titleAdornment}
+      </span>
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconClass}`}>{icon}</div>
     </div>
 
@@ -179,6 +186,26 @@ export const AdminDashboard: React.FC = () => {
         {/* DAU/MAU */}
         <StatCard
           title="Tỉ lệ DAU/MAU"
+          titleAdornment={
+            <InfoPopover align="right" ariaLabel="Ý nghĩa tỉ lệ DAU/MAU">
+              <h4 className="text-sm font-display font-extrabold text-slate-800 mb-2">Ý nghĩa tỉ lệ DAU/MAU</h4>
+              <p className="text-xs text-slate-500 mb-3">Tỉ lệ = (DAU / MAU) × 100%</p>
+              <ul className="space-y-2 text-sm normal-case tracking-normal font-medium">
+                <li className="flex gap-2">
+                  <span className="px-2 py-0.5 h-fit rounded-lg font-bold text-xs bg-red-50 text-red-500 whitespace-nowrap">&lt; 10%</span>
+                  <span className="text-slate-600">Người dùng hiếm khi quay lại (~3 ngày/tháng). Chưa giữ chân được người dùng.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="px-2 py-0.5 h-fit rounded-lg font-bold text-xs bg-sky-50 text-sky-600 whitespace-nowrap">≥ 20%</span>
+                  <span className="text-slate-600">Trung bình khá với app thông thường (~6 ngày/tháng).</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="px-2 py-0.5 h-fit rounded-lg font-bold text-xs bg-emerald-50 text-emerald-600 whitespace-nowrap">≥ 50%</span>
+                  <span className="text-slate-600">Xuất sắc (~15 ngày/tháng). Cơ chế thưởng/nhiệm vụ hằng ngày hoạt động rất hiệu quả.</span>
+                </li>
+              </ul>
+            </InfoPopover>
+          }
           icon={<FireIcon className="w-5 h-5 stroke-[2.5]" />}
           iconClass="bg-rose-50 text-rose-500"
           value={`${ratio.toLocaleString('vi-VN')}%`}
@@ -194,26 +221,8 @@ export const AdminDashboard: React.FC = () => {
         />
       </div>
 
-      {/* Thang đánh giá Stickiness */}
-      <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-          Ý nghĩa tỉ lệ DAU/MAU
-        </h4>
-        <ul className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <li className="flex gap-3">
-            <span className="px-2 py-0.5 h-fit rounded-lg font-bold text-xs bg-red-50 text-red-500 whitespace-nowrap">&lt; 10%</span>
-            <span className="text-slate-600">Người dùng hiếm khi quay lại (~3 ngày/tháng). Sản phẩm chưa giữ chân được người dùng.</span>
-          </li>
-          <li className="flex gap-3">
-            <span className="px-2 py-0.5 h-fit rounded-lg font-bold text-xs bg-sky-50 text-sky-600 whitespace-nowrap">≥ 20%</span>
-            <span className="text-slate-600">Mức trung bình khá với app thông thường (~6 ngày/tháng).</span>
-          </li>
-          <li className="flex gap-3">
-            <span className="px-2 py-0.5 h-fit rounded-lg font-bold text-xs bg-emerald-50 text-emerald-600 whitespace-nowrap">≥ 50%</span>
-            <span className="text-slate-600">Xuất sắc (~15 ngày/tháng). Cơ chế thưởng/nhiệm vụ hằng ngày đang hoạt động rất hiệu quả.</span>
-          </li>
-        </ul>
-      </div>
+      {/* Bảng cohort giữ chân theo ngày đăng ký */}
+      <CohortRetentionTable />
     </div>
   );
 };

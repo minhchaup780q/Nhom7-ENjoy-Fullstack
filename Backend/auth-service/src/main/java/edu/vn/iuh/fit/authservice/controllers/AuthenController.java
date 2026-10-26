@@ -2,6 +2,7 @@ package edu.vn.iuh.fit.authservice.controllers;
 
 import edu.vn.iuh.fit.authservice.dto.request.*;
 import edu.vn.iuh.fit.authservice.dto.response.ActiveStatsResponse;
+import edu.vn.iuh.fit.authservice.dto.response.CohortRetentionRowResponse;
 import edu.vn.iuh.fit.authservice.dto.response.LoginResponse;
 import edu.vn.iuh.fit.authservice.services.ActiveUserService;
 import edu.vn.iuh.fit.authservice.services.AuthenticationService;
@@ -31,6 +32,12 @@ public class AuthenController {
     @GetMapping("/internal/active-stats")
     public ResponseEntity<ActiveStatsResponse> getActiveStats() {
         return ResponseEntity.ok(activeUserService.getActiveStats());
+    }
+
+    @GetMapping("/internal/cohort-retention")
+    public ResponseEntity<java.util.List<CohortRetentionRowResponse>> getCohortRetention(
+            @RequestParam(value = "days", defaultValue = "7") int days) {
+        return ResponseEntity.ok(activeUserService.getCohortRetention(days));
     }
 
     @PostMapping("/login")

@@ -1,9 +1,12 @@
 package edu.vn.iuh.fit.authservice.services.impl;
 
 import edu.vn.iuh.fit.authservice.dto.response.ActiveStatsResponse;
+import edu.vn.iuh.fit.authservice.dto.response.CohortRetentionRowResponse;
+import edu.vn.iuh.fit.authservice.entities.Account;
 import edu.vn.iuh.fit.authservice.entities.DailyActiveStats;
 import edu.vn.iuh.fit.authservice.entities.DailyActiveUser;
 import edu.vn.iuh.fit.authservice.entities.enums.UserRole;
+import edu.vn.iuh.fit.authservice.repositories.AccountRepository;
 import edu.vn.iuh.fit.authservice.repositories.DailyActiveStatsRepository;
 import edu.vn.iuh.fit.authservice.repositories.DailyActiveUserRepository;
 import edu.vn.iuh.fit.authservice.services.ActiveUserService;
@@ -16,8 +19,12 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -35,6 +42,7 @@ public class ActiveUserServiceImpl implements ActiveUserService {
     private final StringRedisTemplate stringRedisTemplate;
     private final DailyActiveUserRepository dailyActiveUserRepository;
     private final DailyActiveStatsRepository dailyActiveStatsRepository;
+    private final AccountRepository accountRepository;
 
     @Override
     public void trackActive(Long accountId, String role) {
@@ -73,6 +81,75 @@ public class ActiveUserServiceImpl implements ActiveUserService {
                 .mau(mau)
                 .stickinessRatio(stickiness(dau, mau))
                 .build();
+    }
+
+    @Override
+    public List<CohortRetentionRowResponse> getCohortRetention(int days) {
+        int windowDays = Math.max(1, days);
+        LocalDate today = today();
+        LocalDate firstCohort = today.minusDays(windowDays - 1);
+
+        // Khoảng [firstCohort 00:00, ngày mai 00:00) để lấy user đăng ký trong windowDays ngày gần nhất
+        LocalDateTime from = firstCohort.atStartOfDay();
+        LocalDateTime to = today.plusDays(1).atStartOfDay();
+
+        List<Account> accounts = accountRepository.findRegisteredBetween(UserRole.ROLE_ADMIN, from, to);
+
+        // Nhóm accountId theo ngày đăng ký
+        Map<LocalDate, List<Long>> cohorts = accounts.stream()
+                .filter(a -> a.getCreatedAt() != null)
+                .collect(Collectors.groupingBy(
+                        a -> a.getCreatedAt().toLocalDate(),
+                        Collectors.mapping(Account::getId, Collectors.toList())));
+
+        // Cache tập account active theo ngày để không truy vấn trùng giữa các cohort
+        Map<LocalDate, Set<Long>> activeCache = new HashMap<>();
+
+        List<CohortRetentionRowResponse> rows = new ArrayList<>();
+        for (Map.Entry<LocalDate, List<Long>> entry : cohorts.entrySet()) {
+            LocalDate cohortDate = entry.getKey();
+            Set<Long> cohortIds = new HashSet<>(entry.getValue());
+
+            Double d1 = retentionRate(cohortDate, 1, cohortIds, today, activeCache);
+            Double d7 = retentionRate(cohortDate, 7, cohortIds, today, activeCache);
+            Double d14 = retentionRate(cohortDate, 14, cohortIds, today, activeCache);
+            Double churn14 = (d14 == null) ? null : round(100.0 - d14);
+
+            rows.add(CohortRetentionRowResponse.builder()
+                    .cohortDate(cohortDate)
+                    .newUsers(cohortIds.size())
+                    .day1Rate(d1)
+                    .day7Rate(d7)
+                    .day14Rate(d14)
+                    .churn14Rate(churn14)
+                    .build());
+        }
+
+        // Ngày đăng ký mới nhất lên đầu
+        rows.sort(Comparator.comparing(CohortRetentionRowResponse::getCohortDate).reversed());
+        return rows;
+    }
+
+    // Tỉ lệ cohort còn active vào ngày D+offset; null nếu mốc đó chưa tới (chưa đủ dữ liệu)
+    private Double retentionRate(LocalDate cohortDate, int offset, Set<Long> cohortIds,
+                                 LocalDate today, Map<LocalDate, Set<Long>> activeCache) {
+        LocalDate target = cohortDate.plusDays(offset);
+        if (target.isAfter(today)) {
+            return null;
+        }
+        if (cohortIds.isEmpty()) {
+            return 0.0;
+        }
+        Set<Long> active = activeCache.computeIfAbsent(target, this::activeAccountsOn);
+        long retained = cohortIds.stream().filter(active::contains).count();
+        return round(retained * 100.0 / cohortIds.size());
+    }
+
+    // Tập account active trong 1 ngày = dữ liệu đã flush ở DB ∪ dữ liệu còn trong Redis (ngày chưa flush)
+    private Set<Long> activeAccountsOn(LocalDate date) {
+        Set<Long> active = new HashSet<>(dailyActiveUserRepository.findAccountIdsByStatDate(date));
+        addAll(active, redisMembers(date));
+        return active;
     }
 
     @Override
@@ -143,6 +220,11 @@ public class ActiveUserServiceImpl implements ActiveUserService {
             return 0;
         }
         return Math.round(dau * 1000.0 / mau) / 10.0;
+    }
+
+    // Làm tròn 1 chữ số thập phân
+    private static double round(double value) {
+        return Math.round(value * 10.0) / 10.0;
     }
 
     private static String dauKey(LocalDate date) {
