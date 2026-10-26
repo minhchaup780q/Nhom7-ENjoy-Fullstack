@@ -1,9 +1,11 @@
 package com.example.learningservice.entities;
 
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 
 import java.io.IOException;
 
@@ -21,7 +23,19 @@ public class RawJsonDeserializer extends StdDeserializer<String> {
 
     @Override
     public String deserialize(JsonParser p, DeserializationContext ctx) throws IOException {
-        // Đọc toàn bộ JSON node và convert về String
-        return mapper.writeValueAsString(p.readValueAsTree());
+        if (p.currentToken() == JsonToken.VALUE_STRING) {
+            return p.getText();
+        }
+        if (p.currentToken() == JsonToken.VALUE_NULL) {
+            return null;
+        }
+        JsonNode node = p.readValueAsTree();
+        if (node == null || node.isNull()) {
+            return null;
+        }
+        if (node.isTextual()) {
+            return node.asText();
+        }
+        return mapper.writeValueAsString(node);
     }
 }

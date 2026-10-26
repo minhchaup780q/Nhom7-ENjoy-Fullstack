@@ -94,8 +94,8 @@ public class UserProgressServiceImpl implements UserProgressService {
             log.error("Lỗi khi cộng điểm XP vào leaderboard cho user {}: {}", userId, ex.getMessage());
         }
 
-        // 2. Tìm bài học tiếp theo trong cùng Part để UNLOCK
-        List<Session> partSessions = sessionRepository.findByPartIdAndIsDeleteFalseOrderByOrderIndexAsc(currentSession.getPart().getId());
+        // 2. Tìm bài học tiếp theo trong cùng Part để UNLOCK (chỉ unlock bài đã phát hành)
+        List<Session> partSessions = sessionRepository.findByPartIdAndIsDeleteFalseAndIsPublishedTrueOrderByOrderIndexAsc(currentSession.getPart().getId());
         int currentIndex = -1;
         for (int i = 0; i < partSessions.size(); i++) {
             if (partSessions.get(i).getId().equals(sessionId)) {

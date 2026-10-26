@@ -27,7 +27,9 @@ export const ExamPage: React.FC = () => {
 
   const isExamLocked = (_exam?: ExamSummary) => {
     // Khi còn từ sai chưa luyện tập xong -> khóa TẤT CẢ các bài thi để tránh loãng biểu đồ
-    return pendingWeakCount > 0;
+    // TODO: tạm tắt khóa để test bài thi, bật lại khi test xong
+    // return pendingWeakCount > 0;
+    return false;
   };
 
   // Lấy danh sách đề thi và thống kê lỗi sai

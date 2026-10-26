@@ -29,7 +29,7 @@ public class TopicServiceImpl implements TopicService {
 
     @Override
     public List<Topic> getTopicsByLevel(Long levelId) {
-        return topicRepository.findByLevelIdAndIsDeleteFalseOrderByOrderIndexAsc(levelId);
+        return topicRepository.findByLevelIdAndIsDeleteFalseAndIsPublishedTrueOrderByOrderIndexAsc(levelId);
     }
 
     @Override
@@ -70,7 +70,7 @@ public class TopicServiceImpl implements TopicService {
 
     @Override
     public List<TopicWithProgressDto> getTopicsWithProgress(Long levelId, Long userId) {
-        List<Topic> topics = topicRepository.findByLevelIdAndIsDeleteFalseOrderByOrderIndexAsc(levelId);
+        List<Topic> topics = topicRepository.findByLevelIdAndIsDeleteFalseAndIsPublishedTrueOrderByOrderIndexAsc(levelId);
         List<TopicWithProgressDto> result = new ArrayList<>();
 
         // Lấy toàn bộ UserProgress của user một lần (tránh N+1)
@@ -88,13 +88,13 @@ public class TopicServiceImpl implements TopicService {
         }
 
         for (Topic topic : topics) {
-            List<Part> parts = partRepository.findByTopicIdAndIsDeleteFalseOrderByOrderIndexAsc(topic.getId());
+            List<Part> parts = partRepository.findByTopicIdAndIsDeleteFalseAndIsPublishedTrueOrderByOrderIndexAsc(topic.getId());
             if (parts.isEmpty()) continue;
 
-            // Lấy tất cả sessions của topic
+            // Lấy tất cả sessions đã phát hành của topic
             List<Session> allSessions = new ArrayList<>();
             for (Part part : parts) {
-                allSessions.addAll(sessionRepository.findByPartIdAndIsDeleteFalseOrderByOrderIndexAsc(part.getId()));
+                allSessions.addAll(sessionRepository.findByPartIdAndIsDeleteFalseAndIsPublishedTrueOrderByOrderIndexAsc(part.getId()));
             }
 
             // Phân loại sessions theo orderIndex

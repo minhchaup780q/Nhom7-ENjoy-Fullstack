@@ -24,7 +24,7 @@ public class PartServiceImpl implements PartService {
 
     @Override
     public List<Part> getPartsByTopic(Long topicId) {
-        return partRepository.findByTopicIdAndIsDeleteFalseOrderByOrderIndexAsc(topicId);
+        return partRepository.findByTopicIdAndIsDeleteFalseAndIsPublishedTrueOrderByOrderIndexAsc(topicId);
     }
 
     @Override

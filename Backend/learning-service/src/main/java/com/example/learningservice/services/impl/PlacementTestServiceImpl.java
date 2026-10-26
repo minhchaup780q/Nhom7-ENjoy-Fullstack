@@ -458,7 +458,7 @@ public class PlacementTestServiceImpl implements PlacementTestService {
         String cleanQ = normalizeString(questionTopic);
 
         for (Topic topic : allTopics) {
-            List<Part> parts = partRepository.findByTopicIdAndIsDeleteFalseOrderByOrderIndexAsc(topic.getId());
+            List<Part> parts = partRepository.findByTopicIdAndIsDeleteFalseAndIsPublishedTrueOrderByOrderIndexAsc(topic.getId());
 
             // Vòng 1 & 2: so sánh với title của part
             if (round == 1 || round == 2) {
@@ -475,7 +475,7 @@ public class PlacementTestServiceImpl implements PlacementTestService {
             } else if (round == 3) {
                 // Vòng 3: so sánh với title của session số 6 (GRAMMAR)
                 for (Part part : parts) {
-                    List<Session> sessions = sessionRepository.findByPartIdAndIsDeleteFalseOrderByOrderIndexAsc(part.getId());
+                    List<Session> sessions = sessionRepository.findByPartIdAndIsDeleteFalseAndIsPublishedTrueOrderByOrderIndexAsc(part.getId());
                     for (Session s : sessions) {
                         if (s.getSessionType() == SessionType.GRAMMAR || (s.getOrderIndex() != null && s.getOrderIndex() == 6)) {
                             String grammarTitle = extractGrammarTitle(s);
