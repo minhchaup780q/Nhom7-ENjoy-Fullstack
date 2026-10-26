@@ -7,15 +7,14 @@ import {
   TrashIcon,
   CloudArrowUpIcon,
   ArrowPathIcon,
-  AcademicCapIcon,
   FolderIcon,
   Squares2X2Icon,
   BookOpenIcon,
   ExclamationCircleIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
-  FunnelIcon,
   DocumentMagnifyingGlassIcon,
+  MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 import {
   adminCourseApi,
@@ -66,6 +65,7 @@ export const AdminLessons: React.FC = () => {
   type FilterMode = 'all' | 'draft-topics' | 'draft-sessions';
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const [loadingFilter, setLoadingFilter] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Thông báo Notification
   const [notification, setNotification] = useState<NotificationState | null>(null);
@@ -152,6 +152,7 @@ export const AdminLessons: React.FC = () => {
       setExpandedTopicIds(new Set());
       setExpandedPartIds(new Set());
       setFilterMode('all');
+      setSearchQuery('');
     }
   }, [selectedLevelId, loadTopics]);
 
@@ -271,10 +272,17 @@ export const AdminLessons: React.FC = () => {
     return false;
   };
 
-  // Lọc topics theo bộ lọc đang chọn
-  const filteredTopics = filterMode === 'draft-topics'
-    ? topics.filter((t) => topicHasDraft(t))
-    : topics;
+  // Lọc topics theo bộ lọc đang chọn + search
+  const filteredTopics = (() => {
+    let result = filterMode === 'draft-topics'
+      ? topics.filter((t) => topicHasDraft(t))
+      : topics;
+    if (searchQuery.trim() && filterMode !== 'draft-sessions') {
+      const q = searchQuery.trim().toLowerCase();
+      result = result.filter((t) => t.title.toLowerCase().includes(q));
+    }
+    return result;
+  })();
 
   // Danh sách phẳng các session nháp (cho chế độ lọc draft-sessions)
   const allDraftSessions: Array<{
@@ -286,19 +294,22 @@ export const AdminLessons: React.FC = () => {
   }> = [];
 
   if (filterMode === 'draft-sessions') {
+    const q = searchQuery.trim().toLowerCase();
     for (const topic of topics) {
       const parts = partsMap[topic.id] || [];
       for (const part of parts) {
         const sessions = sessionsMap[part.id] || [];
         for (const session of sessions) {
           if (session.badge === 'DRAFT' || session.badge === 'HAS_DRAFT') {
-            allDraftSessions.push({
-              session,
-              topicTitle: topic.title,
-              topicId: topic.id,
-              partTitle: part.title,
-              partId: part.id,
-            });
+            if (!q || session.title.toLowerCase().includes(q)) {
+              allDraftSessions.push({
+                session,
+                topicTitle: topic.title,
+                topicId: topic.id,
+                partTitle: part.title,
+                partId: part.id,
+              });
+            }
           }
         }
       }
@@ -507,73 +518,60 @@ export const AdminLessons: React.FC = () => {
   // XỬ LÝ XÓA AN TOÀN (CONFIRM DELETE & AUTO-BRIDGE)
   // ==========================================
 
-  const handlePromptDelete = async (
+  // Luôn mở hộp thoại xác nhận trước khi xóa
+  const handlePromptDelete = (
     id: number,
     title: string,
     itemType: 'Topic' | 'Part' | 'Session',
     parentTopicId?: number,
     parentPartId?: number
   ) => {
-    setActionLoading(true);
-    try {
-      // Gọi API delete lần đầu để kiểm tra xem có cần token xác nhận hay không
-      let result: DeleteResult;
-      if (itemType === 'Topic') {
-        result = await adminCourseApi.deleteTopic(id);
-      } else if (itemType === 'Part') {
-        result = await adminCourseApi.deletePart(id);
-      } else {
-        result = await adminCourseApi.deleteSession(id);
-      }
-
-      if (result.deleted) {
-        showNotify('success', result.message || `Đã xóa ${itemType.toLowerCase()} "${title}" thành công!`);
-        // Refresh danh sách
-        if (itemType === 'Topic' && selectedLevelId) loadTopics(selectedLevelId);
-        if (itemType === 'Part' && parentTopicId) loadParts(parentTopicId);
-        if (itemType === 'Session' && parentPartId) loadSessions(parentPartId);
-      } else if (result.requiresConfirmation) {
-        // Mở Modal xác nhận xóa an toàn kèm thông tin Auto-Bridge
-        setDeleteTarget({
-          id,
-          title,
-          itemType,
-          parentTopicId,
-          parentPartId,
-          result,
-        });
-        setDeleteModalOpen(true);
-      }
-    } catch (err: any) {
-      showNotify('error', err.message || `Không thể xóa ${itemType.toLowerCase()}`);
-    } finally {
-      setActionLoading(false);
-    }
+    setDeleteTarget({ id, title, itemType, parentTopicId, parentPartId });
+    setDeleteModalOpen(true);
   };
 
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
     setActionLoading(true);
     try {
-      const token = deleteTarget.result?.confirmationToken;
-      let finalResult: DeleteResult;
-
+      // Gọi API xóa lần đầu
+      let result: DeleteResult;
       if (deleteTarget.itemType === 'Topic') {
-        finalResult = await adminCourseApi.deleteTopic(deleteTarget.id, token);
-        if (selectedLevelId) loadTopics(selectedLevelId);
+        result = await adminCourseApi.deleteTopic(deleteTarget.id);
       } else if (deleteTarget.itemType === 'Part') {
-        finalResult = await adminCourseApi.deletePart(deleteTarget.id, token);
-        if (deleteTarget.parentTopicId) loadParts(deleteTarget.parentTopicId);
+        result = await adminCourseApi.deletePart(deleteTarget.id);
       } else {
-        finalResult = await adminCourseApi.deleteSession(deleteTarget.id, token);
-        if (deleteTarget.parentPartId) loadSessions(deleteTarget.parentPartId);
+        result = await adminCourseApi.deleteSession(deleteTarget.id);
       }
 
-      showNotify('success', finalResult.message || `Đã xóa an toàn "${deleteTarget.title}"`);
-      setDeleteModalOpen(false);
-      setDeleteTarget(null);
+      if (result.deleted) {
+        // Xóa thành công
+        if (deleteTarget.itemType === 'Topic' && selectedLevelId) loadTopics(selectedLevelId);
+        if (deleteTarget.itemType === 'Part' && deleteTarget.parentTopicId) loadParts(deleteTarget.parentTopicId);
+        if (deleteTarget.itemType === 'Session' && deleteTarget.parentPartId) loadSessions(deleteTarget.parentPartId);
+        showNotify('success', `Đã xóa "${deleteTarget.title}" thành công`);
+        setDeleteModalOpen(false);
+        setDeleteTarget(null);
+      } else if (result.requiresConfirmation) {
+        // Backend yêu cầu xác nhận lần 2 (có ảnh hưởng học sinh) — gọi lại với token
+        const token = result.confirmationToken;
+        let finalResult: DeleteResult;
+        if (deleteTarget.itemType === 'Topic') {
+          finalResult = await adminCourseApi.deleteTopic(deleteTarget.id, token);
+          if (selectedLevelId) loadTopics(selectedLevelId);
+        } else if (deleteTarget.itemType === 'Part') {
+          finalResult = await adminCourseApi.deletePart(deleteTarget.id, token);
+          if (deleteTarget.parentTopicId) loadParts(deleteTarget.parentTopicId);
+        } else {
+          finalResult = await adminCourseApi.deleteSession(deleteTarget.id, token);
+          if (deleteTarget.parentPartId) loadSessions(deleteTarget.parentPartId);
+        }
+        showNotify('success', finalResult.message || `Đã xóa "${deleteTarget.title}" thành công`);
+        setDeleteModalOpen(false);
+        setDeleteTarget(null);
+      }
     } catch (err: any) {
-      showNotify('error', err.message || 'Lỗi khi xác nhận xóa');
+      showNotify('error', err.message || 'Lỗi khi xóa');
     } finally {
       setActionLoading(false);
     }
@@ -652,92 +650,112 @@ export const AdminLessons: React.FC = () => {
         </div>
       )}
 
-      {/* 2. BỘ LỌC TỔNG HỢP (Level + Chế độ xem) */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs divide-y divide-slate-100">
-        {/* Hàng 1: Chọn trình độ */}
-        <div className="flex items-center gap-3 px-4 py-3 flex-wrap">
-          <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0">
-            <AcademicCapIcon className="w-3.5 h-3.5 text-indigo-500" />
-            Trình độ
+      {/* 2. WIDGET THỐNG KÊ (đồng bộ style Overview) */}
+      {!loadingTopics && topics.length > 0 && (() => {
+        const publishedCount = topics.filter((t) => t.badge === 'PUBLISHED').length;
+        const draftCount = topics.filter((t) => t.badge === 'DRAFT').length;
+        return (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+            <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Topic đã phát hành</span>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-emerald-50 text-emerald-500">
+                  <CloudArrowUpIcon className="w-5 h-5 stroke-[2.5]" />
+                </div>
+              </div>
+              <h3 className="text-3xl font-extrabold text-slate-800 my-2">{publishedCount}</h3>
+              <div className="pt-2 border-t border-slate-100 text-xs font-semibold text-slate-400">
+                Tổng số chủ đề đang hiển thị cho người học
+              </div>
+            </div>
+            <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Topic chưa phát hành</span>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-amber-50 text-amber-500">
+                  <ExclamationCircleIcon className="w-5 h-5 stroke-[2.5]" />
+                </div>
+              </div>
+              <h3 className="text-3xl font-extrabold text-slate-800 my-2">{draftCount}</h3>
+              <div className="pt-2 border-t border-slate-100 text-xs font-semibold text-slate-400">
+                Chủ đề đang ở trạng thái nháp, chưa được phát hành
+              </div>
+            </div>
           </div>
-          {loadingLevels ? (
-            <div className="flex items-center gap-1.5 text-xs text-slate-400">
-              <ArrowPathIcon className="w-3.5 h-3.5 animate-spin" /> Đang tải...
-            </div>
-          ) : (
-            <div className="flex items-center gap-1.5 overflow-x-auto">
-              {levels.map((lvl) => (
-                <button
-                  key={lvl.id}
-                  type="button"
-                  onClick={() => setSelectedLevelId(lvl.id)}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shrink-0 ${
-                    selectedLevelId === lvl.id
-                      ? 'bg-indigo-600 text-white shadow-sm ring-2 ring-indigo-500/20'
-                      : 'bg-slate-100 hover:bg-slate-200/80 text-slate-600'
-                  }`}
-                >
-                  {lvl.name}
-                  <span
-                    className={`px-1.5 py-0.5 rounded-full text-[10px] ${
-                      selectedLevelId === lvl.id ? 'bg-indigo-700 text-white' : 'bg-slate-200 text-slate-500'
-                    }`}
-                  >
-                    {lvl.code}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
+        );
+      })()}
+
+      {/* 3. DANH SÁCH CHỦ ĐỀ — Tiêu đề + Bộ lọc */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <FolderIcon className="w-5 h-5 text-indigo-600" />
+            <h3 className="text-base font-bold text-slate-800">Danh sách Chủ đề</h3>
+          </div>
+          <button
+            type="button"
+            onClick={handleOpenCreateTopic}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-xs active:scale-95 transition"
+          >
+            <PlusIcon className="w-4 h-4" />
+            <span>Thêm Chủ đề</span>
+          </button>
         </div>
 
-        {/* Hàng 2: Chế độ xem */}
-        <div className="flex items-center gap-3 px-4 py-3 flex-wrap">
-          <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0">
-            <FunnelIcon className="w-3.5 h-3.5 text-indigo-500" />
-            Chế độ xem
-          </div>
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {([
-              { key: 'all' as FilterMode, label: 'Tất cả', icon: FolderIcon },
-              { key: 'draft-topics' as FilterMode, label: 'Chủ đề có nháp', icon: ExclamationCircleIcon },
-              { key: 'draft-sessions' as FilterMode, label: 'Bài học nháp', icon: DocumentMagnifyingGlassIcon },
-            ] as const).map(({ key, label, icon: Icon }) => (
+        {/* Thanh lọc: Search + Trình độ + Chế độ xem */}
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Thanh tìm kiếm */}
+          <div className="relative flex-1 min-w-[180px]">
+            <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={filterMode === 'draft-sessions' ? 'Tìm theo tên bài học...' : 'Tìm theo tên chủ đề...'}
+              className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition"
+            />
+            {searchQuery && (
               <button
-                key={key}
-                type="button"
-                onClick={() => handleFilterChange(key)}
-                disabled={loadingFilter}
-                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition active:scale-95 disabled:opacity-50 ${
-                  filterMode === key
-                    ? 'bg-indigo-600 text-white shadow-sm ring-2 ring-indigo-500/20'
-                    : 'bg-slate-100 hover:bg-slate-200/80 text-slate-600'
-                }`}
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
-                <Icon className="w-3.5 h-3.5" />
-                {label}
-                {key === 'draft-topics' && filterMode === 'draft-topics' && (
-                  <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-indigo-700 text-white">
-                    {filteredTopics.length}
-                  </span>
-                )}
-                {key === 'draft-sessions' && filterMode === 'draft-sessions' && (
-                  <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-indigo-700 text-white">
-                    {allDraftSessions.length}
-                  </span>
-                )}
+                ×
               </button>
-            ))}
-            {loadingFilter && (
-              <span className="inline-flex items-center gap-1.5 text-xs text-slate-400">
-                <ArrowPathIcon className="w-3.5 h-3.5 animate-spin" /> Đang tải...
-              </span>
             )}
           </div>
+
+          {/* Dropdown: Trình độ */}
+          <select
+            value={selectedLevelId ?? ''}
+            onChange={(e) => setSelectedLevelId(Number(e.target.value))}
+            disabled={loadingLevels}
+            className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition appearance-none cursor-pointer pr-8"
+            style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' stroke='%2394a3b8' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")", backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center' }}
+          >
+            {levels.map((lvl) => (
+              <option key={lvl.id} value={lvl.id}>{lvl.name} ({lvl.code})</option>
+            ))}
+          </select>
+
+          {/* Dropdown: Chế độ xem */}
+          <select
+            value={filterMode}
+            onChange={(e) => handleFilterChange(e.target.value as FilterMode)}
+            disabled={loadingFilter}
+            className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition appearance-none cursor-pointer pr-8"
+            style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' stroke='%2394a3b8' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")", backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center' }}
+          >
+            <option value="all">Tất cả</option>
+            <option value="draft-topics">Chủ đề có nháp</option>
+            <option value="draft-sessions">Bài học nháp</option>
+          </select>
+
+          {loadingFilter && (
+            <ArrowPathIcon className="w-4 h-4 animate-spin text-indigo-500 shrink-0" />
+          )}
         </div>
       </div>
 
-      {/* 3. CẤP 2: DANH SÁCH CHỦ ĐỀ (TOPIC LIST) hoặc DANH SÁCH BÀI HỌC NHÁP */}
+      {/* 4. NỘI DUNG DANH SÁCH */}
       {filterMode === 'draft-sessions' ? (
         /* ── Chế độ lọc: Danh sách phẳng các Session nháp ── */
         <div className="space-y-4">
@@ -820,24 +838,6 @@ export const AdminLessons: React.FC = () => {
       ) : (
       /* ── Chế độ bình thường / lọc topic có nháp ── */
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <FolderIcon className="w-5 h-5 text-indigo-600" />
-            <h3 className="text-base font-bold text-slate-800">
-              Danh sách Chủ đề ({filteredTopics.length}{filterMode === 'draft-topics' ? ` / ${topics.length}` : ''})
-            </h3>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleOpenCreateTopic}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-xs active:scale-95 transition"
-          >
-            <PlusIcon className="w-4 h-4" />
-            <span>Thêm Chủ đề (Topic)</span>
-          </button>
-        </div>
-
         {loadingTopics ? (
           <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 space-y-3">
             <ArrowPathIcon className="w-8 h-8 animate-spin text-indigo-600 mx-auto" />
