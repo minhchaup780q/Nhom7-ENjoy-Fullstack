@@ -12,5 +12,7 @@ public class MistakeCreateRequest {
     private Long questionId;
     private Integer roundType;
     private String wrongAnswerSubmitted;
+    private String phonemeErrorType;
+    private String recognizedAudioTranscript;
     private Integer durationSeconds;
 }

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "sessions")
@@ -35,6 +36,29 @@ public class Session extends BaseEntity {
     @Column(name = "order_index")
     private Integer orderIndex;
 
+    @Setter
+    @Column(name = "is_published")
+    @Builder.Default
+    private Boolean isPublished = false;
+
+    @Setter
+    @Column(name = "has_draft")
+    @Builder.Default
+    private Boolean hasDraft = false;
+
+    @Setter
+    @Column(name = "version")
+    @Builder.Default
+    private Integer version = 1;
+
+    @Setter
+    @Column(name = "published_at")
+    private LocalDateTime publishedAt;
+
+    @Setter
+    @Column(name = "published_by")
+    private Long publishedBy;
+
     // Manual setters for non-payload fields (since @Setter removed at class level)
     public void setId(Long id) { this.id = id; }
     public void setPart(Part part) { this.part = part; }
@@ -51,6 +75,7 @@ public class Session extends BaseEntity {
      *               mà không wrap thêm dấu nháy - tức là trả về object JSON thay vì string.
      */
     @JsonRawValue
+    @JsonDeserialize(using = RawJsonDeserializer.class)
     @Column(columnDefinition = "json", name = "payload")
     private String payload;
 
@@ -61,5 +86,18 @@ public class Session extends BaseEntity {
     @JsonDeserialize(using = RawJsonDeserializer.class)
     public void setPayload(String payload) {
         this.payload = payload;
+    }
+
+    /**
+     * draftPayload: Lưu trữ bản nháp nội dung khi admin sửa đổi bài học đang live
+     */
+    @JsonRawValue
+    @JsonDeserialize(using = RawJsonDeserializer.class)
+    @Column(columnDefinition = "json", name = "draft_payload")
+    private String draftPayload;
+
+    @JsonDeserialize(using = RawJsonDeserializer.class)
+    public void setDraftPayload(String draftPayload) {
+        this.draftPayload = draftPayload;
     }
 }

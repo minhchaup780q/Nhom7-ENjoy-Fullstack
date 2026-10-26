@@ -128,7 +128,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
           {/* Current Password Field */}
           {hasPassword && (
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 ml-1">
+              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5 ml-1">
                 Mật khẩu hiện tại *
               </label>
               <input
@@ -136,14 +136,14 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
                 placeholder="Nhập mật khẩu hiện tại"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-2xl bg-slate-100/80 border-2 border-slate-200 text-slate-700 font-medium focus:outline-none focus:border-sky-400 focus:bg-white transition"
+                className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 font-medium focus:outline-none focus:border-sky-500 focus:bg-white focus:ring-4 focus:ring-sky-100 transition-all duration-150"
               />
             </div>
           )}
 
           {/* New Password Field */}
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 ml-1">
+            <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5 ml-1">
               Mật khẩu mới *
             </label>
             <input
@@ -151,13 +151,13 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
               placeholder="Nhập mật khẩu mới"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-2xl bg-slate-100/80 border-2 border-slate-200 text-slate-700 font-medium focus:outline-none focus:border-sky-400 focus:bg-white transition"
+              className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 font-medium focus:outline-none focus:border-sky-500 focus:bg-white focus:ring-4 focus:ring-sky-100 transition-all duration-150"
             />
           </div>
 
           {/* Confirm Password Field */}
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 ml-1">
+            <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5 ml-1">
               Xác nhận mật khẩu mới *
             </label>
             <input
@@ -165,7 +165,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
               placeholder="Nhập lại mật khẩu mới"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-2xl bg-slate-100/80 border-2 border-slate-200 text-slate-700 font-medium focus:outline-none focus:border-sky-400 focus:bg-white transition"
+              className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 font-medium focus:outline-none focus:border-sky-500 focus:bg-white focus:ring-4 focus:ring-sky-100 transition-all duration-150"
             />
           </div>
 
@@ -174,7 +174,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 rounded-2xl border-2 border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-xs hover:bg-slate-100 transition cursor-pointer"
+              className="flex-1 py-3 rounded-2xl border border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-xs hover:bg-slate-50 active:scale-95 transition-all cursor-pointer"
             >
               Hủy
             </button>
@@ -182,7 +182,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-3 rounded-2xl bg-[#ff5e97] border-b-4 border-[#d93d74] text-white font-extrabold uppercase tracking-wider text-xs hover:brightness-105 active:translate-y-0.5 active:border-b-0 transition disabled:opacity-50 cursor-pointer"
+              className="flex-1 py-3 rounded-2xl bg-sky-600 hover:bg-sky-700 active:scale-95 text-white font-extrabold uppercase tracking-wider text-xs shadow-md shadow-sky-600/20 hover:shadow-lg transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5"
             >
               {loading ? 'ĐANG LƯU...' : 'LƯU MẬT KHẨU'}
             </button>

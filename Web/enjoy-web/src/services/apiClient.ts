@@ -47,22 +47,47 @@ const axiosInstance = axios.create({
 // Request Interceptor: bộ chặn xử lý request trước khi gửi xuống server
 axiosInstance.interceptors.request.use(
   (config) => {
+    const isPublicAuthRoute =
+      config.url?.includes('/api/auth/register') ||
+      config.url?.includes('/api/auth/login') ||
+      config.url?.includes('/api/auth/login-by-google') ||
+      config.url?.includes('/api/auth/verify-otp') ||
+      config.url?.includes('/api/auth/resend-otp');
+
     const token = localStorage.getItem('enjoy_access_token');
-    if (token) {
+    if (token && !isPublicAuthRoute) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    let userId: string | number | null = null;
     const userStr = localStorage.getItem('enjoy_user');
     if (userStr) {
       try {
         const user = JSON.parse(userStr);
         if (user?.id) {
-          config.headers['X-User-Id'] = String(user.id);
+          userId = user.id;
         }
-      } catch {}
+      } catch { }
     }
+
+    // Fallback: nếu enjoy_user chưa có id, trích xuất trực tiếp từ payload của JWT Token
+    if (!userId && token) {
+      try {
+        const payloadBase64 = token.split('.')[1];
+        if (payloadBase64) {
+          const base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+          const payloadJson = JSON.parse(decodeURIComponent(escape(atob(base64))));
+          userId = payloadJson.userId || payloadJson.id || payloadJson.sub;
+        }
+      } catch { }
+    }
+
+    if (userId) {
+      config.headers['X-User-Id'] = String(userId);
+    }
+
     return config;
   },
-
   (error) => Promise.reject(error)
 );
 
@@ -75,9 +100,9 @@ axiosInstance.interceptors.response.use(
 
     // Kiểm tra nếu bị lỗi 401 và không phải là request auth (login/register/googleAuth) hay refresh token
     const isAuthRequest = originalRequest?.url?.includes('/api/auth/login') ||
-                          originalRequest?.url?.includes('/api/auth/register') ||
-                          originalRequest?.url?.includes('/api/auth/login-by-google') ||
-                          originalRequest?.url?.includes('/api/auth/refresh');
+      originalRequest?.url?.includes('/api/auth/register') ||
+      originalRequest?.url?.includes('/api/auth/login-by-google') ||
+      originalRequest?.url?.includes('/api/auth/refresh');
 
     if (
       error.response?.status === 401 &&
@@ -176,3 +201,5 @@ export const apiClient = {
     return response.data;
   },
 };
+
+export default apiClient;
