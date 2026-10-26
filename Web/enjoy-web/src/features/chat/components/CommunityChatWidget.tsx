@@ -250,35 +250,36 @@ export const CommunityChatWidget: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-40 select-none font-sans">
-      {/* 1. CỬA SỔ CHAT MỞ RỘNG */}
+    <div className="fixed bottom-5 right-5 z-40 select-none font-sans">
+      {/* 1. CỬA SỔ CHAT MỞ RỘNG (TINH GỌN) */}
       {isOpen && (
-        <div className="w-96 h-[530px] max-w-[calc(100vw-2.5rem)] max-h-[calc(100vh-6rem)] bg-white rounded-3xl shadow-2xl border border-slate-200/90 flex flex-col overflow-hidden mb-3 animate-in fade-in slide-in-from-bottom-5 duration-200">
-          {/* HEADER */}
-          <div className="bg-gradient-to-r from-sky-600 via-sky-500 to-indigo-600 text-white px-4 py-3.5 flex items-center justify-between shadow-xs">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-2xl bg-white/15 backdrop-blur-xs flex items-center justify-center text-white shadow-inner">
-                <span className="material-symbols-outlined text-[20px]">forum</span>
+        <div className="w-[340px] sm:w-[350px] h-[460px] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-4rem)] bg-white rounded-2xl shadow-2xl border border-slate-200/90 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-3 duration-200">
+          {/* HEADER TINH GỌN */}
+          <div className="bg-gradient-to-r from-sky-600 via-sky-500 to-indigo-600 text-white px-3.5 py-2.5 flex items-center justify-between shadow-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-xl bg-white/15 backdrop-blur-xs flex items-center justify-center text-white shadow-inner">
+                <span className="material-symbols-outlined text-[17px]">forum</span>
               </div>
               <div>
-                <h3 className="text-sm font-extrabold tracking-tight flex items-center gap-2">
+                <h3 className="text-[13px] font-extrabold tracking-tight flex items-center gap-1.5 leading-none">
                   Cộng đồng ENjoy
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-emerald-500/25 text-emerald-200 px-2 py-0.5 rounded-full border border-emerald-400/30">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-500/25 text-emerald-200 px-1.5 py-0.5 rounded-full border border-emerald-400/30">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    {onlineCount} online
+                    {onlineCount}
                   </span>
                 </h3>
-                <p className="text-[11px] text-sky-100/90 font-medium">Giao lưu & học tập cùng nhau</p>
+                <p className="text-[10px] text-sky-100/80 font-medium mt-0.5">Trò chuyện trực tuyến</p>
               </div>
             </div>
 
+            {/* CÁC NÚT ĐIỀU KHIỂN TRÊN THANH TIÊU ĐỀ */}
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setIsOpen(false)}
-                className="w-8 h-8 rounded-xl hover:bg-white/15 flex items-center justify-center text-white/90 transition-all cursor-pointer"
-                title="Thu nhỏ"
+                className="w-7 h-7 rounded-lg hover:bg-white/20 active:bg-white/30 flex items-center justify-center text-white/90 hover:text-white transition-all cursor-pointer"
+                title="Đóng chat"
               >
-                <span className="material-symbols-outlined text-[20px]">remove</span>
+                <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
             </div>
           </div>
@@ -343,7 +344,7 @@ export const CommunityChatWidget: React.FC = () => {
                   <div className={`flex items-end gap-1.5 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
                     {/* Avatar người khác */}
                     {!isMe && (
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-sky-400 to-indigo-500 text-white font-bold text-xs flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-sky-400 to-indigo-500 text-white font-bold text-[10px] flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
                         {msg.avatarUrl ? (
                           <img
                             src={msg.avatarUrl}
@@ -357,11 +358,11 @@ export const CommunityChatWidget: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Bong bóng tin nhắn */}
+                    {/* Bong bóng tin nhắn tinh gọn */}
                     <div
-                      className={`px-3.5 py-2 text-sm leading-relaxed break-words shadow-2xs ${
+                      className={`px-3 py-1.5 text-[13px] leading-relaxed break-words shadow-2xs ${
                         isMe
-                          ? 'bg-sky-600 text-white rounded-2xl rounded-tr-xs'
+                          ? 'bg-sky-600 text-white rounded-2xl rounded-tr-xs font-normal'
                           : 'bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-tl-xs'
                       }`}
                     >
@@ -371,8 +372,8 @@ export const CommunityChatWidget: React.FC = () => {
 
                   {/* Thời gian gửi */}
                   <span
-                    className={`text-[10px] text-slate-400 mt-1 font-medium ${
-                      isMe ? 'mr-1' : 'ml-9'
+                    className={`text-[9px] text-slate-400 mt-0.5 font-medium ${
+                      isMe ? 'mr-1' : 'ml-8'
                     }`}
                   >
                     {formatTime(msg.createdAt)}
@@ -383,80 +384,72 @@ export const CommunityChatWidget: React.FC = () => {
 
             {/* TYPING INDICATOR */}
             {typingUsers.length > 0 && (
-              <div className="flex items-center gap-2 text-xs font-medium text-slate-400 italic py-1">
-                <span className="flex gap-1 items-center">
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:0.2s]" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:0.4s]" />
+              <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400 italic py-0.5">
+                <span className="flex gap-0.5 items-center">
+                  <span className="w-1 h-1 rounded-full bg-slate-400 animate-bounce" />
+                  <span className="w-1 h-1 rounded-full bg-slate-400 animate-bounce [animation-delay:0.2s]" />
+                  <span className="w-1 h-1 rounded-full bg-slate-400 animate-bounce [animation-delay:0.4s]" />
                 </span>
                 <span>{typingUsers.join(', ')} đang soạn tin...</span>
               </div>
             )}
           </div>
 
-          {/* BANNER THÔNG BÁO LỖI / RATE LIMIT NẾU CÓ */}
+          {/* BANNER THÔNG BÁO LỖI / RATE LIMIT */}
           {errorMessage && (
-            <div className="bg-rose-50 text-rose-600 text-xs font-bold px-3 py-1.5 border-t border-rose-100 flex items-center gap-1.5 animate-shake">
-              <span className="material-symbols-outlined text-[16px]">warning</span>
+            <div className="bg-rose-50 text-rose-600 text-[11px] font-bold px-3 py-1.5 border-t border-rose-100 flex items-center gap-1.5 animate-shake">
+              <span className="material-symbols-outlined text-[15px]">warning</span>
               {errorMessage}
             </div>
           )}
 
-          {/* FOOTER: THANH NHẬP TIN NHẮN */}
-          <form onSubmit={handleSendMessage} className="p-2.5 bg-white border-t border-slate-200 flex items-center gap-2">
+          {/* FOOTER: THANH NHẬP TIN NHẮN TINH GỌN */}
+          <form onSubmit={handleSendMessage} className="p-2 bg-white border-t border-slate-200 flex items-center gap-1.5">
             <input
               type="text"
               value={inputText}
               onChange={handleInputChange}
-              placeholder={isAuthenticated ? 'Nhắn gì đó với cộng đồng...' : 'Đăng nhập để chat...'}
+              placeholder={isAuthenticated ? 'Nhắn gì đó... (Enter để gửi)' : 'Đăng nhập để chat...'}
               disabled={!isAuthenticated}
               maxLength={500}
-              className="flex-1 bg-slate-100 hover:bg-slate-100/80 focus:bg-white text-slate-800 text-sm px-3.5 py-2.5 rounded-xl border border-transparent focus:border-sky-500 focus:outline-none transition-all placeholder:text-slate-400 font-medium"
+              className="flex-1 bg-slate-100 hover:bg-slate-100/80 focus:bg-white text-slate-800 text-xs px-3 py-2 rounded-xl border border-transparent focus:border-sky-500 focus:outline-none transition-all placeholder:text-slate-400 font-medium"
             />
 
             <button
               type="submit"
               disabled={!inputText.trim() || cooldown > 0 || !isAuthenticated}
-              className="w-10 h-10 rounded-xl bg-sky-600 hover:bg-sky-700 disabled:bg-slate-200 disabled:text-slate-400 text-white flex items-center justify-center transition-all cursor-pointer disabled:cursor-not-allowed shadow-xs active:scale-95 shrink-0"
+              className="w-8 h-8 rounded-xl bg-sky-600 hover:bg-sky-700 disabled:bg-slate-200 disabled:text-slate-400 text-white flex items-center justify-center transition-all cursor-pointer disabled:cursor-not-allowed shadow-xs active:scale-95 shrink-0"
               title={cooldown > 0 ? `Chờ ${cooldown}s` : 'Gửi tin nhắn'}
             >
               {cooldown > 0 ? (
-                <span className="text-xs font-bold">{cooldown}s</span>
+                <span className="text-[10px] font-bold">{cooldown}s</span>
               ) : (
-                <span className="material-symbols-outlined text-[18px]">send</span>
+                <span className="material-symbols-outlined text-[16px]">send</span>
               )}
             </button>
           </form>
         </div>
       )}
 
-      {/* 2. NÚT BONG BÓNG CHAT THU NHỎ (GÓC DƯỚI BÊN PHẢI) */}
-      <button
-        onClick={handleToggleOpen}
-        className={`w-14 h-14 rounded-full flex items-center justify-center text-white shadow-2xl transition-all duration-300 cursor-pointer active:scale-90 group relative ${
-          isOpen
-            ? 'bg-slate-700 hover:bg-slate-800 rotate-90'
-            : 'bg-gradient-to-tr from-sky-600 via-sky-500 to-indigo-600 hover:shadow-sky-500/40 hover:scale-105'
-        }`}
-        title="Chat cộng đồng ENjoy"
-      >
-        {isOpen ? (
-          <span className="material-symbols-outlined text-[24px]">close</span>
-        ) : (
-          <>
-            <span className="material-symbols-outlined text-[28px] group-hover:scale-110 transition-transform">
-              chat_bubble
-            </span>
+      {/* 2. NÚT BONG BÓNG CHAT THU NHỎ (CHỈ HIỆN KHI CHƯA MỞ HỘP CHAT) */}
+      {!isOpen && (
+        <button
+          onClick={handleToggleOpen}
+          className="w-13 h-13 rounded-full flex items-center justify-center text-white shadow-xl transition-all duration-300 cursor-pointer active:scale-90 bg-gradient-to-tr from-sky-600 via-sky-500 to-indigo-600 hover:shadow-sky-500/40 hover:scale-105 group relative"
+          title="Chat cộng đồng ENjoy"
+        >
+          <span className="material-symbols-outlined text-[26px] group-hover:scale-110 transition-transform">
+            chat_bubble
+          </span>
 
-            {/* HUY HIỆU TIN NHẮN CHƯA ĐỌC */}
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[22px] h-[22px] px-1 bg-rose-500 text-white text-[11px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-md animate-bounce">
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </span>
-            )}
-          </>
-        )}
-      </button>
+          {/* HUY HIỆU TIN NHẮN CHƯA ĐỌC */}
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 bg-rose-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-md animate-bounce">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          )}
+        </button>
+      )}
     </div>
   );
 };
