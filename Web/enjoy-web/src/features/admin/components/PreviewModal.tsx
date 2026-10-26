@@ -93,89 +93,75 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
   const isDraftPreview = session.hasDraft || !session.isPublished;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden">
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-slate-900/80 backdrop-blur-xs transition-opacity"
-        onClick={onClose}
-      />
+    <div className="fixed inset-0 z-50 flex flex-col bg-white">
+      {/* Banner nhỏ thông báo chế độ Preview */}
+      <div className="px-4 py-2 bg-slate-800 flex items-center gap-3 text-white shrink-0">
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-slate-300 hover:text-white p-1.5 rounded-lg hover:bg-slate-700/60 transition shrink-0"
+          title="Thoát xem trước"
+        >
+          <XMarkIcon className="w-5 h-5" />
+        </button>
 
-      {/* Preview Dialog Container */}
-      <div className="relative bg-slate-900 rounded-3xl shadow-2xl max-w-5xl w-full h-[94vh] flex flex-col overflow-hidden border border-slate-700 z-10 animate-in fade-in zoom-in-95 duration-200">
-        {/* Header Bar */}
-        <div className="px-5 py-3 bg-slate-800/90 border-b border-slate-700/80 flex items-center justify-between gap-4 text-white shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="p-2 bg-indigo-500/20 text-indigo-400 rounded-xl shrink-0">
-              <EyeIcon className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-sm font-bold truncate text-white">
-                  Xem trước: {session.title}
-                </h3>
-                <StatusBadge
-                  status={
-                    session.badge ||
-                    (session.isPublished
-                      ? session.hasDraft
-                        ? 'HAS_DRAFT'
-                        : 'PUBLISHED'
-                      : 'DRAFT')
-                  }
-                  size="sm"
-                />
-                {isDraftPreview && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                    Bản nháp (Chưa Live)
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-slate-400 truncate">
-                Chế độ Admin Preview: Trải nghiệm học thử không ghi nhận tiến độ vào cơ sở dữ liệu.
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-700/60 transition shrink-0"
-            title="Đóng xem trước"
-          >
-            <XMarkIcon className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Content Player Area */}
-        <div className="flex-1 bg-white relative overflow-y-auto min-h-0 flex flex-col">
-          {loading ? (
-            <div className="flex-1 flex flex-col items-center justify-center space-y-3">
-              <ArrowPathIcon className="w-8 h-8 animate-spin text-indigo-600" />
-              <p className="text-xs font-semibold text-slate-600">Đang chuẩn bị dữ liệu bài học...</p>
-            </div>
-          ) : error ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-              <ExclamationCircleIcon className="w-12 h-12 text-red-500 mb-2" />
-              <h4 className="text-sm font-bold text-slate-800">Không thể tải dữ liệu xem trước</h4>
-              <p className="text-xs text-slate-500 mt-1 max-w-sm">{error}</p>
-              <button
-                type="button"
-                onClick={onClose}
-                className="mt-4 px-4 py-2 bg-slate-800 text-white text-xs font-semibold rounded-xl"
-              >
-                Đóng
-              </button>
-            </div>
-          ) : (
-            <div className="w-full min-h-full relative flex flex-col flex-1">
-              <SessionPlayer
-                session={adaptedSession}
-                onClose={onClose}
-                isPreview={true}
-              />
-            </div>
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <EyeIcon className="w-4 h-4 text-indigo-400 shrink-0" />
+          <span className="text-sm font-bold truncate">
+            Xem trước: {session.title}
+          </span>
+          <StatusBadge
+            status={
+              session.badge ||
+              (session.isPublished
+                ? session.hasDraft
+                  ? 'HAS_DRAFT'
+                  : 'PUBLISHED'
+                : 'DRAFT')
+            }
+            size="sm"
+          />
+          {isDraftPreview && (
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
+              Bản nháp
+            </span>
           )}
         </div>
+
+        <span className="text-[11px] text-slate-400 hidden sm:block shrink-0">
+          Admin Preview · Không ghi nhận tiến độ
+        </span>
+      </div>
+
+      {/* Content Player Area — full screen */}
+      <div className="flex-1 relative overflow-y-auto min-h-0 flex flex-col">
+        {loading ? (
+          <div className="flex-1 flex flex-col items-center justify-center space-y-3">
+            <ArrowPathIcon className="w-8 h-8 animate-spin text-indigo-600" />
+            <p className="text-xs font-semibold text-slate-600">Đang chuẩn bị dữ liệu bài học...</p>
+          </div>
+        ) : error ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+            <ExclamationCircleIcon className="w-12 h-12 text-red-500 mb-2" />
+            <h4 className="text-sm font-bold text-slate-800">Không thể tải dữ liệu xem trước</h4>
+            <p className="text-xs text-slate-500 mt-1 max-w-sm">{error}</p>
+            <button
+              type="button"
+              onClick={onClose}
+              className="mt-4 px-4 py-2 bg-slate-800 text-white text-xs font-semibold rounded-xl"
+            >
+              Đóng
+            </button>
+          </div>
+        ) : (
+          <div className="w-full min-h-full relative flex flex-col flex-1">
+            <SessionPlayer
+              session={adaptedSession}
+              onClose={onClose}
+              isPreview={true}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
