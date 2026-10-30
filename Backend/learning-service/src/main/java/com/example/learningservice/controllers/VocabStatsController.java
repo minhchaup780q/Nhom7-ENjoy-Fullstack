@@ -31,7 +31,7 @@ public class VocabStatsController {
     public ResponseEntity<VocabStatsResponse> getVocabStats(@RequestParam Long userId) {
         return ResponseEntity.ok(vocabularyTrackingService.getVocabStats(userId));
     }
-
+    
     /**
      * Lấy danh sách từ yếu của topic kèm metadata chi tiết (ảnh, phát âm, nghĩa).
      * GET /api/vocab-stats/topic-words?userId={userId}&topic={topic}

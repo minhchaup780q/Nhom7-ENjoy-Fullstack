@@ -605,7 +605,7 @@ export const AdminLessons: React.FC = () => {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h2 className="text-2xl sm:text-3xl font-display font-extrabold text-slate-800 tracking-tight">
-            Quản lý Bài học & Khóa học
+            Quản lý Bài học
           </h2>
           <p className="text-slate-500 font-medium text-xs sm:text-sm mt-1">
             Quản trị nội dung theo cây phân cấp Level → Topic → Part → Session kèm cơ chế Phát hành & Nháp an toàn
@@ -744,7 +744,7 @@ export const AdminLessons: React.FC = () => {
             className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition appearance-none cursor-pointer pr-8"
             style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' stroke='%2394a3b8' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")", backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center' }}
           >
-            <option value="all">Tất cả</option>
+            <option value="all">Tất cả chủ đề</option>
             <option value="draft-topics">Chủ đề có nháp</option>
             <option value="draft-sessions">Bài học nháp</option>
           </select>
