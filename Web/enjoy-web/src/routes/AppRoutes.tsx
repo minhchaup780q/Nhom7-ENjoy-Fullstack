@@ -17,6 +17,8 @@ import type { Session } from '../features/learning/types';
 
 import { AdminDashboard } from '../features/admin/components/AdminDashboard';
 import { AdminLessons } from '../features/admin/components/AdminLessons';
+import { AdminExams } from '../features/admin/components/AdminExams';
+import { AdminExamDetail } from '../features/admin/components/AdminExamDetail';
 import { AdminUsers } from '../features/admin/components/AdminUsers';
 import { AdminSystem } from '../features/admin/components/AdminSystem';
 import { AdminProfile } from '../features/admin/components/AdminProfile';
@@ -88,6 +90,8 @@ export const AppRoutes: React.FC<AppRoutesProps> = ({ onStartSession }) => {
         <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/lessons" element={<AdminLessons />} />
+        <Route path="/admin/exams" element={<AdminExams />} />
+        <Route path="/admin/exams/:examId" element={<AdminExamDetail />} />
         <Route path="/admin/users" element={<AdminUsers />} />
         <Route path="/admin/system" element={<AdminSystem />} />
         <Route path="/admin/profile" element={<AdminProfile />} />

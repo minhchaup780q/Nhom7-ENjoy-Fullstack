@@ -38,6 +38,9 @@ public class Exam extends BaseEntity {
     @Column(name = "total_reading_questions")
     private Integer totalReadingQuestions;
 
+    @Column(name = "is_published")
+    private Boolean isPublished = true;
+
     @JsonRawValue
     @Column(name = "listening_payload", columnDefinition = "json")
     private String listeningPayload;

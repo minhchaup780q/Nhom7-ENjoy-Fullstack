@@ -191,6 +191,11 @@ export const apiClient = {
     return response.data;
   },
 
+  postForm: async <T>(path: string, formData: FormData, options?: RequestOptions): Promise<T> => {
+    const response = await axiosInstance.postForm<T>(path, formData, options);
+    return response.data;
+  },
+
   put: async <T>(path: string, body?: unknown, options?: RequestOptions): Promise<T> => {
     const response = await axiosInstance.put<T>(path, body, options);
     return response.data;
