@@ -4,6 +4,11 @@ import edu.vn.iuh.fit.authservice.client.UserClient;
 import edu.vn.iuh.fit.authservice.dto.request.EmailDetails;
 import edu.vn.iuh.fit.authservice.dto.request.PendingRegistrationDto;
 import edu.vn.iuh.fit.authservice.dto.request.RegisterRequest;
+import edu.vn.iuh.fit.authservice.dto.request.ResendOtpRequest;
+import edu.vn.iuh.fit.authservice.dto.request.UserCreateRequest;
+import edu.vn.iuh.fit.authservice.dto.request.VerifyOtpRequest;
+import edu.vn.iuh.fit.authservice.dto.response.UserCreateResponse;
+import edu.vn.iuh.fit.authservice.entities.Account;
 import edu.vn.iuh.fit.authservice.entities.enums.AuthProvider;
 import edu.vn.iuh.fit.authservice.entities.enums.UserRole;
 import edu.vn.iuh.fit.authservice.repositories.AccountRepository;
@@ -273,6 +278,222 @@ class RegisterTest {
         verifyNoInteractions(userClient);
         verifyNoInteractions(activeUserService);
         verifyNoInteractions(jwtService);
+    }
+
+    // ==========================================
+    // VERIFY OTP TEST CASES
+    // ==========================================
+
+    /**
+     * Test Case 7: Xác thực OTP thành công -> Tài khoản được lưu vào database và tạo profile ở user-service.
+     */
+    @Test
+    @DisplayName("verifyOtp: Thông tin OTP hợp lệ -> Lưu Account vào DB và tạo profile qua OpenFeign")
+    void verifyOtp_validRequest_accountSavedToDb() {
+        // Arrange
+        String email = "verify_success@enjoy.edu.vn";
+        String otp = "123456";
+        VerifyOtpRequest request = VerifyOtpRequest.builder()
+                .email(email)
+                .otp(otp)
+                .build();
+
+        PendingRegistrationDto pendingDto = PendingRegistrationDto.builder()
+                .email(email)
+                .passwordHash("hashed_secret_pwd")
+                .username("SuccessUser")
+                .birthday(LocalDate.of(2000, 1, 1))
+                .role(UserRole.ROLE_PARENT)
+                .provider(AuthProvider.LOCAL)
+                .build();
+
+        Account mockSavedAccount = Account.builder()
+                .id(10L)
+                .email(email)
+                .passwordHash(pendingDto.getPasswordHash())
+                .role(pendingDto.getRole())
+                .provider(pendingDto.getProvider())
+                .isEnabled(true)
+                .build();
+
+        when(otpService.getPendingRegistration(email)).thenReturn(pendingDto);
+        when(accountRepository.save(any(Account.class))).thenReturn(mockSavedAccount);
+        when(userClient.createUserProfile(any(UserCreateRequest.class)))
+                .thenReturn(UserCreateResponse.builder().id(100L).build());
+
+        ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
+        ArgumentCaptor<UserCreateRequest> userCreateReqCaptor = ArgumentCaptor.forClass(UserCreateRequest.class);
+
+        // Act
+        authenticationService.verifyOtp(request);
+
+        // Assert
+        verify(otpService, times(1)).getPendingRegistration(email);
+        verify(accountRepository, times(1)).save(accountCaptor.capture());
+        verify(userClient, times(1)).createUserProfile(userCreateReqCaptor.capture());
+        verify(otpService, times(1)).clearRegistrationData(email);
+
+        Account savedAccount = accountCaptor.getValue();
+        assertThat(savedAccount.getEmail()).isEqualTo(email);
+        assertThat(savedAccount.getPasswordHash()).isEqualTo("hashed_secret_pwd");
+        assertThat(savedAccount.getRole()).isEqualTo(UserRole.ROLE_PARENT);
+        assertThat(savedAccount.getProvider()).isEqualTo(AuthProvider.LOCAL);
+        assertThat(savedAccount.getIsEnabled()).isTrue();
+
+        UserCreateRequest createdUserReq = userCreateReqCaptor.getValue();
+        assertThat(createdUserReq.getAccountId()).isEqualTo(10L);
+        assertThat(createdUserReq.getEmail()).isEqualTo(email);
+        assertThat(createdUserReq.getUsername()).isEqualTo("SuccessUser");
+        assertThat(createdUserReq.getRole()).isEqualTo(UserRole.ROLE_PARENT);
+    }
+
+    /**
+     * Test Case 8: Xác thực OTP thất bại khi thông tin đăng ký chờ đã hết hạn hoặc không tìm thấy, ném ResponseStatusException 400 BAD_REQUEST.
+     */
+    @Test
+    @DisplayName("verifyOtp: Dữ liệu pending hết hạn hoặc không tồn tại -> Ném ResponseStatusException 400 BAD_REQUEST")
+    void verifyOtp_pendingDataExpiredOrNotFound_throwsBadRequest400() {
+        // Arrange
+        String email = "expired@enjoy.edu.vn";
+        VerifyOtpRequest request = VerifyOtpRequest.builder()
+                .email(email)
+                .otp("123456")
+                .build();
+
+        when(otpService.getPendingRegistration(email)).thenReturn(null);
+
+        // Act & Assert
+        assertThatThrownBy(() -> authenticationService.verifyOtp(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(ex -> {
+                    ResponseStatusException rse = (ResponseStatusException) ex;
+                    assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(rse.getReason()).isEqualTo("Yêu cầu đăng ký đã hết hạn (quá 5 phút). Vui lòng đăng ký lại.");
+                });
+
+        verify(otpService, times(1)).getPendingRegistration(email);
+        verifyNoInteractions(accountRepository);
+        verifyNoInteractions(userClient);
+    }
+
+    /**
+     * Test Case 9: Gọi user-service qua OpenFeign thất bại/ném Exception -> Account vẫn được lưu thành công vào auth_db và dọn dẹp Redis.
+     */
+    @Test
+    @DisplayName("verifyOtp: OpenFeign UserClient ném lỗi -> Account vẫn lưu vào DB và dọn dẹp Redis thành công")
+    void verifyOtp_userClientThrowsException_accountStillSavedInDb() {
+        // Arrange
+        String email = "feign_error@enjoy.edu.vn";
+        VerifyOtpRequest request = VerifyOtpRequest.builder()
+                .email(email)
+                .otp("123456")
+                .build();
+
+        PendingRegistrationDto pendingDto = PendingRegistrationDto.builder()
+                .email(email)
+                .passwordHash("hashed_pwd_feign")
+                .username("FeignUser")
+                .birthday(LocalDate.of(2005, 10, 10))
+                .role(UserRole.ROLE_CHILDREN)
+                .provider(AuthProvider.LOCAL)
+                .build();
+
+        Account mockSavedAccount = Account.builder()
+                .id(20L)
+                .email(email)
+                .passwordHash(pendingDto.getPasswordHash())
+                .role(pendingDto.getRole())
+                .provider(pendingDto.getProvider())
+                .isEnabled(true)
+                .build();
+
+        when(otpService.getPendingRegistration(email)).thenReturn(pendingDto);
+        when(accountRepository.save(any(Account.class))).thenReturn(mockSavedAccount);
+        when(userClient.createUserProfile(any(UserCreateRequest.class)))
+                .thenThrow(new RuntimeException("Connection refused to user-service"));
+
+        // Act
+        authenticationService.verifyOtp(request);
+
+        // Assert
+        verify(accountRepository, times(1)).save(any(Account.class));
+        verify(userClient, times(1)).createUserProfile(any(UserCreateRequest.class));
+        verify(otpService, times(1)).clearRegistrationData(email);
+    }
+
+    // ==========================================
+    // RESEND OTP TEST CASES
+    // ==========================================
+
+    /**
+     * Test Case 10: Gửi lại mã OTP khi dữ liệu đăng ký tạm còn tồn tại -> Sinh mã OTP mới và gửi email thành công.
+     */
+    @Test
+    @DisplayName("resendOtp: Dữ liệu pending tồn tại -> Sinh mã OTP mới và gửi lại email thành công")
+    void resendOtp_pendingDataExists_generatesNewOtpAndSendsEmail() {
+        // Arrange
+        String email = "resend_user@enjoy.edu.vn";
+        ResendOtpRequest request = ResendOtpRequest.builder()
+                .email(email)
+                .build();
+
+        PendingRegistrationDto pendingDto = PendingRegistrationDto.builder()
+                .email(email)
+                .passwordHash("hashed_resend_pwd")
+                .username("ResendUser")
+                .birthday(LocalDate.of(1998, 8, 18))
+                .role(UserRole.ROLE_PARENT)
+                .provider(AuthProvider.LOCAL)
+                .build();
+
+        String newOtp = "789012";
+        when(otpService.getPendingRegistration(email)).thenReturn(pendingDto);
+        when(otpService.generateOtp()).thenReturn(newOtp);
+
+        ArgumentCaptor<EmailDetails> emailDetailsCaptor = ArgumentCaptor.forClass(EmailDetails.class);
+
+        // Act
+        authenticationService.resendOtp(request);
+
+        // Assert
+        verify(otpService, times(1)).getPendingRegistration(email);
+        verify(otpService, times(1)).generateOtp();
+        verify(otpService, times(1)).savePendingRegistration(email, pendingDto, newOtp);
+        verify(emailService, times(1)).sendOtpHtmlMail(emailDetailsCaptor.capture());
+
+        EmailDetails sentEmail = emailDetailsCaptor.getValue();
+        assertThat(sentEmail.getRecipient()).isEqualTo(email);
+        assertThat(sentEmail.getMsgBody()).isEqualTo(newOtp);
+        assertThat(sentEmail.getSubject()).contains("Mã xác thực OTP mới");
+    }
+
+    /**
+     * Test Case 11: Gửi lại mã OTP khi dữ liệu đăng ký tạm không tìm thấy hoặc hết hạn -> Ném ResponseStatusException 400 BAD_REQUEST.
+     */
+    @Test
+    @DisplayName("resendOtp: Dữ liệu pending không tồn tại hoặc hết hạn -> Ném ResponseStatusException 400 BAD_REQUEST")
+    void resendOtp_pendingDataNotFound_throwsBadRequest400() {
+        // Arrange
+        String email = "not_found@enjoy.edu.vn";
+        ResendOtpRequest request = ResendOtpRequest.builder()
+                .email(email)
+                .build();
+
+        when(otpService.getPendingRegistration(email)).thenReturn(null);
+
+        // Act & Assert
+        assertThatThrownBy(() -> authenticationService.resendOtp(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(ex -> {
+                    ResponseStatusException rse = (ResponseStatusException) ex;
+                    assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(rse.getReason()).isEqualTo("Yêu cầu đăng ký không tồn tại hoặc đã quá 15 phút. Vui lòng đăng ký lại.");
+                });
+
+        verify(otpService, times(1)).getPendingRegistration(email);
+        verify(otpService, never()).generateOtp();
+        verify(otpService, never()).savePendingRegistration(any(), any(), any());
+        verify(emailService, never()).sendOtpHtmlMail(any());
     }
 }
 
