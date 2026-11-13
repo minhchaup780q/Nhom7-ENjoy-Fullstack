@@ -1,9 +1,12 @@
 package edu.vn.iuh.fit.authservice.services.impl;
 
 import edu.vn.iuh.fit.authservice.client.UserClient;
+import edu.vn.iuh.fit.authservice.dto.request.GoogleAuthRequest;
 import edu.vn.iuh.fit.authservice.dto.request.LoginRequest;
+import edu.vn.iuh.fit.authservice.dto.request.UserCreateRequest;
 import edu.vn.iuh.fit.authservice.dto.response.LoginResponse;
 import edu.vn.iuh.fit.authservice.dto.response.UserAuthResponse;
+import edu.vn.iuh.fit.authservice.dto.response.UserCreateResponse;
 import edu.vn.iuh.fit.authservice.entities.Account;
 import edu.vn.iuh.fit.authservice.entities.enums.AuthProvider;
 import edu.vn.iuh.fit.authservice.entities.enums.UserRole;
@@ -16,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -24,6 +28,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -270,6 +275,263 @@ class LoginTest {
         // Assert
         assertThat(response).isNotNull();
         assertThat(response.getHasPassword()).isFalse();
+    }
+
+    // ==========================================
+    // GOOGLE AUTH TEST CASES
+    // ==========================================
+
+    /**
+     * Test Case 7: Tài khoản đã tồn tại trong DB -> Trả về tokens thành công mà không tạo mới Account hay UserProfile.
+     */
+    @Test
+    @DisplayName("googleAuth: Tài khoản đã tồn tại -> Trả về tokens mà không tạo mới Account/Profile")
+    void googleAuth_existingAccount_returnsTokensWithoutCreatingNew() {
+        // Arrange
+        String email = "existing_google@enjoy.edu.vn";
+        GoogleAuthRequest request = GoogleAuthRequest.builder()
+                .email(email)
+                .name("Google User")
+                .googleId("google-123456")
+                .birthday(LocalDate.of(1995, 1, 1))
+                .build();
+
+        Account existingAccount = Account.builder()
+                .id(50L)
+                .email(email)
+                .role(UserRole.ROLE_PARENT)
+                .provider(AuthProvider.GOOGLE)
+                .passwordHash(null)
+                .build();
+
+        when(accountRepository.findByEmail(email)).thenReturn(Optional.of(existingAccount));
+        when(jwtService.generateAccessToken(50L, email, "ROLE_PARENT")).thenReturn("google_access_token");
+        when(jwtService.generateRefreshToken(50L, email, "ROLE_PARENT")).thenReturn("google_refresh_token");
+        when(userClient.getUserByEmail(email)).thenReturn(UserAuthResponse.builder().username("GoogleUser").build());
+
+        // Act
+        LoginResponse response = authenticationService.googleAuth(request);
+
+        // Assert
+        assertThat(response).isNotNull();
+        assertThat(response.getAccessToken()).isEqualTo("google_access_token");
+        assertThat(response.getRefreshToken()).isEqualTo("google_refresh_token");
+        assertThat(response.getHasPassword()).isFalse();
+        assertThat(response.getUser().getUsername()).isEqualTo("GoogleUser");
+
+        verify(accountRepository, never()).save(any());
+        verify(userClient, never()).createUserProfile(any());
+        verify(activeUserService, times(1)).trackActive(50L, "ROLE_PARENT");
+    }
+
+    /**
+     * Test Case 8: Tài khoản mới có ngày sinh hợp lệ (> 16 tuổi) -> Tự động tạo Account và UserProfile với ROLE_PARENT.
+     */
+    @Test
+    @DisplayName("googleAuth: Tài khoản mới có ngày sinh (> 16 tuổi) -> Tạo Account và UserProfile với ROLE_PARENT")
+    void googleAuth_newAccountWithBirthday_createsAccountAndUserProfile() {
+        // Arrange
+        String email = "new_google@enjoy.edu.vn";
+        LocalDate birthday = LocalDate.now().minusYears(20);
+        GoogleAuthRequest request = GoogleAuthRequest.builder()
+                .email(email)
+                .name("New Google User")
+                .googleId("google-999")
+                .birthday(birthday)
+                .build();
+
+        Account savedAccount = Account.builder()
+                .id(51L)
+                .email(email)
+                .role(UserRole.ROLE_PARENT)
+                .provider(AuthProvider.GOOGLE)
+                .passwordHash(null)
+                .build();
+
+        when(accountRepository.findByEmail(email)).thenReturn(Optional.empty());
+        when(accountRepository.save(any(Account.class))).thenReturn(savedAccount);
+        when(jwtService.generateAccessToken(51L, email, "ROLE_PARENT")).thenReturn("access_token");
+        when(jwtService.generateRefreshToken(51L, email, "ROLE_PARENT")).thenReturn("refresh_token");
+
+        ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
+        ArgumentCaptor<UserCreateRequest> userReqCaptor = ArgumentCaptor.forClass(UserCreateRequest.class);
+
+        // Act
+        LoginResponse response = authenticationService.googleAuth(request);
+
+        // Assert
+        assertThat(response).isNotNull();
+        verify(accountRepository, times(1)).save(accountCaptor.capture());
+        verify(userClient, times(1)).createUserProfile(userReqCaptor.capture());
+
+        Account capturedAccount = accountCaptor.getValue();
+        assertThat(capturedAccount.getEmail()).isEqualTo(email);
+        assertThat(capturedAccount.getRole()).isEqualTo(UserRole.ROLE_PARENT);
+        assertThat(capturedAccount.getProvider()).isEqualTo(AuthProvider.GOOGLE);
+        assertThat(capturedAccount.getPasswordHash()).isNull();
+
+        UserCreateRequest capturedUserReq = userReqCaptor.getValue();
+        assertThat(capturedUserReq.getAccountId()).isEqualTo(51L);
+        assertThat(capturedUserReq.getEmail()).isEqualTo(email);
+        assertThat(capturedUserReq.getUsername()).isEqualTo("New Google User");
+        assertThat(capturedUserReq.getBirthday()).isEqualTo(birthday);
+        assertThat(capturedUserReq.getRole()).isEqualTo(UserRole.ROLE_PARENT);
+    }
+
+    /**
+     * Test Case 9: Tài khoản mới có độ tuổi dưới 16 (<= 16 tuổi) -> Tự động xác định vai trò ROLE_CHILDREN.
+     */
+    @Test
+    @DisplayName("googleAuth: Tài khoản mới có độ tuổi <= 16 tuổi -> Vai trò tự động là ROLE_CHILDREN")
+    void googleAuth_newAccountAgeUnder16_roleIsChildren() {
+        // Arrange
+        String email = "child_google@enjoy.edu.vn";
+        LocalDate birthday = LocalDate.now().minusYears(12);
+        GoogleAuthRequest request = GoogleAuthRequest.builder()
+                .email(email)
+                .name("Child Google User")
+                .birthday(birthday)
+                .build();
+
+        Account savedAccount = Account.builder()
+                .id(52L)
+                .email(email)
+                .role(UserRole.ROLE_CHILDREN)
+                .provider(AuthProvider.GOOGLE)
+                .build();
+
+        when(accountRepository.findByEmail(email)).thenReturn(Optional.empty());
+        when(accountRepository.save(any(Account.class))).thenReturn(savedAccount);
+        when(jwtService.generateAccessToken(52L, email, "ROLE_CHILDREN")).thenReturn("access_token_child");
+        when(jwtService.generateRefreshToken(52L, email, "ROLE_CHILDREN")).thenReturn("refresh_token_child");
+
+        ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
+        ArgumentCaptor<UserCreateRequest> userReqCaptor = ArgumentCaptor.forClass(UserCreateRequest.class);
+
+        // Act
+        LoginResponse response = authenticationService.googleAuth(request);
+
+        // Assert
+        assertThat(response).isNotNull();
+        assertThat(response.getUser().getRole()).isEqualTo("ROLE_CHILDREN");
+
+        verify(accountRepository).save(accountCaptor.capture());
+        verify(userClient).createUserProfile(userReqCaptor.capture());
+        assertThat(accountCaptor.getValue().getRole()).isEqualTo(UserRole.ROLE_CHILDREN);
+        assertThat(userReqCaptor.getValue().getRole()).isEqualTo(UserRole.ROLE_CHILDREN);
+    }
+
+    /**
+     * Test Case 10: Tài khoản mới không cung cấp ngày sinh (null) -> Mặc định gán vai trò ROLE_PARENT.
+     */
+    @Test
+    @DisplayName("googleAuth: Tài khoản mới không có ngày sinh (null) -> Mặc định là ROLE_PARENT")
+    void googleAuth_newAccountNullBirthday_roleIsParent() {
+        // Arrange
+        String email = "nobday_google@enjoy.edu.vn";
+        GoogleAuthRequest request = GoogleAuthRequest.builder()
+                .email(email)
+                .name("No Bday User")
+                .birthday(null)
+                .build();
+
+        Account savedAccount = Account.builder()
+                .id(53L)
+                .email(email)
+                .role(UserRole.ROLE_PARENT)
+                .provider(AuthProvider.GOOGLE)
+                .build();
+
+        when(accountRepository.findByEmail(email)).thenReturn(Optional.empty());
+        when(accountRepository.save(any(Account.class))).thenReturn(savedAccount);
+        when(jwtService.generateAccessToken(53L, email, "ROLE_PARENT")).thenReturn("access_token");
+        when(jwtService.generateRefreshToken(53L, email, "ROLE_PARENT")).thenReturn("refresh_token");
+
+        ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
+
+        // Act
+        LoginResponse response = authenticationService.googleAuth(request);
+
+        // Assert
+        assertThat(response).isNotNull();
+        verify(accountRepository).save(accountCaptor.capture());
+        assertThat(accountCaptor.getValue().getRole()).isEqualTo(UserRole.ROLE_PARENT);
+    }
+
+    /**
+     * Test Case 11: Tài khoản mới name là null -> Username fallback về tiền tố email trước ký tự @.
+     */
+    @Test
+    @DisplayName("googleAuth: Tài khoản mới name là null -> Username lấy tiền tố email")
+    void googleAuth_newAccountNullName_usernameFallsBackToEmailPrefix() {
+        // Arrange
+        String email = "john.doe@gmail.com";
+        GoogleAuthRequest request = GoogleAuthRequest.builder()
+                .email(email)
+                .name(null)
+                .birthday(LocalDate.of(1990, 1, 1))
+                .build();
+
+        Account savedAccount = Account.builder()
+                .id(54L)
+                .email(email)
+                .role(UserRole.ROLE_PARENT)
+                .provider(AuthProvider.GOOGLE)
+                .build();
+
+        when(accountRepository.findByEmail(email)).thenReturn(Optional.empty());
+        when(accountRepository.save(any(Account.class))).thenReturn(savedAccount);
+        when(jwtService.generateAccessToken(any(), any(), any())).thenReturn("access_token");
+        when(jwtService.generateRefreshToken(any(), any(), any())).thenReturn("refresh_token");
+
+        ArgumentCaptor<UserCreateRequest> userReqCaptor = ArgumentCaptor.forClass(UserCreateRequest.class);
+
+        // Act
+        authenticationService.googleAuth(request);
+
+        // Assert
+        verify(userClient).createUserProfile(userReqCaptor.capture());
+        assertThat(userReqCaptor.getValue().getUsername()).isEqualTo("john.doe");
+    }
+
+    /**
+     * Test Case 12: UserClient ném ngoại lệ khi tạo profile hoặc lấy thông tin -> googleAuth vẫn thành công.
+     */
+    @Test
+    @DisplayName("googleAuth: UserClient ném lỗi qua OpenFeign -> Đăng nhập Google vẫn thành công")
+    void googleAuth_userClientThrowsException_authStillSucceeds() {
+        // Arrange
+        String email = "feign_error_google@enjoy.edu.vn";
+        GoogleAuthRequest request = GoogleAuthRequest.builder()
+                .email(email)
+                .name("Feign Error User")
+                .birthday(LocalDate.of(1992, 2, 2))
+                .build();
+
+        Account savedAccount = Account.builder()
+                .id(55L)
+                .email(email)
+                .role(UserRole.ROLE_PARENT)
+                .provider(AuthProvider.GOOGLE)
+                .build();
+
+        when(accountRepository.findByEmail(email)).thenReturn(Optional.empty());
+        when(accountRepository.save(any(Account.class))).thenReturn(savedAccount);
+        when(userClient.createUserProfile(any())).thenThrow(new RuntimeException("user-service create failed"));
+        when(jwtService.generateAccessToken(55L, email, "ROLE_PARENT")).thenReturn("access_tok");
+        when(jwtService.generateRefreshToken(55L, email, "ROLE_PARENT")).thenReturn("refresh_tok");
+        when(userClient.getUserByEmail(email)).thenThrow(new RuntimeException("user-service get failed"));
+
+        // Act
+        LoginResponse response = authenticationService.googleAuth(request);
+
+        // Assert
+        assertThat(response).isNotNull();
+        assertThat(response.getAccessToken()).isEqualTo("access_tok");
+        assertThat(response.getRefreshToken()).isEqualTo("refresh_tok");
+        assertThat(response.getUser()).isNotNull();
+        assertThat(response.getUser().getUsername()).isNull();
+        verify(activeUserService, times(1)).trackActive(55L, "ROLE_PARENT");
     }
 }
 
