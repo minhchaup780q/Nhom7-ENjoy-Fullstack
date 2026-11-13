@@ -462,7 +462,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-12 space-y-4">
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        <span className="text-sm font-bold text-text-muted">Đang tải danh sách trình độ...</span>
+        <span class/*  */Name="text-sm font-bold text-text-muted">Đang tải danh sách trình độ...</span>
       </div>
     );
   }
