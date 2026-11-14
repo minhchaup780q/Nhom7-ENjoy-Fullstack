@@ -1,6 +1,12 @@
 package edu.vn.iuh.fit.authservice.services.impl;
 
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import edu.vn.iuh.fit.authservice.client.UserClient;
+import edu.vn.iuh.fit.authservice.dto.request.ChangePasswordRequest;
 import edu.vn.iuh.fit.authservice.dto.request.GoogleAuthRequest;
 import edu.vn.iuh.fit.authservice.dto.request.LoginRequest;
 import edu.vn.iuh.fit.authservice.dto.request.UserCreateRequest;
@@ -30,6 +36,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -68,6 +76,8 @@ class LoginTest {
     private Account defaultAccount;
     private final String rawPassword = "ValidPassword@123";
     private final String encodedPassword = "$2a$10$encryptedPasswordHashSample";
+    private static final String JWT_TEST_SECRET =
+            "0123456789012345678901234567890123456789012345678901234567890123";
 
     @BeforeEach
     void setUp() {
@@ -533,5 +543,285 @@ class LoginTest {
         assertThat(response.getUser().getUsername()).isNull();
         verify(activeUserService, times(1)).trackActive(55L, "ROLE_PARENT");
     }
-}
 
+    /**
+     * Verifies that a local account with a valid current password can update its password hash.
+     */
+    @Test
+    @DisplayName("changePassword: Tài khoản local xác thực mật khẩu hiện tại thành công")
+    void changePassword_localAccountValidCurrentPwd_updatesPasswordHash() {
+        // Arrange
+        String newPassword = "NewPassword@456";
+        String newPasswordHash = "$2a$10$newEncryptedPasswordHash";
+        ChangePasswordRequest request = ChangePasswordRequest.builder()
+                .currentPassword(rawPassword)
+                .newPassword(newPassword)
+                .confirmPassword(newPassword)
+                .build();
+        when(accountRepository.findById(defaultAccount.getId())).thenReturn(Optional.of(defaultAccount));
+        when(passwordEncoder.matches(rawPassword, encodedPassword)).thenReturn(true);
+        when(passwordEncoder.encode(newPassword)).thenReturn(newPasswordHash);
+        when(accountRepository.save(defaultAccount)).thenReturn(defaultAccount);
+
+        // Act
+        authenticationService.changePassword(defaultAccount.getId(), request);
+
+        // Assert
+        assertThat(defaultAccount.getPasswordHash()).isEqualTo(newPasswordHash);
+        assertThat(defaultAccount.getUpdatedAt()).isNotNull();
+        verify(passwordEncoder).matches(rawPassword, encodedPassword);
+        verify(passwordEncoder).encode(newPassword);
+        verify(accountRepository).save(defaultAccount);
+    }
+
+    /**
+     * Verifies that a Google account without a password can set one without a current password.
+     */
+    @Test
+    @DisplayName("changePassword: Tài khoản Google chưa có mật khẩu đặt mật khẩu mới trực tiếp")
+    void changePassword_googleAccountNoCurrentPwd_setsPasswordDirectly() {
+        // Arrange
+        String newPassword = "GoogleAccount@456";
+        String newPasswordHash = "$2a$10$googleAccountPasswordHash";
+        Account googleAccount = Account.builder()
+                .id(2L)
+                .email("google@enjoy.edu.vn")
+                .provider(AuthProvider.GOOGLE)
+                .passwordHash(null)
+                .build();
+        ChangePasswordRequest request = ChangePasswordRequest.builder()
+                .currentPassword(null)
+                .newPassword(newPassword)
+                .confirmPassword(newPassword)
+                .build();
+        when(accountRepository.findById(googleAccount.getId())).thenReturn(Optional.of(googleAccount));
+        when(passwordEncoder.encode(newPassword)).thenReturn(newPasswordHash);
+        when(accountRepository.save(googleAccount)).thenReturn(googleAccount);
+
+        // Act
+        authenticationService.changePassword(googleAccount.getId(), request);
+
+        // Assert
+        assertThat(googleAccount.getPasswordHash()).isEqualTo(newPasswordHash);
+        assertThat(googleAccount.getUpdatedAt()).isNotNull();
+        verify(passwordEncoder, never()).matches(any(), any());
+        verify(passwordEncoder).encode(newPassword);
+        verify(accountRepository).save(googleAccount);
+    }
+
+    /**
+     * Verifies that a valid refresh token produces a new access token and tracks user activity.
+     */
+    @Test
+    @DisplayName("refresh: Token hợp lệ trả access token mới, giữ refresh token và ghi nhận hoạt động")
+    void refresh_validToken_returnsNewAccessTokenWithSameRefreshToken() {
+        // Arrange
+        String refreshToken = "valid-refresh-token";
+        String newAccessToken = "new-access-token";
+        JWTClaimsSet claims = new JWTClaimsSet.Builder()
+                .claim("userId", defaultAccount.getId())
+                .claim("email", defaultAccount.getEmail())
+                .claim("role", "ROLE_PARENT")
+                .build();
+        UserAuthResponse userAuth = UserAuthResponse.builder()
+                .id(defaultAccount.getId())
+                .email(defaultAccount.getEmail())
+                .username("TestUser")
+                .role("ROLE_PARENT")
+                .build();
+        when(jwtService.verifyToken(refreshToken)).thenReturn(claims);
+        when(accountRepository.findById(defaultAccount.getId())).thenReturn(Optional.of(defaultAccount));
+        when(userClient.getUserByEmail(defaultAccount.getEmail())).thenReturn(userAuth);
+        when(jwtService.generateAccessToken(defaultAccount.getId(), defaultAccount.getEmail(), "ROLE_PARENT"))
+                .thenReturn(newAccessToken);
+
+        // Act
+        LoginResponse response = authenticationService.refresh(refreshToken);
+
+        // Assert
+        assertThat(response.getAccessToken()).isEqualTo(newAccessToken);
+        assertThat(response.getRefreshToken()).isEqualTo(refreshToken);
+        assertThat(response.getHasPassword()).isTrue();
+        assertThat(response.getUser().getUsername()).isEqualTo("TestUser");
+        verify(jwtService).verifyToken(refreshToken);
+        verify(jwtService).generateAccessToken(defaultAccount.getId(), defaultAccount.getEmail(), "ROLE_PARENT");
+        verify(activeUserService).trackActive(defaultAccount.getId(), "ROLE_PARENT");
+    }
+
+    /**
+     * Verifies that null or blank refresh tokens are rejected with HTTP 400.
+     */
+    @Test
+    @DisplayName("refresh: Token null hoặc rỗng bị từ chối với lỗi 400")
+    void refresh_nullOrEmptyToken_throwsBadRequest400() {
+        // Arrange
+        String[] invalidTokens = {null, "", "   "};
+
+        // Act & Assert
+        for (String invalidToken : invalidTokens) {
+            assertThatThrownBy(() -> authenticationService.refresh(invalidToken))
+                    .isInstanceOfSatisfying(ResponseStatusException.class, exception -> {
+                        assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+                        assertThat(exception.getReason()).isEqualTo("Refresh Token không được để trống");
+                        assertThat(exception.getMessage()).contains("Refresh Token không được để trống");
+                    });
+        }
+        verifyNoInteractions(jwtService, accountRepository, userClient, activeUserService);
+    }
+
+    /**
+     * Verifies that a refresh token with an invalid signature is rejected with HTTP 401.
+     */
+    @Test
+    @DisplayName("refresh: Token sai chữ ký bị từ chối với lỗi 401")
+    void refresh_invalidSignatureToken_throwsUnauthorized401() {
+        // Arrange
+        String forgedRefreshToken = "forged-refresh-token";
+        when(jwtService.verifyToken(forgedRefreshToken))
+                .thenThrow(new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED,
+                        "Refresh Token không hợp lệ hoặc đã hết hạn"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> authenticationService.refresh(forgedRefreshToken))
+                .isInstanceOfSatisfying(ResponseStatusException.class, exception -> {
+                    assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+                    assertThat(exception.getReason()).isEqualTo("Refresh Token không hợp lệ hoặc đã hết hạn");
+                    assertThat(exception.getMessage()).contains("Refresh Token không hợp lệ hoặc đã hết hạn");
+                });
+        verify(jwtService).verifyToken(forgedRefreshToken);
+        verifyNoInteractions(accountRepository, userClient, activeUserService);
+    }
+
+    /**
+     * Verifies that a generated access token contains the requested identity claims.
+     */
+    @Test
+    @DisplayName("generateAccessToken: Token chứa đầy đủ userId, email và role")
+    void generateAccessToken_validInput_claimsContainUserIdEmailRole() throws Exception {
+        // Arrange
+        JWTServiceImpl realJwtService = createJwtService();
+
+        // Act
+        String accessToken = realJwtService.generateAccessToken(
+                defaultAccount.getId(), defaultAccount.getEmail(), "ROLE_PARENT");
+        JWTClaimsSet claims = SignedJWT.parse(accessToken).getJWTClaimsSet();
+
+        // Assert
+        assertThat(claims.getClaim("userId")).isEqualTo(defaultAccount.getId());
+        assertThat(claims.getClaim("email")).isEqualTo(defaultAccount.getEmail());
+        assertThat(claims.getClaim("role")).isEqualTo("ROLE_PARENT");
+    }
+
+    /**
+     * Verifies that generated refresh tokens expire exactly 30 days after issuance.
+     */
+    @Test
+    @DisplayName("generateRefreshToken: Token hết hạn chính xác sau 30 ngày")
+    void generateRefreshToken_validInput_tokenExpiresIn30Days() throws Exception {
+        // Arrange
+        JWTServiceImpl realJwtService = createJwtService();
+
+        // Act
+        String refreshToken = realJwtService.generateRefreshToken(
+                defaultAccount.getId(), defaultAccount.getEmail(), "ROLE_PARENT");
+        JWTClaimsSet claims = SignedJWT.parse(refreshToken).getJWTClaimsSet();
+
+        // Assert
+        assertThat(claims.getExpirationTime().getTime() - claims.getIssueTime().getTime())
+                .isEqualTo(30L * 24 * 60 * 60 * 1000);
+    }
+
+    /**
+     * Verifies that a correctly signed, unexpired token returns its claims.
+     */
+    @Test
+    @DisplayName("verifyToken: Giải mã thành công token hợp lệ")
+    void verifyToken_validToken_returnsClaims() throws Exception {
+        // Arrange
+        JWTServiceImpl realJwtService = createJwtService();
+        Date issuedAt = new Date();
+        String validToken = createSignedToken(
+                JWT_TEST_SECRET,
+                issuedAt,
+                Date.from(issuedAt.toInstant().plus(1, ChronoUnit.DAYS)));
+
+        // Act
+        JWTClaimsSet claims = realJwtService.verifyToken(validToken);
+
+        // Assert
+        assertThat(claims.getClaim("userId")).isEqualTo(defaultAccount.getId());
+        assertThat(claims.getClaim("email")).isEqualTo(defaultAccount.getEmail());
+        assertThat(claims.getClaim("role")).isEqualTo("ROLE_PARENT");
+    }
+
+    /**
+     * Verifies that a correctly signed but expired token is rejected with HTTP 401.
+     */
+    @Test
+    @DisplayName("verifyToken: Token hết hạn bị từ chối với lỗi 401")
+    void verifyToken_expiredToken_throwsUnauthorized401() throws Exception {
+        // Arrange
+        JWTServiceImpl realJwtService = createJwtService();
+        Date issuedAt = Date.from(new Date().toInstant().minus(2, ChronoUnit.DAYS));
+        String expiredToken = createSignedToken(
+                JWT_TEST_SECRET,
+                issuedAt,
+                Date.from(issuedAt.toInstant().plus(1, ChronoUnit.DAYS)));
+
+        // Act & Assert
+        assertThatThrownBy(() -> realJwtService.verifyToken(expiredToken))
+                .isInstanceOfSatisfying(ResponseStatusException.class, exception -> {
+                    assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+                    assertThat(exception.getReason())
+                            .isEqualTo("Refresh Token không hợp lệ hoặc đã hết hạn");
+                    assertThat(exception.getMessage())
+                            .contains("Refresh Token không hợp lệ hoặc đã hết hạn");
+                });
+    }
+
+    /**
+     * Verifies that a token signed with another key is rejected with HTTP 401.
+     */
+    @Test
+    @DisplayName("verifyToken: Token có chữ ký không hợp lệ bị từ chối với lỗi 401")
+    void verifyToken_invalidSignature_throwsUnauthorized401() throws Exception {
+        // Arrange
+        JWTServiceImpl realJwtService = createJwtService();
+        Date issuedAt = new Date();
+        String tokenWithInvalidSignature = createSignedToken(
+                "9876543210987654321098765432109876543210987654321098765432109876",
+                issuedAt,
+                Date.from(issuedAt.toInstant().plus(1, ChronoUnit.DAYS)));
+
+        // Act & Assert
+        assertThatThrownBy(() -> realJwtService.verifyToken(tokenWithInvalidSignature))
+                .isInstanceOfSatisfying(ResponseStatusException.class, exception -> {
+                    assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+                    assertThat(exception.getReason())
+                            .isEqualTo("Refresh Token không hợp lệ hoặc đã hết hạn");
+                    assertThat(exception.getMessage())
+                            .contains("Refresh Token không hợp lệ hoặc đã hết hạn");
+                });
+    }
+
+    private JWTServiceImpl createJwtService() {
+        JWTServiceImpl realJwtService = new JWTServiceImpl();
+        ReflectionTestUtils.setField(realJwtService, "secretKey", JWT_TEST_SECRET);
+        return realJwtService;
+    }
+
+    private String createSignedToken(String signingKey, Date issuedAt, Date expirationTime) throws Exception {
+        JWTClaimsSet claims = new JWTClaimsSet.Builder()
+                .claim("userId", defaultAccount.getId())
+                .claim("email", defaultAccount.getEmail())
+                .claim("role", "ROLE_PARENT")
+                .issueTime(issuedAt)
+                .expirationTime(expirationTime)
+                .build();
+        SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS512), claims);
+        signedJWT.sign(new MACSigner(signingKey));
+        return signedJWT.serialize();
+    }
+
+}
