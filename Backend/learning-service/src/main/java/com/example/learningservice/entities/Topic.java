@@ -4,6 +4,7 @@ package com.example.learningservice.entities;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -26,6 +27,16 @@ public class Topic extends BaseEntity {
 
     @Column(name = "order_index")
     private Integer orderIndex;
+
+    @Column(name = "is_published")
+    @Builder.Default
+    private Boolean isPublished = false;
+
+    @Column(name = "published_at")
+    private LocalDateTime publishedAt;
+
+    @Column(name = "published_by")
+    private Long publishedBy;
 
     @OneToMany(mappedBy = "topic", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("topic")

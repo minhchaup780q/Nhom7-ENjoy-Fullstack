@@ -1,73 +1,79 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { 
-  BookOpenIcon, 
-  SparklesIcon, 
-  PuzzlePieceIcon, 
-  ChartBarIcon,
-  TrophyIcon, 
-  FlagIcon, 
-  ShoppingBagIcon, 
-  UserIcon 
-} from '@heroicons/react/24/outline';
-import { SettingsFlyoutMenu } from './SettingsFlyoutMenu';
 
 interface MenuItem {
   id: string;
   label: string;
-  icon: React.ReactNode;
+  iconName: string;
   path: string;
 }
 
 export const SidebarLeft: React.FC = () => {
   const menuItems: MenuItem[] = [
-    { id: 'learn', label: 'HỌC', icon: <BookOpenIcon className="w-6 h-6 stroke-[2.5]" />, path: '/learn' },
-    { id: 'explore', label: 'KHÁM PHÁ', icon: <SparklesIcon className="w-6 h-6 stroke-[2.5]" />, path: '/explore' },
-    { id: 'practice', label: 'LUYỆN TẬP', icon: <PuzzlePieceIcon className="w-6 h-6 stroke-[2.5]" />, path: '/practice' },
-    { id: 'stats', label: 'THỐNG KÊ', icon: <ChartBarIcon className="w-6 h-6 stroke-[2.5]" />, path: '/stats' },
-    { id: 'leaderboard', label: 'BẢNG XẾP HẠNG', icon: <TrophyIcon className="w-6 h-6 stroke-[2.5]" />, path: '/leaderboard' },
-    { id: 'quests', label: 'NHIỆM VỤ', icon: <FlagIcon className="w-6 h-6 stroke-[2.5]" />, path: '/quests' },
-    { id: 'shop', label: 'CỬA HÀNG', icon: <ShoppingBagIcon className="w-6 h-6 stroke-[2.5]" />, path: '/shop' },
-    { id: 'profile', label: 'HỒ SƠ', icon: <UserIcon className="w-6 h-6 stroke-[2.5]" />, path: '/profile' },
+    { id: 'learn', label: 'Học', iconName: 'school', path: '/learn' },
+    { id: 'explore', label: 'Khám phá', iconName: 'explore', path: '/explore' },
+    { id: 'pronunciation', label: 'Phát âm', iconName: 'record_voice_over', path: '/pronunciation' },
+    { id: 'leaderboard', label: 'Bảng xếp hạng', iconName: 'military_tech', path: '/leaderboard' },
+    { id: 'practice', label: 'Luyện tập', iconName: 'fitness_center', path: '/practice' },
+    { id: 'exam', label: 'Đề thi', iconName: 'assignment', path: '/exams' },
+    { id: 'stats', label: 'Thống kê', iconName: 'trending_up', path: '/stats' },
+    { id: 'profile', label: 'Hồ sơ', iconName: 'person', path: '/profile' },
   ];
 
   return (
-    <aside className="w-64 border-r-2 border-border-main min-h-svh p-4 flex flex-col fixed left-0 top-0 bg-white z-20">
+    <aside className="w-64 border-r border-slate-200/90 min-h-svh p-4 flex flex-col fixed left-0 top-0 bg-white z-20 select-none">
       {/* Brand logo */}
-      <div className="px-4 py-6 mb-4">
-        <h1 className="text-3xl font-extrabold tracking-wide text-primary m-0 font-display flex items-center gap-2 select-none">
-          ENjoy
-          <span className="w-2.5 h-2.5 rounded-full bg-primary-dark inline-block animate-pulse" />
-        </h1>
+      <div className="px-3 py-5 mb-2 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-sky-400 text-white flex items-center justify-center shadow-md shadow-sky-500/20">
+          <span className="material-symbols-outlined text-[24px]">school</span>
+        </div>
+        <div>
+          <h1 className="font-display font-black text-2xl text-slate-900 leading-none tracking-tight">
+            ENjoy
+          </h1>
+          <span className="text-[10px] font-black uppercase tracking-wider text-sky-600">
+            TIẾNG ANH
+          </span>
+        </div>
       </div>
 
       {/* Menu items */}
-      <nav className="flex-1 space-y-2">
+      <nav className="flex-1 space-y-1">
         {menuItems.map((item) => (
           <NavLink
             key={item.id}
             to={item.path}
             className={({ isActive }) =>
-              `w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-display font-extrabold text-sm tracking-wider select-none transition-all duration-100 border-2 ${
+              `w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl font-display font-bold text-sm tracking-tight transition-all duration-150 ${
                 isActive
-                  ? 'bg-primary-soft text-primary border-primary/20'
-                  : 'text-[#5c5c5c] border-transparent hover:bg-bg-light'
+                  ? 'bg-sky-50 text-sky-700 shadow-xs'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               }`
             }
           >
-            {item.icon}
-            {item.label}
+            {({ isActive }) => (
+              <>
+                <span
+                  className={`material-symbols-outlined text-[22px] ${
+                    isActive ? 'text-sky-600' : 'text-slate-400'
+                  }`}
+                  style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
+                >
+                  {item.iconName}
+                </span>
+                <span>{item.label}</span>
+              </>
+            )}
           </NavLink>
         ))}
-
-        {/* Nút cài đặt và toàn bộ popup, modal con của nó */}
-        <SettingsFlyoutMenu />
       </nav>
 
       {/* Footer copyright */}
-      <div className="p-4 border-t-2 border-border-main text-[11px] font-semibold text-text-muted text-left tracking-wide select-none">
-        <p className="hover:text-primary transition-colors cursor-pointer">GIỚI THIỆU • CỬA HÀNG • ĐIỀU KHOẢN</p>
-        <p className="mt-1">© 2026 ENJOY TEAM</p>
+      <div className="p-3 border-t border-slate-200/80 text-[11px] font-medium text-slate-400 text-left tracking-tight">
+        <p className="hover:text-sky-600 transition-colors cursor-pointer">
+          Giới thiệu • Điều khoản
+        </p>
+        <p className="mt-0.5 text-slate-300">© 2026 ENJOY TEAM</p>
       </div>
     </aside>
   );

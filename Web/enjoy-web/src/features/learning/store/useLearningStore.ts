@@ -83,17 +83,29 @@ export const useLearningStore = create<LearningState>((set, get) => ({
     }
   },
 
-  // Chọn Level -> Lấy danh sách Topics tương ứng và UserProgress
+  // Chọn Level -> Lấy danh sách Topics kèm tiến độ placement test và UserProgress
   selectLevel: async (level: Level) => {
     set({ activeLevel: level, topics: [], parts: [], sessions: [], loading: true, error: null });
     try {
+      // Lấy userId từ localStorage
+      const userStr = localStorage.getItem('enjoy_user');
+      const userId = userStr ? JSON.parse(userStr)?.id : null;
+
       const [topicsRes, userProgressRes] = await Promise.all([
-        learningApi.getTopicsByLevel(level.id),
-        learningApi.getUserProgress().catch(() => [])
+        userId
+          ? learningApi.getTopicsWithProgress(level.id, Number(userId))
+          : learningApi.getTopicsByLevel(level.id),
+        learningApi.getUserProgress(userId ? Number(userId) : undefined).catch(() => [])
       ]);
-      const topics = Array.isArray(topicsRes) ? topicsRes : (topicsRes as any)?.data || [];
+
+      // getTopicsWithProgress trả về TopicWithProgress[] - lọc bỏ topic đã ẩn (HIDDEN = pass cả 2 vòng)
+      const rawTopics = Array.isArray(topicsRes) ? topicsRes : (topicsRes as any)?.data || [];
+      const topics = userId
+        ? rawTopics.filter((t: any) => t.learningStatus !== 'HIDDEN')
+        : rawTopics;
+
       const userProgress = Array.isArray(userProgressRes) ? userProgressRes : (userProgressRes as any)?.data || [];
-      console.log(`Danh sách Topics của level ${level.id}:`, topics);
+      console.log(`Topics của level ${level.id} (sau lọc HIDDEN):`, topics);
       set({ topics, userProgress, loading: false });
     } catch (err: unknown) {
       console.error("Lỗi khi lấy danh sách Topic:", err);
@@ -106,9 +118,12 @@ export const useLearningStore = create<LearningState>((set, get) => ({
   selectTopic: async (topic: Topic) => {
     set({ activeTopic: topic, parts: [], sessionsByPart: {}, activePart: null, activeSession: null, loading: true, error: null });
     try {
+      const userStr = localStorage.getItem('enjoy_user');
+      const userId = userStr ? JSON.parse(userStr)?.id : null;
+
       const [partsRes, userProgressRes] = await Promise.all([
         learningApi.getPartsByTopic(topic.id),
-        learningApi.getUserProgress().catch(() => [])
+        learningApi.getUserProgress(userId ? Number(userId) : undefined).catch(() => [])
       ]);
 
       const parts = Array.isArray(partsRes) ? partsRes : (partsRes as any)?.data || [];

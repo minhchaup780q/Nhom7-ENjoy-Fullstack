@@ -83,7 +83,10 @@ export const GrammarExercise: React.FC<GrammarExerciseProps> = ({
 
   // Auto-scroll khi thêm block mới
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const timer = setTimeout(() => {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }, 120);
+    return () => clearTimeout(timer);
   }, [visibleCount]);
 
   // Auto-play audio khi block TEXT_SPEECH được hiển thị

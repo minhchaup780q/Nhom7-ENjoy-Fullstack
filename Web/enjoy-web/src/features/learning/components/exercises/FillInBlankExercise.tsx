@@ -45,7 +45,7 @@ export const FillInBlankExercise: React.FC<Props> = ({
   onMistake,
   onProgress
 }) => {
-  const items: FillInBlankItem[] = payload.items || [];
+  const items: FillInBlankItem[] = (payload.items || []) as FillInBlankItem[];
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [footerStatus, setFooterStatus] = useState<FooterStatus>('idle');
@@ -103,17 +103,23 @@ export const FillInBlankExercise: React.FC<Props> = ({
     } else {
       setFooterStatus('incorrect');
       if (onMistake) {
-        const matchedVocab = vocabularies?.find(v => v.word.toLowerCase() === currentItem.answer.toLowerCase())
-          || vocabularies?.[currentIndex]
-          || vocabularies?.[0];
+        const vocabId = vocabularies?.[currentIndex]?.id
+          || vocabularies?.find(v => v.word.toLowerCase() === currentItem.answer.toLowerCase())?.id
+          || vocabularies?.[0]?.id
+          || 1;
 
-        if (matchedVocab) {
-          onMistake({
-            questionId: matchedVocab.id,
-            roundType: 7,
-            wrongAnswerSubmitted: selectedOption,
-          });
-        }
+        onMistake({
+          questionId: vocabId,
+          roundType: 7,
+          wrongAnswerSubmitted: selectedOption,
+          phonemeErrorType: JSON.stringify({
+            sentence: currentItem.sentence,
+            answer: currentItem.answer,
+            distractors: currentItem.distractors,
+            imageUrl: currentItem.image_url,
+            audioUrl: currentItem.audio_url,
+          }),
+        });
       }
     }
   };

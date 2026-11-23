@@ -43,3 +43,10 @@ export interface AuthResponse {
   role?: string;
   requiresBirthday?: boolean;
 }
+
+export const isAdminRole = (role?: string | null): boolean => {
+  if (!role) return false;
+  const normalized = role.trim().toUpperCase();
+  return normalized === 'ROLE_ADMIN' || normalized === 'ADMIN' || normalized.endsWith('_ADMIN');
+};
+

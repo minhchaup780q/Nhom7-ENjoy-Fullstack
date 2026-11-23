@@ -19,9 +19,10 @@ import { XMarkIcon } from '@heroicons/react/24/solid';
 interface SessionPlayerProps {
   session: Session;
   onClose: () => void;
+  isPreview?: boolean;
 }
 
-export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }) => {
+export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose, isPreview = false }) => {
   const {
     activePart,
     selectSession,
@@ -32,7 +33,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
 
   const [sessionFinished, setSessionFinished] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
-  const [progress, setProgress] = useState(0); // 0-100%
+  const [progress, setProgress] = useState(0);
   const [partVocabs, setPartVocabs] = useState<Vocabulary[]>([]);
   const [loadingVocabs, setLoadingVocabs] = useState(false);
   const [recordedMistakes, setRecordedMistakes] = useState<MistakeCreatePayload[]>([]);
@@ -58,6 +59,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
   }, [session.id, session.part?.id, activePart?.id]);
 
   const handleMistake = (mistakeData?: MistakeCreatePayload) => {
+    if (isPreview) return; // Không ghi nhận lỗi khi đang Preview
     if (mistakeData && mistakeData.questionId) {
       setRecordedMistakes(prev => {
         const existingIdx = prev.findIndex(
@@ -77,7 +79,12 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
     const durationSeconds = Math.round((Date.now() - sessionStartTime.current) / 1000);
     setSessionFinished(true);
 
-    // Gửi toàn bộ danh sách câu làm sai trong màn chơi vào hệ thống ôn tập
+    if (isPreview) {
+      // Trong chế độ Admin Xem trước (Preview): không ghi log lỗi và không ghi đè tiến độ của học sinh
+      return;
+    }
+
+    // Gửi toàn bộ danh sách câu làm sai khi hoàn thành bài học (không trùng lặp)
     if (recordedMistakes.length > 0) {
       try {
         await mistakeApi.logBatchMistakes(recordedMistakes);
@@ -110,18 +117,43 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
       payload = {};
     }
   }
+
+  // Ưu tiên danh sách từ đã lưu trong payload của session (cả khi học thật lẫn khi Admin xem trước).
+  // Nếu session chưa có payload từ vựng (bài cũ) thì fallback về từ vựng gốc của Part.
+  const rawPayload = payload as any;
+  const payloadVocabs: any[] = rawPayload?.vocabularies || rawPayload?.items || [];
+  const isVocabSession = [
+    SessionType.FLASHCARD,
+    SessionType.MATCH_WORD,
+    SessionType.SPEAKING,
+    SessionType.RE_ORDER,
+  ].includes(session.sessionType);
+  const vocabs: Vocabulary[] =
+    isVocabSession && Array.isArray(payloadVocabs) && payloadVocabs.length > 0
+      ? payloadVocabs
+          .filter((v) => v?.word?.trim())
+          .map((v, i) => ({
+            id: partVocabs.find((pv) => pv.word === v.word)?.id ?? -(i + 1),
+            word: v.word,
+            translation: v.translation || '',
+            imageUrl: v.imageUrl || undefined,
+            audioUrl: v.audioUrl || undefined,
+          }))
+      : partVocabs;
   // Header chung
   // ──────────────────────────────────────────────
   const Header = () => (
     <div className="session-player-header">
-      <button
-        id="session-player-exit-btn"
-        className="session-exit-btn"
-        onClick={() => setShowExitModal(true)}
-        aria-label="Thoát bài học"
-      >
-        <XMarkIcon className="w-5 h-5" />
-      </button>
+      {!isPreview && (
+        <button
+          id="session-player-exit-btn"
+          className="session-exit-btn"
+          onClick={() => setShowExitModal(true)}
+          aria-label="Thoát bài học"
+        >
+          <XMarkIcon className="w-5 h-5" />
+        </button>
+      )}
 
       <div className="session-progress-bar">
         <div className="session-progress-fill" style={{ width: `${progress}%` }} />
@@ -143,23 +175,23 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
 
     switch (session.sessionType) {
       case SessionType.FLASHCARD:
-        if (!partVocabs.length) return <div className="session-loading">Không có từ vựng để học.</div>;
+        if (!vocabs.length) return <div className="session-loading">Không có từ vựng để học.</div>;
         return (
           <FlashcardExercise
-            vocabularies={partVocabs}
+            vocabularies={vocabs}
             onComplete={handleSessionComplete}
             onProgress={handleProgress}
           />
         );
 
       case SessionType.MATCH_WORD:
-        if (!partVocabs.length) {
+        if (!vocabs.length) {
           return <div className="session-loading">Không có từ vựng để học.</div>;
         }
         return (
           <MatchWordExercise
             partId={session.part?.id ?? activePart?.id ?? 0}
-            vocabularies={partVocabs}
+            vocabularies={vocabs}
             onComplete={handleSessionComplete}
             onMistake={handleMistake}
             onProgress={handleProgress}
@@ -167,10 +199,10 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
         );
 
       case SessionType.SPEAKING:
-        if (!partVocabs.length) return <div className="session-loading">Không có từ vựng để học.</div>;
+        if (!vocabs.length) return <div className="session-loading">Không có từ vựng để học.</div>;
         return (
           <SpeakingExercise
-            vocabularies={partVocabs}
+            vocabularies={vocabs}
             onComplete={handleSessionComplete}
             onMistake={handleMistake}
             onProgress={handleProgress}
@@ -178,10 +210,10 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
         );
 
       case SessionType.RE_ORDER:
-        if (!partVocabs.length) return <div className="session-loading">Không có từ vựng để học.</div>;
+        if (!vocabs.length) return <div className="session-loading">Không có từ vựng để học.</div>;
         return (
           <ReorderExercise
-            vocabularies={partVocabs}
+            vocabularies={vocabs}
             onComplete={handleSessionComplete}
             onMistake={handleMistake}
             onProgress={handleProgress}
@@ -193,7 +225,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
         return (
           <DragDropExercise
             payload={payload}
-            vocabularies={partVocabs}
+            vocabularies={vocabs}
             onComplete={handleSessionComplete}
             onMistake={handleMistake}
             onProgress={handleProgress}
@@ -205,7 +237,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
         return (
           <GrammarExercise
             payload={payload}
-            vocabularies={partVocabs}
+            vocabularies={vocabs}
             onComplete={handleSessionComplete}
             onMistake={handleMistake}
             onProgress={handleProgress}
@@ -217,7 +249,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
         return (
           <FillInBlankExercise
             payload={payload}
-            vocabularies={partVocabs}
+            vocabularies={vocabs}
             onComplete={handleSessionComplete}
             onMistake={handleMistake}
             onProgress={handleProgress}
@@ -229,6 +261,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
         return (
           <ReorderSentenceExercise
             payload={payload}
+            vocabularies={vocabs}
             onComplete={handleSessionComplete}
             onMistake={handleMistake}
             onProgress={handleProgress}
@@ -240,6 +273,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
         return (
           <SpeakingSentenceExercise
             payload={payload}
+            vocabularies={vocabs}
             onComplete={handleSessionComplete}
             onMistake={handleMistake}
             onProgress={handleProgress}
@@ -251,6 +285,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose }
         return (
           <ConversationExercise
             payload={session.payload}
+            vocabularies={vocabs}
             onComplete={handleSessionComplete}
             onMistake={handleMistake}
             onProgress={(cur, total) => setProgress((cur / total) * 100)}

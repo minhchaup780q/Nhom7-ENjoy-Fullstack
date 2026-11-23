@@ -27,5 +27,6 @@ public class SkillComparisonResponse {
         private int reading;
         private int writing;
         private int vocabGrammar;
+        private int grammar;
     }
 }

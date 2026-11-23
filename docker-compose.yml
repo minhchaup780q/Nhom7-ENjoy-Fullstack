@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  # RabbitMQ Message Broker với giao diện quản trị Web (port 15672)
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: enjoy-rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"     # Cổng AMQP cho Spring Boot kết nối
+      - "15672:15672"   # Cổng Web Management Dashboard
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  # Redis In-memory Database cho Real-time Leaderboard & Chat
+  redis:
+    image: redis:alpine
+    container_name: enjoy-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  rabbitmq_data:
+  redis_data:

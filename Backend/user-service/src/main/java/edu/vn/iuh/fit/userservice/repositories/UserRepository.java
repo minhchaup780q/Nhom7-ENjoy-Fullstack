@@ -17,6 +17,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     long countByRole(UserRole role);
 
+    // User có create_at null (dữ liệu cũ) được coi là đã tồn tại trước mốc thời gian
+    @Query("SELECT COUNT(u) FROM User u WHERE u.createAt < :time OR u.createAt IS NULL")
+    long countCreatedBefore(@Param("time") LocalDateTime time);
+
     long countByRoleAndLastActiveAtAfter(UserRole role, LocalDateTime time);
 
     long countByRoleAndLastActiveAtBetween(UserRole role, LocalDateTime startTime, LocalDateTime endTime);

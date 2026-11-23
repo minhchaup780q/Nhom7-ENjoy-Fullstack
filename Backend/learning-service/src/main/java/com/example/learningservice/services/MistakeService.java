@@ -31,5 +31,9 @@ public interface MistakeService {
     MistakeStatsResponse getUserMistakeStats(Long userId);
 
     void deleteMistake(Long mistakeId);
+
+    com.example.learningservice.dto.PersonalizedAiChallengeDTO getAiChallenge(Long userId, String skillKey, String topicId);
+
+    com.example.learningservice.dto.PersonalizedAiChallengeDTO saveOrUpdateAiChallenge(Long userId, com.example.learningservice.dto.PersonalizedAiChallengeDTO dto);
 }
 
