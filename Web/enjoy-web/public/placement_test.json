@@ -1,0 +1,62 @@
+{
+  "test_id": "pre_a1_placement_test",
+  "title": "Pre-A1 Placement Test",
+  "rounds": [
+    {
+      "round_number": 1,
+      "round_name": "Listen and Choose Image",
+      "type": "LISTEN_AND_CHOOSE_IMAGE",
+      "questions": [
+        {
+          "question_id": "r1_q1",
+          "topic": "Numbers",
+          "audio_url": "https://dict.youdao.com/dictvoice?audio=one&type=2",
+          "options": [
+            { "id": "opt_1", "label": "One", "image_url": "https://static.wikia.nocookie.net/fictional-googology/images/9/9c/One.png/revision/latest?cb=20250225181445" },
+            { "id": "opt_2", "label": "Four", "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTfFn6-4mHGFS-z2d37Mgls_YrW7mfXiez9UyISzIGYyQ&s=10" },
+            { "id": "opt_3", "label": "Seven", "image_url": "https://static.wikia.nocookie.net/numerals/images/a/ad/LM7.png/revision/latest/thumbnail/width/360/height/360?cb=20250306183501" }
+          ],
+          "correct_answer": "opt_1"
+        }
+      ]
+    },
+    {
+      "round_number": 2,
+      "round_name": "Match Word with Meaning",
+      "type": "MATCH_PAIR",
+      "questions": [
+        {
+          "question_id": "r2_q1",
+          "topic": "Classroom",
+          "word": "pencil",
+          "meaning": "bút chì"
+        },
+        {
+          "question_id": "r2_q2",
+          "topic": "Colors",
+          "word": "blue",
+          "meaning": "màu xanh da trời"
+        }
+      ]
+    },
+    {
+      "round_number": 3,
+      "round_name": "Sentence Scramble",
+      "type": "SENTENCE_BUILDER",
+      "questions": [
+        {
+          "question_id": "r3_q1",
+          "topic": "Grammar: Greetings, Names & Age",
+          "sentence": "What is your name?",
+          "meaning": "Tên bạn là gì?"
+        },
+        {
+          "question_id": "r3_q2",
+          "topic": "Grammar: Where is it?",
+          "sentence": "They are next to the rubber",
+          "meaning": "Chúng ở cạnh cục tẩy"
+        }
+      ]
+    }
+  ]
+}

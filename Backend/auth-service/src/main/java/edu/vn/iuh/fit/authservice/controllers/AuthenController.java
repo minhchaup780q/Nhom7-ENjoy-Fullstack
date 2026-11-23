@@ -1,7 +1,10 @@
 package edu.vn.iuh.fit.authservice.controllers;
 
 import edu.vn.iuh.fit.authservice.dto.request.*;
+import edu.vn.iuh.fit.authservice.dto.response.ActiveStatsResponse;
+import edu.vn.iuh.fit.authservice.dto.response.CohortRetentionRowResponse;
 import edu.vn.iuh.fit.authservice.dto.response.LoginResponse;
+import edu.vn.iuh.fit.authservice.services.ActiveUserService;
 import edu.vn.iuh.fit.authservice.services.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,11 +21,23 @@ public class AuthenController {
     private final AuthenticationService authenticationService;
     private final edu.vn.iuh.fit.authservice.services.JWTService jwtService;
     private final edu.vn.iuh.fit.authservice.services.EmailService emailService;
+    private final ActiveUserService activeUserService;
 
     @PostMapping("/internal/send-family-invite")
     public ResponseEntity<Void> sendFamilyInvite(@RequestBody SendFamilyInviteEmailRequest request) {
         emailService.sendFamilyInviteMail(request.getRecipient(), request.getParentName(), request.getOtpCode());
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/internal/active-stats")
+    public ResponseEntity<ActiveStatsResponse> getActiveStats() {
+        return ResponseEntity.ok(activeUserService.getActiveStats());
+    }
+
+    @GetMapping("/internal/cohort-retention")
+    public ResponseEntity<java.util.List<CohortRetentionRowResponse>> getCohortRetention(
+            @RequestParam(value = "days", defaultValue = "7") int days) {
+        return ResponseEntity.ok(activeUserService.getCohortRetention(days));
     }
 
     @PostMapping("/login")

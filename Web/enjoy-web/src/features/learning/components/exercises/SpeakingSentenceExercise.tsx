@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import type { Vocabulary } from '../../types';
+import type { MistakeCreatePayload } from '../../services/mistakeApi';
 import { ExerciseFooter, type FooterStatus } from '../ui/ExerciseFooter';
 import { learningApi } from '../../services/learningApi';
 import { SpeakerWaveIcon, MicrophoneIcon } from '@heroicons/react/24/solid';
@@ -12,8 +14,9 @@ interface SpeakingSentenceItem {
 
 interface SpeakingSentenceExerciseProps {
   payload: any;
+  vocabularies?: Vocabulary[];
   onComplete: () => void;
-  onMistake: () => void;
+  onMistake?: (data: MistakeCreatePayload) => void;
   onProgress?: (current: number, total: number) => void;
 }
 
@@ -21,6 +24,7 @@ type RecordState = 'idle' | 'recording' | 'assessing';
 
 export const SpeakingSentenceExercise: React.FC<SpeakingSentenceExerciseProps> = ({
   payload,
+  vocabularies,
   onComplete,
   onMistake,
   onProgress
@@ -131,7 +135,17 @@ export const SpeakingSentenceExercise: React.FC<SpeakingSentenceExerciseProps> =
         setFooterStatus('correct');
       } else {
         setFooterStatus('incorrect');
-        onMistake();
+        if (onMistake) {
+          const vocabId = vocabularies?.[currentIndex]?.id || vocabularies?.[0]?.id || 1;
+          const recognized = res.recognizedText || 'Lỗi phát âm câu';
+          onMistake({
+            questionId: vocabId,
+            roundType: 9,
+            wrongAnswerSubmitted: recognized,
+            recognizedAudioTranscript: recognized,
+            phonemeErrorType: currentItem.sentence,
+          });
+        }
       }
     } catch {
       setErrorMsg('Kiểm tra phát âm thất bại. Vui lòng thử lại.');

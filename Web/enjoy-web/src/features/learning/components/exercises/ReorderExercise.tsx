@@ -92,6 +92,29 @@ export const ReorderExercise: React.FC<ReorderExerciseProps> = ({ vocabularies, 
     }
   };
 
+  useEffect(() => {
+    const onWindowKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Enter') return;
+      const target = e.target as HTMLElement | null;
+      if (target && target.tagName === 'INPUT' && !(target as HTMLInputElement).disabled) {
+        return;
+      }
+      if (footerStatus === 'selected') {
+        e.preventDefault();
+        handleCheck();
+      } else if (footerStatus === 'incorrect') {
+        e.preventDefault();
+        handleRetry();
+      } else if (footerStatus === 'correct') {
+        e.preventDefault();
+        handleNext();
+      }
+    };
+    window.addEventListener('keydown', onWindowKeyDown);
+    return () => window.removeEventListener('keydown', onWindowKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [footerStatus, answer, currentIndex]);
+
   const handleCheck = () => {
     const typed = answer.join('').toLowerCase();
     const correct = word.toLowerCase();

@@ -27,5 +27,6 @@ public class RouteValidator {
                             || request.getURI().getPath().startsWith("/api/user/public")
                             || request.getURI().getPath().startsWith("/api/v1/speech")
                             || request.getURI().getPath().startsWith("/api/v1/object")
-                            || request.getURI().getPath().startsWith("/api/v1/chatbot"));
+                            || request.getURI().getPath().startsWith("/api/v1/chatbot")
+                            || request.getURI().getPath().startsWith("/api/placement-test/content"));
 }

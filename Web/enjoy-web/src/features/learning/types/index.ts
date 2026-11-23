@@ -17,9 +17,10 @@ export enum SessionType {
 }
 
 export enum SessionStatus {
-  LOCK   = 'LOCK',
-  UNLOCK = 'UNLOCK',
-  FINISH = 'FINISH',
+  LOCK    = 'LOCK',
+  UNLOCK  = 'UNLOCK',
+  FINISH  = 'FINISH',
+  SKIPPED = 'SKIPPED', // Inject bởi Placement Test - bỏ qua tự động
 }
 
 // ============================================================

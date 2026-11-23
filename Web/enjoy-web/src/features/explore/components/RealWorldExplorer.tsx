@@ -343,74 +343,74 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
   return (
     <div className="flex-1 p-4 md:p-6 flex flex-col max-w-6xl mx-auto w-full select-none gap-6">
       {/* Header Bar */}
-      <div className="flex items-center justify-between pb-3 border-b-2 border-border-main">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-200">
         <button 
           onClick={onBack}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-display font-extrabold text-[#5c5c5c] hover:text-primary transition-colors hover:bg-bg-light rounded-xl border-2 border-transparent hover:border-border-main cursor-pointer"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-sky-600 rounded-xl text-xs font-display font-bold shadow-2xs transition-all active:scale-95 cursor-pointer"
         >
-          <ArrowLeftIcon className="w-4 h-4 stroke-[3]" />
-          QUAY LẠI
+          <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+          <span>QUAY LẠI</span>
         </button>
         <div className="text-right">
-          <h2 className="text-xl font-display font-extrabold text-[#2b2b2b] uppercase tracking-wide flex items-center gap-2 justify-end">
-            <SparklesIcon className="w-5 h-5 text-primary" />
-            Khám phá thế giới thực
+          <h2 className="text-xl font-display font-bold text-slate-900 tracking-tight flex items-center gap-2 justify-end">
+            <span className="material-symbols-outlined text-sky-600 text-[22px]">photo_camera</span>
+            <span>Khám Phá Thế Giới Thực</span>
           </h2>
-          <p className="text-xs font-semibold text-text-muted">
-            Quét đồ vật xung quanh bằng camera để học từ vựng
+          <p className="text-xs font-medium text-slate-500">
+            Quét đồ vật xung quanh bằng camera để học từ vựng trực quan
           </p>
         </div>
       </div>
 
       {/* ==================== MÀN HÌNH 1: BẮT ĐẦU (START) ==================== */}
       {gameState === 'START' && (
-        <div className="bg-white border-4 border-border-main rounded-3xl p-8 md:p-12 text-center max-w-2xl mx-auto shadow-sm flex flex-col items-center gap-6 my-auto">
-          <div className="w-20 h-20 bg-primary-soft rounded-3xl flex items-center justify-center text-primary shadow-inner">
-            <TrophyIcon className="w-10 h-10 stroke-[2.5]" />
+        <div className="bg-white rounded-3xl border border-slate-200/90 p-8 md:p-12 text-center max-w-2xl mx-auto shadow-xs flex flex-col items-center gap-6 my-auto">
+          <div className="w-20 h-20 bg-sky-50 text-sky-600 border border-sky-100 rounded-3xl flex items-center justify-center shadow-xs">
+            <span className="material-symbols-outlined text-[40px]">military_tech</span>
           </div>
 
-          <div className="space-y-3">
-            <h1 className="text-2xl md:text-3xl font-display font-black text-[#2b2b2b] uppercase tracking-wide">
+          <div className="space-y-2">
+            <h1 className="text-2xl md:text-3xl font-display font-bold text-slate-900 tracking-tight">
               Thử Thách Thám Tử Nhí
             </h1>
-            <p className="text-sm font-semibold text-text-muted max-w-md mx-auto leading-relaxed">
-              Mỗi lượt chơi, Enjoy sẽ đưa ra ngẫu nhiên <strong className="text-primary font-bold">5 đồ dùng học tập</strong> để bé đi tìm trong thế giới thực!
+            <p className="text-sm font-medium text-slate-500 max-w-md mx-auto leading-relaxed">
+              Mỗi lượt chơi, Enjoy sẽ đưa ra ngẫu nhiên <strong className="text-sky-600 font-bold">5 đồ dùng học tập</strong> để bé đi tìm trong thế giới thực xung quanh!
             </p>
           </div>
 
-          <div className="bg-[#f8f9fa] border-2 border-border-main rounded-2xl p-4 w-full text-left space-y-2.5 text-xs font-semibold text-[#5c5c5c]">
-            <div className="flex items-center gap-2 text-sm font-display font-extrabold text-[#2b2b2b]">
-              <SparklesIcon className="w-4 h-4 text-primary" />
-              LUẬT CHƠI DÀNH CHO BÉ:
+          <div className="bg-slate-50 rounded-2xl border border-slate-200 p-5 w-full text-left space-y-3 text-xs text-slate-600">
+            <div className="flex items-center gap-2 text-sm font-display font-bold text-slate-800">
+              <span className="material-symbols-outlined text-[18px] text-sky-600">info</span>
+              <span>LUẬT CHƠI DÀNH CHO BÉ:</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-black">1</span>
-              <span>Hệ thống chọn ngẫu nhiên 5 món đồ dùng học tập.</span>
+            <div className="flex items-center gap-3">
+              <span className="w-5 h-5 rounded-full bg-sky-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0">1</span>
+              <span>Hệ thống chọn ngẫu nhiên 5 món đồ dùng học tập thông dụng.</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-black">2</span>
-              <span>Mỗi món đồ có <strong>2 phút (120 giây)</strong> để tìm và giơ trước camera.</span>
+            <div className="flex items-center gap-3">
+              <span className="w-5 h-5 rounded-full bg-sky-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0">2</span>
+              <span>Mỗi món đồ có <strong>2 phút (120 giây)</strong> để tìm và đưa trước camera.</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-black">3</span>
+            <div className="flex items-center gap-3">
+              <span className="w-5 h-5 rounded-full bg-sky-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0">3</span>
               <span>Nếu không tìm thấy, bé có thể bấm <strong>"Bỏ qua"</strong> để sang món tiếp theo.</span>
             </div>
           </div>
 
-          <div className="w-full flex items-center justify-center gap-4 pt-2">
+          <div className="w-full flex items-center justify-center gap-4 pt-1">
             <Mascot 
               expression="happy" 
               speechBubbleText="Bé đã sẵn sàng khám phá cùng Enjoy chưa? Bấm Bắt đầu ngay nhé!"
-              size={90}
+              size={85}
             />
           </div>
 
           <button
             onClick={initNewGame}
-            className="w-full max-w-xs py-4 bg-primary hover:bg-primary-dark text-white font-display font-black rounded-2xl text-base uppercase tracking-wider border-b-4 border-primary-dark shadow-lg transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-3 cursor-pointer"
+            className="w-full max-w-xs py-3.5 bg-sky-600 hover:bg-sky-700 text-white font-display font-extrabold rounded-2xl text-sm uppercase tracking-wider shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer"
           >
-            <PlayIcon className="w-5 h-5 fill-current" />
-            BẮT ĐẦU KHÁM PHÁ
+            <span className="material-symbols-outlined text-[20px]">play_arrow</span>
+            <span>BẮT ĐẦU KHÁM PHÁ</span>
           </button>
         </div>
       )}
@@ -419,31 +419,31 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
       {gameState === 'PLAYING' && currentTarget && (
         <div className="flex flex-col gap-6">
           {/* Top Progress Tracker */}
-          <div className="bg-white border-4 border-border-main rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2 w-full md:w-auto">
-              <span className="text-xs font-display font-black text-[#5c5c5c] uppercase">Tiến trình:</span>
-              <div className="flex items-center gap-2 flex-1">
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2.5 w-full md:w-auto">
+              <span className="text-xs font-display font-bold text-slate-500 uppercase tracking-wider">Tiến trình:</span>
+              <div className="flex items-center gap-2 flex-1 flex-wrap">
                 {questList.map((item, idx) => {
                   const isCurrent = idx === currentIndex;
                   return (
                     <div 
                       key={idx}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 font-display text-xs font-black transition-all ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-display font-bold transition-all ${
                         item.status === 'found'
-                          ? 'bg-[#f6ffed] border-[#b7eb8f] text-[#389e0d]'
+                          ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
                           : item.status === 'skipped'
-                          ? 'bg-[#fff7e6] border-[#ffd591] text-[#d46b08]'
+                          ? 'bg-amber-50 border-amber-200 text-amber-700'
                           : item.status === 'timeout'
-                          ? 'bg-[#fff1f0] border-[#ffa39e] text-[#cf1322]'
+                          ? 'bg-rose-50 border-rose-200 text-rose-700'
                           : isCurrent
-                          ? 'bg-primary-soft border-primary text-primary ring-2 ring-primary/20 scale-105'
-                          : 'bg-[#f5f5f5] border-border-main text-text-muted opacity-60'
+                          ? 'bg-sky-50 border-sky-300 text-sky-700 ring-2 ring-sky-200 shadow-2xs'
+                          : 'bg-slate-50 border-slate-200 text-slate-400 opacity-70'
                       }`}
                     >
-                      {item.status === 'found' && <CheckCircleIcon className="w-3.5 h-3.5" />}
-                      {item.status === 'skipped' && <ForwardIcon className="w-3.5 h-3.5" />}
-                      {item.status === 'timeout' && <XCircleIcon className="w-3.5 h-3.5" />}
-                      {item.status === 'pending' && <span>{idx + 1}</span>}
+                      {item.status === 'found' && <span className="material-symbols-outlined text-[14px]">check_circle</span>}
+                      {item.status === 'skipped' && <span className="material-symbols-outlined text-[14px]">fast_forward</span>}
+                      {item.status === 'timeout' && <span className="material-symbols-outlined text-[14px]">cancel</span>}
+                      {item.status === 'pending' && <span className="w-3.5 text-center">{idx + 1}</span>}
                       <span>Món {idx + 1}</span>
                     </div>
                   );
@@ -452,14 +452,14 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
             </div>
 
             {/* Timer Counter */}
-            <div className={`flex items-center gap-2 px-4 py-2 rounded-2xl border-2 font-mono font-black text-base ${
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border font-mono font-bold text-sm ${
               timeLeft <= 20 
-                ? 'bg-red-50 border-red-300 text-red-600 animate-pulse' 
+                ? 'bg-rose-50 border-rose-200 text-rose-600 animate-pulse' 
                 : timeLeft <= 60 
-                ? 'bg-amber-50 border-amber-300 text-amber-600'
-                : 'bg-primary-soft border-primary/30 text-primary'
+                ? 'bg-amber-50 border-amber-200 text-amber-600'
+                : 'bg-sky-50 border-sky-200 text-sky-700'
             }`}>
-              <ClockIcon className="w-4 h-4 stroke-[2.5]" />
+              <span className="material-symbols-outlined text-[18px]">timer</span>
               <span>{formatTime(timeLeft)}</span>
             </div>
           </div>
@@ -467,48 +467,48 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
           <div className="grid lg:grid-cols-12 gap-6 items-start">
             {/* Left Side: Current Quest Target Card */}
             <div className="lg:col-span-5 space-y-4">
-              <div className="bg-white border-4 border-border-main rounded-3xl p-6 relative overflow-hidden shadow-sm">
+              <div className="bg-white rounded-3xl border border-slate-200/90 p-6 relative overflow-hidden shadow-xs">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="px-3 py-1 bg-primary text-white rounded-full text-xs font-display font-black uppercase tracking-wider">
+                  <span className="px-3 py-1 bg-sky-100 text-sky-700 border border-sky-200 rounded-full text-xs font-display font-bold uppercase tracking-wider">
                     MỤC TIÊU {currentIndex + 1} / {TOTAL_QUEST_ITEMS}
                   </span>
                   <button
                     onClick={() => speakWord(currentTarget.key)}
-                    className="p-2 bg-primary-soft hover:bg-primary/20 text-primary rounded-xl transition-colors flex items-center gap-1.5 text-xs font-display font-bold cursor-pointer"
+                    className="p-2 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-xl border border-sky-100 transition-colors flex items-center gap-1.5 text-xs font-display font-bold cursor-pointer"
                     title="Nghe phát âm"
                   >
-                    <SpeakerWaveIcon className="w-4 h-4" />
+                    <span className="material-symbols-outlined text-[16px]">volume_up</span>
                     <span>Nghe</span>
                   </button>
                 </div>
 
-                <div className="space-y-1 mb-6 text-center py-4 bg-[#fafafa] rounded-2xl border-2 border-border-main">
-                  <p className="text-xs font-bold text-text-muted uppercase tracking-wider">Hãy tìm món đồ:</p>
-                  <h3 className="text-3xl font-display font-black text-[#2b2b2b] tracking-wide">
+                <div className="space-y-1 mb-5 text-center py-5 bg-slate-50/70 rounded-2xl border border-slate-200/80">
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Hãy tìm món đồ:</p>
+                  <h3 className="text-2xl sm:text-3xl font-display font-extrabold text-slate-900 tracking-tight">
                     {currentTarget.nameVi}
                   </h3>
-                  <p className="text-base font-mono font-black text-primary uppercase">
+                  <p className="text-base font-mono font-bold text-sky-600 uppercase">
                     {currentTarget.nameEn}
                   </p>
                 </div>
 
-                <p className="text-xs font-semibold text-text-muted text-center mb-6 leading-relaxed">
-                  Bé hãy lấy <strong className="text-[#2b2b2b]">{currentTarget.nameVi}</strong> và đưa vào giữa khung hình camera để Enjoy nhận diện nhé!
+                <p className="text-xs font-medium text-slate-500 text-center mb-5 leading-relaxed">
+                  Bé hãy lấy <strong className="text-slate-800">{currentTarget.nameVi}</strong> và đưa vào giữa khung hình camera để Enjoy nhận diện nhé!
                 </p>
 
                 {/* Skip Button */}
                 <button
                   onClick={handleSkipCurrentItem}
                   disabled={isSuccessTransition}
-                  className="w-full py-3 bg-[#fff7e6] hover:bg-[#ffe7ba] text-[#d46b08] font-display font-black rounded-2xl text-xs uppercase tracking-wide border-2 border-[#ffd591] transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                  className="w-full py-3 bg-amber-50 hover:bg-amber-100 text-amber-700 font-display font-bold rounded-2xl text-xs uppercase tracking-wide border border-amber-200 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer active:scale-95"
                 >
-                  <ForwardIcon className="w-4 h-4" />
-                  BỎ QUA MÓN NÀY (KHÔNG TÍNH ĐIỂM)
+                  <span className="material-symbols-outlined text-[16px]">fast_forward</span>
+                  <span>BỎ QUA MÓN NÀY (KHÔNG TÍNH ĐIỂM)</span>
                 </button>
               </div>
 
               {/* Mascot Assistant Feedback */}
-              <div className="bg-white border-4 border-border-main rounded-3xl p-4 flex items-center gap-4">
+              <div className="bg-white rounded-3xl border border-slate-200/90 p-4 flex items-center gap-4 shadow-xs">
                 <Mascot 
                   expression={isSuccessTransition ? "happy" : timeLeft <= 20 ? "thinking" : "normal"} 
                   speechBubbleText={
@@ -520,14 +520,14 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
                       ? `Enjoy nhìn thấy "${OBJECT_LABELS[detectionResult.class_name] || detectionResult.class_name}" rồi! Hãy tìm "${currentTarget.nameVi}" bé nhé!`
                       : `Bé ơi, cùng đi tìm "${currentTarget.nameVi}" nhé! Cố lên nào!`
                   }
-                  size={85}
+                  size={80}
                 />
               </div>
             </div>
 
             {/* Right Side: Camera View & AI Scanner */}
             <div className="lg:col-span-7 space-y-4">
-              <div className="relative bg-black rounded-3xl overflow-hidden border-4 border-border-main aspect-[4/3] flex items-center justify-center shadow-md">
+              <div className="relative bg-slate-950 rounded-3xl overflow-hidden border border-slate-200/90 aspect-[4/3] flex items-center justify-center shadow-sm">
                 <video 
                   ref={videoRef}
                   autoPlay 
@@ -549,7 +549,7 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
                       key={idx}
                       className={`absolute border-[3px] z-10 transition-all duration-200 pointer-events-none rounded-sm ${
                         isMatchTarget 
-                          ? 'border-[#52c41a] shadow-[0_0_15px_rgba(82,196,26,0.9)] scale-[1.01]' 
+                          ? 'border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.9)] scale-[1.01]' 
                           : 'border-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]'
                       }`}
                       style={{ 
@@ -560,10 +560,10 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
                       }}
                     >
                       <span className={`absolute -top-7 left-[-3px] text-white text-[11px] font-bold px-2 py-0.5 whitespace-nowrap rounded-t-md shadow-md flex items-center gap-1 ${
-                        isMatchTarget ? 'bg-[#52c41a]' : 'bg-amber-500'
+                        isMatchTarget ? 'bg-emerald-600' : 'bg-amber-500'
                       }`}>
-                        <SparklesIcon className="w-3 h-3" />
-                        {isMatchTarget ? `🎯 ${labelText}` : labelText} ({Math.round(det.confidence * 100)}%)
+                        <span className="material-symbols-outlined text-[12px]">auto_awesome</span>
+                        <span>{isMatchTarget ? `🎯 ${labelText}` : labelText} ({Math.round(det.confidence * 100)}%)</span>
                       </span>
                     </div>
                   );
@@ -571,11 +571,11 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
 
                 {/* Success Animation Overlay */}
                 {isSuccessTransition && (
-                  <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center text-white z-30 animate-in fade-in zoom-in-95 duration-200">
-                    <div className="w-16 h-16 bg-[#52c41a] rounded-full flex items-center justify-center text-white mb-2 shadow-lg animate-bounce">
-                      <CheckCircleIcon className="w-10 h-10 stroke-[3]" />
+                  <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm flex flex-col items-center justify-center text-white z-30 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center text-white mb-2 shadow-lg animate-bounce">
+                      <span className="material-symbols-outlined text-[36px]">check_circle</span>
                     </div>
-                    <h4 className="text-2xl font-display font-black uppercase text-[#52c41a]">
+                    <h4 className="text-2xl font-display font-extrabold uppercase text-emerald-400">
                       CHÍNH XÁC!
                     </h4>
                     <p className="text-base font-bold font-mono text-white/90">
@@ -586,47 +586,47 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
 
                 {/* Camera Inactive Overlay */}
                 {!isCameraActive && (
-                  <div className="text-center p-6 space-y-4 absolute inset-0 flex flex-col justify-center items-center bg-[#0d0d0d]">
-                    <CameraIcon className="w-16 h-16 text-[#5c5c5c] mx-auto animate-pulse" />
-                    <p className="text-sm font-semibold text-text-muted">
+                  <div className="text-center p-6 space-y-4 absolute inset-0 flex flex-col justify-center items-center bg-slate-900 text-white">
+                    <span className="material-symbols-outlined text-[48px] text-slate-500 animate-pulse">photo_camera</span>
+                    <p className="text-sm font-medium text-slate-400">
                       {cameraError || "Camera chưa được bật"}
                     </p>
                     <button 
                       onClick={startCamera}
-                      className="px-6 py-3 bg-primary text-white font-display font-extrabold rounded-2xl text-xs uppercase tracking-wide border-b-4 border-primary-dark shadow-md cursor-pointer"
+                      className="px-6 py-3 bg-sky-600 hover:bg-sky-700 text-white font-display font-extrabold rounded-2xl text-xs uppercase tracking-wide shadow-sm transition-all active:scale-95 cursor-pointer"
                     >
-                      Bật Camera
+                      BẬT CAMERA
                     </button>
                   </div>
                 )}
 
                 {/* Scanner Status Badge */}
                 {isCameraActive && (
-                  <div className="absolute top-4 left-4 right-4 md:right-auto md:max-w-md bg-black/70 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/10 text-white flex items-center gap-3 select-none z-20">
+                  <div className="absolute top-4 left-4 right-4 md:right-auto md:max-w-md bg-slate-900/80 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/10 text-white flex items-center gap-3 select-none z-20">
                     {isDetecting ? (
-                      <div className="flex items-center gap-2 text-xs font-bold text-primary animate-pulse">
-                        <ArrowPathIcon className="w-3.5 h-3.5 animate-spin" />
-                        ĐANG PHÂN TÍCH...
+                      <div className="flex items-center gap-2 text-xs font-bold text-sky-400 animate-pulse">
+                        <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
+                        <span>ĐANG PHÂN TÍCH...</span>
                       </div>
                     ) : detectionResult && OBJECT_LABELS[detectionResult.class_name] ? (
                       <div className="space-y-0.5">
                         <div className="text-[10px] text-white/70 font-bold uppercase tracking-wider flex items-center gap-2">
                           <span>Đang thấy:</span>
                           {detectionResult.class_name === currentTarget.key ? (
-                            <span className="text-[#52c41a] font-black">KHỚP MỤC TIÊU!</span>
+                            <span className="text-emerald-400 font-extrabold">KHỚP MỤC TIÊU!</span>
                           ) : (
                             <span className="text-amber-300 font-medium">Chưa đúng món cần tìm</span>
                           )}
                         </div>
-                        <div className="text-sm font-display font-extrabold text-white flex items-center gap-1.5">
-                          {OBJECT_LABELS[detectionResult.class_name]}
-                          <span className={`text-xs font-mono ${detectionResult.class_name === currentTarget.key ? 'text-[#52c41a]' : 'text-amber-400'}`}>
+                        <div className="text-sm font-display font-bold text-white flex items-center gap-1.5">
+                          <span>{OBJECT_LABELS[detectionResult.class_name]}</span>
+                          <span className={`text-xs font-mono ${detectionResult.class_name === currentTarget.key ? 'text-emerald-400' : 'text-amber-400'}`}>
                             ({Math.round(detectionResult.confidence * 100)}%)
                           </span>
                         </div>
                       </div>
                     ) : (
-                      <div className="text-xs font-semibold text-white/70 flex items-center gap-1.5">
+                      <div className="text-xs font-medium text-white/70 flex items-center gap-1.5">
                         Đang quét đồ vật trước camera...
                       </div>
                     )}
@@ -636,7 +636,7 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
 
               {/* Camera Controls */}
               {isCameraActive && (
-                <div className="bg-white border-4 border-border-main rounded-3xl p-4 flex items-center justify-between gap-4">
+                <div className="bg-white rounded-2xl border border-slate-200/90 p-4 flex items-center justify-between gap-4 shadow-xs">
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
                       <input 
@@ -644,23 +644,23 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
                         id="autoScanCheck"
                         checked={isAutoScan}
                         onChange={(e) => setIsAutoScan(e.target.checked)}
-                        className="w-4 h-4 accent-primary border-2 border-border-main rounded cursor-pointer"
+                        className="w-4 h-4 accent-sky-600 border border-slate-300 rounded cursor-pointer"
                       />
-                      <label htmlFor="autoScanCheck" className="text-xs font-display font-extrabold text-[#5c5c5c] cursor-pointer uppercase select-none">
+                      <label htmlFor="autoScanCheck" className="text-xs font-display font-bold text-slate-600 cursor-pointer uppercase select-none">
                         Tự động quét (1.2s)
                       </label>
                     </div>
-                    
-                    <div className="flex items-center gap-2 border-l-2 border-border-main pl-4">
+
+                    <div className="flex items-center gap-2 border-l border-slate-200 pl-4">
                       <input 
                         type="checkbox" 
                         id="showBBoxCheck"
                         checked={showBoundingBoxes}
                         onChange={(e) => setShowBoundingBoxes(e.target.checked)}
-                        className="w-4 h-4 accent-[#52c41a] border-2 border-border-main rounded cursor-pointer"
+                        className="w-4 h-4 accent-sky-600 border border-slate-300 rounded cursor-pointer"
                       />
-                      <label htmlFor="showBBoxCheck" className="text-xs font-display font-extrabold text-[#5c5c5c] cursor-pointer uppercase select-none">
-                        Hiện khung nhận diện
+                      <label htmlFor="showBBoxCheck" className="text-xs font-display font-bold text-slate-600 cursor-pointer uppercase select-none">
+                        Hiện khung AI
                       </label>
                     </div>
                   </div>
@@ -669,7 +669,7 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
                     <button
                       onClick={captureAndDetect}
                       disabled={isDetecting || isSuccessTransition}
-                      className="px-5 py-2.5 bg-primary text-white font-display font-extrabold rounded-2xl text-xs uppercase tracking-wide border-b-4 border-primary-dark shadow-md hover:bg-primary-dark transition-all disabled:opacity-50 cursor-pointer"
+                      className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-display font-bold rounded-2xl text-xs uppercase tracking-wide shadow-sm transition-all disabled:opacity-50 cursor-pointer active:scale-95"
                     >
                       {isDetecting ? "Đang quét..." : "Quét Ngay"}
                     </button>
@@ -683,31 +683,31 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
 
       {/* ==================== MÀN HÌNH 3: TỔNG KẾT (RESULT) ==================== */}
       {gameState === 'RESULT' && (
-        <div className="bg-white border-4 border-border-main rounded-3xl p-6 md:p-10 max-w-3xl mx-auto w-full shadow-sm space-y-8 my-auto">
+        <div className="bg-white rounded-3xl border border-slate-200/90 p-6 md:p-10 max-w-2xl mx-auto w-full shadow-xs space-y-7 my-auto">
           {/* Header Summary Banner */}
-          <div className="text-center space-y-3">
-            <div className="inline-flex p-4 bg-primary-soft text-primary rounded-3xl shadow-inner mb-2">
-              <TrophyIcon className="w-12 h-12 stroke-[2.5]" />
+          <div className="text-center space-y-2">
+            <div className="inline-flex w-16 h-16 bg-sky-50 text-sky-600 border border-sky-100 rounded-3xl items-center justify-center shadow-xs mb-1">
+              <span className="material-symbols-outlined text-[36px]">emoji_events</span>
             </div>
-            <h2 className="text-2xl md:text-3xl font-display font-black text-[#2b2b2b] uppercase tracking-wide">
+            <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-900 tracking-tight">
               Tổng Kết Cuộc Khám Phá!
             </h2>
-            <p className="text-sm font-semibold text-text-muted">
+            <p className="text-sm font-medium text-slate-500">
               Bé đã xuất sắc hoàn thành thử thách tìm kiếm 5 đồ vật!
             </p>
           </div>
 
           {/* Score Stat Box */}
           <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
-            <div className="bg-[#f6ffed] border-2 border-[#b7eb8f] rounded-2xl p-4 text-center">
-              <p className="text-xs font-bold text-[#389e0d] uppercase">Tìm Thấy</p>
-              <p className="text-3xl font-display font-black text-[#389e0d] mt-1">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-center">
+              <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Tìm Thấy</p>
+              <p className="text-3xl font-display font-extrabold text-emerald-700 mt-1">
                 {foundCount} / {TOTAL_QUEST_ITEMS}
               </p>
             </div>
-            <div className="bg-primary-soft border-2 border-primary/30 rounded-2xl p-4 text-center">
-              <p className="text-xs font-bold text-primary uppercase">Tỷ Lệ Đạt</p>
-              <p className="text-3xl font-display font-black text-primary mt-1">
+            <div className="bg-sky-50 border border-sky-200 rounded-2xl p-4 text-center">
+              <p className="text-xs font-bold text-sky-700 uppercase tracking-wider">Tỷ Lệ Đạt</p>
+              <p className="text-3xl font-display font-extrabold text-sky-700 mt-1">
                 {Math.round((foundCount / TOTAL_QUEST_ITEMS) * 100)}%
               </p>
             </div>
@@ -715,43 +715,43 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
 
           {/* 5-Item Details List */}
           <div className="space-y-2.5 max-w-xl mx-auto">
-            <h4 className="text-xs font-display font-black text-[#5c5c5c] uppercase px-1">
+            <h4 className="text-xs font-display font-bold text-slate-500 uppercase tracking-wider px-1">
               Danh sách từ vựng trong lượt chơi:
             </h4>
             {questList.map((item, idx) => (
               <div 
                 key={idx}
-                className={`flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all ${
+                className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all ${
                   item.status === 'found'
-                    ? 'bg-[#f6ffed] border-[#b7eb8f]'
+                    ? 'bg-emerald-50/60 border-emerald-200/80'
                     : item.status === 'skipped'
-                    ? 'bg-[#fff7e6] border-[#ffd591]'
-                    : 'bg-[#fff1f0] border-[#ffa39e]'
+                    ? 'bg-amber-50/60 border-amber-200/80'
+                    : 'bg-rose-50/60 border-rose-200/80'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs ${
                     item.status === 'found'
-                      ? 'bg-[#d9f7be] text-[#389e0d]'
+                      ? 'bg-emerald-100 text-emerald-800'
                       : item.status === 'skipped'
-                      ? 'bg-[#ffe7ba] text-[#d46b08]'
-                      : 'bg-[#ffccc7] text-[#cf1322]'
+                      ? 'bg-amber-100 text-amber-800'
+                      : 'bg-rose-100 text-rose-800'
                   }`}>
                     {idx + 1}
                   </div>
                   <div>
-                    <p className="text-sm font-display font-extrabold text-[#2b2b2b]">{item.nameVi}</p>
-                    <p className="text-xs font-mono font-bold text-text-muted">{item.nameEn}</p>
+                    <p className="text-sm font-display font-bold text-slate-900">{item.nameVi}</p>
+                    <p className="text-xs font-mono font-bold text-slate-500">{item.nameEn}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <span className={`text-xs font-display font-black px-2.5 py-1 rounded-full ${
+                  <span className={`text-xs font-display font-bold px-2.5 py-1 rounded-full ${
                     item.status === 'found'
-                      ? 'bg-[#d9f7be] text-[#389e0d]'
+                      ? 'bg-emerald-100 text-emerald-800'
                       : item.status === 'skipped'
-                      ? 'bg-[#ffe7ba] text-[#d46b08]'
-                      : 'bg-[#ffccc7] text-[#cf1322]'
+                      ? 'bg-amber-100 text-amber-800'
+                      : 'bg-rose-100 text-rose-800'
                   }`}>
                     {item.status === 'found' && 'ĐÃ TÌM THẤY'}
                     {item.status === 'skipped' && 'ĐÃ BỎ QUA'}
@@ -760,10 +760,10 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
 
                   <button 
                     onClick={() => speakWord(item.key)}
-                    className="p-2 bg-white hover:bg-bg-light rounded-xl border border-border-main text-[#5c5c5c] hover:text-primary transition-colors cursor-pointer"
+                    className="p-2 bg-white hover:bg-slate-50 rounded-xl border border-slate-200 text-slate-600 hover:text-sky-600 transition-colors cursor-pointer shadow-2xs"
                     title="Nghe lại phát âm"
                   >
-                    <SpeakerWaveIcon className="w-4 h-4" />
+                    <span className="material-symbols-outlined text-[16px]">volume_up</span>
                   </button>
                 </div>
               </div>
@@ -781,7 +781,7 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
                   ? `Bé đã tìm được ${foundCount}/5 đồ vật! Bé giỏi lắm, tiếp tục phát huy nhé!`
                   : `Lần này bé tìm được ${foundCount} đồ vật. Hãy chơi lại để đạt 5/5 nhé!`
               }
-              size={90}
+              size={85}
             />
           </div>
 
@@ -789,17 +789,17 @@ export const RealWorldExplorer: React.FC<RealWorldExplorerProps> = ({ onBack }) 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2 max-w-md mx-auto">
             <button
               onClick={initNewGame}
-              className="w-full py-3.5 bg-primary hover:bg-primary-dark text-white font-display font-black rounded-2xl text-xs uppercase tracking-wider border-b-4 border-primary-dark shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white font-display font-bold rounded-2xl text-xs uppercase tracking-wider shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
             >
-              <ArrowPathIcon className="w-4 h-4" />
-              CHƠI LƯỢT MỚI (5 MÓN MỚI)
+              <span className="material-symbols-outlined text-[18px]">replay</span>
+              <span>CHƠI LƯỢT MỚI (5 MÓN MỚI)</span>
             </button>
             <button
               onClick={onBack}
-              className="w-full py-3.5 bg-[#f5f5f5] hover:bg-[#e8e8e8] text-[#5c5c5c] font-display font-extrabold rounded-2xl text-xs uppercase tracking-wider border-2 border-border-main transition-colors flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3.5 bg-white hover:bg-slate-50 text-slate-700 font-display font-bold rounded-2xl text-xs uppercase tracking-wider border border-slate-200 transition-colors flex items-center justify-center gap-2 active:scale-95 cursor-pointer shadow-2xs"
             >
-              <ArrowLeftIcon className="w-4 h-4" />
-              VỀ TRANG KHÁM PHÁ
+              <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+              <span>VỀ TRANG KHÁM PHÁ</span>
             </button>
           </div>
         </div>

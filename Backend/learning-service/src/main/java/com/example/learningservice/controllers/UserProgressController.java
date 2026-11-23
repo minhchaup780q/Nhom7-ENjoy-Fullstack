@@ -20,7 +20,10 @@ public class UserProgressController {
     private final UserProgressService userProgressService;
 
     @GetMapping("/my-progress")
-    public ResponseEntity<List<UserProgress>> getMyProgress(@RequestHeader(value = "X-User-Id", required = false) Long userId) {
+    public ResponseEntity<List<UserProgress>> getMyProgress(
+            @RequestHeader(value = "X-User-Id", required = false) Long headerUserId,
+            @RequestParam(value = "userId", required = false) Long queryUserId) {
+        Long userId = (queryUserId != null) ? queryUserId : headerUserId;
         if (userId == null) {
             return ResponseEntity.badRequest().build();
         }

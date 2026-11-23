@@ -7,9 +7,12 @@ import edu.vn.iuh.fit.userservice.dto.response.UserCreateResponse;
 import edu.vn.iuh.fit.userservice.dto.response.UserProfileResponse;
 import edu.vn.iuh.fit.userservice.services.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/user")
@@ -34,6 +37,12 @@ public class UserController {
     public ResponseEntity<Long> countTotalUsers() {
         long count = userService.countTotalUsers();
         return ResponseEntity.ok(count);
+    }
+
+    @GetMapping("/internal/count/created-before")
+    public ResponseEntity<Long> countUsersCreatedBefore(
+            @RequestParam("time") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime time) {
+        return ResponseEntity.ok(userService.countUsersCreatedBefore(time));
     }
 
     @GetMapping("/profile")

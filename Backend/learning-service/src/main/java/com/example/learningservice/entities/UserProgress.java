@@ -40,3 +40,4 @@ public class UserProgress extends BaseEntity {
     @Column(name = "duration_seconds")
     private Integer durationSeconds;
 }
+    

@@ -1,13 +1,13 @@
 -- ============================================================
 -- SAMPLE DATA FOR enjoy_learning_db
--- Ảnh & audio linh hoạt theo từng word
--- Chỉ giữ topic Number (chuẩn mẫu), đã xóa topic Body
--- Session 5: DRAG_DROP (payload đầy đủ)
--- Session 6: GRAMMAR (payload đầy đủ)
--- Session 7: FILL_IN_BLANK (payload đầy đủ)
--- Session 8: RE_ORDER_SENTENCE (payload đầy đủ)
+-- Topic: Number (chỉ còn Part 1: Number 1-10)
+-- Áp dụng cơ chế AUTO_INCREMENT + LAST_INSERT_ID() cho toàn bộ file
+-- Session 5: DRAG_DROP
+-- Session 6: GRAMMAR
+-- Session 7: FILL_IN_BLANK
+-- Session 8: RE_ORDER_SENTENCE
 -- Session 9: SPEAKING_SENTENCE (payload giống hệt session 8)
--- Session 10: CONVERSATION (payload đầy đủ)
+-- Session 10: CONVERSATION
 -- Ảnh của topic Number đã được đưa vào folder /Number/ trên S3
 -- ============================================================
 
@@ -16,124 +16,218 @@ USE `enjoy_learning_db`;
 -- ------------------------------------------------------------
 -- 1. LEVEL
 -- ------------------------------------------------------------
-INSERT INTO `levels` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `code`, `name`, `order_index`)
+INSERT INTO `levels`
+(`create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `code`, `name`, `order_index`)
 VALUES
-(1, NOW(), 1, 0, NOW(), 1, 'PRE_A1', 'Pre A1 - Beginner', 1);
+(NOW(), 1, 0, NOW(), 1, 'PRE_A1', 'Pre A1 - Beginner', 1);
+
+SET @level_pre_a1 := LAST_INSERT_ID();
 
 -- ------------------------------------------------------------
--- 2. TOPICS (chỉ còn Number)
+-- 2. TOPIC: Number
 -- ------------------------------------------------------------
-INSERT INTO `topics` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `description`, `order_index`, `thumbnail_url`, `title`, `level_id`)
+INSERT INTO `topics`
+(`create_at`, `create_by`, `is_delete`, `update_at`, `update_by`,
+ `description`, `order_index`, `thumbnail_url`, `title`, `level_id`)
 VALUES
-(1, NOW(), 1, 0, NOW(), 1, 'Numbers from 1 to 20', 1,
+(NOW(), 1, 0, NOW(), 1,
+ 'Numbers from 1 to 20', 1,
  'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=600&auto=format&fit=crop&q=80',
- 'Number', 1);
+ 'Number', @level_pre_a1);
+
+SET @topic_number := LAST_INSERT_ID();
 
 -- ------------------------------------------------------------
--- 3. PARTS (chỉ còn 2 part thuộc Number)
+-- 3. PART: Number 1-10 (duy nhất)
 -- ------------------------------------------------------------
-INSERT INTO `parts` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `order_index`, `title`, `topic_id`)
+INSERT INTO `parts`
+(`create_at`, `create_by`, `is_delete`, `update_at`, `update_by`,
+ `order_index`, `title`, `topic_id`)
 VALUES
-(1, NOW(), 1, 0, NOW(), 1, 1, 'Number 1-10', 1),
-(2, NOW(), 1, 0, NOW(), 1, 2, 'Number 10-20', 1);
+(NOW(), 1, 0, NOW(), 1, 1, 'Number 1-10', @topic_number);
+
+SET @part_number_1_10 := LAST_INSERT_ID();
 
 -- ------------------------------------------------------------
--- 4. VOCABULARIES (chỉ còn vocab của Number 1-20)
+-- 4. VOCABULARIES (Numbers 1-10)
+--    Mỗi vocab chèn riêng để lấy được id qua LAST_INSERT_ID()
 -- ------------------------------------------------------------
-INSERT INTO `vocabularies` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `audio_url`, `image_url`, `translation`, `word`)
+
+-- one
+INSERT INTO `vocabularies`
+(`create_at`, `create_by`, `is_delete`, `update_at`, `update_by`,
+ `audio_url`, `image_url`, `translation`, `word`)
 VALUES
--- Numbers 1-10
-(1,  NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=one&type=2',
- 'https://dummyimage.com/600x400/4CAF50/ffffff.png&text=1+-+One', 'một', 'one'),
-(2,  NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=two&type=2',
- 'https://dummyimage.com/600x400/2196F3/ffffff.png&text=2+-+Two', 'hai', 'two'),
-(3,  NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=three&type=2',
- 'https://dummyimage.com/600x400/FF9800/ffffff.png&text=3+-+Three', 'ba', 'three'),
-(4,  NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=four&type=2',
- 'https://dummyimage.com/600x400/E91E63/ffffff.png&text=4+-+Four', 'bốn', 'four'),
-(5,  NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=five&type=2',
- 'https://dummyimage.com/600x400/9C27B0/ffffff.png&text=5+-+Five', 'năm', 'five'),
-(6,  NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=six&type=2',
- 'https://dummyimage.com/600x400/00BCD4/ffffff.png&text=6+-+Six', 'sáu', 'six'),
-(7,  NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=seven&type=2',
- 'https://dummyimage.com/600x400/3F51B5/ffffff.png&text=7+-+Seven', 'bảy', 'seven'),
-(8,  NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=eight&type=2',
- 'https://dummyimage.com/600x400/8BC34A/ffffff.png&text=8+-+Eight', 'tám', 'eight'),
-(9,  NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=nine&type=2',
- 'https://dummyimage.com/600x400/FF5722/ffffff.png&text=9+-+Nine', 'chín', 'nine'),
-(10, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=ten&type=2',
- 'https://dummyimage.com/600x400/607D8B/ffffff.png&text=10+-+Ten', 'mười', 'ten'),
+(NOW(), 1, 0, NOW(), 1,
+ 'https://dict.youdao.com/dictvoice?audio=one&type=2',
+ 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Number/flashcard_one.webp',
+ 'một', 'one');
+SET @v_one := LAST_INSERT_ID();
 
--- Numbers 10-20
-(11, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=ten&type=2',
- 'https://dummyimage.com/600x400/607D8B/ffffff.png&text=10+-+Ten', 'mười', 'ten'),
-(12, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=eleven&type=2',
- 'https://dummyimage.com/600x400/3F51B5/ffffff.png&text=11+-+Eleven', 'mười một', 'eleven'),
-(13, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=twelve&type=2',
- 'https://dummyimage.com/600x400/009688/ffffff.png&text=12+-+Twelve', 'mười hai', 'twelve'),
-(14, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=thirteen&type=2',
- 'https://dummyimage.com/600x400/4CAF50/ffffff.png&text=13+-+Thirteen', 'mười ba', 'thirteen'),
-(15, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=fourteen&type=2',
- 'https://dummyimage.com/600x400/8BC34A/ffffff.png&text=14+-+Fourteen', 'mười bốn', 'fourteen'),
-(16, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=fifteen&type=2',
- 'https://dummyimage.com/600x400/FF9800/ffffff.png&text=15+-+Fifteen', 'mười lăm', 'fifteen'),
-(17, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=sixteen&type=2',
- 'https://dummyimage.com/600x400/FF5722/ffffff.png&text=16+-+Sixteen', 'mười sáu', 'sixteen'),
-(18, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=seventeen&type=2',
- 'https://dummyimage.com/600x400/E91E63/ffffff.png&text=17+-+Seventeen', 'mười bảy', 'seventeen'),
-(19, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=eighteen&type=2',
- 'https://dummyimage.com/600x400/9C27B0/ffffff.png&text=18+-+Eighteen', 'mười tám', 'eighteen'),
-(20, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=nineteen&type=2',
- 'https://dummyimage.com/600x400/673AB7/ffffff.png&text=19+-+Nineteen', 'mười chín', 'nineteen'),
-(21, NOW(), 1, 0, NOW(), 1, 'https://dict.youdao.com/dictvoice?audio=twenty&type=2',
- 'https://dummyimage.com/600x400/2196F3/ffffff.png&text=20+-+Twenty', 'hai mươi', 'twenty');
-
--- ------------------------------------------------------------
--- 5. PART_VOCABULARIES (chỉ còn 2 part)
--- ------------------------------------------------------------
-INSERT INTO `part_vocabularies` (`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `order_index`, `part_id`, `vocabulary_id`)
+-- two
+INSERT INTO `vocabularies`
+(`create_at`, `create_by`, `is_delete`, `update_at`, `update_by`,
+ `audio_url`, `image_url`, `translation`, `word`)
 VALUES
-(1,  NOW(), 1, 0, NOW(), 1, 1,  1, 1),
-(2,  NOW(), 1, 0, NOW(), 1, 2,  1, 2),
-(3,  NOW(), 1, 0, NOW(), 1, 3,  1, 3),
-(4,  NOW(), 1, 0, NOW(), 1, 4,  1, 4),
-(5,  NOW(), 1, 0, NOW(), 1, 5,  1, 5),
-(6,  NOW(), 1, 0, NOW(), 1, 6,  1, 6),
-(7,  NOW(), 1, 0, NOW(), 1, 7,  1, 7),
-(8,  NOW(), 1, 0, NOW(), 1, 8,  1, 8),
-(9,  NOW(), 1, 0, NOW(), 1, 9,  1, 9),
-(10, NOW(), 1, 0, NOW(), 1, 10, 1, 10),
-(11, NOW(), 1, 0, NOW(), 1, 1,  2, 11),
-(12, NOW(), 1, 0, NOW(), 1, 2,  2, 12),
-(13, NOW(), 1, 0, NOW(), 1, 3,  2, 13),
-(14, NOW(), 1, 0, NOW(), 1, 4,  2, 14),
-(15, NOW(), 1, 0, NOW(), 1, 5,  2, 15),
-(16, NOW(), 1, 0, NOW(), 1, 6,  2, 16),
-(17, NOW(), 1, 0, NOW(), 1, 7,  2, 17),
-(18, NOW(), 1, 0, NOW(), 1, 8,  2, 18),
-(19, NOW(), 1, 0, NOW(), 1, 9,  2, 19),
-(20, NOW(), 1, 0, NOW(), 1, 10, 2, 20),
-(21, NOW(), 1, 0, NOW(), 1, 11, 2, 21);
+(NOW(), 1, 0, NOW(), 1,
+ 'https://dict.youdao.com/dictvoice?audio=two&type=2',
+ 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Number/flashcard_two.webp',
+ 'hai', 'two');
+SET @v_two := LAST_INSERT_ID();
+
+-- three
+INSERT INTO `vocabularies`
+(`create_at`, `create_by`, `is_delete`, `update_at`, `update_by`,
+ `audio_url`, `image_url`, `translation`, `word`)
+VALUES
+(NOW(), 1, 0, NOW(), 1,
+ 'https://dict.youdao.com/dictvoice?audio=three&type=2',
+ 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Number/flashcard_three.webp',
+ 'ba', 'three');
+SET @v_three := LAST_INSERT_ID();
+
+-- four
+INSERT INTO `vocabularies`
+(`create_at`, `create_by`, `is_delete`, `update_at`, `update_by`,
+ `audio_url`, `image_url`, `translation`, `word`)
+VALUES
+(NOW(), 1, 0, NOW(), 1,
+ 'https://dict.youdao.com/dictvoice?audio=four&type=2',
+ 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Number/flashcard_four.webp',
+ 'bốn', 'four');
+SET @v_four := LAST_INSERT_ID();
+
+-- five
+INSERT INTO `vocabularies`
+(`create_at`, `create_by`, `is_delete`, `update_at`, `update_by`,
+ `audio_url`, `image_url`, `translation`, `word`)
+VALUES
+(NOW(), 1, 0, NOW(), 1,
+ 'https://dict.youdao.com/dictvoice?audio=five&type=2',
+ 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Number/flashcard_five.webp',
+ 'năm', 'five');
+SET @v_five := LAST_INSERT_ID();
+
+-- six
+INSERT INTO `vocabularies`
+(`create_at`, `create_by`, `is_delete`, `update_at`, `update_by`,
+ `audio_url`, `image_url`, `translation`, `word`)
+VALUES
+(NOW(), 1, 0, NOW(), 1,
+ 'https://dict.youdao.com/dictvoice?audio=six&type=2',
+ 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Number/flashcard_six.webp',
+ 'sáu', 'six');
+SET @v_six := LAST_INSERT_ID();
+
+-- seven
+INSERT INTO `vocabularies`
+(`create_at`, `create_by`, `is_delete`, `update_at`, `update_by`,
+ `audio_url`, `image_url`, `translation`, `word`)
+VALUES
+(NOW(), 1, 0, NOW(), 1,
+ 'https://dict.youdao.com/dictvoice?audio=seven&type=2',
+ 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Number/flashcard_seven.webp',
+ 'bảy', 'seven');
+SET @v_seven := LAST_INSERT_ID();
+
+-- eight
+INSERT INTO `vocabularies`
+(`create_at`, `create_by`, `is_delete`, `update_at`, `update_by`,
+ `audio_url`, `image_url`, `translation`, `word`)
+VALUES
+(NOW(), 1, 0, NOW(), 1,
+ 'https://dict.youdao.com/dictvoice?audio=eight&type=2',
+ 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Number/flashcard_eight.webp',
+ 'tám', 'eight');
+SET @v_eight := LAST_INSERT_ID();
+
+-- nine
+INSERT INTO `vocabularies`
+(`create_at`, `create_by`, `is_delete`, `update_at`, `update_by`,
+ `audio_url`, `image_url`, `translation`, `word`)
+VALUES
+(NOW(), 1, 0, NOW(), 1,
+ 'https://dict.youdao.com/dictvoice?audio=nine&type=2',
+ 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Number/flashcard_nine.webp',
+ 'chín', 'nine');
+SET @v_nine := LAST_INSERT_ID();
+
+-- ten
+INSERT INTO `vocabularies`
+(`create_at`, `create_by`, `is_delete`, `update_at`, `update_by`,
+ `audio_url`, `image_url`, `translation`, `word`)
+VALUES
+(NOW(), 1, 0, NOW(), 1,
+ 'https://dict.youdao.com/dictvoice?audio=ten&type=2',
+ 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Number/flashcard_ten.webp',
+ 'mười', 'ten');
+SET @v_ten := LAST_INSERT_ID();
 
 -- ------------------------------------------------------------
--- 6. SESSIONS
---    Part 1: Number 1-10  (10 vòng, vòng 5-10 có payload)
---    Part 2: Number 10-20 (9 vòng, payload = NULL)
+-- 5. PART_VOCABULARIES (nối part Number 1-10 với 10 vocab)
 -- ------------------------------------------------------------
+INSERT INTO `part_vocabularies`
+(`create_at`, `create_by`, `is_delete`, `update_at`, `update_by`,
+ `order_index`, `part_id`, `vocabulary_id`)
+VALUES
+(NOW(), 1, 0, NOW(), 1, 1,  @part_number_1_10, @v_one),
+(NOW(), 1, 0, NOW(), 1, 2,  @part_number_1_10, @v_two),
+(NOW(), 1, 0, NOW(), 1, 3,  @part_number_1_10, @v_three),
+(NOW(), 1, 0, NOW(), 1, 4,  @part_number_1_10, @v_four),
+(NOW(), 1, 0, NOW(), 1, 5,  @part_number_1_10, @v_five),
+(NOW(), 1, 0, NOW(), 1, 6,  @part_number_1_10, @v_six),
+(NOW(), 1, 0, NOW(), 1, 7,  @part_number_1_10, @v_seven),
+(NOW(), 1, 0, NOW(), 1, 8,  @part_number_1_10, @v_eight),
+(NOW(), 1, 0, NOW(), 1, 9,  @part_number_1_10, @v_nine),
+(NOW(), 1, 0, NOW(), 1, 10, @part_number_1_10, @v_ten);
+
+-- ------------------------------------------------------------
+-- 6. SESSIONS (10 vòng, đều thuộc part Number 1-10)
+-- ------------------------------------------------------------
+
+-- Vòng 1: FLASHCARD
 INSERT INTO `sessions`
-(`id`, `create_at`, `create_by`, `is_delete`, `update_at`, `update_by`, `badge_id`, `description`, `session_type`, `order_index`, `payload`, `title`, `part_id`)
+(`create_at`, `create_by`, `is_delete`, `update_at`, `update_by`,
+ `badge_id`, `description`, `session_type`, `order_index`, `payload`, `title`, `part_id`)
 VALUES
+(NOW(), 1, 0, NOW(), 1, NULL,
+ 'Flashcard numbers 1-10', 'FLASHCARD', 1, NULL,
+ 'Flashcard: Numbers 1-10', @part_number_1_10);
 
--- ============================================================
--- PART 1: Number 1-10
--- ============================================================
-(1, NOW(), 1, 0, NOW(), 1, NULL, 'Flashcard numbers 1-10', 'FLASHCARD', 1, NULL, 'Flashcard: Numbers 1-10', 1),
-(2, NOW(), 1, 0, NOW(), 1, NULL, 'Match word numbers 1-10', 'MATCH_WORD', 2, NULL, 'Match Word: Numbers 1-10', 1),
-(3, NOW(), 1, 0, NOW(), 1, NULL, 'Speaking numbers 1-10', 'SPEAKING', 3, NULL, 'Speaking: Numbers 1-10', 1),
-(4, NOW(), 1, 0, NOW(), 1, NULL, 'Re-order numbers 1-10', 'RE_ORDER', 4, NULL, 'Re-order: Numbers 1-10', 1),
+-- Vòng 2: MATCH_WORD
+INSERT INTO `sessions`
+(`create_at`, `create_by`, `is_delete`, `update_at`, `update_by`,
+ `badge_id`, `description`, `session_type`, `order_index`, `payload`, `title`, `part_id`)
+VALUES
+(NOW(), 1, 0, NOW(), 1, NULL,
+ 'Match word numbers 1-10', 'MATCH_WORD', 2, NULL,
+ 'Match Word: Numbers 1-10', @part_number_1_10);
+
+-- Vòng 3: SPEAKING
+INSERT INTO `sessions`
+(`create_at`, `create_by`, `is_delete`, `update_at`, `update_by`,
+ `badge_id`, `description`, `session_type`, `order_index`, `payload`, `title`, `part_id`)
+VALUES
+(NOW(), 1, 0, NOW(), 1, NULL,
+ 'Speaking numbers 1-10', 'SPEAKING', 3, NULL,
+ 'Speaking: Numbers 1-10', @part_number_1_10);
+
+-- Vòng 4: RE_ORDER
+INSERT INTO `sessions`
+(`create_at`, `create_by`, `is_delete`, `update_at`, `update_by`,
+ `badge_id`, `description`, `session_type`, `order_index`, `payload`, `title`, `part_id`)
+VALUES
+(NOW(), 1, 0, NOW(), 1, NULL,
+ 'Re-order numbers 1-10', 'RE_ORDER', 4, NULL,
+ 'Re-order: Numbers 1-10', @part_number_1_10);
 
 -- Vòng 5: DRAG_DROP
-(5, NOW(), 1, 0, NOW(), 1, NULL, 'Drag drop numbers 1-10', 'DRAG_DROP', 5,
+INSERT INTO `sessions`
+(`create_at`, `create_by`, `is_delete`, `update_at`, `update_by`,
+ `badge_id`, `description`, `session_type`, `order_index`, `payload`, `title`, `part_id`)
+VALUES
+(NOW(), 1, 0, NOW(), 1, NULL,
+ 'Drag drop numbers 1-10', 'DRAG_DROP', 5,
  JSON_OBJECT(
   'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Number/number.jpg',
   'audio_url', 'https://dict.youdao.com/dictvoice?audio=one&type=2',
@@ -149,10 +243,16 @@ VALUES
     JSON_OBJECT('word','six',   'x',0.5712,'y',0.0751,'width',0.0787,'height',0.0424),
     JSON_OBJECT('word','nine',  'x',0.8649,'y',0.2924,'width',0.0675,'height',0.0442)
   )
-), 'Drag Drop: Numbers 1-10', 1),
+),
+ 'Drag Drop: Numbers 1-10', @part_number_1_10);
 
 -- Vòng 6: GRAMMAR
-(6, NOW(), 1, 0, NOW(), 1, NULL, 'Grammar numbers 1-10', 'GRAMMAR', 6,
+INSERT INTO `sessions`
+(`create_at`, `create_by`, `is_delete`, `update_at`, `update_by`,
+ `badge_id`, `description`, `session_type`, `order_index`, `payload`, `title`, `part_id`)
+VALUES
+(NOW(), 1, 0, NOW(), 1, NULL,
+ 'Grammar numbers 1-10', 'GRAMMAR', 6,
  JSON_OBJECT(
   'title', 'Grammar: Greetings, Names & Age',
   'blocks', JSON_ARRAY(
@@ -173,10 +273,16 @@ VALUES
     JSON_OBJECT('order', 15, 'type', 'QUESTION', 'text', 'My [] is Kin.',   'audio_url', 'https://dict.youdao.com/dictvoice?audio=My+name+is+Kin.&type=2',       'options', JSON_ARRAY(JSON_OBJECT('id','opt_1','text','name',   'is_correct',TRUE), JSON_OBJECT('id','opt_2','text','am',      'is_correct',FALSE))),
     JSON_OBJECT('order', 16, 'type', 'QUESTION', 'text', '[] old are you?', 'audio_url', 'https://dict.youdao.com/dictvoice?audio=How+old+are+you?&type=2',      'options', JSON_ARRAY(JSON_OBJECT('id','opt_1','text','How',    'is_correct',TRUE), JSON_OBJECT('id','opt_2','text','What',    'is_correct',FALSE)))
   )
-), 'Grammar: Numbers 1-10', 1),
+),
+ 'Grammar: Numbers 1-10', @part_number_1_10);
 
 -- Vòng 7: FILL_IN_BLANK
-(7, NOW(), 1, 0, NOW(), 1, NULL, 'Fill in blank numbers 1-10', 'FILL_IN_BLANK', 7,
+INSERT INTO `sessions`
+(`create_at`, `create_by`, `is_delete`, `update_at`, `update_by`,
+ `badge_id`, `description`, `session_type`, `order_index`, `payload`, `title`, `part_id`)
+VALUES
+(NOW(), 1, 0, NOW(), 1, NULL,
+ 'Fill in blank numbers 1-10', 'FILL_IN_BLANK', 7,
  JSON_OBJECT(
   'title', 'Fill in Blank: Numbers 1-10',
   'items', JSON_ARRAY(
@@ -229,10 +335,16 @@ VALUES
       'distractors', JSON_ARRAY('four', 'nine')
     )
   )
-), 'Fill in Blank: Numbers 1-10', 1),
+),
+ 'Fill in Blank: Numbers 1-10', @part_number_1_10);
 
 -- Vòng 8: RE_ORDER_SENTENCE
-(8, NOW(), 1, 0, NOW(), 1, NULL, 'Re-order sentence numbers 1-10', 'RE_ORDER_SENTENCE', 8,
+INSERT INTO `sessions`
+(`create_at`, `create_by`, `is_delete`, `update_at`, `update_by`,
+ `badge_id`, `description`, `session_type`, `order_index`, `payload`, `title`, `part_id`)
+VALUES
+(NOW(), 1, 0, NOW(), 1, NULL,
+ 'Re-order sentence numbers 1-10', 'RE_ORDER_SENTENCE', 8,
  JSON_OBJECT(
   'title', 'Re-order Sentence: Numbers 1-10',
   'items', JSON_ARRAY(
@@ -303,10 +415,16 @@ VALUES
       'audio_url', 'https://dict.youdao.com/dictvoice?audio=How+old+are+you%3F&type=2'
     )
   )
-), 'Re-order Sentence: Numbers 1-10', 1),
+),
+ 'Re-order Sentence: Numbers 1-10', @part_number_1_10);
 
 -- Vòng 9: SPEAKING_SENTENCE (data giống hệt vòng 8)
-(9, NOW(), 1, 0, NOW(), 1, NULL, 'Speaking sentence numbers 1-10', 'SPEAKING_SENTENCE', 9,
+INSERT INTO `sessions`
+(`create_at`, `create_by`, `is_delete`, `update_at`, `update_by`,
+ `badge_id`, `description`, `session_type`, `order_index`, `payload`, `title`, `part_id`)
+VALUES
+(NOW(), 1, 0, NOW(), 1, NULL,
+ 'Speaking sentence numbers 1-10', 'SPEAKING_SENTENCE', 9,
  JSON_OBJECT(
   'title', 'Speaking Sentence: Numbers 1-10',
   'items', JSON_ARRAY(
@@ -377,10 +495,16 @@ VALUES
       'audio_url', 'https://dict.youdao.com/dictvoice?audio=How+old+are+you%3F&type=2'
     )
   )
-), 'Speaking Sentence: Numbers 1-10', 1),
+),
+ 'Speaking Sentence: Numbers 1-10', @part_number_1_10);
 
 -- Vòng 10: CONVERSATION
-(10, NOW(), 1, 0, NOW(), 1, NULL, 'Conversation numbers 1-10', 'CONVERSATION', 10,
+INSERT INTO `sessions`
+(`create_at`, `create_by`, `is_delete`, `update_at`, `update_by`,
+ `badge_id`, `description`, `session_type`, `order_index`, `payload`, `title`, `part_id`)
+VALUES
+(NOW(), 1, 0, NOW(), 1, NULL,
+ 'Conversation numbers 1-10', 'CONVERSATION', 10,
  JSON_OBJECT(
   'title', 'Conversation: Numbers 1-10',
   'items', JSON_ARRAY(
@@ -415,28 +539,10 @@ VALUES
       'distractor', JSON_OBJECT('type', 'distractor', 'text', 'No, I''m fine',                        'audio_url', 'https://dict.youdao.com/dictvoice?audio=No%2C+I%27m+fine&type=2',      'is_correct', FALSE)
     )
   )
-), 'Conversation: Numbers 1-10', 1),
+),
+ 'Conversation: Numbers 1-10', @part_number_1_10);
 
 -- ============================================================
--- PART 2: Number 10-20
+-- 7. KHÔNG reset AUTO_INCREMENT
+--    (để MySQL tự quản lý, tránh trùng id khi chạy nhiều file seed)
 -- ============================================================
-(11, NOW(), 1, 0, NOW(), 1, NULL, 'Flashcard numbers 10-20', 'FLASHCARD', 1, NULL, 'Flashcard: Numbers 10-20', 2),
-(12, NOW(), 1, 0, NOW(), 1, NULL, 'Match word numbers 10-20', 'MATCH_WORD', 2, NULL, 'Match Word: Numbers 10-20', 2),
-(13, NOW(), 1, 0, NOW(), 1, NULL, 'Speaking numbers 10-20', 'SPEAKING', 3, NULL, 'Speaking: Numbers 10-20', 2),
-(14, NOW(), 1, 0, NOW(), 1, NULL, 'Re-order numbers 10-20', 'RE_ORDER', 4, NULL, 'Re-order: Numbers 10-20', 2),
-(15, NOW(), 1, 0, NOW(), 1, NULL, 'Drag drop numbers 10-20', 'DRAG_DROP', 5, NULL, 'Drag Drop: Numbers 10-20', 2),
-(16, NOW(), 1, 0, NOW(), 1, NULL, 'Grammar numbers 10-20', 'GRAMMAR', 6, NULL, 'Grammar: Numbers 10-20', 2),
-(17, NOW(), 1, 0, NOW(), 1, NULL, 'Fill in blank numbers 10-20', 'FILL_IN_BLANK', 7, NULL, 'Fill in Blank: Numbers 10-20', 2),
-(18, NOW(), 1, 0, NOW(), 1, NULL, 'Re-order sentence numbers 10-20', 'RE_ORDER_SENTENCE', 8, NULL, 'Re-order Sentence: Numbers 10-20', 2),
-(19, NOW(), 1, 0, NOW(), 1, NULL, 'Speaking sentence numbers 10-20', 'SPEAKING_SENTENCE', 9, NULL, 'Speaking Sentence: Numbers 10-20', 2),
-(20, NOW(), 1, 0, NOW(), 1, NULL, 'Conversation numbers 10-20', 'CONVERSATION', 10, NULL, 'Conversation: Numbers 10-20', 2);
-
--- ============================================================
--- 7. RESET AUTO_INCREMENT (tuỳ chọn, để id sạch)
--- ============================================================
-ALTER TABLE `levels`            AUTO_INCREMENT = 2;
-ALTER TABLE `topics`            AUTO_INCREMENT = 2;
-ALTER TABLE `parts`             AUTO_INCREMENT = 3;
-ALTER TABLE `vocabularies`      AUTO_INCREMENT = 22;
-ALTER TABLE `part_vocabularies` AUTO_INCREMENT = 22;
-ALTER TABLE `sessions`          AUTO_INCREMENT = 21;

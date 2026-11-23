@@ -138,6 +138,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public long countUsersCreatedBefore(LocalDateTime time) {
+        return userRepository.countCreatedBefore(time);
+    }
+
+    @Override
     @Transactional
     public void updateUserActivity(Long userId) {
         userRepository.findById(userId).ifPresent(user -> {

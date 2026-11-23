@@ -16,7 +16,7 @@ export const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in">
-      <div className="bg-white w-full max-w-sm rounded-3xl border-2 border-slate-200 shadow-2xl p-6 relative font-sans">
+      <div className="bg-white w-full max-w-sm rounded-3xl border border-slate-200/90 shadow-2xl p-6 relative font-sans">
         {/* Close Button */}
         <button
           type="button"
@@ -28,13 +28,13 @@ export const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({
 
         {/* Modal Header / Icon */}
         <div className="flex flex-col items-center text-center mb-6">
-          <div className="p-4 rounded-3xl bg-red-50 text-red-500 mb-4 border border-red-100">
+          <div className="p-4 rounded-3xl bg-rose-50 text-rose-600 mb-4 border border-rose-100">
             <ArrowRightOnRectangleIcon className="w-8 h-8 stroke-[2.5]" />
           </div>
-          <h2 className="text-xl font-extrabold text-slate-700 font-display">
-            Đăng Xuất
+          <h2 className="text-xl font-extrabold text-slate-900 font-display">
+            Đăng xuất
           </h2>
-          <p className="text-sm text-slate-500 font-medium mt-1">
+          <p className="text-sm text-slate-500 font-medium mt-1.5">
             Bạn có chắc chắn muốn đăng xuất khỏi tài khoản không?
           </p>
         </div>
@@ -44,7 +44,7 @@ export const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-3 rounded-2xl border-2 border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-xs hover:bg-slate-100 transition cursor-pointer"
+            className="flex-1 py-3 rounded-2xl border border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-xs hover:bg-slate-50 active:scale-95 transition-all cursor-pointer"
           >
             Hủy
           </button>
@@ -52,12 +52,12 @@ export const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({
           <button
             type="button"
             onClick={onConfirm}
-            className="flex-1 py-3 rounded-2xl bg-red-500 border-b-4 border-red-700 text-white font-extrabold uppercase tracking-wider text-xs hover:bg-red-600 active:translate-y-0.5 active:border-b-0 transition cursor-pointer"
+            className="flex-1 py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-extrabold uppercase tracking-wider text-xs shadow-md shadow-rose-600/20 transition-all cursor-pointer"
           >
-            Xác nhận
+            Đăng xuất
           </button>
         </div>
       </div>
     </div>
   );
-};
+}
