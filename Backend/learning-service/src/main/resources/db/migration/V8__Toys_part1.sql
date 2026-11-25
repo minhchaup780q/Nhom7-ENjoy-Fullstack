@@ -216,7 +216,7 @@ VALUES
  'Drag drop toys vocabulary', 'DRAG_DROP', 5,
  JSON_OBJECT(
   'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Toys/drag_drop_toys_part1.webp',
-  'audio_url', 'https://dict.youdao.com/dictvoice?audio=toy&type=2',
+  'audio_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Toys/drag_drop_toys.mp3',
   'coordinates', JSON_ARRAY(
     JSON_OBJECT('word','orange', 'x',0,     'y',0.3559,'width',0.0975,'height',0.0619),
     JSON_OBJECT('word','red',    'x',0.1681,'y',0.3352,'width',0.0975,'height',0.0619),

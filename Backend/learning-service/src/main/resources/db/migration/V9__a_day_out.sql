@@ -240,17 +240,17 @@ VALUES
  'Drag drop a day out vocabulary', 'DRAG_DROP', 5,
  JSON_OBJECT(
   'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/ADayOut/drag_drop_adayout.webp',
-  'audio_url', 'https://dict.youdao.com/dictvoice?audio=tree&type=2',
+  'audio_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/ADayOut/drag_drop_a_day_out.mp3',
   'coordinates', JSON_ARRAY(
-    JSON_OBJECT('word','flower',   'x',0.8522,'y',0.8302,'width',0.1388,'height',0.0638),
+    JSON_OBJECT('word','flower',   'x',0.8522,'y',0.7627,'width',0.1388,'height',0.0638),
     JSON_OBJECT('word','garden',   'x',0.8267,'y',0.5752,'width',0.1388,'height',0.0638),
-    JSON_OBJECT('word','car',      'x',0.638, 'y',0.6859,'width',0.1388,'height',0.0638),
-    JSON_OBJECT('word','motorbike','x',0.5941,'y',0.5209,'width',0.1388,'height',0.0638),
-    JSON_OBJECT('word','bus',      'x',0.4667,'y',0.3802,'width',0.1388,'height',0.0638),
-    JSON_OBJECT('word','bus stop', 'x',0.3113,'y',0.4854,'width',0.1388,'height',0.0638),
-    JSON_OBJECT('word','lorry',    'x',0.1168,'y',0.4027,'width',0.1388,'height',0.0638),
-    JSON_OBJECT('word','park',     'x',0.0593,'y',0.2884,'width',0.1388,'height',0.0638),
-    JSON_OBJECT('word','shop',     'x',0.283, 'y',0.2527,'width',0.1388,'height',0.0638)
+    JSON_OBJECT('word','car',      'x',0.6168,'y',0.6859,'width',0.1388,'height',0.0638),
+    JSON_OBJECT('word','motorbike','x',0.6528,'y',0.4834,'width',0.1388,'height',0.0638),
+    JSON_OBJECT('word','bus',      'x',0.3905,'y',0.3858,'width',0.1388,'height',0.0638),
+    JSON_OBJECT('word','bus stop', 'x',0.2626,'y',0.4085,'width',0.1388,'height',0.0638),
+    JSON_OBJECT('word','lorry',    'x',0.0830,'y',0.4121,'width',0.1388,'height',0.0638),
+    JSON_OBJECT('word','park',     'x',0.0605,'y',0.2678,'width',0.1388,'height',0.0638),
+    JSON_OBJECT('word','shop',     'x',0.3093,'y',0.3015,'width',0.1388,'height',0.0638)
   )
 ),
  'Drag Drop: A day out', @part_a_day_out);

@@ -658,7 +658,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
       {/* 2. MÀN HÌNH CHỌN CHỦ ĐỀ (TOPICS VIEW) */}
       {currentView === 'topics' && (
         <div className="max-w-2xl mx-auto space-y-6 animate-fade-in-up">
-          <div className="flex items-center justify-between pb-2">
+          <div className="sticky top-16 z-20 flex items-center justify-between gap-2 rounded-b-2xl border border-slate-200/90 bg-white/95 p-3 shadow-sm backdrop-blur-md">
             <button
               onClick={handleBackToLevels}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-sky-600 font-display font-bold text-xs shadow-2xs transition-all active:scale-95 cursor-pointer"
