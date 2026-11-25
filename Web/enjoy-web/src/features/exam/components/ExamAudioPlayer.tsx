@@ -5,9 +5,10 @@ interface AudioPlayerProps {
   src: string;
   label?: string;
   autoPlay?: boolean;
+  fakeDuration?: number;
 }
 
-export const ExamAudioPlayer: React.FC<AudioPlayerProps> = ({ src, label, autoPlay = false }) => {
+export const ExamAudioPlayer: React.FC<AudioPlayerProps> = ({ src, label, autoPlay = false, fakeDuration }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -30,18 +31,53 @@ export const ExamAudioPlayer: React.FC<AudioPlayerProps> = ({ src, label, autoPl
     };
   }, [src, autoPlay]);
 
+  // Hỗ trợ fake playback timer nếu audio không tải được duration
+  useEffect(() => {
+    let interval: any = null;
+    const effectiveDur = duration > 0 ? duration : (fakeDuration || 0);
+
+    if (playing && (!src || duration === 0) && effectiveDur > 0) {
+      interval = setInterval(() => {
+        setCurrentTime((prev) => {
+          if (prev >= effectiveDur) {
+            setPlaying(false);
+            return 0;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [playing, src, duration, fakeDuration]);
+
   const toggle = () => {
     const audio = audioRef.current;
-    if (!audio) return;
-    if (playing) { audio.pause(); setPlaying(false); }
-    else { audio.play().catch(() => {}); setPlaying(true); }
+    const effectiveDur = duration > 0 ? duration : (fakeDuration || 0);
+    if (!audio) {
+      if (effectiveDur > 0) setPlaying(!playing);
+      return;
+    }
+    if (playing) {
+      audio.pause();
+      setPlaying(false);
+    } else {
+      audio.play().then(() => {
+        setPlaying(true);
+      }).catch(() => {
+        if (effectiveDur > 0) setPlaying(true);
+      });
+    }
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = Number(e.target.value);
     const audio = audioRef.current;
-    if (!audio) return;
-    audio.currentTime = Number(e.target.value);
-    setCurrentTime(Number(e.target.value));
+    if (audio && duration > 0) {
+      audio.currentTime = val;
+    }
+    setCurrentTime(val);
   };
 
   const fmt = (s: number) => {
@@ -50,7 +86,8 @@ export const ExamAudioPlayer: React.FC<AudioPlayerProps> = ({ src, label, autoPl
     return `${m}:${sec}`;
   };
 
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const effectiveDuration = duration > 0 ? duration : (fakeDuration || 0);
+  const progress = effectiveDuration > 0 ? (currentTime / effectiveDuration) * 100 : 0;
 
   return (
     <div className="w-full bg-white rounded-2xl border-2 border-border-main p-3 mb-6 shadow-sm">
@@ -76,7 +113,7 @@ export const ExamAudioPlayer: React.FC<AudioPlayerProps> = ({ src, label, autoPl
             <input
               type="range"
               min={0}
-              max={duration || 1}
+              max={effectiveDuration || 1}
               value={currentTime}
               onChange={handleSeek}
               className="flex-1 h-1.5 accent-primary cursor-pointer"
@@ -85,7 +122,7 @@ export const ExamAudioPlayer: React.FC<AudioPlayerProps> = ({ src, label, autoPl
               }}
             />
             <span className="text-xs text-text-muted font-mono flex-shrink-0 min-w-[80px] text-right">
-              {fmt(currentTime)} / {fmt(duration)}
+              {fmt(currentTime)} / {fmt(effectiveDuration)}
             </span>
           </div>
         </div>

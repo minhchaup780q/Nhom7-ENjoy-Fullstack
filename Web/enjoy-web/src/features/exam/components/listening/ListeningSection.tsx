@@ -12,8 +12,6 @@ interface Props {
   onFinish: () => void;
 }
 
-const PARTS = ['Part 1', 'Part 2', 'Part 3', 'Part 4'];
-
 export const ListeningSection: React.FC<Props> = ({ onFinish }) => {
   const { currentExam, userAnswers, setListeningAnswer } = useExamStore();
   const [currentPart, setCurrentPart] = useState(0);
@@ -48,20 +46,23 @@ export const ListeningSection: React.FC<Props> = ({ onFinish }) => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="max-w-5xl mx-auto w-full px-4 pt-6 pb-6 flex-1">
-        {/* Part Indicator */}
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-text-main">
-            Phần {currentPart + 1} <span className="text-text-muted text-base font-medium">/ 4</span>
-          </h2>
-        </div>
+      <div className="max-w-6xl mx-auto w-full px-4 pt-6 pb-6 flex-1">
+        {/* Part Indicator & Audio (Dành cho Part 2, 3, 4. Part 1 được render trong cột trái riêng) */}
+        {currentPart !== 0 && (
+          <>
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-text-main">
+                Phần {currentPart + 1} <span className="text-text-muted text-base font-medium">/ 4</span>
+              </h2>
+            </div>
 
-        {/* Audio Player (top) */}
-        <ExamAudioPlayer
-          key={currentPart}
-          src={currentAudio}
-          label={`Listening - Part ${currentPart + 1}`}
-        />
+            <ExamAudioPlayer
+              key={currentPart}
+              src={currentAudio}
+              label={`Listening - Part ${currentPart + 1}`}
+            />
+          </>
+        )}
 
         {/* Part Content */}
         <div>
@@ -70,6 +71,22 @@ export const ListeningSection: React.FC<Props> = ({ onFinish }) => {
             data={lis.part1}
             answers={userAnswers.listening.part1}
             onChange={(ans) => updateAnswers('part1', ans)}
+            headerAndAudio={
+              <>
+                <div className="mb-1">
+                  <h2 className="text-xl font-bold text-text-main">
+                    Phần 1 <span className="text-text-muted text-base font-medium">/ 4</span>
+                  </h2>
+                </div>
+
+                <ExamAudioPlayer
+                  key={0}
+                  src={currentAudio}
+                  label="Listening - Part 1"
+                  fakeDuration={205}
+                />
+              </>
+            }
           />
         )}
         {currentPart === 1 && (
