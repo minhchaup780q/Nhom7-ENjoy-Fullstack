@@ -264,7 +264,7 @@ VALUES
  'Drag drop free time activities vocabulary', 'DRAG_DROP', 5,
  JSON_OBJECT(
   'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/FreeTimeActivities/drag_drop_Free_Time_Activities.webp',
-  'audio_url', 'https://dict.youdao.com/dictvoice?audio=bag&type=2',
+  'audio_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/FreeTimeActivities/drag_drop_free_time_activities.mp3',
   'coordinates', JSON_ARRAY(
     JSON_OBJECT('word','play football','x',0.192, 'y',0.6046,'width',0.1087,'height',0.0756),
     JSON_OBJECT('word','run',          'x',0.0054,'y',0.1884,'width',0.1087,'height',0.0756),

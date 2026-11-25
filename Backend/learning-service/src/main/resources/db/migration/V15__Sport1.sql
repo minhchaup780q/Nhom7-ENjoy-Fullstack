@@ -228,7 +228,7 @@ VALUES
  'Drag drop sport vocabulary', 'DRAG_DROP', 5,
  JSON_OBJECT(
   'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Sport/drag_drop_sport_part1.webp',
-  'audio_url', 'https://dict.youdao.com/dictvoice?audio=run&type=2',
+  'audio_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Sport/drag_drop_sport1.mp3',
   'coordinates', JSON_ARRAY(
     JSON_OBJECT('word','run',           'x',0.3942,'y',0.5639,'width',0.1563,'height',0.0889),
     JSON_OBJECT('word','kick a ball',   'x',0.373, 'y',0.2773,'width',0.1563,'height',0.0889),

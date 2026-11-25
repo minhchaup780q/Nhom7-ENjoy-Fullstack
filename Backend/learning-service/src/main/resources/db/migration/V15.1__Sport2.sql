@@ -213,7 +213,7 @@ VALUES
  'Drag drop sport vocabulary', 'DRAG_DROP', 5,
  JSON_OBJECT(
   'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Sport/drag_drop_part2.webp',
-  'audio_url', 'https://dict.youdao.com/dictvoice?audio=draw&type=2',
+  'audio_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Sport/drag_drop_sport2.mp3',
   'coordinates', JSON_ARRAY(
     JSON_OBJECT('word','Alex', 'x',0.328, 'y',0.1217,'width',0.1288,'height',0.0689),
     JSON_OBJECT('word','Tom',  'x',0.6505,'y',0.0439,'width',0.1288,'height',0.0689),

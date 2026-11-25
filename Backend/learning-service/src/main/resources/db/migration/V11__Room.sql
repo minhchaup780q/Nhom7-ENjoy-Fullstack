@@ -252,7 +252,7 @@ VALUES
  'Drag drop room vocabulary', 'DRAG_DROP', 5,
  JSON_OBJECT(
   'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Room/drag_drop_animal.webp',
-  'audio_url', 'https://dict.youdao.com/dictvoice?audio=bedroom&type=2',
+  'audio_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Room/drag_drop_room.mp3',
   'coordinates', JSON_ARRAY(
     JSON_OBJECT('word','sleep',       'x',0.118, 'y',0.2454,'width',0.14,'height',0.0853),
     JSON_OBJECT('word','watch TV',    'x',0.2343,'y',0.3505,'width',0.14,'height',0.0853),

@@ -252,7 +252,7 @@ VALUES
  'Drag drop clothes vocabulary', 'DRAG_DROP', 5,
  JSON_OBJECT(
   'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Clothes/drag_drop_clothes.webp',
-  'audio_url', 'https://dict.youdao.com/dictvoice?audio=boots&type=2',
+  'audio_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Clothes/drag_drop_clothes.mp3',
   'coordinates', JSON_ARRAY(
     JSON_OBJECT('word','hat',     'x',0.2255,'y',0.0795,'width',0.1388,'height',0.08),
     JSON_OBJECT('word','shoes',   'x',0.3717,'y',0.9124,'width',0.1388,'height',0.08),
