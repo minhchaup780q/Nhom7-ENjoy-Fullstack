@@ -249,7 +249,7 @@ VALUES
  'Drag drop describing things vocabulary', 'DRAG_DROP', 5,
  JSON_OBJECT(
   'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/DescribingThings/drag_drop_describingthings_part2.webp',
-  'audio_url', 'https://dict.youdao.com/dictvoice?audio=funny&type=2',
+  'audio_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/DescribingThings/drag_drop_descibing_things2.mp3',
   'coordinates', JSON_ARRAY(
     JSON_OBJECT('word','ugly',      'x',0.0255,'y',0.2396,'width',0.115,'height',0.0619),
     JSON_OBJECT('word','small',     'x',0.7342,'y',0.1589,'width',0.115,'height',0.0619),

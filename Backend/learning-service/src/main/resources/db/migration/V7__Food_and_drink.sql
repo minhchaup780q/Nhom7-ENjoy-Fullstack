@@ -228,7 +228,7 @@ VALUES
  'Drag drop food and drink vocabulary', 'DRAG_DROP', 5,
  JSON_OBJECT(
   'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/FoodAndDrink/drag_drop_foodanddrink.webp',
-  'audio_url', 'https://dict.youdao.com/dictvoice?audio=burger&type=2',
+  'audio_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/FoodAndDrink/drag_drop_food_and_drink_full.mp3',
   'coordinates', JSON_ARRAY(
     JSON_OBJECT('word','2', 'x',0.5917,'y',0.4777,'width',0.1313,'height',0.0863),
     JSON_OBJECT('word','3', 'x',0.318, 'y',0.3877,'width',0.1313,'height',0.0863),

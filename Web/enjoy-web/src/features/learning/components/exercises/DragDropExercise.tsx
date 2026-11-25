@@ -3,7 +3,7 @@ import type { SessionPayload, Vocabulary } from '../../types';
 import type { MistakeCreatePayload } from '../../services/mistakeApi';
 import { ExerciseFooter, type FooterStatus } from '../ui/ExerciseFooter';
 
-import { SpeakerWaveIcon } from '@heroicons/react/24/solid';
+import { PauseIcon, PlayIcon, SpeakerWaveIcon } from '@heroicons/react/24/solid';
 
 interface DragDropExerciseProps {
   payload: SessionPayload;
@@ -31,8 +31,17 @@ export const DragDropExercise: React.FC<DragDropExerciseProps> = ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const raw = payload as any;
   const imageUrl: string = raw?.image_url ?? raw?.imageUrl ?? '';
-  const audioUrl: string = raw?.audio_url ?? raw?.audioUrl ?? '';
-  const isVideoUrl = /\.(mp4|webm|mov|m4v)(?:[?#]|$)/i.test(audioUrl);
+  const rawAudioUrl = raw?.audio_url ?? raw?.audioUrl;
+  const audioUrl = typeof rawAudioUrl === 'string' ? rawAudioUrl.trim() : '';
+  const hasAudioUrl = (() => {
+    try {
+      const url = new URL(audioUrl);
+      return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  })();
+  const isVideoUrl = hasAudioUrl && /\.(mp4|webm|mov|m4v)(?:[?#]|$)/i.test(audioUrl);
   
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let rawCoords: any[] = [];
@@ -49,6 +58,12 @@ export const DragDropExercise: React.FC<DragDropExerciseProps> = ({
   const [placedWords, setPlacedWords] = useState<Record<number, string>>({});
   const [wrongBoxes, setWrongBoxes] = useState<number[]>([]);
   const [footerStatus, setFooterStatus] = useState<FooterStatus>('idle');
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const speechUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
 
   const fallbackToSpeechSynthesis = (text: string) => {
     if (!window.speechSynthesis) return;
@@ -56,36 +71,130 @@ export const DragDropExercise: React.FC<DragDropExerciseProps> = ({
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US';
     utterance.rate = 0.9;
+    speechUtteranceRef.current = utterance;
+    utterance.onstart = () => {
+      if (speechUtteranceRef.current === utterance) setIsPlaying(true);
+    };
+    utterance.onend = () => {
+      if (speechUtteranceRef.current === utterance) {
+        speechUtteranceRef.current = null;
+        setIsPlaying(false);
+      }
+    };
+    utterance.onerror = () => {
+      if (speechUtteranceRef.current === utterance) {
+        speechUtteranceRef.current = null;
+        setIsPlaying(false);
+      }
+    };
     window.speechSynthesis.speak(utterance);
   };
 
-  const playAudio = () => {
-    if (isVideoUrl) return;
+  const fallbackText = raw?.sentence || coords.map(c => c.word).join(' ');
 
-    if (audioUrl) {
-      const safeUrl = audioUrl.replace(/ /g, '%20');
-      const audio = new Audio(safeUrl);
-      audio.play().catch(e => {
-        console.warn('Primary audio failed, falling back to Web Speech API...', e);
-        const fallbackText = raw?.sentence || coords.map(c => c.word).join(' ');
-        if (fallbackText) fallbackToSpeechSynthesis(fallbackText);
-      });
-    } else {
-      const fallbackText = raw?.sentence || coords.map(c => c.word).join(' ');
-      if (fallbackText) fallbackToSpeechSynthesis(fallbackText);
+  const playAudio = () => {
+    if (isVideoUrl || !hasAudioUrl) return;
+
+    if (window.speechSynthesis?.speaking) {
+      window.speechSynthesis.cancel();
+      speechUtteranceRef.current = null;
+      setIsPlaying(false);
+      return;
     }
+
+    const audio = audioRef.current;
+    if (!audioUrl || !audio) {
+      if (fallbackText) {
+        fallbackToSpeechSynthesis(fallbackText);
+      }
+      return;
+    }
+
+    if (!audio.paused) {
+      audio.pause();
+      window.speechSynthesis?.cancel();
+      speechUtteranceRef.current = null;
+      return;
+    }
+
+    if (audio.ended) audio.currentTime = 0;
+    audio.play().catch(error => {
+      if (error.name !== 'AbortError' && audio.isConnected) {
+        console.warn('Primary audio failed, falling back to Web Speech API...', error);
+        if (fallbackText) fallbackToSpeechSynthesis(fallbackText);
+      }
+    });
   };
 
   useEffect(() => {
-    if (isVideoUrl) return;
+    if (isVideoUrl || !hasAudioUrl) return;
 
-    const timeoutId = setTimeout(() => {
-      playAudio();
+    let active = true;
+    const audio = audioRef.current;
+    const updateDuration = () => {
+      const mediaDuration = audio?.duration ?? 0;
+      setDuration(Number.isFinite(mediaDuration) ? mediaDuration : 0);
+    };
+    const updateCurrentTime = () => setCurrentTime(audio?.currentTime ?? 0);
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setCurrentTime(audio?.duration ?? 0);
+    };
+
+    audio?.addEventListener('loadedmetadata', updateDuration);
+    audio?.addEventListener('durationchange', updateDuration);
+    audio?.addEventListener('timeupdate', updateCurrentTime);
+    audio?.addEventListener('play', handlePlay);
+    audio?.addEventListener('pause', handlePause);
+    audio?.addEventListener('ended', handleEnded);
+    updateDuration();
+    updateCurrentTime();
+
+    const timeoutId = window.setTimeout(() => {
+      if (hasAudioUrl && audio) {
+        audio.play().catch(error => {
+          if (active && error.name !== 'AbortError') {
+            console.warn('Primary audio failed, falling back to Web Speech API...', error);
+            if (fallbackText) fallbackToSpeechSynthesis(fallbackText);
+          }
+        });
+      } else if (fallbackText) {
+        fallbackToSpeechSynthesis(fallbackText);
+      }
     }, 300);
     
-    return () => clearTimeout(timeoutId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [audioUrl, isVideoUrl, raw?.sentence]);
+    return () => {
+      active = false;
+      window.clearTimeout(timeoutId);
+      audio?.removeEventListener('loadedmetadata', updateDuration);
+      audio?.removeEventListener('durationchange', updateDuration);
+      audio?.removeEventListener('timeupdate', updateCurrentTime);
+      audio?.removeEventListener('play', handlePlay);
+      audio?.removeEventListener('pause', handlePause);
+      audio?.removeEventListener('ended', handleEnded);
+      audio?.pause();
+      if (audio) audio.currentTime = 0;
+      window.speechSynthesis?.cancel();
+      speechUtteranceRef.current = null;
+    };
+  }, [audioUrl, hasAudioUrl, isVideoUrl, fallbackText]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    return () => {
+      video?.pause();
+    };
+  }, [audioUrl, isVideoUrl]);
+
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60).toString().padStart(2, '0');
+    const seconds = Math.floor(time % 60).toString().padStart(2, '0');
+    return `${minutes}:${seconds}`;
+  };
+
+  const audioProgress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, word: string, sourceIndex?: number) => {
     if (footerStatus === 'correct' || footerStatus === 'incorrect') return;
@@ -200,8 +309,64 @@ export const DragDropExercise: React.FC<DragDropExerciseProps> = ({
         <h2 className="text-xl md:text-2xl font-bold text-text-main text-center tracking-wide">
           Drag the correct words onto the picture
         </h2>
-        
-        <div className="flex flex-col md:flex-row w-full gap-6 md:gap-8 items-center md:items-start justify-center mt-2">
+
+        <div className="flex w-full justify-center">
+          {isVideoUrl ? (
+            <video
+              ref={videoRef}
+              src={audioUrl.replace(/ /g, '%20')}
+              controls
+              playsInline
+              className="w-full max-w-sm rounded-xl bg-black shadow-md"
+              aria-label="Video hướng dẫn"
+            />
+          ) : hasAudioUrl ? (
+            <div className="w-full rounded-2xl border-2 border-border-main bg-white p-3 shadow-sm">
+              {audioUrl && <audio ref={audioRef} src={audioUrl.replace(/ /g, '%20')} preload="metadata" />}
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={playAudio}
+                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-md shadow-primary/30 transition-all hover:bg-primary/90 active:scale-95"
+                  aria-label={isPlaying ? 'Tạm dừng âm thanh' : 'Phát âm thanh'}
+                  title={isPlaying ? 'Tạm dừng âm thanh' : 'Phát lại âm thanh'}
+                >
+                  {isPlaying ? (
+                    <PauseIcon className="h-5 w-5" />
+                  ) : (
+                    <PlayIcon className="h-5 w-5 ml-0.5" />
+                  )}
+                </button>
+                <div className="min-w-0 flex-1">
+                  <p className="mb-1 flex items-center gap-1.5 truncate text-xs font-medium text-text-muted">
+                    <SpeakerWaveIcon className="h-3.5 w-3.5" />
+                    Âm thanh bài học
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-200"
+                      role="progressbar"
+                      aria-label="Tiến trình âm thanh"
+                      aria-valuemin={0}
+                      aria-valuemax={duration || 1}
+                      aria-valuenow={currentTime}
+                    >
+                      <div
+                        className="h-full rounded-full bg-primary transition-[width] duration-150"
+                        style={{ width: `${audioProgress}%` }}
+                      />
+                    </div>
+                    <span className="min-w-[82px] flex-shrink-0 text-right font-mono text-xs text-text-muted">
+                      {formatTime(currentTime)} / {formatTime(duration)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="flex flex-col md:flex-row w-full gap-6 md:gap-8 items-center md:items-start justify-center">
           {/* Left Side: Image with drop zones */}
           <div className="relative inline-block mx-auto flex-shrink-0">
             <img 
@@ -215,7 +380,7 @@ export const DragDropExercise: React.FC<DragDropExerciseProps> = ({
               const isWrong = wrongBoxes.includes(index);
               const currentWord = placedWords[index];
 
-              let boxClass = "absolute border-2 border-dashed flex items-center justify-center transition-all bg-white/60 backdrop-blur-sm rounded-lg overflow-hidden ";
+              let boxClass = "absolute border-2 border-dashed flex items-center justify-center transition-all bg-white/25 rounded-lg overflow-hidden ";
               let textClass = "w-full h-full flex items-center justify-center font-display font-bold text-[10px] sm:text-xs md:text-sm lg:text-base cursor-grab active:cursor-grabbing select-none text-center leading-tight p-0.5 md:p-1 break-words ";
               
               if (footerStatus === 'incorrect' || footerStatus === 'correct') {
@@ -234,7 +399,7 @@ export const DragDropExercise: React.FC<DragDropExerciseProps> = ({
                 } else {
                   boxClass += "border-gray-500 hover:border-primary";
                 }
-                textClass += "text-primary";
+                textClass += "text-primary-dark";
               }
 
               return (
@@ -269,24 +434,6 @@ export const DragDropExercise: React.FC<DragDropExerciseProps> = ({
 
           {/* Right Side: Draggable words (Hidden container background, 2 columns layout) */}
           <div className="flex-shrink-0 flex flex-col items-center justify-start min-w-[200px]">
-            {isVideoUrl ? (
-              <video
-                src={audioUrl.replace(/ /g, '%20')}
-                controls
-                playsInline
-                className="mb-2 w-full max-w-sm rounded-xl bg-black shadow-md"
-                aria-label="Video hướng dẫn"
-              />
-            ) : (
-              <button
-                onClick={playAudio}
-                className="mb-2 text-primary hover:scale-110 active:scale-95 transition-transform"
-                title="Nghe lại đoạn ghi âm"
-              >
-                <SpeakerWaveIcon className="w-8 h-8 md:w-10 md:h-10 drop-shadow-md" />
-              </button>
-            )}
-
             {/* The words are rendered in a 2-column grid */}
             <div className="grid grid-cols-2 gap-3 md:gap-4 p-2">
               {draggableWords.map((word, idx) => {

@@ -244,10 +244,9 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
 
   const getSessionPalette = (partIdx: number) => {
     const palettes = [
-      { name: 'sky', bg: 'bg-sky-500', border: 'border-sky-600', ring: 'ring-sky-200', textClass: 'text-sky-600', borderClass: 'border-sky-500' },
-      { name: 'indigo', bg: 'bg-indigo-500', border: 'border-indigo-600', ring: 'ring-indigo-200', textClass: 'text-indigo-600', borderClass: 'border-indigo-500' },
-      { name: 'emerald', bg: 'bg-emerald-500', border: 'border-emerald-600', ring: 'ring-emerald-200', textClass: 'text-emerald-600', borderClass: 'border-emerald-500' },
-      { name: 'amber', bg: 'bg-amber-500', border: 'border-amber-600', ring: 'ring-amber-200', textClass: 'text-amber-600', borderClass: 'border-amber-500' }
+      { name: 'green', bg: 'bg-green-500', border: 'border-green-600', ring: 'ring-green-200', textClass: 'text-green-700', softBg: 'bg-green-50', softBorder: 'border-green-200' },
+      { name: 'orange', bg: 'bg-orange-400', border: 'border-orange-500', ring: 'ring-orange-200', textClass: 'text-orange-600', softBg: 'bg-orange-50', softBorder: 'border-orange-200' },
+      { name: 'yellow', bg: 'bg-yellow-500', border: 'border-yellow-600', ring: 'ring-yellow-200', textClass: 'text-yellow-700', softBg: 'bg-yellow-50', softBorder: 'border-yellow-200' }
     ];
     return palettes[partIdx % palettes.length];
   };
@@ -270,27 +269,26 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
       case SessionType.CONVERSATION: Icon = ChatBubbleLeftRightIcon; break;
     }
 
-    if (session.status === SessionStatus.LOCK) {
-      return <Icon className="w-7 h-7 text-slate-300" />;
-    }
     return <Icon className="w-7 h-7 text-white drop-shadow-xs" />;
   };
 
   const getNodeBackground = (session: any, isSelected: boolean) => {
+    const palette = getSessionPalette(session.partIdx ?? 0);
+    const partColor = `${palette.bg} text-white border-2 ${palette.border}`;
+    const uncompletedColor = 'bg-slate-400 text-white border-2 border-slate-500';
+
     if (session.status === SessionStatus.LOCK) {
-      return 'bg-slate-100 border-2 border-slate-200 text-slate-300 shadow-2xs cursor-not-allowed opacity-80';
+      return `${uncompletedColor} border-solid ring-2 ring-slate-300 shadow-2xs cursor-not-allowed`;
     }
 
-    const palette = getSessionPalette(session.partIdx || 0);
-
     if (session.status === SessionStatus.FINISH) {
-      return `bg-emerald-500 text-white border-2 border-emerald-600 shadow-md hover:scale-105 active:scale-95 transition-all`;
+      return `${partColor} ring-2 ${palette.ring} shadow-md hover:scale-105 active:scale-95 transition-all`;
     }
 
     // Đang mở khóa (UNLOCK) - bài hiện tại
     return isSelected
-      ? `${palette.bg} text-white border-2 ${palette.border} ring-4 ${palette.ring} scale-110 shadow-lg active:scale-100 transition-all`
-      : `${palette.bg} text-white border-2 ${palette.border} ring-4 ${palette.ring} hover:scale-110 shadow-md animate-pulse transition-all`;
+      ? `${uncompletedColor} ring-4 ring-slate-300 scale-110 shadow-lg active:scale-100 transition-all`
+      : `${uncompletedColor} ring-4 ring-slate-200 hover:scale-110 shadow-md animate-pulse transition-all`;
   };
 
   const handleNodeClick = (session: Session) => {
@@ -911,7 +909,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
         <div className="w-full space-y-6 animate-fade-in-up relative">
           
           {/* Sticky Header with Modern Sky Blue Theme */}
-          <div className="max-w-2xl mx-auto sticky top-2 z-30 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-4 shadow-sm flex items-center justify-between">
+          <div className="max-w-2xl mx-auto sticky top-16 z-20 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-4 shadow-sm flex items-center justify-between">
             <div className="flex items-center gap-3 text-left">
               <button
                 onClick={handleBackToTopics}
@@ -958,6 +956,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
             <div className="flex flex-col items-center py-12 w-full relative min-h-[500px]">
               {currentParts.map((part, partIdx) => {
                 const partSessions = allSessionsInTopic.filter(s => s.partId === part.id);
+                const partPalette = getSessionPalette(partIdx);
                 
                 const isGrammarSession = (session: Session) => {
                   const sAny = session as any;
@@ -1072,7 +1071,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                   <React.Fragment key={part.id}>
                     {/* Part Separator Divider line right before the first session of each Part */}
                     <div className="w-full max-w-xl text-center my-6 py-2 border-b border-dashed border-slate-200 relative z-10">
-                      <span className="bg-slate-50 px-4 text-xs font-display font-bold text-slate-500 tracking-wider uppercase rounded-full py-1 border border-slate-200">
+                      <span className={`px-4 text-xs font-display font-bold tracking-wider uppercase rounded-full py-1 border ${partPalette.softBg} ${partPalette.textClass} ${partPalette.softBorder}`}>
                         PHẦN {partIdx + 1}: {part.title}
                       </span>
                     </div>
