@@ -312,7 +312,7 @@ VALUES
  'Drag drop describing things vocabulary', 'DRAG_DROP', 5,
  JSON_OBJECT(
   'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/DescribingThings/drag_drop_describingthings.webp',
-  'audio_url', 'https://dict.youdao.com/dictvoice?audio=young&type=2',
+  'audio_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/DescribingThings/drag_drop_descibing_things1.mp3',
   'coordinates', JSON_ARRAY(
     JSON_OBJECT('word','Leo',   'x',0,      'y',0.3111,'width',0.1313,'height',0.0788),
     JSON_OBJECT('word','Nina',  'x',0.333,  'y',0.4312,'width',0.1313,'height',0.0788),

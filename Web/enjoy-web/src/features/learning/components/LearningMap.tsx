@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useLearningStore } from '../store/useLearningStore';
+import { learningApi } from '../services/learningApi';
 import { SessionStatus, SessionType } from '../types';
 import type { Session, Topic } from '../types';
+import { SessionPlayer } from './SessionPlayer';
 import type { TopicWithProgress } from '../types/placementTest';
 import { Button3D } from '../../../components/ui/Button3D';
 import { Mascot } from '../../../components/ui/Mascot';
@@ -27,11 +30,9 @@ import { useAuthStore } from '../../auth/store/useAuthStore';
 import { TargetSelectionScreen } from '../../placement-test/components/TargetSelectionScreen';
 import type { UserExamTarget } from '../services/learningApi';
 
-interface LearningMapProps {
-  onStartSession: (session: Session) => void;
-}
-
-export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
+export const LearningMap: React.FC = () => {
+  const navigate = useNavigate();
+  const { levelId, topicId, sessionId } = useParams();
   const {
     levels,
     topics,
@@ -50,6 +51,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
   } = useLearningStore();
 
   const [selectedNodeId, setSelectedNodeId] = useState<number | null>(null);
+  const [routeError, setRouteError] = useState<{ key: string; message: string } | null>(null);
   const popupRef = useRef<HTMLDivElement | null>(null);
 
   const { user } = useAuthStore();
@@ -95,39 +97,116 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
 
 
   
-  // Trạng thái màn hình: 'levels' (Trình độ) | 'topics' (Chủ đề) | 'sessions' (Bản đồ bài học)
-  const [currentView, setCurrentView] = useState<'levels' | 'topics' | 'sessions'>(() => {
-    const state = useLearningStore.getState();
-    if (state.activeTopic) return 'sessions';
-    if (state.activeLevel) return 'topics';
-    return 'levels';
-  });
+  const currentView = sessionId ? 'session' : topicId ? 'sessions' : levelId ? 'topics' : 'levels';
+  const routeKey = `${levelId ?? ''}/${topicId ?? ''}/${sessionId ?? ''}`;
 
   useEffect(() => {
-    if (levels.length === 0) {
+    if (levels.length === 0 && currentView === 'levels') {
       fetchLevels();
     }
-    fetchUserProgress();
-    
-    // Nếu đã chọn activeTopic và chưa có parts (ví dụ F5 tải lại trang):
-    if (activeTopic) {
-      if (parts.length === 0) {
-        selectTopic(activeTopic);
-      }
-    } else if (activeLevel) {
-      // Chỉ tải topics nếu danh sách topics đang rỗng
-      if (topics.length === 0) {
-        selectLevel(activeLevel);
-      }
-    }
-  }, []);
+  }, [levels.length, currentView, fetchLevels]);
 
-  // Tự động tải lại Parts và Sessions nếu đang ở view 'sessions' mà parts bị rỗng
   useEffect(() => {
-    if (currentView === 'sessions' && activeTopic && parts.length === 0 && !loading) {
-      selectTopic(activeTopic);
+    fetchUserProgress();
+  }, [fetchUserProgress]);
+
+  useEffect(() => {
+    if (!levelId) {
+      useLearningStore.setState({
+        activeLevel: null,
+        activeTopic: null,
+        activePart: null,
+        activeSession: null,
+        topics: [],
+        parts: [],
+        sessions: [],
+        sessionsByPart: {},
+      });
+      return;
     }
-  }, [currentView, activeTopic?.id, parts.length, loading]);
+
+    const parsedLevelId = Number(levelId);
+    const parsedTopicId = topicId ? Number(topicId) : null;
+    const parsedSessionId = sessionId ? Number(sessionId) : null;
+    if (
+      !Number.isSafeInteger(parsedLevelId) ||
+      parsedLevelId <= 0 ||
+      (topicId && (!Number.isSafeInteger(parsedTopicId) || (parsedTopicId ?? 0) <= 0)) ||
+      (sessionId && (!Number.isSafeInteger(parsedSessionId) || (parsedSessionId ?? 0) <= 0))
+    ) {
+      navigate('/learn', { replace: true });
+      return;
+    }
+
+    let cancelled = false;
+    useLearningStore.setState({ loading: true, error: null });
+    const loadRoute = async () => {
+      try {
+        let state = useLearningStore.getState();
+        const level = state.activeLevel?.id === parsedLevelId
+          ? state.activeLevel
+          : await learningApi.getLevelById(parsedLevelId);
+        if (cancelled) return;
+
+        state = useLearningStore.getState();
+        if (state.activeLevel?.id !== parsedLevelId || state.topics.length === 0) {
+          await selectLevel(level);
+          const selectionError = useLearningStore.getState().error;
+          if (selectionError) throw new Error(selectionError);
+        }
+        if (cancelled) return;
+
+        // Luôn refresh state sau khi có thể gọi selectLevel
+        state = useLearningStore.getState();
+        if (!parsedTopicId) {
+          if (state.activeTopic) {
+            useLearningStore.setState({
+              activeTopic: null,
+              activePart: null,
+              activeSession: null,
+              parts: [],
+              sessionsByPart: {},
+            });
+          }
+          return;
+        }
+
+        const topic = state.activeTopic?.id === parsedTopicId
+          ? state.activeTopic
+          : await learningApi.getTopicById(parsedTopicId);
+        if (cancelled) return;
+        // topic.levelId có thể là undefined nếu backend trả về nested object (level.id)
+        const topicLevelId = topic.levelId ?? (topic as any).level?.id;
+        if (topicLevelId !== undefined && topicLevelId !== parsedLevelId) {
+          navigate(`/learn/levels/${parsedLevelId}`, { replace: true });
+          return;
+        }
+
+        state = useLearningStore.getState();
+        if (state.activeTopic?.id !== parsedTopicId || state.parts.length === 0) {
+          await selectTopic(topic);
+          const selectionError = useLearningStore.getState().error;
+          if (selectionError) throw new Error(selectionError);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setRouteError({
+            key: routeKey,
+            message: error instanceof Error ? error.message : 'Không thể tải nội dung học tập.',
+          });
+        }
+      } finally {
+        if (!cancelled) {
+          useLearningStore.setState({ loading: false });
+        }
+      }
+    };
+
+    void loadRoute();
+    return () => {
+      cancelled = true;
+    };
+  }, [levelId, topicId, sessionId, navigate, routeKey, selectLevel, selectTopic]);
 
   const getLevelColors = (index: number) => {
     const palettes = [
@@ -191,7 +270,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
   };
 
   // Hành động khi nhấp vào Trình độ -> Chuyển sang màn hình Chủ đề và tải Topics
-  const handleLevelClick = async (lvl: any) => {
+  const handleLevelClick = (lvl: any) => {
     const currentUserId = user?.id || (() => {
       try {
         const str = localStorage.getItem('enjoy_user');
@@ -209,28 +288,22 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
       return;
     }
 
-    setCurrentView('topics');
-    await selectLevel(lvl);
+    navigate(`/learn/levels/${lvl.id}`);
   };
 
-  // Hành động khi nhấp vào Chủ đề -> Chuyển sang Bản đồ bài học và tải Parts + Sessions
-  const handleTopicClick = async (tpc: Topic) => {
-    setCurrentView('sessions');
-    await selectTopic(tpc);
+  const handleTopicClick = (tpc: Topic) => {
+    if (!activeLevel) return;
+    navigate(`/learn/levels/${activeLevel.id}/topics/${tpc.id}`);
   };
 
-  // Quay lại màn hình Trình độ
   const handleBackToLevels = () => {
     setSelectedNodeId(null);
-    useLearningStore.setState({ activeLevel: null, activeTopic: null });
-    setCurrentView('levels');
+    navigate('/learn');
   };
 
-  // Quay lại màn hình Chủ đề
   const handleBackToTopics = () => {
     setSelectedNodeId(null);
-    useLearningStore.setState({ activeTopic: null });
-    setCurrentView('topics');
+    navigate(levelId ? `/learn/levels/${levelId}` : '/learn');
   };
 
   // Hàm tính toán độ dịch chuyển ngang (margin-left) để tạo đường cong hình chữ S
@@ -244,10 +317,9 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
 
   const getSessionPalette = (partIdx: number) => {
     const palettes = [
-      { name: 'sky', bg: 'bg-sky-500', border: 'border-sky-600', ring: 'ring-sky-200', textClass: 'text-sky-600', borderClass: 'border-sky-500' },
-      { name: 'indigo', bg: 'bg-indigo-500', border: 'border-indigo-600', ring: 'ring-indigo-200', textClass: 'text-indigo-600', borderClass: 'border-indigo-500' },
-      { name: 'emerald', bg: 'bg-emerald-500', border: 'border-emerald-600', ring: 'ring-emerald-200', textClass: 'text-emerald-600', borderClass: 'border-emerald-500' },
-      { name: 'amber', bg: 'bg-amber-500', border: 'border-amber-600', ring: 'ring-amber-200', textClass: 'text-amber-600', borderClass: 'border-amber-500' }
+      { name: 'green', bg: 'bg-green-500', border: 'border-green-600', ring: 'ring-green-200', textClass: 'text-green-700', softBg: 'bg-green-50', softBorder: 'border-green-200' },
+      { name: 'orange', bg: 'bg-orange-400', border: 'border-orange-500', ring: 'ring-orange-200', textClass: 'text-orange-600', softBg: 'bg-orange-50', softBorder: 'border-orange-200' },
+      { name: 'yellow', bg: 'bg-yellow-500', border: 'border-yellow-600', ring: 'ring-yellow-200', textClass: 'text-yellow-700', softBg: 'bg-yellow-50', softBorder: 'border-yellow-200' }
     ];
     return palettes[partIdx % palettes.length];
   };
@@ -270,27 +342,26 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
       case SessionType.CONVERSATION: Icon = ChatBubbleLeftRightIcon; break;
     }
 
-    if (session.status === SessionStatus.LOCK) {
-      return <Icon className="w-7 h-7 text-slate-300" />;
-    }
     return <Icon className="w-7 h-7 text-white drop-shadow-xs" />;
   };
 
   const getNodeBackground = (session: any, isSelected: boolean) => {
+    const palette = getSessionPalette(session.partIdx ?? 0);
+    const partColor = `${palette.bg} text-white border-2 ${palette.border}`;
+    const uncompletedColor = 'bg-slate-400 text-white border-2 border-slate-500';
+
     if (session.status === SessionStatus.LOCK) {
-      return 'bg-slate-100 border-2 border-slate-200 text-slate-300 shadow-2xs cursor-not-allowed opacity-80';
+      return `${uncompletedColor} border-solid ring-2 ring-slate-300 shadow-2xs cursor-not-allowed`;
     }
 
-    const palette = getSessionPalette(session.partIdx || 0);
-
     if (session.status === SessionStatus.FINISH) {
-      return `bg-emerald-500 text-white border-2 border-emerald-600 shadow-md hover:scale-105 active:scale-95 transition-all`;
+      return `${partColor} ring-2 ${palette.ring} shadow-md hover:scale-105 active:scale-95 transition-all`;
     }
 
     // Đang mở khóa (UNLOCK) - bài hiện tại
     return isSelected
-      ? `${palette.bg} text-white border-2 ${palette.border} ring-4 ${palette.ring} scale-110 shadow-lg active:scale-100 transition-all`
-      : `${palette.bg} text-white border-2 ${palette.border} ring-4 ${palette.ring} hover:scale-110 shadow-md animate-pulse transition-all`;
+      ? `${uncompletedColor} ring-4 ring-slate-300 scale-110 shadow-lg active:scale-100 transition-all`
+      : `${uncompletedColor} ring-4 ring-slate-200 hover:scale-110 shadow-md animate-pulse transition-all`;
   };
 
   const handleNodeClick = (session: Session) => {
@@ -458,7 +529,83 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
   // Tìm bài học đang học hiện tại (UNLOCK) để hiển thị thông tin động trên Sticky Header
   const activeSession = allSessionsInTopic.find(s => s.status === SessionStatus.UNLOCK) || allSessionsInTopic[0];
 
-  if (loading && levels.length === 0) {
+  const visibleRouteError = routeError?.key === routeKey ? routeError.message : null;
+  if (visibleRouteError) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-12 space-y-4 text-center">
+        <span className="text-sm font-bold text-red-500">Không thể mở nội dung học tập: {visibleRouteError}</span>
+        <button
+          onClick={() => navigate(topicId && levelId ? `/learn/levels/${levelId}` : '/learn')}
+          className="px-4 py-2 bg-primary text-white font-bold rounded-xl shadow-md hover:bg-primary-dark transition-all cursor-pointer"
+        >
+          Quay lại
+        </button>
+      </div>
+    );
+  }
+
+  if (currentView === 'session') {
+    if (loading) {
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-sky-600 border-t-transparent" />
+        </div>
+      );
+    }
+
+    const routeSession = allSessionsInTopic.find(session => session.id === Number(sessionId));
+    const currentTopicIndex = topics.findIndex(topic => topic.id === activeTopic?.id);
+    if (!routeSession) {
+      return (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-white p-6 text-center">
+          <p className="font-bold text-red-600">Không tìm thấy bài học trong chủ đề này.</p>
+          <button
+            type="button"
+            onClick={handleBackToTopics}
+            className="rounded-xl bg-sky-600 px-4 py-2 font-bold text-white hover:bg-sky-700"
+          >
+            Quay lại danh sách bài học
+          </button>
+        </div>
+      );
+    }
+
+    const sessionRouteError = !activeTopic
+      ? 'Không tìm thấy chủ đề trong đường dẫn.'
+      : currentTopicIndex < 0
+        ? 'Chủ đề này hiện không khả dụng.'
+      : !isTopicUnlocked(activeTopic, currentTopicIndex)
+        ? 'Chủ đề này hiện đang bị khóa.'
+        : routeSession.status === SessionStatus.LOCK
+          ? 'Bài học này hiện đang bị khóa.'
+          : null;
+
+    if (sessionRouteError) {
+      return (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-white p-6 text-center">
+          <p className="font-bold text-red-600">{sessionRouteError}</p>
+          <button
+            type="button"
+            onClick={handleBackToTopics}
+            className="rounded-xl bg-sky-600 px-4 py-2 font-bold text-white hover:bg-sky-700"
+          >
+            Quay lại danh sách bài học
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="fixed inset-0 z-50 overflow-y-auto bg-white">
+        <SessionPlayer
+          session={routeSession}
+          onClose={() => navigate(`/learn/levels/${levelId}/topics/${topicId}`, { replace: true })}
+        />
+      </div>
+    );
+  }
+
+  if (currentView === 'levels' && loading && levels.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-12 space-y-4">
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -467,7 +614,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
     );
   }
 
-  if (error && levels.length === 0) {
+  if (currentView === 'levels' && error && levels.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-12 space-y-4 text-center">
         <span className="text-sm font-bold text-red-500">Đã xảy ra lỗi: {error}</span>
@@ -481,7 +628,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
     );
   }
 
-  if (levels.length === 0 && !loading) {
+  if (currentView === 'levels' && levels.length === 0 && !loading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-12 space-y-4 text-center">
         <span className="text-sm font-bold text-text-muted">Không tìm thấy trình độ học tập nào. Vui lòng kết nối database và chạy script khởi tạo.</span>
@@ -660,7 +807,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
       {/* 2. MÀN HÌNH CHỌN CHỦ ĐỀ (TOPICS VIEW) */}
       {currentView === 'topics' && (
         <div className="max-w-2xl mx-auto space-y-6 animate-fade-in-up">
-          <div className="flex items-center justify-between pb-2">
+          <div className="sticky top-16 z-20 flex items-center justify-between gap-2 rounded-b-2xl border border-slate-200/90 bg-white/95 p-3 shadow-sm backdrop-blur-md">
             <button
               onClick={handleBackToLevels}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-sky-600 font-display font-bold text-xs shadow-2xs transition-all active:scale-95 cursor-pointer"
@@ -911,7 +1058,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
         <div className="w-full space-y-6 animate-fade-in-up relative">
           
           {/* Sticky Header with Modern Sky Blue Theme */}
-          <div className="max-w-2xl mx-auto sticky top-2 z-30 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-4 shadow-sm flex items-center justify-between">
+          <div className="max-w-2xl mx-auto sticky top-16 z-20 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-4 shadow-sm flex items-center justify-between">
             <div className="flex items-center gap-3 text-left">
               <button
                 onClick={handleBackToTopics}
@@ -958,6 +1105,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
             <div className="flex flex-col items-center py-12 w-full relative min-h-[500px]">
               {currentParts.map((part, partIdx) => {
                 const partSessions = allSessionsInTopic.filter(s => s.partId === part.id);
+                const partPalette = getSessionPalette(partIdx);
                 
                 const isGrammarSession = (session: Session) => {
                   const sAny = session as any;
@@ -1041,7 +1189,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                                 onClick={(e) => {
                                   e?.stopPropagation();
                                   setSelectedNodeId(null);
-                                  onStartSession(session);
+                                  navigate(`/learn/levels/${levelId}/topics/${topicId}/sessions/${session.id}`);
                                 }}
                                 className="w-full py-3 bg-sky-600 hover:bg-sky-700 active:scale-95 text-white font-display font-bold text-xs tracking-wider uppercase rounded-2xl shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2"
                               >
@@ -1072,7 +1220,7 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
                   <React.Fragment key={part.id}>
                     {/* Part Separator Divider line right before the first session of each Part */}
                     <div className="w-full max-w-xl text-center my-6 py-2 border-b border-dashed border-slate-200 relative z-10">
-                      <span className="bg-slate-50 px-4 text-xs font-display font-bold text-slate-500 tracking-wider uppercase rounded-full py-1 border border-slate-200">
+                      <span className={`px-4 text-xs font-display font-bold tracking-wider uppercase rounded-full py-1 border ${partPalette.softBg} ${partPalette.textClass} ${partPalette.softBorder}`}>
                         PHẦN {partIdx + 1}: {part.title}
                       </span>
                     </div>
@@ -1119,12 +1267,11 @@ export const LearningMap: React.FC<LearningMapProps> = ({ onStartSession }) => {
         <TargetSelectionScreen
           userId={Number(user?.id || 1)}
           isModal={true}
-          onConfirm={async (_target: UserExamTarget) => {
+          onConfirm={(_target: UserExamTarget) => {
             setShowTargetModal(false);
             const lvl = pendingLevel || levels[0];
-            setCurrentView('topics');
             if (lvl) {
-              await selectLevel(lvl);
+              navigate(`/learn/levels/${lvl.id}`);
             }
           }}
           onCancel={() => setShowTargetModal(false)}

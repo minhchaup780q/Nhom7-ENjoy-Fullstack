@@ -235,19 +235,19 @@ VALUES
  'Drag drop colors', 'DRAG_DROP', 5,
  JSON_OBJECT(
   'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Color/color.jpg',
-  'audio_url', 'https://dict.youdao.com/dictvoice?audio=blue&type=2',
+  'audio_url', null,
   'coordinates', JSON_ARRAY(
-    JSON_OBJECT('word','blue',   'x',0.1000,'y',0.1000,'width',0.0800,'height',0.0400),
-    JSON_OBJECT('word','green',  'x',0.2500,'y',0.1000,'width',0.0800,'height',0.0400),
-    JSON_OBJECT('word','pink',   'x',0.4000,'y',0.1000,'width',0.0800,'height',0.0400),
-    JSON_OBJECT('word','red',    'x',0.5500,'y',0.1000,'width',0.0800,'height',0.0400),
-    JSON_OBJECT('word','purple', 'x',0.7000,'y',0.1000,'width',0.0800,'height',0.0400),
-    JSON_OBJECT('word','yellow', 'x',0.1000,'y',0.3000,'width',0.0800,'height',0.0400),
-    JSON_OBJECT('word','orange', 'x',0.2500,'y',0.3000,'width',0.0800,'height',0.0400),
-    JSON_OBJECT('word','white',  'x',0.4000,'y',0.3000,'width',0.0800,'height',0.0400),
-    JSON_OBJECT('word','black',  'x',0.5500,'y',0.3000,'width',0.0800,'height',0.0400),
-    JSON_OBJECT('word','brown',  'x',0.7000,'y',0.3000,'width',0.0800,'height',0.0400),
-    JSON_OBJECT('word','grey',   'x',0.4000,'y',0.5000,'width',0.0800,'height',0.0400)
+    JSON_OBJECT('word','blue',   'x',0.2805,'y',0.6164,'width',0.1338,'height',0.0867),
+    JSON_OBJECT('word','while',  'x',0.4317,'y',0.7653,'width',0.1338,'height',0.0867),
+    JSON_OBJECT('word','grey',   'x',0.0980,'y',0.8925,'width',0.1338,'height',0.0867),
+    JSON_OBJECT('word','brown',  'x',0.0067,'y',0.7946,'width',0.1338,'height',0.0867),
+    JSON_OBJECT('word','black',  'x',0.7292,'y',0.3618,'width',0.1338,'height',0.0867),
+    JSON_OBJECT('word','green',  'x',0.0092,'y',0.5988,'width',0.1338,'height',0.0867),
+    JSON_OBJECT('word','purple', 'x',0.5430,'y',0.6223,'width',0.1338,'height',0.0867),
+    JSON_OBJECT('word','orange', 'x',0.4555,'y',0.4950,'width',0.1338,'height',0.0867),
+    JSON_OBJECT('word','red',    'x',0.4144,'y',0.6141,'width',0.1338,'height',0.0867),
+    JSON_OBJECT('word','pink',   'x',0.7079,'y',0.2306,'width',0.1338,'height',0.0867),
+    JSON_OBJECT('word','yellow', 'x',0.3417,'y',0.1014,'width',0.1338,'height',0.0867)
   )
 ),
  'Drag Drop: Colors', @part_color);

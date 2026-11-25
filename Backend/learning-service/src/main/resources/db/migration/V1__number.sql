@@ -230,7 +230,7 @@ VALUES
  'Drag drop numbers 1-10', 'DRAG_DROP', 5,
  JSON_OBJECT(
   'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Number/number.jpg',
-  'audio_url', 'https://dict.youdao.com/dictvoice?audio=one&type=2',
+  'audio_url', null,
   'coordinates', JSON_ARRAY(
     JSON_OBJECT('word','one',   'x',0.2949,'y',0.8578,'width',0.0762,'height',0.0405),
     JSON_OBJECT('word','two',   'x',0.0737,'y',0.5263,'width',0.0937,'height',0.046),

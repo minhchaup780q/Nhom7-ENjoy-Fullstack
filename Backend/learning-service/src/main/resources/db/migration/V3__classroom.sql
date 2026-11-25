@@ -239,20 +239,17 @@ VALUES
 (NOW(), 1, 0, NOW(), 1, NULL,
  'Drag drop classroom', 'DRAG_DROP', 5,
  JSON_OBJECT(
-  'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Classroom/classroom.jpg',
-  'audio_url', 'https://dict.youdao.com/dictvoice?audio=classroom&type=2',
+  'image_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Classroom/drag_drop_classroom.webp',
+  'audio_url', 'https://minhchau-22662231-bucket.s3.ap-southeast-1.amazonaws.com/session-items/Classroom/drag_drop_color.mp3',
   'coordinates', JSON_ARRAY(
-    JSON_OBJECT('word','classroom',   'x',0.1000,'y',0.1000,'width',0.0800,'height',0.0400),
-    JSON_OBJECT('word','rubber',      'x',0.2500,'y',0.1000,'width',0.0800,'height',0.0400),
-    JSON_OBJECT('word','pencil',      'x',0.4000,'y',0.1000,'width',0.0800,'height',0.0400),
-    JSON_OBJECT('word','crayon',      'x',0.5500,'y',0.1000,'width',0.0800,'height',0.0400),
-    JSON_OBJECT('word','bag',         'x',0.7000,'y',0.1000,'width',0.0800,'height',0.0400),
-    JSON_OBJECT('word','teacher',     'x',0.1000,'y',0.3000,'width',0.0800,'height',0.0400),
-    JSON_OBJECT('word','desk',        'x',0.2500,'y',0.3000,'width',0.0800,'height',0.0400),
-    JSON_OBJECT('word','chair',       'x',0.4000,'y',0.3000,'width',0.0800,'height',0.0400),
-    JSON_OBJECT('word','book',        'x',0.5500,'y',0.3000,'width',0.0800,'height',0.0400),
-    JSON_OBJECT('word','pen',         'x',0.7000,'y',0.3000,'width',0.0800,'height',0.0400),
-    JSON_OBJECT('word','pencil case', 'x',0.4000,'y',0.5000,'width',0.1000,'height',0.0400)
+    JSON_OBJECT('word','bag',         'x',0.1030,'y',0.8795,'width',0.1338,'height',0.0867),
+    JSON_OBJECT('word','desk',        'x',0.4755,'y',0.7617,'width',0.1338,'height',0.0867),
+    JSON_OBJECT('word','book',        'x',0.5792,'y',0.4684,'width',0.1338,'height',0.0867),
+    JSON_OBJECT('word','pencil',      'x',0.2417,'y',0.6262,'width',0.1338,'height',0.0867),
+    JSON_OBJECT('word','pen',         'x',0.3330,'y',0.5662,'width',0.1338,'height',0.0867),
+    JSON_OBJECT('word','pencil case', 'x',0.4355,'y',0.4351,'width',0.1338,'height',0.0867),
+    JSON_OBJECT('word','rubber',      'x',0.1655,'y',0.5017,'width',0.1338,'height',0.0867),
+    JSON_OBJECT('word','crayon',      'x',0.6955,'y',0.5639,'width',0.1338,'height',0.0867)
   )
 ),
  'Drag Drop: Classroom', @part_classroom);

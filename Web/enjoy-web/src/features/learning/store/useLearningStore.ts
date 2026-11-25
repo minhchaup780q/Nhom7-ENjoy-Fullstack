@@ -85,7 +85,18 @@ export const useLearningStore = create<LearningState>((set, get) => ({
 
   // Chọn Level -> Lấy danh sách Topics kèm tiến độ placement test và UserProgress
   selectLevel: async (level: Level) => {
-    set({ activeLevel: level, topics: [], parts: [], sessions: [], loading: true, error: null });
+    set({
+      activeLevel: level,
+      activeTopic: null,
+      activePart: null,
+      activeSession: null,
+      topics: [],
+      parts: [],
+      sessions: [],
+      sessionsByPart: {},
+      loading: true,
+      error: null,
+    });
     try {
       // Lấy userId từ localStorage
       const userStr = localStorage.getItem('enjoy_user');
