@@ -32,6 +32,7 @@ export const DragDropExercise: React.FC<DragDropExerciseProps> = ({
   const raw = payload as any;
   const imageUrl: string = raw?.image_url ?? raw?.imageUrl ?? '';
   const audioUrl: string = raw?.audio_url ?? raw?.audioUrl ?? '';
+  const isVideoUrl = /\.(mp4|webm|mov|m4v)(?:[?#]|$)/i.test(audioUrl);
   
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let rawCoords: any[] = [];
@@ -59,6 +60,8 @@ export const DragDropExercise: React.FC<DragDropExerciseProps> = ({
   };
 
   const playAudio = () => {
+    if (isVideoUrl) return;
+
     if (audioUrl) {
       const safeUrl = audioUrl.replace(/ /g, '%20');
       const audio = new Audio(safeUrl);
@@ -74,13 +77,15 @@ export const DragDropExercise: React.FC<DragDropExerciseProps> = ({
   };
 
   useEffect(() => {
+    if (isVideoUrl) return;
+
     const timeoutId = setTimeout(() => {
       playAudio();
     }, 300);
     
     return () => clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [audioUrl, raw?.sentence]);
+  }, [audioUrl, isVideoUrl, raw?.sentence]);
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, word: string, sourceIndex?: number) => {
     if (footerStatus === 'correct' || footerStatus === 'incorrect') return;
@@ -264,14 +269,23 @@ export const DragDropExercise: React.FC<DragDropExerciseProps> = ({
 
           {/* Right Side: Draggable words (Hidden container background, 2 columns layout) */}
           <div className="flex-shrink-0 flex flex-col items-center justify-start min-w-[200px]">
-            {/* Speaker Button */}
-            <button 
-              onClick={playAudio}
-              className="mb-2 text-primary hover:scale-110 active:scale-95 transition-transform"
-              title="Nghe lại đoạn ghi âm"
-            >
-              <SpeakerWaveIcon className="w-8 h-8 md:w-10 md:h-10 drop-shadow-md" />
-            </button>
+            {isVideoUrl ? (
+              <video
+                src={audioUrl.replace(/ /g, '%20')}
+                controls
+                playsInline
+                className="mb-2 w-full max-w-sm rounded-xl bg-black shadow-md"
+                aria-label="Video hướng dẫn"
+              />
+            ) : (
+              <button
+                onClick={playAudio}
+                className="mb-2 text-primary hover:scale-110 active:scale-95 transition-transform"
+                title="Nghe lại đoạn ghi âm"
+              >
+                <SpeakerWaveIcon className="w-8 h-8 md:w-10 md:h-10 drop-shadow-md" />
+              </button>
+            )}
 
             {/* The words are rendered in a 2-column grid */}
             <div className="grid grid-cols-2 gap-3 md:gap-4 p-2">

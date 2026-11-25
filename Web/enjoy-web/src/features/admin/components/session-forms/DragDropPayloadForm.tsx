@@ -72,13 +72,13 @@ export const DragDropPayloadForm: React.FC<DragDropPayloadFormProps> = ({
         </div>
         <div>
           <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-            URL âm thanh hướng dẫn (tùy chọn)
+            URL âm thanh hoặc video hướng dẫn (tùy chọn)
           </label>
           <input
             type="text"
             value={audioUrl}
             onChange={(e) => handleFieldChange('audio_url', e.target.value)}
-            placeholder="https://..."
+            placeholder="https://... (Youdao audio hoặc AWS MP4)"
             className="w-full text-xs px-2.5 py-2 border border-slate-300 rounded-lg outline-none font-mono focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
           />
         </div>
