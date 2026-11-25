@@ -49,7 +49,7 @@ export const SessionPlayer: React.FC<SessionPlayerProps> = ({ session, onClose, 
 
   // Fetch từ vựng của Part cho tất cả các vòng cần thông tin từ vựng / ghi nhận lỗi sai
   useEffect(() => {
-    const partId = session.part?.id ?? (activePart?.id ?? 0);
+    const partId = session.part?.id ?? session.partId ?? activePart?.id ?? 0;
     if (!partId) return;
     setLoadingVocabs(true);
     fetchPartVocabularies(partId).then(vocabs => {

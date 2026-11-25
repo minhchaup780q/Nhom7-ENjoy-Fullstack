@@ -13,7 +13,6 @@ import { PronunciationGuidePage } from '../features/pronunciation/components/Pro
 import { PlacementTestPage } from '../features/placement-test/components/PlacementTestPage';
 import { ExamPage } from '../features/exam/components/ExamPage';
 import { LeaderboardPage } from '../features/leaderboard/components/LeaderboardPage';
-import type { Session } from '../features/learning/types';
 
 import { AdminDashboard } from '../features/admin/components/AdminDashboard';
 import { AdminLessons } from '../features/admin/components/AdminLessons';
@@ -54,11 +53,7 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ isAuthenticated, role }) => {
 };
 
 
-interface AppRoutesProps {
-  onStartSession: (session: Session) => void;
-}
-
-export const AppRoutes: React.FC<AppRoutesProps> = ({ onStartSession }) => {
+export const AppRoutes: React.FC = () => {
   const { isAuthenticated, user } = useAuthStore();
 
   return (
@@ -71,7 +66,13 @@ export const AppRoutes: React.FC<AppRoutesProps> = ({ onStartSession }) => {
       <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
         {/* Welcome / Placement Test - hiện khi user mới đăng ký */}
         <Route path="/welcome" element={<PlacementTestPage />} />
-        <Route path="/learn" element={<LearningMap onStartSession={onStartSession} />} />
+        <Route path="/learn" element={<LearningMap />} />
+        <Route path="/learn/levels/:levelId" element={<LearningMap />} />
+        <Route path="/learn/levels/:levelId/topics/:topicId" element={<LearningMap />} />
+        <Route
+          path="/learn/levels/:levelId/topics/:topicId/sessions/:sessionId"
+          element={<LearningMap />}
+        />
         <Route path="/explore" element={<ExploreDashboard />} />
         <Route path="/practice" element={<PracticePage />} />
         <Route path="/exams" element={<ExamPage />} />
