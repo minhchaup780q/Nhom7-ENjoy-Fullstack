@@ -11,6 +11,8 @@ import edu.vn.iuh.fit.authservice.dto.response.UserCreateResponse;
 import edu.vn.iuh.fit.authservice.entities.Account;
 import edu.vn.iuh.fit.authservice.entities.enums.AuthProvider;
 import edu.vn.iuh.fit.authservice.entities.enums.UserRole;
+import edu.vn.iuh.fit.authservice.controllers.AuthenController;
+import edu.vn.iuh.fit.authservice.exceptions.GlobalExceptionHandler;
 import edu.vn.iuh.fit.authservice.repositories.AccountRepository;
 import edu.vn.iuh.fit.authservice.services.ActiveUserService;
 import edu.vn.iuh.fit.authservice.services.EmailService;
@@ -24,8 +26,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.server.ResponseStatusException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.time.LocalDate;
 
@@ -33,9 +39,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("Register Feature Unit Tests")
+@DisplayName("Registration API behavior tests")
 class RegisterTest {
 
     @Mock
@@ -62,12 +71,21 @@ class RegisterTest {
     @InjectMocks
     private AuthenticationServiceImpl authenticationService;
 
+    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+
+    private MockMvc registrationApi() {
+        return MockMvcBuilders.standaloneSetup(
+                        new AuthenController(authenticationService, jwtService, emailService, activeUserService))
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+    }
+
     /**
      * Test Case 1: Đăng ký tài khoản mới với độ tuổi người lớn (> 16 tuổi) lưu thông tin chờ với vai trò ROLE_PARENT.
      */
     @Test
-    @DisplayName("register: Email mới và độ tuổi người lớn (> 16 tuổi) -> Lưu pending với ROLE_PARENT")
-    void register_newEmailAdultAge_savesAsPendingWithRoleParent() {
+    @DisplayName("TC21: Đăng ký tài khoản mới ở độ tuổi người lớn")
+    void register_newEmailAdultAge_savesAsPendingWithRoleParent() throws Exception {
         // Arrange
         String email = "adult@enjoy.edu.vn";
         String rawPwd = "AdultPassword@123";
@@ -86,8 +104,10 @@ class RegisterTest {
         ArgumentCaptor<PendingRegistrationDto> pendingDtoCaptor = ArgumentCaptor.forClass(PendingRegistrationDto.class);
         ArgumentCaptor<EmailDetails> emailDetailsCaptor = ArgumentCaptor.forClass(EmailDetails.class);
 
-        // Act
-        authenticationService.register(request);
+        registrationApi().perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
 
         // Assert
         verify(accountRepository, times(1)).existsByEmail(email);
@@ -114,8 +134,8 @@ class RegisterTest {
      * Test Case 2: Đăng ký tài khoản mới cho trẻ em 10 tuổi (<= 16 tuổi) lưu thông tin chờ với vai trò ROLE_CHILDREN.
      */
     @Test
-    @DisplayName("register: Email mới và trẻ em 10 tuổi (<= 16 tuổi) -> Lưu pending với ROLE_CHILDREN")
-    void register_newEmailChildAge10_savesAsPendingWithRoleChildren() {
+    @DisplayName("TC22: Đăng ký tài khoản 10 tuổi lưu vai trò trẻ em")
+    void register_newEmailChildAge10_savesAsPendingWithRoleChildren() throws Exception {
         // Arrange
         String email = "child10@enjoy.edu.vn";
         String rawPwd = "ChildPassword@123";
@@ -133,8 +153,10 @@ class RegisterTest {
 
         ArgumentCaptor<PendingRegistrationDto> pendingDtoCaptor = ArgumentCaptor.forClass(PendingRegistrationDto.class);
 
-        // Act
-        authenticationService.register(request);
+        registrationApi().perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
 
         // Assert
         verify(otpService, times(1)).savePendingRegistration(eq(email), pendingDtoCaptor.capture(), eq("654321"));
@@ -150,8 +172,8 @@ class RegisterTest {
      * Test Case 3: Đăng ký với ngày sinh vừa tròn 16 tuổi (giá trị biên) -> được phân quyền ROLE_CHILDREN.
      */
     @Test
-    @DisplayName("register: Ngày sinh vừa tròn 16 tuổi (Boundary <= 16) -> Phân quyền ROLE_CHILDREN")
-    void register_birthday_exactly16YearsOld_roleIsChildren() {
+    @DisplayName("TC23: Đăng ký ở tuổi 16 được phân vai trò trẻ em")
+    void register_birthday_exactly16YearsOld_roleIsChildren() throws Exception {
         // Arrange
         String email = "teen16@enjoy.edu.vn";
         String rawPwd = "TeenPassword@123";
@@ -169,8 +191,10 @@ class RegisterTest {
 
         ArgumentCaptor<PendingRegistrationDto> pendingDtoCaptor = ArgumentCaptor.forClass(PendingRegistrationDto.class);
 
-        // Act
-        authenticationService.register(request);
+        registrationApi().perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
 
         // Assert
         verify(otpService, times(1)).savePendingRegistration(eq(email), pendingDtoCaptor.capture(), eq("112233"));
@@ -183,8 +207,8 @@ class RegisterTest {
      * Test Case 4: Đăng ký với ngày sinh vừa tròn 17 tuổi (giá trị biên) -> được phân quyền ROLE_PARENT.
      */
     @Test
-    @DisplayName("register: Ngày sinh vừa tròn 17 tuổi (Boundary > 16) -> Phân quyền ROLE_PARENT")
-    void register_birthday_17YearsOld_roleIsParent() {
+    @DisplayName("TC24: Đăng ký ở tuổi 17 được phân vai trò phụ huynh")
+    void register_birthday_17YearsOld_roleIsParent() throws Exception {
         // Arrange
         String email = "teen17@enjoy.edu.vn";
         String rawPwd = "TeenPassword@123";
@@ -202,8 +226,10 @@ class RegisterTest {
 
         ArgumentCaptor<PendingRegistrationDto> pendingDtoCaptor = ArgumentCaptor.forClass(PendingRegistrationDto.class);
 
-        // Act
-        authenticationService.register(request);
+        registrationApi().perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
 
         // Assert
         verify(otpService, times(1)).savePendingRegistration(eq(email), pendingDtoCaptor.capture(), eq("445566"));
@@ -249,8 +275,8 @@ class RegisterTest {
      * Test Case 6: Đăng ký thất bại khi email đã tồn tại trong hệ thống, ném ResponseStatusException 400 BAD_REQUEST.
      */
     @Test
-    @DisplayName("register: Email đã được đăng ký -> Ném ResponseStatusException 400 BAD_REQUEST")
-    void register_duplicateEmail_throwsResponseStatusException400() {
+    @DisplayName("TC25: Email đã tồn tại bị từ chối khi đăng ký")
+    void register_duplicateEmail_throwsResponseStatusException400() throws Exception {
         // Arrange
         String duplicateEmail = "existing@enjoy.edu.vn";
         RegisterRequest request = RegisterRequest.builder()
@@ -262,14 +288,11 @@ class RegisterTest {
 
         when(accountRepository.existsByEmail(duplicateEmail)).thenReturn(true);
 
-        // Act & Assert
-        assertThatThrownBy(() -> authenticationService.register(request))
-                .isInstanceOf(ResponseStatusException.class)
-                .satisfies(ex -> {
-                    ResponseStatusException rse = (ResponseStatusException) ex;
-                    assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-                    assertThat(rse.getReason()).isEqualTo("Email này đã được đăng ký!");
-                });
+        registrationApi().perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Email này đã được đăng ký!"));
 
         verify(accountRepository, times(1)).existsByEmail(duplicateEmail);
         verifyNoInteractions(passwordEncoder);
@@ -288,8 +311,8 @@ class RegisterTest {
      * Test Case 7: Xác thực OTP thành công -> Tài khoản được lưu vào database và tạo profile ở user-service.
      */
     @Test
-    @DisplayName("verifyOtp: Thông tin OTP hợp lệ -> Lưu Account vào DB và tạo profile qua OpenFeign")
-    void verifyOtp_validRequest_accountSavedToDb() {
+    @DisplayName("TC26: OTP đăng ký được xác nhận và tạo tài khoản")
+    void verifyOtp_validRequest_accountSavedToDb() throws Exception {
         // Arrange
         String email = "verify_success@enjoy.edu.vn";
         String otp = "123456";
@@ -324,8 +347,10 @@ class RegisterTest {
         ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
         ArgumentCaptor<UserCreateRequest> userCreateReqCaptor = ArgumentCaptor.forClass(UserCreateRequest.class);
 
-        // Act
-        authenticationService.verifyOtp(request);
+        registrationApi().perform(post("/api/auth/verify-otp")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
 
         // Assert
         verify(otpService, times(1)).getPendingRegistration(email);
@@ -351,8 +376,8 @@ class RegisterTest {
      * Test Case 8: Xác thực OTP thất bại khi thông tin đăng ký chờ đã hết hạn hoặc không tìm thấy, ném ResponseStatusException 400 BAD_REQUEST.
      */
     @Test
-    @DisplayName("verifyOtp: Dữ liệu pending hết hạn hoặc không tồn tại -> Ném ResponseStatusException 400 BAD_REQUEST")
-    void verifyOtp_pendingDataExpiredOrNotFound_throwsBadRequest400() {
+    @DisplayName("TC27: Xác nhận OTP bị từ chối khi đăng ký tạm hết hạn")
+    void verifyOtp_pendingDataExpiredOrNotFound_throwsBadRequest400() throws Exception {
         // Arrange
         String email = "expired@enjoy.edu.vn";
         VerifyOtpRequest request = VerifyOtpRequest.builder()
@@ -362,14 +387,12 @@ class RegisterTest {
 
         when(otpService.getPendingRegistration(email)).thenReturn(null);
 
-        // Act & Assert
-        assertThatThrownBy(() -> authenticationService.verifyOtp(request))
-                .isInstanceOf(ResponseStatusException.class)
-                .satisfies(ex -> {
-                    ResponseStatusException rse = (ResponseStatusException) ex;
-                    assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-                    assertThat(rse.getReason()).isEqualTo("Yêu cầu đăng ký đã hết hạn (quá 5 phút). Vui lòng đăng ký lại.");
-                });
+        registrationApi().perform(post("/api/auth/verify-otp")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message")
+                        .value("Yêu cầu đăng ký đã hết hạn (quá 5 phút). Vui lòng đăng ký lại."));
 
         verify(otpService, times(1)).getPendingRegistration(email);
         verifyNoInteractions(accountRepository);
@@ -380,8 +403,8 @@ class RegisterTest {
      * Test Case 9: Gọi user-service qua OpenFeign thất bại/ném Exception -> Account vẫn được lưu thành công vào auth_db và dọn dẹp Redis.
      */
     @Test
-    @DisplayName("verifyOtp: OpenFeign UserClient ném lỗi -> Account vẫn lưu vào DB và dọn dẹp Redis thành công")
-    void verifyOtp_userClientThrowsException_accountStillSavedInDb() {
+    @DisplayName("TC28: Lỗi User Service không ngăn tạo tài khoản sau xác nhận OTP")
+    void verifyOtp_userClientThrowsException_accountStillSavedInDb() throws Exception {
         // Arrange
         String email = "feign_error@enjoy.edu.vn";
         VerifyOtpRequest request = VerifyOtpRequest.builder()
@@ -412,8 +435,10 @@ class RegisterTest {
         when(userClient.createUserProfile(any(UserCreateRequest.class)))
                 .thenThrow(new RuntimeException("Connection refused to user-service"));
 
-        // Act
-        authenticationService.verifyOtp(request);
+        registrationApi().perform(post("/api/auth/verify-otp")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
 
         // Assert
         verify(accountRepository, times(1)).save(any(Account.class));
@@ -429,8 +454,8 @@ class RegisterTest {
      * Test Case 10: Gửi lại mã OTP khi dữ liệu đăng ký tạm còn tồn tại -> Sinh mã OTP mới và gửi email thành công.
      */
     @Test
-    @DisplayName("resendOtp: Dữ liệu pending tồn tại -> Sinh mã OTP mới và gửi lại email thành công")
-    void resendOtp_pendingDataExists_generatesNewOtpAndSendsEmail() {
+    @DisplayName("TC29: Gửi lại OTP khi thông tin đăng ký còn hiệu lực")
+    void resendOtp_pendingDataExists_generatesNewOtpAndSendsEmail() throws Exception {
         // Arrange
         String email = "resend_user@enjoy.edu.vn";
         ResendOtpRequest request = ResendOtpRequest.builder()
@@ -452,8 +477,10 @@ class RegisterTest {
 
         ArgumentCaptor<EmailDetails> emailDetailsCaptor = ArgumentCaptor.forClass(EmailDetails.class);
 
-        // Act
-        authenticationService.resendOtp(request);
+        registrationApi().perform(post("/api/auth/resend-otp")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
 
         // Assert
         verify(otpService, times(1)).getPendingRegistration(email);
@@ -471,8 +498,8 @@ class RegisterTest {
      * Test Case 11: Gửi lại mã OTP khi dữ liệu đăng ký tạm không tìm thấy hoặc hết hạn -> Ném ResponseStatusException 400 BAD_REQUEST.
      */
     @Test
-    @DisplayName("resendOtp: Dữ liệu pending không tồn tại hoặc hết hạn -> Ném ResponseStatusException 400 BAD_REQUEST")
-    void resendOtp_pendingDataNotFound_throwsBadRequest400() {
+    @DisplayName("TC30: Không gửi lại OTP khi đăng ký tạm không tồn tại hoặc hết hạn")
+    void resendOtp_pendingDataNotFound_throwsBadRequest400() throws Exception {
         // Arrange
         String email = "not_found@enjoy.edu.vn";
         ResendOtpRequest request = ResendOtpRequest.builder()
@@ -481,14 +508,12 @@ class RegisterTest {
 
         when(otpService.getPendingRegistration(email)).thenReturn(null);
 
-        // Act & Assert
-        assertThatThrownBy(() -> authenticationService.resendOtp(request))
-                .isInstanceOf(ResponseStatusException.class)
-                .satisfies(ex -> {
-                    ResponseStatusException rse = (ResponseStatusException) ex;
-                    assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-                    assertThat(rse.getReason()).isEqualTo("Yêu cầu đăng ký không tồn tại hoặc đã quá 15 phút. Vui lòng đăng ký lại.");
-                });
+        registrationApi().perform(post("/api/auth/resend-otp")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message")
+                        .value("Yêu cầu đăng ký không tồn tại hoặc đã quá 15 phút. Vui lòng đăng ký lại."));
 
         verify(otpService, times(1)).getPendingRegistration(email);
         verify(otpService, never()).generateOtp();
@@ -496,4 +521,3 @@ class RegisterTest {
         verify(emailService, never()).sendOtpHtmlMail(any());
     }
 }
-
